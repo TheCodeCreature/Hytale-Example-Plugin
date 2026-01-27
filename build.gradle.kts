@@ -17,6 +17,10 @@ repositories {
 dependencies {
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
+
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
 }
 
 hytale {
@@ -70,6 +74,12 @@ tasks.withType<Jar> {
                 .map { "${version}-${it}" }
                 .getOrElse(version.toString())
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
+
+    systemProperty("java.util.logging.manager", "com.hypixel.hytale.logger.backend.HytaleLogManager")
 }
 
 publishing {
