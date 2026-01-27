@@ -23,6 +23,8 @@ import java.util.UUID;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
@@ -31,9 +33,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class MmoCamCommandTest {
 
-    private static final class NoOpPacketHandler extends PacketHandler {
-        public NoOpPacketHandler() {
+    private static final class CountingPacketHandler extends PacketHandler {
+        private final CountDownLatch writes;
+        private final AtomicInteger writeCount;
+
+        public CountingPacketHandler(@Nonnull CountDownLatch writes, @Nonnull AtomicInteger writeCount) {
             super(new EmbeddedChannel(), new ProtocolVersion(0));
+            this.writes = writes;
+            this.writeCount = writeCount;
         }
 
         @Nonnull
@@ -48,6 +55,8 @@ public class MmoCamCommandTest {
 
         @Override
         public void writeNoCache(@Nonnull com.hypixel.hytale.protocol.Packet packet) {
+            this.writeCount.incrementAndGet();
+            this.writes.countDown();
         }
     }
 
@@ -92,9 +101,13 @@ public class MmoCamCommandTest {
         CountDownLatch storeReady = new CountDownLatch(1);
         CountDownLatch storeShutdown = new CountDownLatch(1);
 
+        CountDownLatch writes = new CountDownLatch(2);
+        AtomicInteger writeCount = new AtomicInteger();
+
         AtomicReference<Store<EntityStore>> storeRef = new AtomicReference<>();
         AtomicReference<ComponentType<EntityStore, PlayerRef>> playerRefComponentTypeRef = new AtomicReference<>();
         AtomicReference<Ref<EntityStore>> playerEntityRefRef = new AtomicReference<>();
+        AtomicReference<Throwable> worldThreadError = new AtomicReference<>();
 
         Thread worldThread = new Thread(() -> {
             try {
@@ -129,7 +142,7 @@ public class MmoCamCommandTest {
                         UUID.randomUUID(),
                         "tester",
                         "en_us",
-                        new NoOpPacketHandler(),
+                        new CountingPacketHandler(writes, writeCount),
                         new ChunkTracker()
                 );
                 entityHolder.addComponent(playerRefComponentType, componentPlayerRef);
@@ -148,8 +161,8 @@ public class MmoCamCommandTest {
                         Thread.onSpinWait();
                     }
                 }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            } catch (Throwable t) {
+                worldThreadError.set(t);
             }
         }, "WorldThread-Default");
 
@@ -183,7 +196,7 @@ public class MmoCamCommandTest {
                 UUID.randomUUID(),
                 "tester",
                 "en_us",
-                new NoOpPacketHandler(),
+                new CountingPacketHandler(writes, writeCount),
                 new ChunkTracker()
         ));
 
@@ -192,7 +205,134 @@ public class MmoCamCommandTest {
 
         assertDoesNotThrow(() -> command.executeSync(ctx));
 
+        assertTrue(writes.await(2, TimeUnit.SECONDS), "Expected scheduled task to send camera packet + chat message");
+
         storeShutdown.countDown();
         worldThread.join();
+
+        Throwable threadFailure = worldThreadError.get();
+        if (threadFailure != null) {
+            fail(threadFailure);
+        }
+    }
+
+    @Test
+    void executeSync_offSubcommandDoesNotThrowWhenCalledOffWorldThread() throws Exception {
+        CountDownLatch storeReady = new CountDownLatch(1);
+        CountDownLatch storeShutdown = new CountDownLatch(1);
+
+        CountDownLatch writes = new CountDownLatch(2);
+        AtomicInteger writeCount = new AtomicInteger();
+
+        AtomicReference<Store<EntityStore>> storeRef = new AtomicReference<>();
+        AtomicReference<ComponentType<EntityStore, PlayerRef>> playerRefComponentTypeRef = new AtomicReference<>();
+        AtomicReference<Ref<EntityStore>> playerEntityRefRef = new AtomicReference<>();
+        AtomicReference<Throwable> worldThreadError = new AtomicReference<>();
+
+        Thread worldThread = new Thread(() -> {
+            try {
+                Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+                Field theUnsafeField = unsafeClass.getDeclaredField("theUnsafe");
+                theUnsafeField.setAccessible(true);
+                Object unsafeInstance = theUnsafeField.get(null);
+
+                World world = (World) unsafeClass.getMethod("allocateInstance", Class.class).invoke(unsafeInstance, World.class);
+                Field acceptingTasksField = World.class.getDeclaredField("acceptingTasks");
+                acceptingTasksField.setAccessible(true);
+                acceptingTasksField.set(world, new AtomicBoolean(true));
+                Field taskQueueField = World.class.getDeclaredField("taskQueue");
+                taskQueueField.setAccessible(true);
+                LinkedBlockingDeque<Runnable> taskQueue = new LinkedBlockingDeque<>();
+                taskQueueField.set(world, taskQueue);
+
+                EntityStore entityStore = new EntityStore(world);
+                entityStore.start(EmptyResourceStorage.get());
+
+                Store<EntityStore> store = entityStore.getStore();
+                storeRef.set(store);
+
+                ComponentType<EntityStore, PlayerRef> playerRefComponentType = EntityStore.REGISTRY.registerComponent(PlayerRef.class, () -> {
+                    throw new UnsupportedOperationException();
+                });
+                playerRefComponentTypeRef.set(playerRefComponentType);
+
+                Holder<EntityStore> entityHolder = EntityStore.REGISTRY.newHolder();
+                PlayerRef componentPlayerRef = new PlayerRef(
+                        EntityStore.REGISTRY.newHolder(),
+                        UUID.randomUUID(),
+                        "tester",
+                        "en_us",
+                        new CountingPacketHandler(writes, writeCount),
+                        new ChunkTracker()
+                );
+                entityHolder.addComponent(playerRefComponentType, componentPlayerRef);
+                Ref<EntityStore> playerEntityRef = store.addEntity(entityHolder, AddReason.SPAWN);
+                if (playerEntityRef == null) {
+                    throw new IllegalStateException("Failed to create test player entity");
+                }
+                playerEntityRefRef.set(playerEntityRef);
+
+                storeReady.countDown();
+                while (storeShutdown.getCount() > 0) {
+                    Runnable task = taskQueue.poll();
+                    if (task != null) {
+                        task.run();
+                    } else {
+                        Thread.onSpinWait();
+                    }
+                }
+            } catch (Throwable t) {
+                worldThreadError.set(t);
+                storeReady.countDown();
+            }
+        }, "WorldThread-Default");
+
+        worldThread.start();
+        storeReady.await();
+
+        Store<EntityStore> store = storeRef.get();
+        assertNotNull(store);
+
+        Ref<EntityStore> playerEntityRef = playerEntityRefRef.get();
+        assertNotNull(playerEntityRef);
+
+        Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+        Field theUnsafeField = unsafeClass.getDeclaredField("theUnsafe");
+        theUnsafeField.setAccessible(true);
+        Object unsafeInstance = theUnsafeField.get(null);
+        Universe universe = (Universe) unsafeClass.getMethod("allocateInstance", Class.class).invoke(unsafeInstance, Universe.class);
+
+        Field universeInstanceField = Universe.class.getDeclaredField("instance");
+        universeInstanceField.setAccessible(true);
+        universeInstanceField.set(null, universe);
+
+        Field playerRefComponentTypeField = Universe.class.getDeclaredField("playerRefComponentType");
+        playerRefComponentTypeField.setAccessible(true);
+        playerRefComponentTypeField.set(universe, playerRefComponentTypeRef.get());
+
+        Player player = new Player();
+        player.setReference(playerEntityRef);
+        player.init(UUID.randomUUID(), new PlayerRef(
+                EntityStore.REGISTRY.newHolder(),
+                UUID.randomUUID(),
+                "tester",
+                "en_us",
+                new CountingPacketHandler(writes, writeCount),
+                new ChunkTracker()
+        ));
+
+        MmoCamOffCommand command = new MmoCamOffCommand();
+        CommandContext ctx = new CommandContext(command, player, "mmocam off");
+
+        assertDoesNotThrow(() -> command.executeSync(ctx));
+        assertTrue(writes.await(2, TimeUnit.SECONDS), "Expected scheduled task to send camera packet + chat message");
+
+        storeShutdown.countDown();
+        worldThread.join();
+
+        Throwable threadFailure = worldThreadError.get();
+        if (threadFailure != null) {
+            fail(threadFailure);
+        }
     }
 }
