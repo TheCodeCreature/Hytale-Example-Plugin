@@ -2,6 +2,11 @@ package com.example.exampleplugin;
 
 import com.example.exampleplugin.camera.MmoCamCommand;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 
@@ -19,5 +24,25 @@ public class ExamplePlugin extends JavaPlugin {
         this.getCommandRegistry().registerCommand(new MmoCamCommand());
         this.getCommandRegistry().registerCommand(new TransparentBlockCommand());
         this.getCommandRegistry().registerCommand(new TransparentAreaCommand());
+        this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, ExamplePlugin::onPlayerReady);
+    }
+
+    private static void onPlayerReady(PlayerReadyEvent event) {
+        Ref<EntityStore> ref = event.getPlayerRef();
+        if (ref == null || !ref.isValid()) {
+            return;
+        }
+
+        Store<EntityStore> store = ref.getStore();
+        if (store == null) {
+            return;
+        }
+
+        PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
+        if (playerRef == null) {
+            return;
+        }
+
+        TransparentAreaCommand.preloadTransparentType(playerRef);
     }
 }
