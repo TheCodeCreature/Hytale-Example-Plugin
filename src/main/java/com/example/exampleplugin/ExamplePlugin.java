@@ -2,6 +2,7 @@ package com.example.exampleplugin;
 
 import com.example.exampleplugin.camera.MmoCamCommand;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.component.Ref;
@@ -25,6 +26,7 @@ public class ExamplePlugin extends JavaPlugin {
         this.getCommandRegistry().registerCommand(new TransparentBlockCommand());
         this.getCommandRegistry().registerCommand(new TransparentAreaCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, ExamplePlugin::onPlayerReady);
+        this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, ExamplePlugin::onPlayerDisconnect);
     }
 
     private static void onPlayerReady(PlayerReadyEvent event) {
@@ -43,6 +45,12 @@ public class ExamplePlugin extends JavaPlugin {
             return;
         }
 
+        TransparentAreaCommand.resetPlayer(playerRef.getUuid());
         TransparentAreaCommand.preloadTransparentType(playerRef);
+    }
+
+    private static void onPlayerDisconnect(PlayerDisconnectEvent event) {
+        PlayerRef playerRef = event.getPlayerRef();
+        TransparentAreaCommand.resetPlayer(playerRef.getUuid());
     }
 }
