@@ -45,12 +45,12 @@ public class ExamplePlugin extends JavaPlugin {
             return;
         }
 
-        TransparentAreaCommand.resetPlayer(playerRef.getUuid());
+        TransparentAreaCommand.resetPlayer(playerRef);
         TransparentAreaCommand.preloadTransparentType(playerRef);
     }
 
     private static void onPlayerDisconnect(PlayerDisconnectEvent event) {
         PlayerRef playerRef = event.getPlayerRef();
-        TransparentAreaCommand.resetPlayer(playerRef.getUuid());
+        TransparentAreaCommand.resetPlayer(playerRef);
     }
 }
