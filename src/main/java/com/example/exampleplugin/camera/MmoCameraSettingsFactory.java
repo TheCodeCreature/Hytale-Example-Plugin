@@ -18,6 +18,8 @@ public final class MmoCameraSettingsFactory {
     public static ServerCameraSettings create() {
         ServerCameraSettings cameraSettings = new ServerCameraSettings();
 
+        cameraSettings.displayReticle = true;
+
         cameraSettings.isFirstPerson = false;
         cameraSettings.distance = 5.0F;
         cameraSettings.allowPitchControls = true;
@@ -26,11 +28,11 @@ public final class MmoCameraSettingsFactory {
         cameraSettings.positionType = PositionType.AttachedToPlusOffset;
         cameraSettings.positionDistanceOffsetType = PositionDistanceOffsetType.DistanceOffset;
 
-        cameraSettings.rotationType = RotationType.Custom;
-        cameraSettings.applyLookType = ApplyLookType.Rotation;
+        cameraSettings.rotationType = RotationType.AttachedToPlusOffset;
+        cameraSettings.applyLookType = ApplyLookType.LocalPlayerLookOrientation;
 
-        // Option A: movement relative to camera yaw.
-        cameraSettings.movementForceRotationType = MovementForceRotationType.CameraRotation;
+        // Keep player facing the camera's look direction.
+        cameraSettings.movementForceRotationType = MovementForceRotationType.AttachedToHead;
 
         return cameraSettings;
     }
