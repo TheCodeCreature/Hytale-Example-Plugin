@@ -61,7 +61,7 @@ public class TransparentAreaCommand extends CommandBase {
     private static final int CLEANUP_INTERVAL_MILLIS = 100;
 
     public TransparentAreaCommand() {
-        super("peek", "Toggles a transparent peek area on your client.");
+        super("peek", "Toggles a transparent peek area on your client. Usage: /peek [f|forward|b|backward]");
         this.setPermissionGroup(GameMode.Adventure);
     }
 
@@ -93,10 +93,16 @@ public class TransparentAreaCommand extends CommandBase {
             return;
         }
 
+        // TODO: Parse mode argument from command - need to research CommandContext API
+        // For now, default to backward mode
+        PeekMode requestedMode = PeekMode.BACKWARD;
+
         UUID playerId = playerRef.getUuid();
-        PeekState existing = ACTIVE_PEEKS.remove(playerId);
+        PeekState existing = ACTIVE_PEEKS.get(playerId);
+        
         if (existing != null) {
-            // Disable peek: stop update task and restore all blocks immediately
+            // Peek is active - toggle off
+            ACTIVE_PEEKS.remove(playerId);
             existing.stop();
             removeManager(playerId);
             applyPeekCamera(playerRef, false);
@@ -104,15 +110,15 @@ public class TransparentAreaCommand extends CommandBase {
             return;
         }
 
-        // Enable peek: create manager and start update task
+        // Enable peek with backward mode
         applyPeekCamera(playerRef, true);
         World world = store.getExternalData().getWorld();
         getOrCreateManager(playerRef, world);
         ScheduledFuture<?> task = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> {
             world.execute(() -> updatePeek(playerRef));
         }, 0L, PEEK_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
-        ACTIVE_PEEKS.put(playerId, new PeekState(task));
-        ctx.sendMessage(Message.raw("Peek enabled."));
+        ACTIVE_PEEKS.put(playerId, new PeekState(task, requestedMode));
+        ctx.sendMessage(Message.raw("Peek enabled (backward mode)."));
     }
 
     private static void updatePeek(@Nonnull PlayerRef playerRef) {
@@ -123,13 +129,25 @@ public class TransparentAreaCommand extends CommandBase {
         }
 
         Store<EntityStore> store = ref.getStore();
-        if (store == null) {
-            stopPeek(playerRef.getUuid());
+        
+        // Get current mode from PeekState
+        PeekState state = ACTIVE_PEEKS.get(playerRef.getUuid());
+        if (state == null) {
             return;
         }
+        PeekMode mode = state.getMode();
 
-        Vector3i cameraOrigin = getCameraOriginBlock(ref, store);
-        if (cameraOrigin == null) {
+        // Choose anchor based on mode
+        Vector3i anchor;
+        if (mode == PeekMode.FORWARD) {
+            // Forward mode: use target block (where player is looking)
+            anchor = getCameraTarget(ref, store);
+        } else {
+            // Backward mode: use camera origin (behind player in 3rd person)
+            anchor = getCameraOriginBlock(ref, store);
+        }
+        
+        if (anchor == null) {
             return;
         }
 
@@ -141,7 +159,7 @@ public class TransparentAreaCommand extends CommandBase {
 
         World world = store.getExternalData().getWorld();
         ChunkStore chunkStore = world.getChunkStore();
-        List<BlockSnapshot> blocks = collectBlocks(chunkStore, cameraOrigin, axisDir);
+        List<BlockSnapshot> blocks = collectBlocks(chunkStore, anchor, axisDir);
         
         if (blocks.isEmpty()) {
             return;
@@ -497,5 +515,13 @@ public class TransparentAreaCommand extends CommandBase {
             manager.shutdown();
             stopCleanupTaskIfEmpty();
         }
+    }
+
+    private static PeekMode parseMode(@Nonnull String mode) {
+        return switch (mode.toLowerCase()) {
+            case "f", "forward" -> PeekMode.FORWARD;
+            case "b", "backward" -> PeekMode.BACKWARD;
+            default -> null;
+        };
     }
 }
