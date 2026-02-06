@@ -52,6 +52,13 @@ public class TransparentAreaCommand extends CommandBase {
     private static volatile AtomicInteger nextFakeId;
     private static volatile int preloadBlockId = Integer.MIN_VALUE;
     private static final float CAMERA_DISTANCE = 6.0F;
+    
+    // Transparent block manager infrastructure
+    private static final Map<UUID, TransparentBlockManager> MANAGERS = new ConcurrentHashMap<>();
+    private static volatile ScheduledFuture<?> globalCleanupTask = null;
+    private static final Object CLEANUP_LOCK = new Object();
+    private static final long DECAY_THRESHOLD_MILLIS = 500;
+    private static final int CLEANUP_INTERVAL_MILLIS = 100;
 
     public TransparentAreaCommand() {
         super("peek", "Toggles a transparent peek area on your client.");
@@ -89,28 +96,23 @@ public class TransparentAreaCommand extends CommandBase {
         UUID playerId = playerRef.getUuid();
         PeekState existing = ACTIVE_PEEKS.remove(playerId);
         if (existing != null) {
+            // Disable peek: stop update task and restore all blocks immediately
             existing.stop();
-            restoreBlocks(playerRef, existing.lastBlocks);
+            removeManager(playerId);
             applyPeekCamera(playerRef, false);
             ctx.sendMessage(Message.raw("Peek disabled."));
             return;
         }
 
+        // Enable peek: create manager and start update task
         applyPeekCamera(playerRef, true);
         World world = store.getExternalData().getWorld();
+        getOrCreateManager(playerRef, world);
         ScheduledFuture<?> task = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> {
             world.execute(() -> updatePeek(playerRef));
         }, 0L, PEEK_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
         ACTIVE_PEEKS.put(playerId, new PeekState(task));
         ctx.sendMessage(Message.raw("Peek enabled."));
-    }
-
-    private static void restoreBlocks(@Nonnull PlayerRef playerRef, @Nonnull List<BlockSnapshot> originalBlocks) {
-        for (BlockSnapshot snapshot : originalBlocks) {
-            playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
-                snapshot.x, snapshot.y, snapshot.z, snapshot.blockId, snapshot.filler, snapshot.rotation
-            ));
-        }
     }
 
     private static void updatePeek(@Nonnull PlayerRef playerRef) {
@@ -128,7 +130,6 @@ public class TransparentAreaCommand extends CommandBase {
 
         Vector3i cameraOrigin = getCameraOriginBlock(ref, store);
         if (cameraOrigin == null) {
-            clearLastPeek(playerRef);
             return;
         }
 
@@ -140,78 +141,21 @@ public class TransparentAreaCommand extends CommandBase {
 
         World world = store.getExternalData().getWorld();
         ChunkStore chunkStore = world.getChunkStore();
-        List<BlockSnapshot> newBlocks = collectBlocks(chunkStore, cameraOrigin, axisDir);
-        if (newBlocks.isEmpty()) {
-            clearLastPeek(playerRef);
+        List<BlockSnapshot> blocks = collectBlocks(chunkStore, cameraOrigin, axisDir);
+        
+        if (blocks.isEmpty()) {
             return;
         }
 
-        PeekState state = ACTIVE_PEEKS.get(playerRef.getUuid());
-        if (state == null) {
-            return;
+        // Send-and-forget: submit blocks to manager, it handles everything else
+        TransparentBlockManager manager = MANAGERS.get(playerRef.getUuid());
+        if (manager != null) {
+            manager.submitBlocks(
+                blocks, 
+                TransparentAreaCommand::getTransparentVariantId,
+                TransparentAreaCommand::ensureTransparentTypesSent
+            );
         }
-
-        long newHash = hashBlocks(newBlocks);
-        if (state.lastHash == newHash && state.pendingBlocks == null) {
-            return;
-        }
-
-        Map<Integer, Integer> fakeIdByBaseId = new HashMap<>();
-        for (BlockSnapshot snapshot : newBlocks) {
-            fakeIdByBaseId.computeIfAbsent(snapshot.blockId, TransparentAreaCommand::getTransparentVariantId);
-        }
-
-        boolean sentAny = ensureTransparentTypesSent(playerRef, fakeIdByBaseId);
-        if (sentAny) {
-            state.pendingBlocks = newBlocks;
-            state.pendingHash = newHash;
-            return;
-        }
-
-        if (state.pendingBlocks != null) {
-            if (state.pendingHash != newHash) {
-                state.pendingBlocks = null;
-                state.pendingHash = 0L;
-            } else {
-                newBlocks = state.pendingBlocks;
-                newHash = state.pendingHash;
-                state.pendingBlocks = null;
-                state.pendingHash = 0L;
-            }
-        }
-
-        if (state.lastHash != 0L && state.lastHash != newHash) {
-            restoreBlocks(playerRef, state.lastBlocks);
-        }
-
-        List<BlockSnapshot> applyBlocks = newBlocks;
-        long applyHash = newHash;
-        CompletableFuture.delayedExecutor(APPLY_DELAY_MILLIS, TimeUnit.MILLISECONDS).execute(() -> {
-            world.execute(() -> {
-                for (BlockSnapshot snapshot : applyBlocks) {
-                    int fakeId = fakeIdByBaseId.get(snapshot.blockId);
-                    playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
-                        snapshot.x, snapshot.y, snapshot.z, fakeId, snapshot.filler, snapshot.rotation
-                    ));
-                }
-            });
-        });
-
-        state.lastBlocks = applyBlocks;
-        state.lastHash = applyHash;
-    }
-
-    private static void clearLastPeek(@Nonnull PlayerRef playerRef) {
-        PeekState state = ACTIVE_PEEKS.get(playerRef.getUuid());
-        if (state == null) {
-            return;
-        }
-
-        restoreBlocks(playerRef, state.lastBlocks);
-        state.lastBlocks = List.of();
-        state.lastHash = 0L;
-        state.pendingBlocks = null;
-        state.pendingHash = 0L;
     }
 
     private static void stopPeek(@Nonnull UUID playerId) {
@@ -281,8 +225,8 @@ public class TransparentAreaCommand extends CommandBase {
                     }
 
                     BlockSnapshot snapshot = readBlock(chunkStore, x, y, z);
-                    if (snapshot != null && snapshot.blockId != 0) {
-                        BlockType baseType = BlockType.getAssetMap().getAsset(snapshot.blockId);
+                    if (snapshot != null && snapshot.blockId() != 0) {
+                        BlockType baseType = BlockType.getAssetMap().getAsset(snapshot.blockId());
                         if (baseType != null && isEligibleBlockType(baseType)) {
                             out.add(snapshot);
                         }
@@ -389,6 +333,7 @@ public class TransparentAreaCommand extends CommandBase {
 
     public static void resetPlayer(@Nonnull UUID playerId) {
         stopPeek(playerId);
+        removeManager(playerId);
         SENT_FAKE_IDS.remove(playerId);
     }
 
@@ -537,32 +482,61 @@ public class TransparentAreaCommand extends CommandBase {
         return sentAny;
     }
 
-    private record BlockSnapshot(int x, int y, int z, int blockId, short filler, byte rotation) {
-    }
 
-    private static final class PeekState {
-        private final ScheduledFuture<?> task;
-        private volatile List<BlockSnapshot> lastBlocks = List.of();
-        private volatile long lastHash;
-        private volatile List<BlockSnapshot> pendingBlocks;
-        private volatile long pendingHash;
-
-        private PeekState(ScheduledFuture<?> task) {
-            this.task = task;
-        }
-
-        private void stop() {
-            this.task.cancel(false);
+    // Global cleanup task management
+    private static void ensureCleanupTaskRunning() {
+        if (globalCleanupTask == null) {
+            synchronized (CLEANUP_LOCK) {
+                if (globalCleanupTask == null) {
+                    globalCleanupTask = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(
+                        TransparentAreaCommand::runGlobalCleanup,
+                        CLEANUP_INTERVAL_MILLIS,
+                        CLEANUP_INTERVAL_MILLIS,
+                        TimeUnit.MILLISECONDS
+                    );
+                }
+            }
         }
     }
 
-    private static long hashBlocks(@Nonnull List<BlockSnapshot> blocks) {
-        long hash = 1L;
-        for (BlockSnapshot snapshot : blocks) {
-            long pos = BlockUtil.packUnchecked(snapshot.x, snapshot.y, snapshot.z);
-            hash = 31L * hash + pos;
-            hash = 31L * hash + snapshot.blockId;
+    private static void stopCleanupTaskIfEmpty() {
+        if (MANAGERS.isEmpty() && globalCleanupTask != null) {
+            synchronized (CLEANUP_LOCK) {
+                if (MANAGERS.isEmpty() && globalCleanupTask != null) {
+                    globalCleanupTask.cancel(false);
+                    globalCleanupTask = null;
+                }
+            }
         }
-        return hash;
+    }
+
+    private static void runGlobalCleanup() {
+        for (TransparentBlockManager manager : MANAGERS.values()) {
+            manager.cleanup();
+        }
+    }
+
+    private static TransparentBlockManager getOrCreateManager(@Nonnull PlayerRef playerRef, @Nonnull World world) {
+        UUID playerId = playerRef.getUuid();
+        TransparentBlockManager manager = MANAGERS.get(playerId);
+        if (manager == null) {
+            manager = new TransparentBlockManager(
+                playerRef, 
+                world, 
+                DECAY_THRESHOLD_MILLIS, 
+                APPLY_DELAY_MILLIS
+            );
+            MANAGERS.put(playerId, manager);
+            ensureCleanupTaskRunning();
+        }
+        return manager;
+    }
+
+    private static void removeManager(@Nonnull UUID playerId) {
+        TransparentBlockManager manager = MANAGERS.remove(playerId);
+        if (manager != null) {
+            manager.shutdown();
+            stopCleanupTaskIfEmpty();
+        }
     }
 }
