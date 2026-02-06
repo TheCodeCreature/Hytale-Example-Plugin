@@ -1,0 +1,175 @@
+$C = "../../Common.ui";
+
+@TransparentBtn = TextButtonStyle(
+    Default: (Background: #000000(0)),
+    Hovered: (Background: #FFFFFF(0.2)),
+    Pressed: (Background: #FFFFFF(0.3)),
+    Disabled: (Background: #000000(0)),
+    Sounds: $C.@ButtonSounds
+);
+
+$C.@PageOverlay {
+  $C.@DecoratedContainer {
+    Anchor: (Width: 450, Height: 550);
+
+    #Title {
+      $C.@Title {
+        @Text = "Edit Waypoint";
+      }
+    }
+
+    #Content {
+      LayoutMode: Top;
+      Padding: (Full: 20);
+
+      Label {
+        Text: "Name";
+        Style: (FontSize: 16, TextColor: #93844c, RenderBold: true); 
+        Anchor: (Height: 20);
+      }
+      $C.@TextField #NameInput {
+        Anchor: (Height: 40);
+        PlaceholderText: "Waypoint Name...";
+        PlaceholderStyle: (TextColor: #3d5a85, FontSize: 14);
+      }
+
+      Label {
+        Text: "Coordinates (X / Y / Z)";
+        Style: (FontSize: 16, TextColor: #93844c, RenderBold: true); 
+        Anchor: (Height: 20);
+      }
+      Group #CoordsRow {
+        LayoutMode: Left;
+        Anchor: (Height: 40);
+        $C.@TextField #InputX { FlexWeight: 1; PlaceholderText: "X"; }
+        $C.@TextField #InputY { FlexWeight: 1; PlaceholderText: "Y"; }
+        $C.@TextField #InputZ { FlexWeight: 1; PlaceholderText: "Z"; }
+      }
+
+      Label {
+        Text: "Icon Color";
+        Style: (FontSize: 16, TextColor: #93844c, RenderBold: true); 
+        Anchor: (Height: 20);
+      }
+      Group #ColorRow {
+        LayoutMode: Left;
+        Anchor: (Height: 40);
+
+        // White (default)
+        Group {
+          Anchor: (Width: 40, Height: 40);
+
+          Panel {
+             Anchor: (Full: 0);
+             Background: "../../Common/WhiteMarker.png";
+          }
+          Group #SelWhite {
+            Anchor: (Full: 0);
+            Visible: false;
+            Background: #FFFF55(0.5);
+          }
+          TextButton #ColorWhite { Anchor: (Full: 0); Style: @TransparentBtn; Text: ""; }
+        }
+
+        // Spacer
+        Panel { Anchor: (Width: 10, Height: 1); }
+        
+        // Red
+        Group {
+            Anchor: (Width: 40, Height: 40); 
+            
+            // Icon
+            Panel { 
+               Anchor: (Full: 0);
+               Background: "../../Common/RedMarker.png"; 
+            }
+            // Selection Highlight
+            Group #SelRed {
+                Anchor: (Full: 0);
+                Visible: false;
+                Background: #FFFF55(0.5);
+            }
+            // Button Interaction
+            TextButton #ColorRed { Anchor: (Full: 0); Style: @TransparentBtn; Text: ""; }
+        }
+
+        // Spacer
+        Panel { Anchor: (Width: 10, Height: 1); }
+
+        // Green
+        Group {
+            Anchor: (Width: 40, Height: 40); 
+            
+            // Icon
+            Panel { 
+               Anchor: (Full: 0);
+               Background: "../../Common/GreenMarker.png"; 
+            }
+            // Selection Highlight
+            Group #SelGreen {
+                Anchor: (Full: 0);
+                Visible: false;
+                Background: #FFFF55(0.5);
+            }
+            // Button Interaction
+            TextButton #ColorGreen { Anchor: (Full: 0); Style: @TransparentBtn; Text: ""; }
+        }
+
+        // Spacer
+        Panel { Anchor: (Width: 10, Height: 1); }
+
+        // Blue
+        Group {
+            Anchor: (Width: 40, Height: 40); 
+            
+            // Icon
+            Panel { 
+               Anchor: (Full: 0);
+               Background: "../../Common/BlueMarker.png"; 
+            }
+            // Selection Highlight
+            Group #SelBlue {
+                Anchor: (Full: 0);
+                Visible: false;
+                Background: #FFFF55(0.5);
+            }
+            // Button Interaction
+            TextButton #ColorBlue { Anchor: (Full: 0); Style: @TransparentBtn; Text: ""; }
+        }
+      }
+
+      Group #GlobalRow {
+        LayoutMode: Left;
+        Anchor: (Top: 12, Height: 28);
+        Visible: false;
+
+        $C.@CheckBox #GlobalCheckbox {
+          Anchor: (Width: 24, Height: 24);
+        }
+
+        Label {
+          Anchor: (Left: 8);
+          Style: (FontSize: 14, TextColor: #d3d6db);
+          Text: "Global waypoint (visible to everyone)";
+        }
+      }
+
+      Group #ActionRow {
+        LayoutMode: Left;
+        Anchor: (Top: 20);
+
+        $C.@TextButton #SaveButton {
+          Anchor: (Height: 28, Right: 8);
+          Padding: (Left: 16, Right: 16, Top: 6, Bottom: 6);
+          Text: "Save";
+        }
+
+        $C.@CancelTextButton #CancelButton {
+          Anchor: (Height: 28);
+          Padding: (Left: 16, Right: 16, Top: 6, Bottom: 6);
+          Text: "Cancel";
+        }
+      }
+    }
+  }
+}

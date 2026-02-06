@@ -1,6 +1,6 @@
 package com;
 
-import com.hypixel.hytale.event.EventPriority;
+import com.UnobtrusiveThirdPerson.camera.TransparentAreaCommand;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;

@@ -1,0 +1,22 @@
+{
+    "Group": "FLOCK4H",
+    "Name": "BrightnessTweaks",
+    "Version": "0.3.8",
+    "Description": "Boosts the in-game torch light while it's equipped in the utility slot (/brightness).",
+    "Authors": [
+        {
+            "Name": "FLOCK4H"
+        }
+    ],
+    "Website": "TBD",
+    "ServerVersion": "*",
+    "Dependencies": {
+        
+    },
+    "OptionalDependencies": {
+        
+    },
+    "DisabledByDefault": false,
+    "Main": "org.example.plugin.BrightnessTweaksPlugin",
+    "IncludesAssetPack": true
+}

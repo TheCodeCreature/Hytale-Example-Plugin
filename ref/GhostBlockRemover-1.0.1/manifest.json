@@ -1,0 +1,7 @@
+{
+  "Name": "GhostBlockRemover",
+  "Group": "Jordansbored",
+  "Version": "1.0.1",
+  "Main": "com.Jordansbored.ghostblockremover.GhostBlockRemover",
+  "ServerVersion": "*"
+}

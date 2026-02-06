@@ -1,0 +1,156 @@
+$C = "../../Common.ui";
+
+Group #WaypointItem {
+  LayoutMode: Top;
+  Background: $C.@InputBoxBackground;
+  FlexWeight: 1;
+  Padding: (Left: 10, Top: 8, Bottom: 8);
+  Anchor: (Bottom: 5);
+
+  Group {
+    LayoutMode: Left;
+    Anchor: (Height: 24);
+
+    Label #NameLabel {
+      Style: (
+        FontSize: 18,
+        RenderBold: true,
+        TextColor: #ffffff
+      );
+      Padding: (Right: 8);
+    }
+
+    Label #IconLabel {
+      Style: (
+        FontSize: 12,
+        RenderBold: false,
+        TextColor: #93844c
+      );
+      Anchor: (Top: 4);
+      Padding: (Right: 8);
+    }
+
+    Label #SharedLabel {
+      Style: (
+        FontSize: 12,
+        RenderBold: false,
+        TextColor: #5ad3ff
+      );
+      Anchor: (Top: 4);
+    }
+
+    Label {
+      FlexWeight: 1;
+    }
+
+    Group #ButtonRow {
+      LayoutMode: Left;
+      Anchor: (Height: 24);
+
+      $C.@TextButton #EditButton {
+        Anchor: (Width: 70, Height: 24);
+        Padding: (Left: 10, Right: 10, Top: 2, Bottom: 2);
+        Text: "Edit";
+        Overscroll: false;
+      }
+
+      Panel { Anchor: (Width: 6, Height: 1); }
+
+      $C.@TextButton #TeleportButton {
+        Anchor: (Width: 70, Height: 24);
+        Padding: (Left: 10, Right: 10, Top: 2, Bottom: 2);
+        Text: "TP";
+        Overscroll: false;
+      }
+
+      Panel { Anchor: (Width: 6, Height: 1); }
+
+      $C.@CancelTextButton #DeleteButton {
+        Anchor: (Width: 70, Height: 24);
+        Padding: (Left: 10, Right: 10, Top: 2, Bottom: 2);
+        Text: "X";
+        Overscroll: false;
+      }
+    }
+  }
+
+  Group {
+    LayoutMode: Left;
+    Anchor: (Top: 4);
+
+    Label {
+      Text: "World: ";
+      Style: (
+        FontSize: 13,
+        RenderBold: true,
+        TextColor: #93844c
+      );
+    }
+
+    Label #WorldValue {
+      Text: "-";
+      Style: (
+        FontSize: 13,
+        RenderBold: false,
+        TextColor: #ffffff
+      );
+      Padding: (Right: 10);
+    }
+
+    Label {
+      Text: "X: ";
+      Style: (
+        FontSize: 13,
+        RenderBold: true,
+        TextColor: #93844c
+      );
+    }
+
+    Label #XValue {
+      Text: "0";
+      Style: (
+        FontSize: 13,
+        RenderBold: false,
+        TextColor: #ffffff
+      );
+      Padding: (Right: 10);
+    }
+
+    Label {
+      Text: "Y: ";
+      Style: (
+        FontSize: 13,
+        RenderBold: true,
+        TextColor: #93844c
+      );
+    }
+
+    Label #YValue {
+      Text: "0";
+      Style: (
+        FontSize: 13,
+        RenderBold: false,
+        TextColor: #ffffff
+      );
+      Padding: (Right: 10);
+    }
+
+    Label {
+      Text: "Z: ";
+      Style: (
+        FontSize: 13,
+        RenderBold: true,
+        TextColor: #93844c
+      );
+    }
+
+    Label #ZValue {
+      Text: "0";
+      Style: (
+        FontSize: 13,
+        RenderBold: false,
+        TextColor: #ffffff
+      );
+    }
+  }
+}
