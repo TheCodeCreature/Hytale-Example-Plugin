@@ -42,6 +42,7 @@ public class TransparentAreaCommand extends CommandBase {
     private static final int APPLY_DELAY_MILLIS = 50;
     private static final Map<UUID, Set<Integer>> SENT_FAKE_IDS = new ConcurrentHashMap<>();
     private static final Map<UUID, PeekState> ACTIVE_PEEKS = new ConcurrentHashMap<>();
+    private static final Map<UUID, ClientCameraView> PREVIOUS_CAMERA_VIEW = new ConcurrentHashMap<>();
     private static volatile int preloadBlockId = Integer.MIN_VALUE;
     
     // Transparent texture and ID management
@@ -321,6 +322,7 @@ public class TransparentAreaCommand extends CommandBase {
         stopPeek(playerId);
         removeManager(playerId);
         SENT_FAKE_IDS.remove(playerId);
+        PREVIOUS_CAMERA_VIEW.remove(playerId);
     }
 
     public static void resetPlayer(@Nonnull PlayerRef playerRef) {
@@ -329,27 +331,22 @@ public class TransparentAreaCommand extends CommandBase {
     }
 
     private static void applyPeekCamera(@Nonnull PlayerRef playerRef, boolean enabled) {
-        if (!enabled) return;
+        UUID playerId = playerRef.getUuid();
+        
+        if (!enabled) {
+            // Restore to stored preference, or ThirdPerson if no preference set
+            ClientCameraView restoreView = PREVIOUS_CAMERA_VIEW.getOrDefault(playerId, ClientCameraView.ThirdPerson);
+            playerRef.getPacketHandler().writeNoCache(new SetServerCamera(restoreView, false, null));
+            return;
+        }
 
         ServerCameraSettings settings = new ServerCameraSettings();
         settings.positionLerpSpeed = 0.9f;
-//        settings.rotationLerpSpeed = 0.9f;
         settings.isFirstPerson = false;
         settings.distance = 10f;
         settings.eyeOffset = true;
         settings.displayReticle = true;
-//        settings.sendMouseMotion = true;
-//        settings.mouseInputTargetType = MouseInputTargetType.Any;
-//        settings.mouseInputType = MouseInputType.LookAtTarget;
-//        settings.rotationType = RotationType.AttachedToPlusOffset;
-// Set the typical isometric rotation to the camera
-//        Direction direction = new Direction(
-//                (float) Math.toRadians(45f),  // yaw
-//                (float) Math.toRadians(-35f), // pitch
-//                0f                            // roll
-//        );
-
-
+        settings.sendMouseMotion = true;  // Allow client to control camera rotation
 
         playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, settings));
     }
