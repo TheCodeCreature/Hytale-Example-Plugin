@@ -57,7 +57,7 @@ public class TransparentAreaCommand extends CommandBase {
     private static final Map<UUID, TransparentBlockManager> MANAGERS = new ConcurrentHashMap<>();
     private static volatile ScheduledFuture<?> globalCleanupTask = null;
     private static final Object CLEANUP_LOCK = new Object();
-    private static final long DECAY_THRESHOLD_MILLIS = 500;
+    private static final long DECAY_THRESHOLD_MILLIS = 200;
     private static final int CLEANUP_INTERVAL_MILLIS = 100;
 
     public TransparentAreaCommand() {
@@ -343,72 +343,30 @@ public class TransparentAreaCommand extends CommandBase {
     }
 
     private static void applyPeekCamera(@Nonnull PlayerRef playerRef, boolean enabled) {
-        if (!enabled) {
-            playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, null));
-            return;
-        }
+        if (!enabled) return;
 
-//        ServerCameraSettings cameraSettings = new ServerCameraSettings();
-//        cameraSettings.isFirstPerson = false;
-//        cameraSettings.distance = CAMERA_DISTANCE;
-//        cameraSettings.allowPitchControls = true;
-//        cameraSettings.displayReticle = true;
-////        cameraSettings.mouseInputTargetType = MouseInputTargetType.Any;
-////        cameraSettings.mouseInputType = MouseInputType.LookAtTarget;
-//        cameraSettings.sendMouseMotion = true;
-//        cameraSettings.skipCharacterPhysics = false;
-//        cameraSettings.eyeOffset = true;
-//        cameraSettings.attachedToType = AttachedToType.LocalPlayer;
-//        cameraSettings.positionType = PositionType.AttachedToPlusOffset;
-////        cameraSettings.positionDistanceOffsetType = PositionDistanceOffsetType.DistanceOffsetRaycast;
-//        cameraSettings.rotationType = RotationType.AttachedToPlusOffset;
-//        cameraSettings.applyLookType = ApplyLookType.LocalPlayerLookOrientation;
-//        cameraSettings.movementForceRotationType = MovementForceRotationType.AttachedToHead;
-//        cameraSettings.canMoveType = CanMoveType.AttachedToLocalPlayer;
-//        cameraSettings.applyMovementType = ApplyMovementType.CharacterController;
-////
-////        playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, true, cameraSettings));
-//
-////        ServerCameraSettings cameraSettings = new ServerCameraSettings();
-////        cameraSettings.positionLerpSpeed = 0.2F;
-////        cameraSettings.rotationLerpSpeed = 0.2F;
-////        cameraSettings.distance = 20.0F;
-//        cameraSettings.displayCursor = false;
-////        cameraSettings.isFirstPerson = false;
-////        cameraSettings.movementForceRotationType = MovementForceRotationType.Custom;
-////        cameraSettings.eyeOffset = true;
-//        cameraSettings.positionDistanceOffsetType = PositionDistanceOffsetType.DistanceOffset;
-////        cameraSettings.rotationType = RotationType.Custom;
-////        cameraSettings.rotation = new Direction(0.0F, (float) (-Math.PI / 2), 0.0F);
-////        cameraSettings.mouseInputType = MouseInputType.LookAtPlane;
-//        cameraSettings.mouseInputType = MouseInputType.LookAtTargetBlock;
-////        cameraSettings.planeNormal = new Vector3f(0.0F, 1.0F, 0.0F);
         ServerCameraSettings settings = new ServerCameraSettings();
-        settings.positionLerpSpeed = 0.1f;
-        settings.rotationLerpSpeed = 0.1f;
+        settings.clone();
+        settings.positionLerpSpeed = 0.9f;
+//        settings.rotationLerpSpeed = 0.9f;
         settings.isFirstPerson = false;
         settings.distance = 10f;
         settings.eyeOffset = true;
-//        settings.allowPitchControls = false;
-//        settings.displayCursor = false;
         settings.displayReticle = true;
-        settings.sendMouseMotion = true;
-        settings.mouseInputTargetType = MouseInputTargetType.Any;
-        settings.mouseInputType = MouseInputType.LookAtTarget;
-// Force the camera's rotation to be set by the server.
-//        settings.applyLookType = ApplyLookType.Rotation;
-// Notify that we provide a custom rotation in "settings.rotation"
-        settings.rotationType = RotationType.AttachedToPlusOffset;
+//        settings.sendMouseMotion = true;
+//        settings.mouseInputTargetType = MouseInputTargetType.Any;
+//        settings.mouseInputType = MouseInputType.LookAtTarget;
+//        settings.rotationType = RotationType.AttachedToPlusOffset;
 // Set the typical isometric rotation to the camera
-        Direction direction = new Direction(
-                (float) Math.toRadians(45f),  // yaw
-                (float) Math.toRadians(-35f), // pitch
-                0f                            // roll
-        );
+//        Direction direction = new Direction(
+//                (float) Math.toRadians(45f),  // yaw
+//                (float) Math.toRadians(-35f), // pitch
+//                0f                            // roll
+//        );
 
 
 
-        playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, true, settings));
+        playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, settings));
     }
 
     private static int getPreloadBlockId() {
@@ -450,15 +408,16 @@ public class TransparentAreaCommand extends CommandBase {
 
     private static boolean isEligibleBlockType(@Nonnull BlockType type) {
         DrawType drawType = type.getDrawType();
-        if (drawType != DrawType.Cube && drawType != DrawType.GizmoCube) {
-            return false;
-        }
+//        if (drawType != DrawType.Cube && drawType != DrawType.GizmoCube) {
+//            return false;
+//        }
 
-        if (type.getState() != null) {
-            return false;
-        }
-
-        return type.getBlockEntity() == null;
+//        if (drawType == DrawType.Empty || type.getState() != null) {
+//            return false;
+//        }
+//
+//        return type.getBlockEntity() == null;
+        return (type.getState() != null);
     }
 
     private static boolean ensureTransparentTypesSent(@Nonnull PlayerRef playerRef, @Nonnull Map<Integer, Integer> fakeIdByBaseId) {

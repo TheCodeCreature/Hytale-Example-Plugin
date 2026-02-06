@@ -22,11 +22,8 @@ public class ExamplePlugin extends JavaPlugin {
     @Override
     protected void setup() {
         this.getCommandRegistry().registerCommand(new ExampleCommand(this.getName(), this.getManifest().getVersion().toString()));
-//        this.getCommandRegistry().registerCommand(new MmoCamCommand());
-//        this.getCommandRegistry().registerCommand(new TransparentBlockCommand());
         this.getCommandRegistry().registerCommand(new TransparentAreaCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, ExamplePlugin::onPlayerReady);
-        this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, ExamplePlugin::onPlayerDisconnect);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, ExamplePlugin::onPlayerDisconnect);
     }
 
