@@ -8,13 +8,11 @@ import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.*;
 import com.hypixel.hytale.protocol.packets.assets.UpdateBlockTypes;
-import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
 import com.hypixel.hytale.protocol.packets.camera.SetServerCamera;
 import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.basecommands.CommandBase;
-import com.hypixel.hytale.server.core.entity.entities.player.CameraManager;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.chunk.BlockChunk;
@@ -31,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -39,19 +36,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nonnull;
 
 public class TransparentAreaCommand extends CommandBase {
-    private static final int RAYCAST_DISTANCE = 30;
     private static final int DEPTH_BLOCKS = 5;
     private static final int RADIUS = 5;
-    private static final int PEEK_INTERVAL_MILLIS = 100;
+    private static final long PEEK_INTERVAL_MILLIS = 100;
     private static final int APPLY_DELAY_MILLIS = 50;
-    private static final String TRANSPARENT_TEXTURE = "BlockTextures/Transparent.png";
-    private static final Object ID_LOCK = new Object();
-    private static final Map<Integer, Integer> TRANSPARENT_VARIANT_IDS = new ConcurrentHashMap<>();
-    private static final Map<UUID, PeekState> ACTIVE_PEEKS = new ConcurrentHashMap<>();
     private static final Map<UUID, Set<Integer>> SENT_FAKE_IDS = new ConcurrentHashMap<>();
-    private static volatile AtomicInteger nextFakeId;
+    private static final Map<UUID, PeekState> ACTIVE_PEEKS = new ConcurrentHashMap<>();
     private static volatile int preloadBlockId = Integer.MIN_VALUE;
-    private static final float CAMERA_DISTANCE = 6.0F;
+    
+    // Transparent texture and ID management
+    private static final String TRANSPARENT_TEXTURE = "hytale:block/debug/alpha_test";
+    private static final Map<Integer, Integer> TRANSPARENT_VARIANT_IDS = new ConcurrentHashMap<>();
+    private static volatile AtomicInteger nextFakeId;
+    private static final Object ID_LOCK = new Object();
     
     // Transparent block manager infrastructure
     private static final Map<UUID, TransparentBlockManager> MANAGERS = new ConcurrentHashMap<>();
@@ -151,10 +148,10 @@ public class TransparentAreaCommand extends CommandBase {
         Vector3i anchor;
         if (mode == PeekMode.FORWARD) {
             // Forward mode: use target block (where player is looking)
-            anchor = getCameraTarget(ref, store);
+            anchor = CameraPositionUtil.getCameraTarget(ref, store);
         } else {
             // Backward mode: use camera origin (behind player in 3rd person)
-            anchor = getCameraOriginBlock(ref, store);
+            anchor = CameraPositionUtil.getCameraOriginBlock(ref, store);
         }
         
         if (anchor == null) {
@@ -193,45 +190,6 @@ public class TransparentAreaCommand extends CommandBase {
         }
     }
 
-    private static Vector3i getCameraTarget(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store) {
-        CameraManager cameraManager = store.getComponent(ref, CameraManager.getComponentType());
-        if (cameraManager != null) {
-            Vector3i target = cameraManager.getLastTargetBlock();
-            if (target != null) {
-                return target;
-            }
-        }
-
-        return TargetUtil.getTargetBlock(ref, RAYCAST_DISTANCE, store);
-    }
-
-    private static Vector3i getCameraOriginBlock(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store) {
-        Transform look = TargetUtil.getLook(ref, store);
-        if (look == null) {
-            return null;
-        }
-
-        // Get player position (eye level)
-        com.hypixel.hytale.math.vector.Vector3d playerPos = look.getPosition();
-        if (playerPos == null) {
-            return null;
-        }
-
-        // Get look direction normalized
-        com.hypixel.hytale.math.vector.Vector3d lookDir = look.getDirection();
-        if (lookDir == null) {
-            return null;
-        }
-
-        // Calculate camera position: player position - (look direction * camera distance)
-        // Camera distance matches the peek camera settings (10f)
-        double cameraX = playerPos.x - (lookDir.x * CAMERA_DISTANCE);
-        double cameraY = playerPos.y - (lookDir.y * CAMERA_DISTANCE);
-        double cameraZ = playerPos.z - (lookDir.z * CAMERA_DISTANCE);
-
-        // Convert to block coordinates (floor to int)
-        return new Vector3i((int) Math.floor(cameraX), (int) Math.floor(cameraY), (int) Math.floor(cameraZ));
-    }
 
     private static List<BlockSnapshot> collectBlocks(@Nonnull ChunkStore chunkStore, @Nonnull Vector3i target, @Nonnull Vector3i axisDir) {
         Set<Long> seen = new HashSet<>();
