@@ -43,21 +43,12 @@ final class CameraPositionUtil {
     @Nullable
     static Vector3i getCameraOriginBlock(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store) {
         Transform look = TargetUtil.getLook(ref, store);
-        if (look == null) {
-            return null;
-        }
 
         // Get player position (eye level)
         com.hypixel.hytale.math.vector.Vector3d playerPos = look.getPosition();
-        if (playerPos == null) {
-            return null;
-        }
 
         // Get look direction normalized
         com.hypixel.hytale.math.vector.Vector3d lookDir = look.getDirection();
-        if (lookDir == null) {
-            return null;
-        }
 
         // Calculate camera position: player position - (look direction * camera distance)
         // Camera distance matches the peek camera settings (10f)
