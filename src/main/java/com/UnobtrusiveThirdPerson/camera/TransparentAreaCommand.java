@@ -126,8 +126,8 @@ public class TransparentAreaCommand extends CommandBase {
             return;
         }
 
-        Vector3i target = getCameraTarget(ref, store);
-        if (target == null) {
+        Vector3i cameraOrigin = getCameraOriginBlock(ref, store);
+        if (cameraOrigin == null) {
             clearLastPeek(playerRef);
             return;
         }
@@ -140,7 +140,7 @@ public class TransparentAreaCommand extends CommandBase {
 
         World world = store.getExternalData().getWorld();
         ChunkStore chunkStore = world.getChunkStore();
-        List<BlockSnapshot> newBlocks = collectBlocks(chunkStore, target, axisDir);
+        List<BlockSnapshot> newBlocks = collectBlocks(chunkStore, cameraOrigin, axisDir);
         if (newBlocks.isEmpty()) {
             clearLastPeek(playerRef);
             return;
@@ -231,6 +231,34 @@ public class TransparentAreaCommand extends CommandBase {
         }
 
         return TargetUtil.getTargetBlock(ref, RAYCAST_DISTANCE, store);
+    }
+
+    private static Vector3i getCameraOriginBlock(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store) {
+        Transform look = TargetUtil.getLook(ref, store);
+        if (look == null) {
+            return null;
+        }
+
+        // Get player position (eye level)
+        com.hypixel.hytale.math.vector.Vector3d playerPos = look.getPosition();
+        if (playerPos == null) {
+            return null;
+        }
+
+        // Get look direction normalized
+        com.hypixel.hytale.math.vector.Vector3d lookDir = look.getDirection();
+        if (lookDir == null) {
+            return null;
+        }
+
+        // Calculate camera position: player position - (look direction * camera distance)
+        // Camera distance matches the peek camera settings (10f)
+        double cameraX = playerPos.x - (lookDir.x * CAMERA_DISTANCE);
+        double cameraY = playerPos.y - (lookDir.y * CAMERA_DISTANCE);
+        double cameraZ = playerPos.z - (lookDir.z * CAMERA_DISTANCE);
+
+        // Convert to block coordinates (floor to int)
+        return new Vector3i((int) Math.floor(cameraX), (int) Math.floor(cameraY), (int) Math.floor(cameraZ));
     }
 
     private static List<BlockSnapshot> collectBlocks(@Nonnull ChunkStore chunkStore, @Nonnull Vector3i target, @Nonnull Vector3i axisDir) {
