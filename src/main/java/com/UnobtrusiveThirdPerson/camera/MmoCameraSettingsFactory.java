@@ -1,4 +1,4 @@
-package com.example.exampleplugin.camera;
+package com.UnobtrusiveThirdPerson.camera;
 
 import com.hypixel.hytale.protocol.ApplyLookType;
 import com.hypixel.hytale.protocol.AttachedToType;

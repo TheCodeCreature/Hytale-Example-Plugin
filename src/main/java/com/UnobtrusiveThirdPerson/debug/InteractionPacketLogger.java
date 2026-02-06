@@ -1,4 +1,4 @@
-package com.example.exampleplugin.debug;
+package com.UnobtrusiveThirdPerson.debug;
 
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.protocol.InteractionType;

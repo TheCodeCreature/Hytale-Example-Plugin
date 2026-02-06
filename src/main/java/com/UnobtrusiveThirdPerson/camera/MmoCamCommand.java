@@ -1,4 +1,4 @@
-package com.example.exampleplugin.camera;
+package com.UnobtrusiveThirdPerson.camera;
 
 import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.Message;
