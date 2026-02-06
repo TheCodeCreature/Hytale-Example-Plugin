@@ -82,6 +82,10 @@ public class TransparentAreaCommand extends CommandBase {
     }
 
     private static void apply(@Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull CommandContext ctx) {
+        applyWithMode(store, ref, ctx, PeekMode.BACKWARD);
+    }
+
+    static void applyWithMode(@Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull CommandContext ctx, @Nonnull PeekMode requestedMode) {
         if (!ref.isValid()) {
             ctx.sendMessage(Message.translation("server.commands.errors.playerNotInWorld"));
             return;
@@ -93,24 +97,28 @@ public class TransparentAreaCommand extends CommandBase {
             return;
         }
 
-        // TODO: Parse mode argument from command - need to research CommandContext API
-        // For now, default to backward mode
-        PeekMode requestedMode = PeekMode.BACKWARD;
-
         UUID playerId = playerRef.getUuid();
         PeekState existing = ACTIVE_PEEKS.get(playerId);
         
         if (existing != null) {
-            // Peek is active - toggle off
-            ACTIVE_PEEKS.remove(playerId);
-            existing.stop();
-            removeManager(playerId);
-            applyPeekCamera(playerRef, false);
-            ctx.sendMessage(Message.raw("Peek disabled."));
+            // Peek is active
+            if (existing.getMode() == requestedMode) {
+                // Same mode requested - toggle off
+                ACTIVE_PEEKS.remove(playerId);
+                existing.stop();
+                removeManager(playerId);
+                applyPeekCamera(playerRef, false);
+                ctx.sendMessage(Message.raw("Peek disabled."));
+            } else {
+                // Different mode - switch modes
+                existing.setMode(requestedMode);
+                String modeName = requestedMode == PeekMode.FORWARD ? "forward" : "backward";
+                ctx.sendMessage(Message.raw("Switched to " + modeName + " mode."));
+            }
             return;
         }
 
-        // Enable peek with backward mode
+        // Enable peek with requested mode
         applyPeekCamera(playerRef, true);
         World world = store.getExternalData().getWorld();
         getOrCreateManager(playerRef, world);
@@ -118,7 +126,9 @@ public class TransparentAreaCommand extends CommandBase {
             world.execute(() -> updatePeek(playerRef));
         }, 0L, PEEK_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
         ACTIVE_PEEKS.put(playerId, new PeekState(task, requestedMode));
-        ctx.sendMessage(Message.raw("Peek enabled (backward mode)."));
+        
+        String modeName = requestedMode == PeekMode.FORWARD ? "forward" : "backward";
+        ctx.sendMessage(Message.raw("Peek enabled (" + modeName + " mode)."));
     }
 
     private static void updatePeek(@Nonnull PlayerRef playerRef) {
@@ -364,7 +374,6 @@ public class TransparentAreaCommand extends CommandBase {
         if (!enabled) return;
 
         ServerCameraSettings settings = new ServerCameraSettings();
-        settings.clone();
         settings.positionLerpSpeed = 0.9f;
 //        settings.rotationLerpSpeed = 0.9f;
         settings.isFirstPerson = false;

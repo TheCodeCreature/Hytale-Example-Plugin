@@ -1,5 +1,6 @@
 package com;
 
+import com.UnobtrusiveThirdPerson.camera.PeekTestCommand;
 import com.UnobtrusiveThirdPerson.camera.TransparentAreaCommand;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
@@ -23,6 +24,7 @@ public class ExamplePlugin extends JavaPlugin {
     protected void setup() {
         this.getCommandRegistry().registerCommand(new ExampleCommand(this.getName(), this.getManifest().getVersion().toString()));
         this.getCommandRegistry().registerCommand(new TransparentAreaCommand());
+        this.getCommandRegistry().registerCommand(new PeekTestCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, ExamplePlugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, ExamplePlugin::onPlayerDisconnect);
     }
