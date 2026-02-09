@@ -1,4 +1,4 @@
-package com.UnobtrusiveThirdPerson.camera;
+package com.UnobstructedThirdPerson.camera;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;

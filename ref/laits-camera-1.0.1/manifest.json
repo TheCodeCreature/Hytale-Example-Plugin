@@ -1,0 +1,17 @@
+{
+    "Group": "Laits",
+    "Name": "Camera",
+    "Version": "1.0.1",
+    "Description": "Camera control plugin with mount camera settings and freecam mode",
+    "Authors": [
+        {
+            "Name": "Laits",
+            "Email": "",
+            "Url": ""
+        }
+    ],
+    "Website": "",
+    "Main": "com.laits.camera.LaitsCameraPlugin",
+    "ServerVersion": "*",
+    "IncludesAssetPack": false
+}

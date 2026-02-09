@@ -1,7 +1,7 @@
 package com;
 
-import com.UnobtrusiveThirdPerson.camera.PeekTestCommand;
-import com.UnobtrusiveThirdPerson.camera.TransparentAreaCommand;
+import com.UnobstructedThirdPerson.camera.PeekTestCommand;
+import com.UnobstructedThirdPerson.camera.TransparentAreaCommand;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;

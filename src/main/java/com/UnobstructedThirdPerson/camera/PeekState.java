@@ -1,4 +1,4 @@
-package com.UnobtrusiveThirdPerson.camera;
+package com.UnobstructedThirdPerson.camera;
 
 import java.util.concurrent.ScheduledFuture;
 

@@ -1,4 +1,4 @@
-package com.UnobtrusiveThirdPerson.camera;
+package com.UnobstructedThirdPerson.camera;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -80,7 +80,10 @@ public class TransparentAreaCommand extends CommandBase {
     }
 
     private static void apply(@Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull CommandContext ctx) {
-        applyWithMode(store, ref, ctx, PeekMode.BACKWARD);
+
+        PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
+        applyPeekCamera(playerRef, true);
+//        applyWithMode(store, ref, ctx, PeekMode.BACKWARD);
     }
 
     static void applyWithMode(@Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull CommandContext ctx, @Nonnull PeekMode requestedMode) {
@@ -95,9 +98,10 @@ public class TransparentAreaCommand extends CommandBase {
             return;
         }
 
+
         UUID playerId = playerRef.getUuid();
         PeekState existing = ACTIVE_PEEKS.get(playerId);
-        
+
         if (existing != null) {
             // Peek is active
             if (existing.getMode() == requestedMode) {
@@ -124,7 +128,7 @@ public class TransparentAreaCommand extends CommandBase {
             world.execute(() -> updatePeek(playerRef));
         }, 0L, PEEK_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
         ACTIVE_PEEKS.put(playerId, new PeekState(task, requestedMode));
-        
+
         String modeName = requestedMode == PeekMode.FORWARD ? "forward" : "backward";
         ctx.sendMessage(Message.raw("Peek enabled (" + modeName + " mode)."));
     }
@@ -251,10 +255,6 @@ public class TransparentAreaCommand extends CommandBase {
         return new BlockSnapshot(x, y, z, blockId, (short) filler, (byte) rotation);
     }
 
-//    private static void sendTransparentBlockType(@Nonnull PlayerRef playerRef, int fakeId, @Nonnull BlockType baseType) {
-//        sendTransparentBlockType(playerRef, fakeId, baseType, false);
-//    }
-
     public static void preloadTransparentType(@Nonnull PlayerRef playerRef) {
         int fakeId = getPreloadBlockId();
         BlockType baseType = findAnyBlockType();
@@ -318,35 +318,33 @@ public class TransparentAreaCommand extends CommandBase {
         return TRANSPARENT_VARIANT_IDS.computeIfAbsent(baseId, _id -> allocateFakeId());
     }
 
-    public static void resetPlayer(@Nonnull UUID playerId) {
+    public static void resetPlayer(@Nonnull PlayerRef playerRef) {
+        var playerId = playerRef.getUuid();
         stopPeek(playerId);
         removeManager(playerId);
         SENT_FAKE_IDS.remove(playerId);
         PREVIOUS_CAMERA_VIEW.remove(playerId);
-    }
-
-    public static void resetPlayer(@Nonnull PlayerRef playerRef) {
-        resetPlayer(playerRef.getUuid());
         applyPeekCamera(playerRef, false);
     }
 
     private static void applyPeekCamera(@Nonnull PlayerRef playerRef, boolean enabled) {
-        UUID playerId = playerRef.getUuid();
-        
+
         if (!enabled) {
-            // Restore to stored preference, or ThirdPerson if no preference set
-            ClientCameraView restoreView = PREVIOUS_CAMERA_VIEW.getOrDefault(playerId, ClientCameraView.ThirdPerson);
-            playerRef.getPacketHandler().writeNoCache(new SetServerCamera(restoreView, false, null));
+            playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.ThirdPerson, false, null));
             return;
         }
 
         ServerCameraSettings settings = new ServerCameraSettings();
-        settings.positionLerpSpeed = 0.9f;
+        settings.positionLerpSpeed = 0.99f;
         settings.isFirstPerson = false;
         settings.distance = 10f;
         settings.eyeOffset = true;
         settings.displayReticle = true;
         settings.sendMouseMotion = true;  // Allow client to control camera rotation
+        settings.mouseInputType = MouseInputType.LookAtTarget;
+        settings.mouseInputTargetType = MouseInputTargetType.Any;
+        settings.applyLookType = ApplyLookType.LocalPlayerLookOrientation;
+        settings.applyMovementType = ApplyMovementType.CharacterController;
 
         playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, settings));
     }

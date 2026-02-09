@@ -1,4 +1,4 @@
-package com.UnobtrusiveThirdPerson.camera;
+package com.UnobstructedThirdPerson.camera;
 
 final class ManagedBlock {
     final BlockSnapshot original;

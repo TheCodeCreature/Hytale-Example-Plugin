@@ -1,4 +1,4 @@
-package com.UnobtrusiveThirdPerson.camera;
+package com.UnobstructedThirdPerson.camera;
 
 enum PeekMode {
     FORWARD,   // Use target block (where player is looking)

@@ -1,4 +1,4 @@
-package com.UnobtrusiveThirdPerson.camera;
+package com.UnobstructedThirdPerson.camera;
 
 import com.hypixel.hytale.math.block.BlockUtil;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
