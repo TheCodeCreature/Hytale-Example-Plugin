@@ -55,20 +55,12 @@ public class SetCameraCommand extends AbstractPlayerCommand {
         settings.mouseInputType = MouseInputType.LookAtTargetBlock;
         settings.mouseInputTargetType = MouseInputTargetType.Block;
         settings.applyLookType = ApplyLookType.LocalPlayerLookOrientation;
-        settings.applyMovementType = ApplyMovementType.CharacterController;
+        settings.applyMovementType = ApplyMovementType.Position;
         settings.rotationType = RotationType.AttachedToPlusOffset;
         settings.positionType = PositionType.AttachedToPlusOffset;
 //        settings.positionDistanceOffsetType = PositionDistanceOffsetType.DistanceOffsetRaycast;
 
         playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, settings));
-
-        MovementManager movementManagerComponent = playerRef.getComponent(MovementManager.getComponentType());
-//        InteractionManager interactionManager = new InteractionManager(player, player,);//playerRef.getComponent(MovementManager.getComponentType());
-
-        assert movementManagerComponent != null;
-
-        movementManagerComponent.applyDefaultSettings();
-        movementManagerComponent.update(playerRef.getPacketHandler());
     }
 
 
