@@ -13,7 +13,7 @@ import org.jspecify.annotations.NonNull;
 
 public class ResetCameraCommand extends AbstractPlayerCommand {
     public ResetCameraCommand(){
-        super("Stops the camera");
+        super("Stop","Stops the camera");
     }
     @Override
     protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {

@@ -18,6 +18,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
     @Override
     protected void setup(){
+        LOGGER.atInfo().log("Hello from %s version %s SETUP", this.getName(), this.getManifest().getVersion().toString());
         this.getCommandRegistry().registerCommand(new UnobstructedCameraCommand());
         this.getCommandRegistry().registerCommand(new PeekTestCommand());
         this.getCommandRegistry().registerCommand(new ExampleCommand(this.getName(), this.getManifest().getVersion().toString()));

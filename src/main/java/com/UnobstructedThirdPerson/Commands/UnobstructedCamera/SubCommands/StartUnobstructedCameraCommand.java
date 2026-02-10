@@ -15,6 +15,7 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class StartUnobstructedCameraCommand extends AbstractPlayerCommand {
     private final OptionalArg<Float> distanceArg;
@@ -28,8 +29,8 @@ public class StartUnobstructedCameraCommand extends AbstractPlayerCommand {
     protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
         ServerCameraSettings settings = new CustomCameraSettings().Settings;
 
-        float distance = distanceArg.get(commandContext);
-        if(distance != 0) settings.distance = distance;
+        var distance = distanceArg.get(commandContext);
+        if(distance != null) settings.distance = distance;
 
         playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, settings));
     }
