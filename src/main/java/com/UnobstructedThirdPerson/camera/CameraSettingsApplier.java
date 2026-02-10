@@ -46,12 +46,12 @@ public class CameraSettingsApplier {
             
             ServerCameraSettings packet = settings.toPacket();
             
-            // Use ThirdPerson view to avoid the Custom view bug that breaks block targeting
-            // FirstPerson view ignores all settings, so we can't use that either
-            ClientCameraView cameraView = ClientCameraView.ThirdPerson;
+            // Use Custom view to avoid the Custom view bug that breaks block targeting
+            // FirstPerson and ThirdPerson view ignores all settings, so we can't use that either
+            ClientCameraView cameraView = ClientCameraView.Custom;
             
-            // If the settings indicate first person, we still need to use ThirdPerson
-            // because FirstPerson ignores ServerCameraSettings
+            // If the settings indicate first person, we still need to use Custom
+            // because FirstPerson and ThirdPerson ignores ServerCameraSettings
             // The distance=0 and isFirstPerson=true will give first-person-like behavior
             if (settings.isFirstPerson()) {
                 packet.distance = 0.0f;
