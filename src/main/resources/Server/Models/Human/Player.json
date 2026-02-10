@@ -1308,11 +1308,7 @@
   "GradientSet": "Skin",
   "GradientId": "02",
   "Camera": {
-    "PositionOffset": {
-      "X": -0.75,
-      "Z": 10,
-      "Y": 0.5
-    },
-    "PositionDistanceOffsetType": "DistanceOffsetRaycast"
+    "PositionLerpSpeed": 0.1,
+    "Distance": 2
   }
 }
