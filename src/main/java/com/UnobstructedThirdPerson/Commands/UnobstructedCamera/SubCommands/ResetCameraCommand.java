@@ -1,0 +1,22 @@
+package com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands;
+
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.protocol.ClientCameraView;
+import com.hypixel.hytale.protocol.packets.camera.SetServerCamera;
+import com.hypixel.hytale.server.core.command.system.CommandContext;
+import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import org.jspecify.annotations.NonNull;
+
+public class ResetCameraCommand extends AbstractPlayerCommand {
+    public ResetCameraCommand(){
+        super("Stops the camera");
+    }
+    @Override
+    protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
+        playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, null));
+    }
+}

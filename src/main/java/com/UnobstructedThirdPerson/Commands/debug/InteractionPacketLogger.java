@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.debug;
+package com.UnobstructedThirdPerson.Commands.debug;
 
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.protocol.InteractionType;
@@ -6,6 +6,11 @@ import com.hypixel.hytale.protocol.Packet;
 import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChain;
 import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChains;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.command.system.AbstractCommand;
+import com.hypixel.hytale.server.core.command.system.CommandContext;
+import com.hypixel.hytale.server.core.command.system.arguments.system.OptionalArg;
+import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
+import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
 import com.hypixel.hytale.server.core.io.PacketHandler;
 import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
 import com.hypixel.hytale.server.core.io.adapter.PacketFilter;
@@ -14,13 +19,14 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 
-public final class InteractionPacketLogger {
+public final class InteractionPacketLogger extends AbstractPlayerCommand {
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
     private static final Set<String> IGNORED_PACKET_SIMPLE_NAMES = Set.of(
@@ -30,15 +36,20 @@ public final class InteractionPacketLogger {
     );
 
     public InteractionPacketLogger() {
-        PacketAdapters.registerInbound((PacketFilter) (handler, packet) -> {
-            logPacket(handler, packet, "Inbound");
-            return false;
-        });
-        PacketAdapters.registerOutbound((PacketFilter) (handler, packet) -> {
-            logPacket(handler, packet, "Outbound");
-            return false;
-        });
+        super("InteractionPacketLogger","Logs Interaction Packets");
+//        PacketAdapters.registerInbound((PacketFilter) (handler, packet) -> {
+//            logPacket(handler, packet, "Inbound");
+//            return false;
+//        });
+//        PacketAdapters.registerOutbound((PacketFilter) (handler, packet) -> {
+//            logPacket(handler, packet, "Outbound");
+//            return false;
+//        });
         LOGGER.atInfo().log("InteractionPacketLogger registered inbound/outbound packet filters.");
+    }
+    @Override
+    protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
+
     }
 
     private static void logPacket(@Nonnull PacketHandler handler, @Nonnull Packet packet, @Nonnull String direction) {
@@ -120,4 +131,5 @@ public final class InteractionPacketLogger {
             || name.contains(".packets.mount.")
             || name.contains(".packets.worldmap.");
     }
+
 }
