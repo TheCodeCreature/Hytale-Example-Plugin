@@ -90,12 +90,20 @@ public class CameraSettingsLoader {
     @Nonnull
     public static ExtendedCameraSettings parseFromJson(@Nonnull JsonObject cameraJson) {
         ExtendedCameraSettings settings = new ExtendedCameraSettings();
+        
+        LOGGER.log(Level.INFO, "[CameraDebug] Parsing Camera section from JSON...");
+        LOGGER.log(Level.INFO, "[CameraDebug] Raw Camera JSON: " + cameraJson.toString());
 
         // Float fields
         settings.positionLerpSpeed = getFloat(cameraJson, "PositionLerpSpeed", 1.0f);
         settings.rotationLerpSpeed = getFloat(cameraJson, "RotationLerpSpeed", 1.0f);
         settings.distance = getFloat(cameraJson, "Distance", 0.0f);
         settings.speedModifier = getFloat(cameraJson, "SpeedModifier", 1.0f);
+        
+        LOGGER.log(Level.INFO, "[CameraDebug] Parsed floats: positionLerpSpeed=" + settings.positionLerpSpeed 
+            + ", rotationLerpSpeed=" + settings.rotationLerpSpeed 
+            + ", distance=" + settings.distance 
+            + ", speedModifier=" + settings.speedModifier);
 
         // Boolean fields
         settings.allowPitchControls = getBoolean(cameraJson, "AllowPitchControls", false);

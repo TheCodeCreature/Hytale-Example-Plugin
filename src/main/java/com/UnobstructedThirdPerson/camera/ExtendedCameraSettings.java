@@ -185,4 +185,55 @@ public class ExtendedCameraSettings {
             ", displayReticle=" + displayReticle +
             "}";
     }
+
+    @Nonnull
+    public String toFullString() {
+        StringBuilder sb = new StringBuilder("ExtendedCameraSettings{\n");
+        sb.append("  positionLerpSpeed=").append(positionLerpSpeed).append("\n");
+        sb.append("  rotationLerpSpeed=").append(rotationLerpSpeed).append("\n");
+        sb.append("  distance=").append(distance).append("\n");
+        sb.append("  speedModifier=").append(speedModifier).append("\n");
+        sb.append("  allowPitchControls=").append(allowPitchControls).append("\n");
+        sb.append("  displayCursor=").append(displayCursor).append("\n");
+        sb.append("  displayReticle=").append(displayReticle).append("\n");
+        sb.append("  mouseInputTargetType=").append(mouseInputTargetType).append("\n");
+        sb.append("  sendMouseMotion=").append(sendMouseMotion).append("\n");
+        sb.append("  skipCharacterPhysics=").append(skipCharacterPhysics).append("\n");
+        sb.append("  isFirstPerson=").append(isFirstPerson).append("\n");
+        sb.append("  movementForceRotationType=").append(movementForceRotationType).append("\n");
+        sb.append("  movementForceRotation=").append(movementForceRotation).append("\n");
+        sb.append("  attachedToType=").append(attachedToType).append("\n");
+        sb.append("  attachedToEntityId=").append(attachedToEntityId).append("\n");
+        sb.append("  eyeOffset=").append(eyeOffset).append("\n");
+        sb.append("  positionDistanceOffsetType=").append(positionDistanceOffsetType).append("\n");
+        sb.append("  positionOffset=").append(positionOffset).append("\n");
+        sb.append("  rotationOffset=").append(rotationOffset).append("\n");
+        sb.append("  positionType=").append(positionType).append("\n");
+        sb.append("  position=").append(position).append("\n");
+        sb.append("  rotationType=").append(rotationType).append("\n");
+        sb.append("  rotation=").append(rotation).append("\n");
+        sb.append("  canMoveType=").append(canMoveType).append("\n");
+        sb.append("  applyMovementType=").append(applyMovementType).append("\n");
+        sb.append("  movementMultiplier=").append(movementMultiplier).append("\n");
+        sb.append("  applyLookType=").append(applyLookType).append("\n");
+        sb.append("  lookMultiplier=").append(lookMultiplier).append("\n");
+        sb.append("  mouseInputType=").append(mouseInputType).append("\n");
+        sb.append("  planeNormal=").append(planeNormal).append("\n");
+        sb.append("}");
+        return sb.toString();
+    }
+
+    // Setters for test command
+    public void setPositionLerpSpeed(float value) { this.positionLerpSpeed = value; }
+    public void setRotationLerpSpeed(float value) { this.rotationLerpSpeed = value; }
+    public void setDistance(float value) { this.distance = value; }
+    public void setSpeedModifier(float value) { this.speedModifier = value; }
+    public void setAllowPitchControls(boolean value) { this.allowPitchControls = value; }
+    public void setDisplayCursor(boolean value) { this.displayCursor = value; }
+    public void setDisplayReticle(boolean value) { this.displayReticle = value; }
+    public void setSendMouseMotion(boolean value) { this.sendMouseMotion = value; }
+    public void setSkipCharacterPhysics(boolean value) { this.skipCharacterPhysics = value; }
+    public void setIsFirstPerson(boolean value) { this.isFirstPerson = value; }
+    public void setEyeOffset(boolean value) { this.eyeOffset = value; }
+    public void setAttachedToEntityId(int value) { this.attachedToEntityId = value; }
 }

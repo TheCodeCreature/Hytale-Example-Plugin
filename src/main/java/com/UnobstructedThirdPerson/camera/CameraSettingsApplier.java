@@ -1,5 +1,6 @@
 package com.UnobstructedThirdPerson.camera;
 
+import com.UnobstructedThirdPerson.debug.CameraDebugManager;
 import com.hypixel.hytale.protocol.ClientCameraView;
 import com.hypixel.hytale.protocol.ServerCameraSettings;
 import com.hypixel.hytale.protocol.packets.camera.SetServerCamera;
@@ -40,6 +41,9 @@ public class CameraSettingsApplier {
 
     public static void applyToPlayer(@Nonnull PlayerRef playerRef, @Nonnull ExtendedCameraSettings settings) {
         try {
+            // Debug: Log ExtendedCameraSettings before conversion
+            CameraDebugManager.logForPlayer(playerRef, "ExtendedCameraSettings before toPacket():\n" + settings.toFullString());
+            
             ServerCameraSettings packet = settings.toPacket();
             
             // Use ThirdPerson view to avoid the Custom view bug that breaks block targeting
@@ -54,7 +58,11 @@ public class CameraSettingsApplier {
                 packet.isFirstPerson = true;
             }
             
-            playerRef.getPacketHandler().writeNoCache(new SetServerCamera(cameraView, false, packet));
+            // Debug: Log the packet before sending
+            SetServerCamera setServerCamera = new SetServerCamera(cameraView, false, packet);
+            CameraDebugManager.logPacket(playerRef, setServerCamera);
+            
+            playerRef.getPacketHandler().writeNoCache(setServerCamera);
             
             LOGGER.log(Level.FINE, "Applied camera settings to player: " + settings);
         } catch (Exception e) {
