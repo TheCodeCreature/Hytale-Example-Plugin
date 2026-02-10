@@ -1,18 +1,18 @@
 {
-  "Group": "${plugin_group}",
-  "Name": "${plugin_name}",
-  "Version": "${plugin_version}",
-  "Description": "${plugin_description}",
+  "Group": "Camera",
+  "Name": "Unobstructed Third Person Camera",
+  "Version": "0.1.0",
+  "Description": "Makes it so that the Third Person Camera no longer can be obstructed by the world.",
   "Authors": [
     {
-      "Name": "${plugin_author}"
+      "Name": "Code Creature"
     }
   ],
-  "Website": "${plugin_website}",
-  "ServerVersion": "${server_version}",
+  "Website": "",
+  "ServerVersion": "*",
   "Dependencies": {},
   "OptionalDependencies": {},
   "DisabledByDefault": false,
   "IncludesAssetPack": true,
-  "Main": "${plugin_main_entrypoint}"
+  "Main": "UnobstructedThirdPersonPlugin"
 }
