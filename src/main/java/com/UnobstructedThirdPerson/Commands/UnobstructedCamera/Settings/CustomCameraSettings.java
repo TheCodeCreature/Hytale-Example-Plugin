@@ -1,6 +1,7 @@
 package com.UnobstructedThirdPerson.Commands.UnobstructedCamera.Settings;
 
 import com.hypixel.hytale.protocol.CameraSettings;
+import com.hypixel.hytale.protocol.PositionDistanceOffsetType;
 import com.hypixel.hytale.protocol.ServerCameraSettings;
 
 public class CustomCameraSettings extends CameraSettings {
@@ -24,6 +25,8 @@ public class CustomCameraSettings extends CameraSettings {
 //        settings.applyMovementType = ApplyMovementType.CharacterController;
 //        settings.rotationType = RotationType.AttachedToPlusOffset;
 //        settings.positionType = PositionType.AttachedToPlusOffset;
+        // settings.positionDistanceOffsetType = PositionDistanceOffsetType.DistanceOffsetRaycast;
+
         return settings;
     }
 }
