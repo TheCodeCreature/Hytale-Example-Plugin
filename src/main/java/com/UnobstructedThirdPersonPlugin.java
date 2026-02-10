@@ -32,7 +32,10 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
         // Register schema extension to add all 30 camera settings fields to AssetEditor
         this.getEventRegistry().register(GenerateSchemaEvent.class, CameraSchemaExtension::extendCameraSchema);
+    }
 
+    @Override
+    protected void start() {
         // Register system to apply camera settings when player spawns
         this.getEntityStoreRegistry().registerSystem(new ApplyCameraOnSpawnSystem());
 

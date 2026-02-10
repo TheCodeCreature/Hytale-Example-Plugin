@@ -1,9 +1,5 @@
 package com.UnobstructedThirdPerson.camera;
 
-import com.hypixel.hytale.codec.Codec;
-import com.hypixel.hytale.codec.KeyedCodec;
-import com.hypixel.hytale.codec.builder.BuilderCodec;
-import com.hypixel.hytale.codec.codecs.EnumCodec;
 import com.hypixel.hytale.protocol.ApplyLookType;
 import com.hypixel.hytale.protocol.ApplyMovementType;
 import com.hypixel.hytale.protocol.AttachedToType;
@@ -19,18 +15,10 @@ import com.hypixel.hytale.protocol.RotationType;
 import com.hypixel.hytale.protocol.ServerCameraSettings;
 import com.hypixel.hytale.protocol.Vector2f;
 import com.hypixel.hytale.protocol.Vector3f;
-import com.hypixel.hytale.server.core.codec.ProtocolCodecs;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ExtendedCameraSettings {
-
-    // Position codec for Position type (uses doubles)
-    public static final BuilderCodec<Position> POSITION_CODEC = BuilderCodec.builder(Position.class, Position::new)
-        .addField(new KeyedCodec<>("X", Codec.DOUBLE), (p, v) -> p.x = v, p -> p.x)
-        .addField(new KeyedCodec<>("Y", Codec.DOUBLE), (p, v) -> p.y = v, p -> p.y)
-        .addField(new KeyedCodec<>("Z", Codec.DOUBLE), (p, v) -> p.z = v, p -> p.z)
-        .build();
 
     // All 30 fields from ServerCameraSettings with defaults
     protected float positionLerpSpeed = 1.0f;
@@ -81,85 +69,6 @@ public class ExtendedCameraSettings {
     protected MouseInputType mouseInputType = MouseInputType.LookAtTarget;
     @Nullable
     protected Vector3f planeNormal = null;
-
-    public static final BuilderCodec<ExtendedCameraSettings> CODEC = BuilderCodec.builder(ExtendedCameraSettings.class, ExtendedCameraSettings::new)
-        // Float fields
-        .addField(new KeyedCodec<>("PositionLerpSpeed", Codec.FLOAT, false, true),
-            (s, v) -> s.positionLerpSpeed = v, s -> s.positionLerpSpeed)
-        .addField(new KeyedCodec<>("RotationLerpSpeed", Codec.FLOAT, false, true),
-            (s, v) -> s.rotationLerpSpeed = v, s -> s.rotationLerpSpeed)
-        .addField(new KeyedCodec<>("Distance", Codec.FLOAT, false, true),
-            (s, v) -> s.distance = v, s -> s.distance)
-        .addField(new KeyedCodec<>("SpeedModifier", Codec.FLOAT, false, true),
-            (s, v) -> s.speedModifier = v, s -> s.speedModifier)
-
-        // Boolean fields
-        .addField(new KeyedCodec<>("AllowPitchControls", Codec.BOOLEAN, false, true),
-            (s, v) -> s.allowPitchControls = v, s -> s.allowPitchControls)
-        .addField(new KeyedCodec<>("DisplayCursor", Codec.BOOLEAN, false, true),
-            (s, v) -> s.displayCursor = v, s -> s.displayCursor)
-        .addField(new KeyedCodec<>("DisplayReticle", Codec.BOOLEAN, false, true),
-            (s, v) -> s.displayReticle = v, s -> s.displayReticle)
-        .addField(new KeyedCodec<>("SendMouseMotion", Codec.BOOLEAN, false, true),
-            (s, v) -> s.sendMouseMotion = v, s -> s.sendMouseMotion)
-        .addField(new KeyedCodec<>("SkipCharacterPhysics", Codec.BOOLEAN, false, true),
-            (s, v) -> s.skipCharacterPhysics = v, s -> s.skipCharacterPhysics)
-        .addField(new KeyedCodec<>("IsFirstPerson", Codec.BOOLEAN, false, true),
-            (s, v) -> s.isFirstPerson = v, s -> s.isFirstPerson)
-        .addField(new KeyedCodec<>("EyeOffset", Codec.BOOLEAN, false, true),
-            (s, v) -> s.eyeOffset = v, s -> s.eyeOffset)
-
-        // Integer field
-        .addField(new KeyedCodec<>("AttachedToEntityId", Codec.INTEGER, false, true),
-            (s, v) -> s.attachedToEntityId = v, s -> s.attachedToEntityId)
-
-        // Enum fields
-        .addField(new KeyedCodec<>("MouseInputTargetType", new EnumCodec<>(MouseInputTargetType.class), false, true),
-            (s, v) -> s.mouseInputTargetType = v, s -> s.mouseInputTargetType)
-        .addField(new KeyedCodec<>("MovementForceRotationType", new EnumCodec<>(MovementForceRotationType.class), false, true),
-            (s, v) -> s.movementForceRotationType = v, s -> s.movementForceRotationType)
-        .addField(new KeyedCodec<>("AttachedToType", new EnumCodec<>(AttachedToType.class), false, true),
-            (s, v) -> s.attachedToType = v, s -> s.attachedToType)
-        .addField(new KeyedCodec<>("PositionDistanceOffsetType", new EnumCodec<>(PositionDistanceOffsetType.class), false, true),
-            (s, v) -> s.positionDistanceOffsetType = v, s -> s.positionDistanceOffsetType)
-        .addField(new KeyedCodec<>("PositionType", new EnumCodec<>(PositionType.class), false, true),
-            (s, v) -> s.positionType = v, s -> s.positionType)
-        .addField(new KeyedCodec<>("RotationType", new EnumCodec<>(RotationType.class), false, true),
-            (s, v) -> s.rotationType = v, s -> s.rotationType)
-        .addField(new KeyedCodec<>("CanMoveType", new EnumCodec<>(CanMoveType.class), false, true),
-            (s, v) -> s.canMoveType = v, s -> s.canMoveType)
-        .addField(new KeyedCodec<>("ApplyMovementType", new EnumCodec<>(ApplyMovementType.class), false, true),
-            (s, v) -> s.applyMovementType = v, s -> s.applyMovementType)
-        .addField(new KeyedCodec<>("ApplyLookType", new EnumCodec<>(ApplyLookType.class), false, true),
-            (s, v) -> s.applyLookType = v, s -> s.applyLookType)
-        .addField(new KeyedCodec<>("MouseInputType", new EnumCodec<>(MouseInputType.class), false, true),
-            (s, v) -> s.mouseInputType = v, s -> s.mouseInputType)
-
-        // Direction fields (yaw, pitch, roll)
-        .addField(new KeyedCodec<>("MovementForceRotation", ProtocolCodecs.DIRECTION, false, true),
-            (s, v) -> s.movementForceRotation = v, s -> s.movementForceRotation)
-        .addField(new KeyedCodec<>("RotationOffset", ProtocolCodecs.DIRECTION, false, true),
-            (s, v) -> s.rotationOffset = v, s -> s.rotationOffset)
-        .addField(new KeyedCodec<>("Rotation", ProtocolCodecs.DIRECTION, false, true),
-            (s, v) -> s.rotation = v, s -> s.rotation)
-
-        // Position fields (x, y, z doubles)
-        .addField(new KeyedCodec<>("PositionOffset", POSITION_CODEC, false, true),
-            (s, v) -> s.positionOffset = v, s -> s.positionOffset)
-        .addField(new KeyedCodec<>("Position", POSITION_CODEC, false, true),
-            (s, v) -> s.position = v, s -> s.position)
-
-        // Vector3f fields
-        .addField(new KeyedCodec<>("MovementMultiplier", ProtocolCodecs.VECTOR3F, false, true),
-            (s, v) -> s.movementMultiplier = v, s -> s.movementMultiplier)
-        .addField(new KeyedCodec<>("PlaneNormal", ProtocolCodecs.VECTOR3F, false, true),
-            (s, v) -> s.planeNormal = v, s -> s.planeNormal)
-
-        // Vector2f field
-        .addField(new KeyedCodec<>("LookMultiplier", ProtocolCodecs.VECTOR2F, false, true),
-            (s, v) -> s.lookMultiplier = v, s -> s.lookMultiplier)
-
-        .build();
 
     public ExtendedCameraSettings() {
     }
