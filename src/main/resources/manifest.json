@@ -14,5 +14,5 @@
   "OptionalDependencies": {},
   "DisabledByDefault": false,
   "IncludesAssetPack": true,
-  "Main": "UnobstructedThirdPersonPlugin"
+  "Main": "com.UnobstructedThirdPersonPlugin"
 }
