@@ -53,6 +53,7 @@ public class CameraSchemaExtension {
             props.put("EyeOffset", createBooleanField("Eye Offset", "Use eye offset for camera position", false));
 
             // === POSITION & ROTATION ===
+            // Note: PositionOffset already exists in base CameraSettings schema, don't override it
             props.put("PositionDistanceOffsetType", createEnumField("Position Distance Offset Type", 
                 "Camera position distance offset calculation type",
                 "DistanceOffset", "DistanceOffsetRaycast", "None"));

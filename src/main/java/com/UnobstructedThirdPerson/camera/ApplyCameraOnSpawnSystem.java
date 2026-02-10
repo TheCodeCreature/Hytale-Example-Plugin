@@ -24,26 +24,20 @@ public class ApplyCameraOnSpawnSystem extends RefSystem<EntityStore> {
     private static final Logger LOGGER = Logger.getLogger(ApplyCameraOnSpawnSystem.class.getName());
 
     @Nonnull
-    private final Set<Dependency<EntityStore>> dependencies = Set.of(
-        new SystemDependency<>(Order.AFTER, PlayerSystems.PlayerSpawnedSystem.class)
-    );
-
-    @Nonnull
-    private final Query<EntityStore> query = Query.and(
-        Player.getComponentType(),
-        PlayerRef.getComponentType()
-    );
-
-    @Nonnull
     @Override
     public Query<EntityStore> getQuery() {
-        return this.query;
+        return Query.and(
+            Player.getComponentType(),
+            PlayerRef.getComponentType()
+        );
     }
 
     @Nonnull
     @Override
     public Set<Dependency<EntityStore>> getDependencies() {
-        return this.dependencies;
+        return Set.of(
+            new SystemDependency<>(Order.AFTER, PlayerSystems.PlayerSpawnedSystem.class)
+        );
     }
 
     @Override
