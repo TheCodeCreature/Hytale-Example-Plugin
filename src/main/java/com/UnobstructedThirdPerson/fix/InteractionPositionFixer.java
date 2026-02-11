@@ -2,6 +2,7 @@ package com.UnobstructedThirdPerson.fix;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.BlockPosition;
 import com.hypixel.hytale.protocol.InteractionSyncData;
@@ -71,6 +72,7 @@ public class InteractionPositionFixer {
     private static final Map<UUID, BlockPosition> lastClientPositions = new ConcurrentHashMap<>();
     private static final Map<UUID, BlockPosition> lastServerPositions = new ConcurrentHashMap<>();
     private static final Map<UUID, Vector3i> cachedServerTargets = new ConcurrentHashMap<>();
+    private static final Map<UUID, Vector3i> cachedPlacementPositions = new ConcurrentHashMap<>();
     private static final Map<UUID, ScheduledFuture<?>> activeTasks = new ConcurrentHashMap<>();
     private static PacketFilter registeredInboundFilter;
     private static PacketFilter registeredOutboundFilter;
@@ -140,9 +142,17 @@ public class InteractionPositionFixer {
         Store<EntityStore> store = ref.getStore();
         
         try {
+            // Get the target block (for breaking)
             Vector3i target = TargetUtil.getTargetBlock(ref, RAYCAST_DISTANCE, store);
             if (target != null) {
                 cachedServerTargets.put(playerId, target);
+                
+                // Calculate placement position (adjacent block) based on ray hit
+                World world = store.getExternalData().getWorld();
+                Vector3i placementPos = calculatePlacementPosition(ref, target, world, store);
+                if (placementPos != null) {
+                    cachedPlacementPositions.put(playerId, placementPos);
+                }
             }
         } catch (Exception e) {
             // Silently ignore - player may have disconnected
@@ -165,6 +175,64 @@ public class InteractionPositionFixer {
     @Nullable
     public static Vector3i getCachedServerTarget(@Nonnull UUID playerId) {
         return cachedServerTargets.get(playerId);
+    }
+    
+    @Nullable
+    public static Vector3i getCachedPlacementPosition(@Nonnull UUID playerId) {
+        return cachedPlacementPositions.get(playerId);
+    }
+    
+    /**
+     * Calculate the placement position (adjacent air block) based on which face of the target block
+     * the ray hits. This uses the precise hit location to determine the face.
+     */
+    @Nullable
+    private static Vector3i calculatePlacementPosition(Ref<EntityStore> ref, Vector3i targetBlock, 
+                                                        World world, Store<EntityStore> store) {
+        // Get the precise hit location on the block surface
+        Vector3d hitLocation = TargetUtil.getTargetLocation(ref, RAYCAST_DISTANCE, store);
+        if (hitLocation == null) {
+            return null;
+        }
+        
+        // Calculate which face was hit by checking which coordinate is closest to block boundary
+        double dx = hitLocation.x - targetBlock.x;
+        double dy = hitLocation.y - targetBlock.y;
+        double dz = hitLocation.z - targetBlock.z;
+        
+        // Determine offset direction based on which face was hit
+        int offsetX = 0, offsetY = 0, offsetZ = 0;
+        
+        // Check X faces (West = 0.0, East = 1.0)
+        if (Math.abs(dx) < 0.001) {
+            offsetX = -1; // Hit west face
+        } else if (Math.abs(dx - 1.0) < 0.001) {
+            offsetX = 1;  // Hit east face
+        }
+        // Check Y faces (Bottom = 0.0, Top = 1.0)
+        else if (Math.abs(dy) < 0.001) {
+            offsetY = -1; // Hit bottom face
+        } else if (Math.abs(dy - 1.0) < 0.001) {
+            offsetY = 1;  // Hit top face
+        }
+        // Check Z faces (North = 0.0, South = 1.0)
+        else if (Math.abs(dz) < 0.001) {
+            offsetZ = -1; // Hit north face
+        } else if (Math.abs(dz - 1.0) < 0.001) {
+            offsetZ = 1;  // Hit south face
+        }
+        // Fallback: use closest face
+        else {
+            double minDist = Math.min(dx, Math.min(1.0 - dx, Math.min(dy, Math.min(1.0 - dy, Math.min(dz, 1.0 - dz)))));
+            if (minDist == dx) offsetX = -1;
+            else if (minDist == 1.0 - dx) offsetX = 1;
+            else if (minDist == dy) offsetY = -1;
+            else if (minDist == 1.0 - dy) offsetY = 1;
+            else if (minDist == dz) offsetZ = -1;
+            else offsetZ = 1;
+        }
+        
+        return new Vector3i(targetBlock.x + offsetX, targetBlock.y + offsetY, targetBlock.z + offsetZ);
     }
 
     @Nullable
@@ -331,7 +399,20 @@ public class InteractionPositionFixer {
                     handleServerSideBreak(world, chunk, serverTarget, playerRef, store);
                 } else if (interactionType == InteractionType.Secondary) {
                     // Secondary = Place/use (right-click)
-                    handleServerSidePlace(world, chunk, serverTarget, playerRef, store);
+                    // Use the placement position (adjacent block) not the target block
+                    Vector3i placementPos = cachedPlacementPositions.get(playerRef.getUuid());
+                    if (placementPos != null) {
+                        // Get chunk for placement position (may be different chunk)
+                        long placeChunkIndex = ChunkUtil.indexChunkFromBlock(placementPos.x, placementPos.z);
+                        WorldChunk placeChunk = world.getChunkIfLoaded(placeChunkIndex);
+                        if (placeChunk != null) {
+                            handleServerSidePlace(world, placeChunk, placementPos, playerRef, store);
+                        } else {
+                            LOGGER.warning("[InteractionFix] Chunk not loaded at placement position");
+                        }
+                    } else {
+                        LOGGER.warning("[InteractionFix] No cached placement position for player");
+                    }
                 }
             } catch (Exception e) {
                 LOGGER.warning("[InteractionFix] Error triggering server-side action: " + e.getMessage());
@@ -382,12 +463,12 @@ public class InteractionPositionFixer {
             return;
         }
         
-        // Place block at server target
+        // Place block at placement position (adjacent to target block)
         boolean success = chunk.placeBlock(target.x, target.y, target.z, blockKey, 
             com.hypixel.hytale.server.core.asset.type.blocktype.config.RotationTuple.NONE, 0, false);
         
         if (LOG_SYNC_INTERACTION_CHAINS) {
-            LOGGER.info("[InteractionFix] Server-side PLACE '" + blockKey + "' at " + 
+            LOGGER.info("[InteractionFix] Server-side PLACE '" + blockKey + "' at placement pos " + 
                 target.x + "," + target.y + "," + target.z + " - success: " + success);
         }
     }
