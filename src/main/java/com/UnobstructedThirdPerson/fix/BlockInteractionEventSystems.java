@@ -33,17 +33,26 @@ public class BlockInteractionEventSystems {
             @Nonnull CommandBuffer<EntityStore> commandBuffer,
             @Nonnull PlaceBlockEvent event
         ) {
+            // Debug: Log every PlaceBlockEvent
+            LOGGER.info("[BlockEvent] PlaceBlockEvent fired at " + 
+                event.getTargetBlock().x + "," + event.getTargetBlock().y + "," + event.getTargetBlock().z);
+            
             Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
             if (ref == null) {
+                LOGGER.info("[BlockEvent] PlaceBlockEvent: ref is null");
                 return;
             }
 
             UUIDComponent uuidComponent = store.getComponent(ref, UUIDComponent.getComponentType());
             if (uuidComponent == null) {
+                LOGGER.info("[BlockEvent] PlaceBlockEvent: uuidComponent is null");
                 return;
             }
 
             UUID playerUuid = uuidComponent.getUuid();
+            LOGGER.info("[BlockEvent] PlaceBlockEvent: player UUID = " + playerUuid + 
+                ", enabled = " + InteractionPositionFixer.isEnabledForPlayer(playerUuid));
+            
             if (InteractionPositionFixer.isEnabledForPlayer(playerUuid)) {
                 event.setCancelled(true);
                 LOGGER.info("[BlockEvent] CANCELLED PlaceBlockEvent for player: " + playerUuid + 
