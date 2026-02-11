@@ -255,16 +255,17 @@ public class InteractionPositionFixer {
                             sb.append("  Client blockPosition: ").append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z).append("\n");
                             sb.append("  Server calculated:    ").append(serverTarget.x).append(",").append(serverTarget.y).append(",").append(serverTarget.z).append("\n");
                             sb.append("  Status: ").append(desynced ? "DESYNC DETECTED" : "In sync");
-                            if (desynced && ENABLE_POSITION_FIX) {
-                                sb.append(" -> FIXING");
+                            if (ENABLE_POSITION_FIX) {
+                                sb.append(" -> INVALIDATING (y=-1)");
                             }
                             LOGGER.info(sb.toString());
                         }
 
-                        // Apply the fix
-                        if (ENABLE_POSITION_FIX && desynced) {
+                        // Invalidate the block position to prevent client-side place/break
+                        // Setting y=-1 causes PlaceBlockInteraction and BreakBlockInteraction to return early
+                        if (ENABLE_POSITION_FIX) {
                             data.blockPosition = new BlockPosition(
-                                serverTarget.x, serverTarget.y, serverTarget.z
+                                clientPos.x, -1, clientPos.z
                             );
                         }
                     }
