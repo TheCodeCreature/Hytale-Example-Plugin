@@ -21,6 +21,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.TargetUtil;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
+import com.UnobstructedThirdPerson.fix.InteractionPositionFixer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -328,11 +329,17 @@ public class TransparentAreaCommand extends CommandBase {
     }
 
     private static void applyPeekCamera(@Nonnull PlayerRef playerRef, boolean enabled) {
+        UUID playerId = playerRef.getUuid();
 
         if (!enabled) {
+            // Disable the interaction position fixer
+            InteractionPositionFixer.disableForPlayer(playerId);
             playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.ThirdPerson, false, null));
             return;
         }
+
+        // Enable the interaction position fixer to correct stale block positions
+        InteractionPositionFixer.enableForPlayer(playerId);
 
         ServerCameraSettings settings = new ServerCameraSettings();
         settings.positionLerpSpeed = 0.99f;

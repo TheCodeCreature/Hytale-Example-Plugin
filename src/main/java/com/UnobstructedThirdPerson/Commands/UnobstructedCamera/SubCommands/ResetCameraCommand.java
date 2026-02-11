@@ -1,5 +1,6 @@
 package com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands;
 
+import com.UnobstructedThirdPerson.fix.InteractionPositionFixer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.ClientCameraView;
@@ -17,6 +18,9 @@ public class ResetCameraCommand extends AbstractPlayerCommand {
     }
     @Override
     protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
+        // Disable the interaction position fixer when resetting camera
+        InteractionPositionFixer.disableForPlayer(playerRef.getUuid());
+
         playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, null));
     }
 }

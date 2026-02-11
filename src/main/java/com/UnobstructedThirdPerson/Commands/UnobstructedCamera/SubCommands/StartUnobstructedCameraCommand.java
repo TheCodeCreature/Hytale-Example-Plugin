@@ -1,6 +1,7 @@
 package com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands;
 
 import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.Settings.CustomCameraSettings;
+import com.UnobstructedThirdPerson.fix.InteractionPositionFixer;
 import com.hypixel.hytale.codec.validation.Validators;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -31,6 +32,9 @@ public class StartUnobstructedCameraCommand extends AbstractPlayerCommand {
 
         var distance = distanceArg.get(commandContext);
         if(distance != null) settings.distance = distance;
+
+        // Enable the interaction position fixer to correct stale block positions
+        InteractionPositionFixer.enableForPlayer(playerRef.getUuid());
 
         playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, settings));
     }
