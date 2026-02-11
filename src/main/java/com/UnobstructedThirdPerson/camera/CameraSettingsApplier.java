@@ -64,24 +64,7 @@ public class CameraSettingsApplier {
             LOGGER.log(Level.SEVERE, "Failed to apply camera settings to player", e);
         }
     }
-
-    public static void applyToPlayerWithCustomView(@Nonnull PlayerRef playerRef, @Nonnull ExtendedCameraSettings settings) {
-        try {
-            ServerCameraSettings packet = settings.toPacket();
-            
-            // WARNING: Custom view breaks block placement and entity interaction!
-            // The target block/entity position gets stuck at the location where SetServerCamera was called.
-            // Only use this if you don't need block placement or entity interaction.
-            ClientCameraView cameraView = ClientCameraView.Custom;
-            
-            playerRef.getPacketHandler().writeNoCache(new SetServerCamera(cameraView, false, packet));
-            
-            LOGGER.log(Level.FINE, "Applied camera settings with Custom view to player: " + settings);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to apply camera settings to player", e);
-        }
-    }
-
+    
     public static void resetCamera(@Nonnull PlayerRef playerRef) {
         try {
             playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, null));
