@@ -21,9 +21,13 @@ import com.hypixel.hytale.protocol.ServerCameraSettings;
 import com.hypixel.hytale.protocol.Vector2f;
 import com.hypixel.hytale.protocol.Vector3f;
 import com.hypixel.hytale.server.core.asset.type.model.config.ModelAsset;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
@@ -39,8 +43,34 @@ public class CameraSettingsLoader {
 
     @Nullable
     public static ExtendedCameraSettings loadFromPlayerModel() {
+        // Try to load from server's asset directory first (for live editing)
+        // The server typically runs from a directory where assets are in "Server/Models/..."
+        Path serverAssetPath = Paths.get(PLAYER_MODEL_PATH);
+        
+        if (Files.exists(serverAssetPath)) {
+            LOGGER.log(Level.INFO, "[CameraDebug] Loading from server asset file: " + serverAssetPath.toAbsolutePath());
+            return loadFromFile(serverAssetPath);
+        }
+        
+        // Fallback to JAR resource
+        LOGGER.log(Level.INFO, "[CameraDebug] Server asset not found, falling back to JAR resource");
+        return loadFromJarResource();
+    }
+    
+    @Nullable
+    private static ExtendedCameraSettings loadFromFile(@Nonnull Path filePath) {
+        try (FileReader reader = new FileReader(filePath.toFile(), StandardCharsets.UTF_8)) {
+            JsonElement rootElement = JsonParser.parseReader(reader);
+            return parseRootJson(rootElement);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "[CameraDebug] Failed to load from file: " + filePath, e);
+            return createDefaultSettings();
+        }
+    }
+    
+    @Nullable
+    private static ExtendedCameraSettings loadFromJarResource() {
         try {
-            // Load directly from resource file - don't depend on ModelAsset being loaded
             String resourcePath = "/" + PLAYER_MODEL_PATH;
             LOGGER.log(Level.INFO, "[CameraDebug] Attempting to load from resource: " + resourcePath);
             
@@ -50,31 +80,34 @@ public class CameraSettingsLoader {
                 LOGGER.log(Level.WARNING, "[CameraDebug] Could not find resource: " + resourcePath);
                 return createDefaultSettings();
             }
-            
-            LOGGER.log(Level.INFO, "[CameraDebug] Resource found, parsing JSON...");
 
             try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
                 JsonElement rootElement = JsonParser.parseReader(reader);
-                if (!rootElement.isJsonObject()) {
-                    LOGGER.log(Level.WARNING, "[CameraDebug] Player.json root is not a JSON object");
-                    return createDefaultSettings();
-                }
-
-                JsonObject rootObject = rootElement.getAsJsonObject();
-                JsonElement cameraElement = rootObject.get("Camera");
-                
-                if (cameraElement == null || !cameraElement.isJsonObject()) {
-                    LOGGER.log(Level.INFO, "[CameraDebug] No Camera section found in Player.json, using defaults");
-                    return createDefaultSettings();
-                }
-                
-                LOGGER.log(Level.INFO, "[CameraDebug] Camera section found, parsing...");
-                return parseFromJson(cameraElement.getAsJsonObject());
+                return parseRootJson(rootElement);
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "[CameraDebug] Failed to load camera settings from player model", e);
+            LOGGER.log(Level.SEVERE, "[CameraDebug] Failed to load from JAR resource", e);
             return createDefaultSettings();
         }
+    }
+    
+    @Nullable
+    private static ExtendedCameraSettings parseRootJson(@Nonnull JsonElement rootElement) {
+        if (!rootElement.isJsonObject()) {
+            LOGGER.log(Level.WARNING, "[CameraDebug] Player.json root is not a JSON object");
+            return createDefaultSettings();
+        }
+
+        JsonObject rootObject = rootElement.getAsJsonObject();
+        JsonElement cameraElement = rootObject.get("Camera");
+        
+        if (cameraElement == null || !cameraElement.isJsonObject()) {
+            LOGGER.log(Level.INFO, "[CameraDebug] No Camera section found in Player.json, using defaults");
+            return createDefaultSettings();
+        }
+        
+        LOGGER.log(Level.INFO, "[CameraDebug] Camera section found, parsing...");
+        return parseFromJson(cameraElement.getAsJsonObject());
     }
 
     @Nullable

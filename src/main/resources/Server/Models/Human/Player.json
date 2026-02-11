@@ -1309,6 +1309,9 @@
   "GradientId": "02",
   "Camera": {
     "IsFirstPerson": false,
+    "EyeOffset": true,
+    "PositionDistanceOffsetType": "DistanceOffset",
+    "PositionType": "AttachedToPlusOffset",
     "PositionOffset": {
       "X": 0.5,
       "Y": 1,
