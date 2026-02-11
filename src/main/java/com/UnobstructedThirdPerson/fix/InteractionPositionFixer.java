@@ -173,9 +173,9 @@ public class InteractionPositionFixer {
             handleMouseInteraction(handler, mi);
         }
 
-        // Handle SyncInteractionChains - this is where block positions for placement/breaking are sent
+        // Handle SyncInteractionChains - BLOCK this packet for enabled players to prevent place/break
         if (packet instanceof SyncInteractionChains sic) {
-            handleSyncInteractionChains(handler, sic);
+            return shouldBlockSyncInteractionChains(handler, sic);
         }
 
         // Handle ClientPlaceBlock - BLOCK this packet for enabled players
@@ -214,64 +214,41 @@ public class InteractionPositionFixer {
         return true; // Block the packet
     }
 
-    private static void handleSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
+    private static boolean shouldBlockSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
         if (!(handler instanceof GamePacketHandler gph)) {
-            return;
+            return false; // Not a game packet handler, let it through
         }
 
         PlayerRef playerRef = gph.getPlayerRef();
         UUID playerId = playerRef.getUuid();
 
-        // Only process for enabled players
+        // Only block for enabled players
         if (!ENABLED_PLAYERS.contains(playerId)) {
-            return;
+            return false; // Not enabled, let packet through
         }
 
-        // Get cached server target (updated on world thread)
-        Vector3i serverTarget = cachedServerTargets.get(playerId);
-        if (serverTarget == null) {
-            // No cached target yet
-            return;
-        }
-
-        // Process each chain
-        for (SyncInteractionChain chain : sic.updates) {
-            if (chain.interactionData != null) {
-                for (InteractionSyncData data : chain.interactionData) {
-                    if (data != null && data.blockPosition != null) {
-                        BlockPosition clientPos = data.blockPosition;
-
-                        // Log the desync
-                        boolean desynced = clientPos.x != serverTarget.x ||
-                                          clientPos.y != serverTarget.y ||
-                                          clientPos.z != serverTarget.z;
-
-                        if (LOG_SYNC_INTERACTION_CHAINS) {
+        // Log and block the packet entirely
+        if (LOG_SYNC_INTERACTION_CHAINS) {
+            for (SyncInteractionChain chain : sic.updates) {
+                if (chain.interactionData != null) {
+                    for (InteractionSyncData data : chain.interactionData) {
+                        if (data != null && data.blockPosition != null) {
+                            BlockPosition clientPos = data.blockPosition;
                             StringBuilder sb = new StringBuilder();
-                            sb.append("[SyncInteractionChains] Player: ").append(playerRef.getUsername()).append("\n");
+                            sb.append("[SyncInteractionChains] BLOCKING for player: ").append(playerRef.getUsername()).append("\n");
                             sb.append("  Chain ID: ").append(chain.chainId);
                             sb.append(", State: ").append(chain.state);
                             sb.append(", Type: ").append(chain.interactionType).append("\n");
-                            sb.append("  Client blockPosition: ").append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z).append("\n");
-                            sb.append("  Server calculated:    ").append(serverTarget.x).append(",").append(serverTarget.y).append(",").append(serverTarget.z).append("\n");
-                            sb.append("  Status: ").append(desynced ? "DESYNC DETECTED" : "In sync");
-                            if (ENABLE_POSITION_FIX) {
-                                sb.append(" -> INVALIDATING (y=-1)");
-                            }
+                            sb.append("  Client blockPosition: ").append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z);
                             LOGGER.info(sb.toString());
-                        }
-
-                        // Invalidate the block position to prevent client-side place/break
-                        // Setting y=-1 causes PlaceBlockInteraction and BreakBlockInteraction to return early
-                        if (ENABLE_POSITION_FIX) {
-                            data.blockPosition = new BlockPosition(
-                                clientPos.x, -1, clientPos.z
-                            );
                         }
                     }
                 }
             }
         }
+
+        // Block the packet entirely to prevent client-side place/break
+        return true;
     }
 
     private static void handleOutboundPacket(PacketHandler handler, Packet packet) {
