@@ -53,16 +53,13 @@ public class BlockInteractionEventSystems {
 
             // Always cancel client events - we handle placement manually via SyncInteractionChains
             // when REDIRECT_MODE is true, or simply block all placement when false
+            boolean redirectMode = InteractionPositionFixer.isRedirectMode();
             event.setCancelled(true);
             
-            if (InteractionPositionFixer.isRedirectMode()) {
-                LOGGER.info("[BlockEvent] CANCELLED PlaceBlockEvent at client pos " + 
-                    originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + 
-                    " (redirect mode - handled via SyncInteractionChains)");
-            } else {
-                LOGGER.info("[BlockEvent] CANCELLED PlaceBlockEvent at " + 
-                    originalTarget.x + "," + originalTarget.y + "," + originalTarget.z);
-            }
+            LOGGER.info("[BlockEvent] CANCELLED PlaceBlockEvent at client pos " + 
+                originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + 
+                " | REDIRECT_MODE=" + redirectMode + 
+                " | isCancelled=" + event.isCancelled());
         }
 
         @Nullable
@@ -104,16 +101,13 @@ public class BlockInteractionEventSystems {
 
             // Always cancel client events - we handle breaking manually via SyncInteractionChains
             // when REDIRECT_MODE is true, or simply block all breaking when false
+            boolean redirectMode = InteractionPositionFixer.isRedirectMode();
             event.setCancelled(true);
             
-            if (InteractionPositionFixer.isRedirectMode()) {
-                LOGGER.info("[BlockEvent] CANCELLED BreakBlockEvent at client pos " + 
-                    originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + 
-                    " (redirect mode - handled via SyncInteractionChains)");
-            } else {
-                LOGGER.info("[BlockEvent] CANCELLED BreakBlockEvent at " + 
-                    originalTarget.x + "," + originalTarget.y + "," + originalTarget.z);
-            }
+            LOGGER.info("[BlockEvent] CANCELLED BreakBlockEvent at client pos " + 
+                originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + 
+                " | REDIRECT_MODE=" + redirectMode + 
+                " | isCancelled=" + event.isCancelled());
         }
 
         @Nullable

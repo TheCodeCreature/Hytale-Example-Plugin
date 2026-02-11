@@ -390,7 +390,8 @@ public class InteractionPositionFixer {
                         // Log if enabled
                         if (LOG_SYNC_INTERACTION_CHAINS) {
                             StringBuilder sb = new StringBuilder();
-                            sb.append("[SyncInteractionChains] Player: ").append(playerRef.getUsername()).append("\n");
+                            sb.append("[SyncInteractionChains] Player: ").append(playerRef.getUsername());
+                            sb.append(" | REDIRECT_MODE=").append(REDIRECT_MODE).append("\n");
                             sb.append("  Chain ID: ").append(chain.chainId);
                             sb.append(", State: ").append(chain.state);
                             sb.append(", Type: ").append(chain.interactionType);
@@ -422,15 +423,7 @@ public class InteractionPositionFixer {
             }
         }
         
-        // In redirect mode, block the original packet entirely
-        if (REDIRECT_MODE) {
-            if (LOG_SYNC_INTERACTION_CHAINS) {
-                LOGGER.info("[SyncInteractionChains] BLOCKED packet - server-side action triggered at server target");
-            }
-            return true; // Block the packet
-        }
-        
-        return false; // Let packet through if not in redirect mode
+        return false;
     }
     
     private static void triggerServerSideBlockAction(PlayerRef playerRef, InteractionType interactionType, 
