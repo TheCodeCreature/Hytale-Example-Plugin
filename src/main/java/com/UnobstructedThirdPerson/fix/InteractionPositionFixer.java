@@ -146,8 +146,7 @@ public class InteractionPositionFixer {
     private static void ensureFiltersRegistered() {
         if (registeredInboundFilter == null) {
             PacketFilter inboundFilter = (PacketHandler handler, Packet packet) -> {
-                handleInboundPacket(handler, packet);
-                return false; // Let packet continue
+                return handleInboundPacket(handler, packet); // Returns true to block packet
             };
             PacketAdapters.registerInbound(inboundFilter);
             registeredInboundFilter = inboundFilter;
@@ -165,7 +164,7 @@ public class InteractionPositionFixer {
         }
     }
 
-    private static void handleInboundPacket(PacketHandler handler, Packet packet) {
+    private static boolean handleInboundPacket(PacketHandler handler, Packet packet) {
         // Log packet discovery if enabled
         logPacketDiscovery(handler, packet, "Inbound");
 
@@ -179,52 +178,40 @@ public class InteractionPositionFixer {
             handleSyncInteractionChains(handler, sic);
         }
 
-        // Handle ClientPlaceBlock - separate packet that also contains block position
+        // Handle ClientPlaceBlock - BLOCK this packet for enabled players
+        // The SyncInteractionChains path will handle placement instead
         if (packet instanceof ClientPlaceBlock cpb) {
-            handleClientPlaceBlock(handler, cpb);
+            return shouldBlockClientPlaceBlock(handler, cpb);
         }
+        
+        return false; // Let other packets continue
     }
 
-    private static void handleClientPlaceBlock(PacketHandler handler, ClientPlaceBlock cpb) {
+    private static boolean shouldBlockClientPlaceBlock(PacketHandler handler, ClientPlaceBlock cpb) {
         if (!(handler instanceof GamePacketHandler gph)) {
-            return;
+            return false; // Not a game packet handler, let it through
         }
 
         PlayerRef playerRef = gph.getPlayerRef();
         UUID playerId = playerRef.getUuid();
 
-        // Only process for enabled players
+        // Only block for enabled players
         if (!ENABLED_PLAYERS.contains(playerId)) {
-            return;
+            return false; // Not enabled, let packet through
         }
 
-        // Get cached server target (updated on world thread)
-        Vector3i serverTarget = cachedServerTargets.get(playerId);
-        if (serverTarget == null || cpb.position == null) {
-            return;
-        }
-
-        BlockPosition clientPos = cpb.position;
-        boolean desynced = clientPos.x != serverTarget.x ||
-                          clientPos.y != serverTarget.y ||
-                          clientPos.z != serverTarget.z;
-
-        if (LOG_CLIENT_PLACE_BLOCK && desynced) {
+        // Block this packet - SyncInteractionChains will handle placement
+        if (LOG_CLIENT_PLACE_BLOCK) {
             StringBuilder sb = new StringBuilder();
             sb.append("[ClientPlaceBlock] Player: ").append(playerRef.getUsername()).append("\n");
-            sb.append("  Client position: ").append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z).append("\n");
-            sb.append("  Server calculated: ").append(serverTarget.x).append(",").append(serverTarget.y).append(",").append(serverTarget.z).append("\n");
-            sb.append("  Status: DESYNC DETECTED");
-            if (ENABLE_POSITION_FIX) {
-                sb.append(" -> FIXING");
+            if (cpb.position != null) {
+                sb.append("  Client position: ").append(cpb.position.x).append(",").append(cpb.position.y).append(",").append(cpb.position.z).append("\n");
             }
+            sb.append("  Action: BLOCKED (SyncInteractionChains will handle placement)");
             LOGGER.info(sb.toString());
         }
 
-        // Apply the fix
-        if (ENABLE_POSITION_FIX && desynced) {
-            cpb.position = new BlockPosition(serverTarget.x, serverTarget.y, serverTarget.z);
-        }
+        return true; // Block the packet
     }
 
     private static void handleSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
