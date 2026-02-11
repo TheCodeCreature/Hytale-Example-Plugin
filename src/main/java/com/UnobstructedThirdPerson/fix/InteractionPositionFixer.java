@@ -75,6 +75,7 @@ public class InteractionPositionFixer {
     private static final Map<UUID, Vector3i> cachedPlacementPositions = new ConcurrentHashMap<>();
     private static final Map<UUID, Vector3d> cachedHitLocations = new ConcurrentHashMap<>();
     private static final Map<UUID, String> cachedHitFaces = new ConcurrentHashMap<>();
+    private static final Map<UUID, Set<Integer>> processedChainIds = new ConcurrentHashMap<>();
     private static final Map<UUID, ScheduledFuture<?>> activeTasks = new ConcurrentHashMap<>();
     private static PacketFilter registeredInboundFilter;
     private static PacketFilter registeredOutboundFilter;
@@ -370,8 +371,14 @@ public class InteractionPositionFixer {
         // Get cached server target
         Vector3i serverTarget = cachedServerTargets.get(playerId);
 
+        // Get or create the set of processed chain IDs for this player
+        Set<Integer> playerProcessedChains = processedChainIds.computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet());
+        
         // Process chains and trigger server-side actions
         for (SyncInteractionChain chain : sic.updates) {
+            // Check if we've already processed this chain
+            boolean alreadyProcessed = playerProcessedChains.contains(chain.chainId);
+            
             if (chain.interactionData != null) {
                 for (InteractionSyncData data : chain.interactionData) {
                     if (data != null && data.blockPosition != null) {
@@ -386,7 +393,8 @@ public class InteractionPositionFixer {
                             sb.append("[SyncInteractionChains] Player: ").append(playerRef.getUsername()).append("\n");
                             sb.append("  Chain ID: ").append(chain.chainId);
                             sb.append(", State: ").append(chain.state);
-                            sb.append(", Type: ").append(chain.interactionType).append("\n");
+                            sb.append(", Type: ").append(chain.interactionType);
+                            sb.append(", Already processed: ").append(alreadyProcessed).append("\n");
                             sb.append("  Client blockPosition: ").append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z);
                             if (serverTarget != null) {
                                 sb.append("\n  Server target: ").append(serverTarget.x).append(",").append(serverTarget.y).append(",").append(serverTarget.z);
@@ -395,12 +403,22 @@ public class InteractionPositionFixer {
                         }
                         
                         // When redirect mode is enabled, block packet and manually trigger action
-                        if (REDIRECT_MODE && serverTarget != null) {
+                        // Only trigger once per chain ID to avoid duplicate placements
+                        if (REDIRECT_MODE && serverTarget != null && !alreadyProcessed) {
+                            // Mark this chain as processed
+                            playerProcessedChains.add(chain.chainId);
+                            alreadyProcessed = true; // Prevent further triggers in this loop
+                            
                             // Trigger server-side action at server target
                             triggerServerSideBlockAction(playerRef, chain.interactionType, serverTarget, clientPos);
                         }
                     }
                 }
+            }
+            
+            // Clean up finished chains from the tracking set
+            if (chain.state != null && chain.state.toString().equals("Finished")) {
+                playerProcessedChains.remove(chain.chainId);
             }
         }
         
