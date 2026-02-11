@@ -21,6 +21,12 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.TargetUtil;
 import com.hypixel.hytale.server.core.HytaleServer;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.inventory.Inventory;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
+import com.hypixel.hytale.protocol.InteractionType;
+import com.hypixel.hytale.math.util.ChunkUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -196,9 +202,9 @@ public class InteractionPositionFixer {
             handleMouseInteraction(handler, mi);
         }
 
-        // Handle SyncInteractionChains - fix positions when in redirect mode
+        // Handle SyncInteractionChains - block packet and manually trigger server-side action
         if (packet instanceof SyncInteractionChains sic) {
-            handleSyncInteractionChains(handler, sic);
+            return handleSyncInteractionChains(handler, sic);
         }
 
         // Handle ClientPlaceBlock - BLOCK this packet for enabled players
@@ -237,9 +243,9 @@ public class InteractionPositionFixer {
         return true; // Block the packet
     }
 
-    private static void handleSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
+    private static boolean handleSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
         if (!(handler instanceof GamePacketHandler gph)) {
-            return;
+            return false;
         }
 
         PlayerRef playerRef = gph.getPlayerRef();
@@ -247,13 +253,13 @@ public class InteractionPositionFixer {
 
         // Only process for enabled players
         if (!ENABLED_PLAYERS.contains(playerId)) {
-            return;
+            return false;
         }
 
         // Get cached server target
         Vector3i serverTarget = cachedServerTargets.get(playerId);
 
-        // Fix positions in the packet when redirect mode is enabled
+        // Process chains and trigger server-side actions
         for (SyncInteractionChain chain : sic.updates) {
             if (chain.interactionData != null) {
                 for (InteractionSyncData data : chain.interactionData) {
@@ -277,16 +283,112 @@ public class InteractionPositionFixer {
                             LOGGER.info(sb.toString());
                         }
                         
-                        // Fix the position when in redirect mode
+                        // When redirect mode is enabled, block packet and manually trigger action
                         if (REDIRECT_MODE && serverTarget != null) {
-                            data.blockPosition = new BlockPosition(serverTarget.x, serverTarget.y, serverTarget.z);
-                            if (LOG_SYNC_INTERACTION_CHAINS) {
-                                LOGGER.info("[SyncInteractionChains] FIXED position to server target");
-                            }
+                            // Trigger server-side action at server target
+                            triggerServerSideBlockAction(playerRef, chain.interactionType, serverTarget, clientPos);
                         }
                     }
                 }
             }
+        }
+        
+        // In redirect mode, block the original packet entirely
+        if (REDIRECT_MODE) {
+            if (LOG_SYNC_INTERACTION_CHAINS) {
+                LOGGER.info("[SyncInteractionChains] BLOCKED packet - server-side action triggered at server target");
+            }
+            return true; // Block the packet
+        }
+        
+        return false; // Let packet through if not in redirect mode
+    }
+    
+    private static void triggerServerSideBlockAction(PlayerRef playerRef, InteractionType interactionType, 
+                                                      Vector3i serverTarget, BlockPosition clientPos) {
+        Ref<EntityStore> ref = playerRef.getReference();
+        if (ref == null || !ref.isValid()) {
+            LOGGER.warning("[InteractionFix] Cannot trigger action - invalid player reference");
+            return;
+        }
+        
+        Store<EntityStore> store = ref.getStore();
+        World world = store.getExternalData().getWorld();
+        
+        // Execute on world thread
+        world.execute(() -> {
+            try {
+                long chunkIndex = ChunkUtil.indexChunkFromBlock(serverTarget.x, serverTarget.z);
+                WorldChunk chunk = world.getChunkIfLoaded(chunkIndex);
+                
+                if (chunk == null) {
+                    LOGGER.warning("[InteractionFix] Chunk not loaded at server target position");
+                    return;
+                }
+                
+                if (interactionType == InteractionType.Primary) {
+                    // Primary = Break/attack (left-click)
+                    handleServerSideBreak(world, chunk, serverTarget, playerRef, store);
+                } else if (interactionType == InteractionType.Secondary) {
+                    // Secondary = Place/use (right-click)
+                    handleServerSidePlace(world, chunk, serverTarget, playerRef, store);
+                }
+            } catch (Exception e) {
+                LOGGER.warning("[InteractionFix] Error triggering server-side action: " + e.getMessage());
+            }
+        });
+    }
+    
+    private static void handleServerSideBreak(World world, WorldChunk chunk, Vector3i target, 
+                                               PlayerRef playerRef, Store<EntityStore> store) {
+        // Break block at server target
+        boolean success = chunk.breakBlock(target.x, target.y, target.z, 0);
+        
+        if (LOG_SYNC_INTERACTION_CHAINS) {
+            LOGGER.info("[InteractionFix] Server-side BREAK at " + 
+                target.x + "," + target.y + "," + target.z + " - success: " + success);
+        }
+    }
+    
+    private static void handleServerSidePlace(World world, WorldChunk chunk, Vector3i target, 
+                                               PlayerRef playerRef, Store<EntityStore> store) {
+        Ref<EntityStore> ref = playerRef.getReference();
+        if (ref == null || !ref.isValid()) {
+            return;
+        }
+        
+        // Get player's held item to determine what block to place
+        Player player = store.getComponent(ref, Player.getComponentType());
+        if (player == null) {
+            LOGGER.warning("[InteractionFix] Cannot get player entity for placement");
+            return;
+        }
+        
+        Inventory inventory = player.getInventory();
+        if (inventory == null) {
+            LOGGER.warning("[InteractionFix] Player has no inventory");
+            return;
+        }
+        
+        ItemStack heldItem = inventory.getItemInHand();
+        if (heldItem == null) {
+            LOGGER.info("[InteractionFix] No item in hand for placement");
+            return;
+        }
+        
+        String blockKey = heldItem.getBlockKey();
+        if (blockKey == null || blockKey.isEmpty()) {
+            LOGGER.info("[InteractionFix] Held item is not a block: " + heldItem.getItemId());
+            return;
+        }
+        
+        // Place block at server target
+        boolean success = chunk.placeBlock(target.x, target.y, target.z, blockKey, 
+            com.hypixel.hytale.server.core.asset.type.blocktype.config.RotationTuple.NONE, 0, false);
+        
+        if (LOG_SYNC_INTERACTION_CHAINS) {
+            LOGGER.info("[InteractionFix] Server-side PLACE '" + blockKey + "' at " + 
+                target.x + "," + target.y + "," + target.z + " - success: " + success);
         }
     }
 

@@ -17,7 +17,7 @@ public class UnobstructedCameraCommand extends AbstractCommandCollection {
     public UnobstructedCameraCommand() {
         super("UnobstructedCamera", "Access to the Unobstructed Third Person Camera commands");
         this.setPermissionGroup(GameMode.Adventure);
-        this.addAliases("NoClipCamera");
+        this.addAliases("NoClipCamera", "UCamera", "UC");
 //        this.addUsageVariant(new WhoAmICommand.WhoAmIOtherCommand());
         this.addSubCommand(new StartUnobstructedCameraCommand());
         this.addSubCommand(new ResetCameraCommand());
