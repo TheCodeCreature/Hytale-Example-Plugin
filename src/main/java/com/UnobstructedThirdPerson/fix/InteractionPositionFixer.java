@@ -23,6 +23,7 @@ import com.hypixel.hytale.server.core.util.TargetUtil;
 import com.hypixel.hytale.server.core.HytaleServer;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -54,6 +55,9 @@ public class InteractionPositionFixer {
     private static final boolean ENABLE_POSITION_FIX = true;  // Enable the actual fix
     private static final int RAYCAST_DISTANCE = 30;           // Max distance for server raycast
     private static final long CACHE_UPDATE_INTERVAL_MS = 50;  // How often to update cached target (ms)
+
+    // Redirect mode: true = redirect to server position, false = block entirely
+    private static boolean REDIRECT_MODE = true;
 
     // ===== END CONFIGURABLE FILTERS =====
 
@@ -141,6 +145,20 @@ public class InteractionPositionFixer {
 
     public static boolean isEnabledForPlayer(@Nonnull UUID playerId) {
         return ENABLED_PLAYERS.contains(playerId);
+    }
+
+    public static boolean isRedirectMode() {
+        return REDIRECT_MODE;
+    }
+
+    public static void setRedirectMode(boolean redirectMode) {
+        REDIRECT_MODE = redirectMode;
+        LOGGER.info("[InteractionFix] Redirect mode set to: " + redirectMode);
+    }
+
+    @Nullable
+    public static Vector3i getCachedServerTarget(@Nonnull UUID playerId) {
+        return cachedServerTargets.get(playerId);
     }
 
     private static void ensureFiltersRegistered() {

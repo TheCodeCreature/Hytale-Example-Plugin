@@ -7,6 +7,7 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.Archetype;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.event.events.ecs.BreakBlockEvent;
 import com.hypixel.hytale.server.core.event.events.ecs.PlaceBlockEvent;
@@ -33,30 +34,35 @@ public class BlockInteractionEventSystems {
             @Nonnull CommandBuffer<EntityStore> commandBuffer,
             @Nonnull PlaceBlockEvent event
         ) {
-            // Debug: Log every PlaceBlockEvent
-            LOGGER.info("[BlockEvent] PlaceBlockEvent fired at " + 
-                event.getTargetBlock().x + "," + event.getTargetBlock().y + "," + event.getTargetBlock().z);
-            
             Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
             if (ref == null) {
-                LOGGER.info("[BlockEvent] PlaceBlockEvent: ref is null");
                 return;
             }
 
             UUIDComponent uuidComponent = store.getComponent(ref, UUIDComponent.getComponentType());
             if (uuidComponent == null) {
-                LOGGER.info("[BlockEvent] PlaceBlockEvent: uuidComponent is null");
                 return;
             }
 
             UUID playerUuid = uuidComponent.getUuid();
-            LOGGER.info("[BlockEvent] PlaceBlockEvent: player UUID = " + playerUuid + 
-                ", enabled = " + InteractionPositionFixer.isEnabledForPlayer(playerUuid));
-            
-            if (InteractionPositionFixer.isEnabledForPlayer(playerUuid)) {
+            if (!InteractionPositionFixer.isEnabledForPlayer(playerUuid)) {
+                return;
+            }
+
+            Vector3i serverTarget = InteractionPositionFixer.getCachedServerTarget(playerUuid);
+            Vector3i originalTarget = event.getTargetBlock();
+
+            if (serverTarget != null && InteractionPositionFixer.isRedirectMode()) {
+                // Redirect to server-calculated position
+                event.setTargetBlock(serverTarget);
+                LOGGER.info("[BlockEvent] REDIRECTED PlaceBlockEvent from " + 
+                    originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + " to " +
+                    serverTarget.x + "," + serverTarget.y + "," + serverTarget.z);
+            } else {
+                // Block mode - cancel the event
                 event.setCancelled(true);
-                LOGGER.info("[BlockEvent] CANCELLED PlaceBlockEvent for player: " + playerUuid + 
-                    " at " + event.getTargetBlock().x + "," + event.getTargetBlock().y + "," + event.getTargetBlock().z);
+                LOGGER.info("[BlockEvent] CANCELLED PlaceBlockEvent at " + 
+                    originalTarget.x + "," + originalTarget.y + "," + originalTarget.z);
             }
         }
 
@@ -91,10 +97,24 @@ public class BlockInteractionEventSystems {
             }
 
             UUID playerUuid = uuidComponent.getUuid();
-            if (InteractionPositionFixer.isEnabledForPlayer(playerUuid)) {
+            if (!InteractionPositionFixer.isEnabledForPlayer(playerUuid)) {
+                return;
+            }
+
+            Vector3i serverTarget = InteractionPositionFixer.getCachedServerTarget(playerUuid);
+            Vector3i originalTarget = event.getTargetBlock();
+
+            if (serverTarget != null && InteractionPositionFixer.isRedirectMode()) {
+                // Redirect to server-calculated position
+                event.setTargetBlock(serverTarget);
+                LOGGER.info("[BlockEvent] REDIRECTED BreakBlockEvent from " + 
+                    originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + " to " +
+                    serverTarget.x + "," + serverTarget.y + "," + serverTarget.z);
+            } else {
+                // Block mode - cancel the event
                 event.setCancelled(true);
-                LOGGER.info("[BlockEvent] CANCELLED BreakBlockEvent for player: " + playerUuid +
-                    " at " + event.getTargetBlock().x + "," + event.getTargetBlock().y + "," + event.getTargetBlock().z);
+                LOGGER.info("[BlockEvent] CANCELLED BreakBlockEvent at " + 
+                    originalTarget.x + "," + originalTarget.y + "," + originalTarget.z);
             }
         }
 
