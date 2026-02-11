@@ -39,6 +39,8 @@ public class DebugTargetCommand extends AbstractPlayerCommand {
     private static final Vector3f COLOR_ORANGE = new Vector3f(1.0f, 0.5f, 0.2f);
     private static final Vector3f COLOR_BLUE = new Vector3f(0.2f, 0.4f, 1.0f);
     private static final Vector3f COLOR_PURPLE = new Vector3f(0.8f, 0.2f, 1.0f);
+    private static final Vector3f COLOR_MAGENTA = new Vector3f(1.0f, 0.0f, 0.5f);
+    private static final Vector3f COLOR_WHITE = new Vector3f(1.0f, 1.0f, 1.0f);
 
     public DebugTargetCommand() {
         super("DebugTarget", "Shows client target vs server calculated target positions with visual debug shapes");
@@ -51,6 +53,9 @@ public class DebugTargetCommand extends AbstractPlayerCommand {
         // Get cached positions from InteractionPositionFixer
         BlockPosition clientPos = InteractionPositionFixer.getLastClientPosition(playerId);
         Vector3i serverTarget = InteractionPositionFixer.getCachedServerTarget(playerId);
+        Vector3i placementPos = InteractionPositionFixer.getCachedPlacementPosition(playerId);
+        Vector3d hitLocation = InteractionPositionFixer.getCachedHitLocation(playerId);
+        String hitFace = InteractionPositionFixer.getCachedHitFace(playerId);
         boolean isEnabled = InteractionPositionFixer.isEnabledForPlayer(playerId);
         boolean isRedirectMode = InteractionPositionFixer.isRedirectMode();
         
@@ -109,17 +114,28 @@ public class DebugTargetCommand extends AbstractPlayerCommand {
             DebugUtils.addCube(world, clientBlockCenter, COLOR_RED, 1.05, DEBUG_DURATION);
         }
         
-        // 5. Server target block - Green cube
+        // 5. Server target block - Green cube (block that would be broken)
         if (serverTarget != null) {
             Vector3d serverBlockCenter = new Vector3d(serverTarget.x + 0.5, serverTarget.y + 0.5, serverTarget.z + 0.5);
             DebugUtils.addCube(world, serverBlockCenter, COLOR_GREEN, 1.0, DEBUG_DURATION);
         }
         
-        // 6. Look raycast - Orange arrow from eye position
+        // 6. Placement position - Magenta cube (adjacent block where placement would happen)
+        if (placementPos != null) {
+            Vector3d placementBlockCenter = new Vector3d(placementPos.x + 0.5, placementPos.y + 0.5, placementPos.z + 0.5);
+            DebugUtils.addCube(world, placementBlockCenter, COLOR_MAGENTA, 0.95, DEBUG_DURATION);
+        }
+        
+        // 7. Hit location - Small white sphere (precise ray hit point)
+        if (hitLocation != null) {
+            DebugUtils.addSphere(world, hitLocation, COLOR_WHITE, 0.1, DEBUG_DURATION);
+        }
+        
+        // 8. Look raycast - Orange arrow from eye position
         Vector3d lookArrowDir = new Vector3d(lookDir.x * ARROW_LENGTH, lookDir.y * ARROW_LENGTH, lookDir.z * ARROW_LENGTH);
         DebugUtils.addArrow(world, eyePos, lookArrowDir, COLOR_ORANGE, DEBUG_DURATION, true);
         
-        // 7. Camera to server target - Yellow arrow
+        // 9. Camera to server target - Yellow arrow
         if (serverTarget != null) {
             Vector3d targetCenter = new Vector3d(serverTarget.x + 0.5, serverTarget.y + 0.5, serverTarget.z + 0.5);
             Vector3d cameraToTarget = new Vector3d(
@@ -130,11 +146,11 @@ public class DebugTargetCommand extends AbstractPlayerCommand {
             DebugUtils.addArrow(world, cameraPos, cameraToTarget, COLOR_YELLOW, DEBUG_DURATION, true);
         }
         
-        // 8. Body rotation - Blue arrow
+        // 10. Body rotation - Blue arrow
         Vector3d bodyArrowDir = new Vector3d(bodyDir.x * ARROW_LENGTH, bodyDir.y * ARROW_LENGTH, bodyDir.z * ARROW_LENGTH);
         DebugUtils.addArrow(world, playerPos, bodyArrowDir, COLOR_BLUE, DEBUG_DURATION, true);
         
-        // 9. Head rotation - Purple arrow from eye position (different angle to show difference)
+        // 11. Head rotation - Purple arrow from eye position (different angle to show difference)
         Vector3d headArrowDir = new Vector3d(lookDir.x * (ARROW_LENGTH * 0.8), lookDir.y * (ARROW_LENGTH * 0.8), lookDir.z * (ARROW_LENGTH * 0.8));
         DebugUtils.addArrow(world, eyePos, headArrowDir, COLOR_PURPLE, DEBUG_DURATION, true);
         
@@ -180,6 +196,30 @@ public class DebugTargetCommand extends AbstractPlayerCommand {
         } else {
             sb.append("§aServer Target: §7(not calculated)\n");
             logSb.append("  Server Target: (not calculated)\n");
+        }
+        
+        if (placementPos != null) {
+            sb.append("§dPlacement Pos: §f").append(placementPos.x).append(", ").append(placementPos.y).append(", ").append(placementPos.z).append("\n");
+            logSb.append("  Placement Pos: ").append(placementPos.x).append(", ").append(placementPos.y).append(", ").append(placementPos.z).append("\n");
+        } else {
+            sb.append("§dPlacement Pos: §7(not calculated)\n");
+            logSb.append("  Placement Pos: (not calculated)\n");
+        }
+        
+        if (hitLocation != null) {
+            sb.append("§fHit Location: §f").append(fmtPos(hitLocation)).append("\n");
+            logSb.append("  Hit Location: ").append(fmtPos(hitLocation)).append("\n");
+        } else {
+            sb.append("§fHit Location: §7(not calculated)\n");
+            logSb.append("  Hit Location: (not calculated)\n");
+        }
+        
+        if (hitFace != null) {
+            sb.append("§fHit Face: §f").append(hitFace).append("\n");
+            logSb.append("  Hit Face: ").append(hitFace).append("\n");
+        } else {
+            sb.append("§fHit Face: §7(not calculated)\n");
+            logSb.append("  Hit Face: (not calculated)\n");
         }
         
         if (clientPos != null && serverTarget != null) {

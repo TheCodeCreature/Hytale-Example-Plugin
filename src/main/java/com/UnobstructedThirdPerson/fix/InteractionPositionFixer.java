@@ -73,6 +73,8 @@ public class InteractionPositionFixer {
     private static final Map<UUID, BlockPosition> lastServerPositions = new ConcurrentHashMap<>();
     private static final Map<UUID, Vector3i> cachedServerTargets = new ConcurrentHashMap<>();
     private static final Map<UUID, Vector3i> cachedPlacementPositions = new ConcurrentHashMap<>();
+    private static final Map<UUID, Vector3d> cachedHitLocations = new ConcurrentHashMap<>();
+    private static final Map<UUID, String> cachedHitFaces = new ConcurrentHashMap<>();
     private static final Map<UUID, ScheduledFuture<?>> activeTasks = new ConcurrentHashMap<>();
     private static PacketFilter registeredInboundFilter;
     private static PacketFilter registeredOutboundFilter;
@@ -149,7 +151,7 @@ public class InteractionPositionFixer {
                 
                 // Calculate placement position (adjacent block) based on ray hit
                 World world = store.getExternalData().getWorld();
-                Vector3i placementPos = calculatePlacementPosition(ref, target, world, store);
+                Vector3i placementPos = calculatePlacementPosition(ref, target, world, store, playerId);
                 if (placementPos != null) {
                     cachedPlacementPositions.put(playerId, placementPos);
                 }
@@ -188,51 +190,92 @@ public class InteractionPositionFixer {
      */
     @Nullable
     private static Vector3i calculatePlacementPosition(Ref<EntityStore> ref, Vector3i targetBlock, 
-                                                        World world, Store<EntityStore> store) {
+                                                        World world, Store<EntityStore> store, UUID playerId) {
         // Get the precise hit location on the block surface
         Vector3d hitLocation = TargetUtil.getTargetLocation(ref, RAYCAST_DISTANCE, store);
         if (hitLocation == null) {
+            LOGGER.info("[PlacementCalc] No hit location from TargetUtil");
             return null;
         }
+        
+        // Cache hit location for debug display
+        cachedHitLocations.put(playerId, hitLocation);
         
         // Calculate which face was hit by checking which coordinate is closest to block boundary
         double dx = hitLocation.x - targetBlock.x;
         double dy = hitLocation.y - targetBlock.y;
         double dz = hitLocation.z - targetBlock.z;
         
+        LOGGER.info("[PlacementCalc] Target: " + targetBlock.x + "," + targetBlock.y + "," + targetBlock.z +
+            " HitLoc: " + String.format("%.3f,%.3f,%.3f", hitLocation.x, hitLocation.y, hitLocation.z) +
+            " Delta: " + String.format("%.3f,%.3f,%.3f", dx, dy, dz));
+        
         // Determine offset direction based on which face was hit
         int offsetX = 0, offsetY = 0, offsetZ = 0;
+        String hitFace = "unknown";
         
         // Check X faces (West = 0.0, East = 1.0)
         if (Math.abs(dx) < 0.001) {
             offsetX = -1; // Hit west face
+            hitFace = "WEST (-X)";
         } else if (Math.abs(dx - 1.0) < 0.001) {
             offsetX = 1;  // Hit east face
+            hitFace = "EAST (+X)";
         }
         // Check Y faces (Bottom = 0.0, Top = 1.0)
         else if (Math.abs(dy) < 0.001) {
             offsetY = -1; // Hit bottom face
+            hitFace = "BOTTOM (-Y)";
         } else if (Math.abs(dy - 1.0) < 0.001) {
             offsetY = 1;  // Hit top face
+            hitFace = "TOP (+Y)";
         }
         // Check Z faces (North = 0.0, South = 1.0)
         else if (Math.abs(dz) < 0.001) {
             offsetZ = -1; // Hit north face
+            hitFace = "NORTH (-Z)";
         } else if (Math.abs(dz - 1.0) < 0.001) {
             offsetZ = 1;  // Hit south face
+            hitFace = "SOUTH (+Z)";
         }
-        // Fallback: use closest face
+        // Fallback: use closest face based on which delta is closest to a boundary
         else {
-            double minDist = Math.min(dx, Math.min(1.0 - dx, Math.min(dy, Math.min(1.0 - dy, Math.min(dz, 1.0 - dz)))));
-            if (minDist == dx) offsetX = -1;
-            else if (minDist == 1.0 - dx) offsetX = 1;
-            else if (minDist == dy) offsetY = -1;
-            else if (minDist == 1.0 - dy) offsetY = 1;
-            else if (minDist == dz) offsetZ = -1;
-            else offsetZ = 1;
+            // Find which coordinate is closest to 0 or 1
+            double distWest = Math.abs(dx);           // Distance to west face (x=0)
+            double distEast = Math.abs(dx - 1.0);     // Distance to east face (x=1)
+            double distBottom = Math.abs(dy);         // Distance to bottom face (y=0)
+            double distTop = Math.abs(dy - 1.0);      // Distance to top face (y=1)
+            double distNorth = Math.abs(dz);          // Distance to north face (z=0)
+            double distSouth = Math.abs(dz - 1.0);    // Distance to south face (z=1)
+            
+            double minDist = Math.min(distWest, Math.min(distEast, Math.min(distBottom, 
+                             Math.min(distTop, Math.min(distNorth, distSouth)))));
+            
+            if (minDist == distWest) { offsetX = -1; hitFace = "WEST (-X) [fallback]"; }
+            else if (minDist == distEast) { offsetX = 1; hitFace = "EAST (+X) [fallback]"; }
+            else if (minDist == distBottom) { offsetY = -1; hitFace = "BOTTOM (-Y) [fallback]"; }
+            else if (minDist == distTop) { offsetY = 1; hitFace = "TOP (+Y) [fallback]"; }
+            else if (minDist == distNorth) { offsetZ = -1; hitFace = "NORTH (-Z) [fallback]"; }
+            else { offsetZ = 1; hitFace = "SOUTH (+Z) [fallback]"; }
         }
         
-        return new Vector3i(targetBlock.x + offsetX, targetBlock.y + offsetY, targetBlock.z + offsetZ);
+        cachedHitFaces.put(playerId, hitFace);
+        Vector3i placementPos = new Vector3i(targetBlock.x + offsetX, targetBlock.y + offsetY, targetBlock.z + offsetZ);
+        
+        LOGGER.info("[PlacementCalc] Hit face: " + hitFace + " -> Placement: " + 
+            placementPos.x + "," + placementPos.y + "," + placementPos.z);
+        
+        return placementPos;
+    }
+    
+    @Nullable
+    public static Vector3d getCachedHitLocation(@Nonnull UUID playerId) {
+        return cachedHitLocations.get(playerId);
+    }
+    
+    @Nullable
+    public static String getCachedHitFace(@Nonnull UUID playerId) {
+        return cachedHitFaces.get(playerId);
     }
 
     @Nullable
