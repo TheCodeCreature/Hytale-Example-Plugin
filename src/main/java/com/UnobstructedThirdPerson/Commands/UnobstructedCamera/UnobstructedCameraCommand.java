@@ -1,5 +1,6 @@
 package com.UnobstructedThirdPerson.Commands.UnobstructedCamera;
 
+import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands.DebugTargetCommand;
 import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands.StartUnobstructedCameraCommand;
 import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands.ResetCameraCommand;
 import com.hypixel.hytale.protocol.*;
@@ -20,6 +21,7 @@ public class UnobstructedCameraCommand extends AbstractCommandCollection {
 //        this.addUsageVariant(new WhoAmICommand.WhoAmIOtherCommand());
         this.addSubCommand(new StartUnobstructedCameraCommand());
         this.addSubCommand(new ResetCameraCommand());
+        this.addSubCommand(new DebugTargetCommand());
     }
 
 //    @Override

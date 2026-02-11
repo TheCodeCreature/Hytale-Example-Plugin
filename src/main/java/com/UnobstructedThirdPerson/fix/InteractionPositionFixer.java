@@ -161,6 +161,11 @@ public class InteractionPositionFixer {
         return cachedServerTargets.get(playerId);
     }
 
+    @Nullable
+    public static BlockPosition getLastClientPosition(@Nonnull UUID playerId) {
+        return lastClientPositions.get(playerId);
+    }
+
     private static void ensureFiltersRegistered() {
         if (registeredInboundFilter == null) {
             PacketFilter inboundFilter = (PacketHandler handler, Packet packet) -> {
@@ -191,10 +196,9 @@ public class InteractionPositionFixer {
             handleMouseInteraction(handler, mi);
         }
 
-        // Handle SyncInteractionChains - let packet through so events can fire
-        // The BlockInteractionEventSystems will cancel PlaceBlockEvent/BreakBlockEvent
+        // Handle SyncInteractionChains - fix positions when in redirect mode
         if (packet instanceof SyncInteractionChains sic) {
-            logSyncInteractionChains(handler, sic);
+            handleSyncInteractionChains(handler, sic);
         }
 
         // Handle ClientPlaceBlock - BLOCK this packet for enabled players
@@ -233,11 +237,7 @@ public class InteractionPositionFixer {
         return true; // Block the packet
     }
 
-    private static void logSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
-        if (!LOG_SYNC_INTERACTION_CHAINS) {
-            return;
-        }
-        
+    private static void handleSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
         if (!(handler instanceof GamePacketHandler gph)) {
             return;
         }
@@ -245,24 +245,45 @@ public class InteractionPositionFixer {
         PlayerRef playerRef = gph.getPlayerRef();
         UUID playerId = playerRef.getUuid();
 
-        // Only log for enabled players
+        // Only process for enabled players
         if (!ENABLED_PLAYERS.contains(playerId)) {
             return;
         }
 
-        // Log chain details
+        // Get cached server target
+        Vector3i serverTarget = cachedServerTargets.get(playerId);
+
+        // Fix positions in the packet when redirect mode is enabled
         for (SyncInteractionChain chain : sic.updates) {
             if (chain.interactionData != null) {
                 for (InteractionSyncData data : chain.interactionData) {
                     if (data != null && data.blockPosition != null) {
                         BlockPosition clientPos = data.blockPosition;
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("[SyncInteractionChains] Player: ").append(playerRef.getUsername()).append("\n");
-                        sb.append("  Chain ID: ").append(chain.chainId);
-                        sb.append(", State: ").append(chain.state);
-                        sb.append(", Type: ").append(chain.interactionType).append("\n");
-                        sb.append("  Client blockPosition: ").append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z);
-                        LOGGER.info(sb.toString());
+                        
+                        // Store client position for debug command
+                        lastClientPositions.put(playerId, clientPos);
+                        
+                        // Log if enabled
+                        if (LOG_SYNC_INTERACTION_CHAINS) {
+                            StringBuilder sb = new StringBuilder();
+                            sb.append("[SyncInteractionChains] Player: ").append(playerRef.getUsername()).append("\n");
+                            sb.append("  Chain ID: ").append(chain.chainId);
+                            sb.append(", State: ").append(chain.state);
+                            sb.append(", Type: ").append(chain.interactionType).append("\n");
+                            sb.append("  Client blockPosition: ").append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z);
+                            if (serverTarget != null) {
+                                sb.append("\n  Server target: ").append(serverTarget.x).append(",").append(serverTarget.y).append(",").append(serverTarget.z);
+                            }
+                            LOGGER.info(sb.toString());
+                        }
+                        
+                        // Fix the position when in redirect mode
+                        if (REDIRECT_MODE && serverTarget != null) {
+                            data.blockPosition = new BlockPosition(serverTarget.x, serverTarget.y, serverTarget.z);
+                            if (LOG_SYNC_INTERACTION_CHAINS) {
+                                LOGGER.info("[SyncInteractionChains] FIXED position to server target");
+                            }
+                        }
                     }
                 }
             }
