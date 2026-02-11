@@ -178,6 +178,53 @@ public class InteractionPositionFixer {
         if (packet instanceof SyncInteractionChains sic) {
             handleSyncInteractionChains(handler, sic);
         }
+
+        // Handle ClientPlaceBlock - separate packet that also contains block position
+        if (packet instanceof ClientPlaceBlock cpb) {
+            handleClientPlaceBlock(handler, cpb);
+        }
+    }
+
+    private static void handleClientPlaceBlock(PacketHandler handler, ClientPlaceBlock cpb) {
+        if (!(handler instanceof GamePacketHandler gph)) {
+            return;
+        }
+
+        PlayerRef playerRef = gph.getPlayerRef();
+        UUID playerId = playerRef.getUuid();
+
+        // Only process for enabled players
+        if (!ENABLED_PLAYERS.contains(playerId)) {
+            return;
+        }
+
+        // Get cached server target (updated on world thread)
+        Vector3i serverTarget = cachedServerTargets.get(playerId);
+        if (serverTarget == null || cpb.position == null) {
+            return;
+        }
+
+        BlockPosition clientPos = cpb.position;
+        boolean desynced = clientPos.x != serverTarget.x ||
+                          clientPos.y != serverTarget.y ||
+                          clientPos.z != serverTarget.z;
+
+        if (LOG_CLIENT_PLACE_BLOCK && desynced) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("[ClientPlaceBlock] Player: ").append(playerRef.getUsername()).append("\n");
+            sb.append("  Client position: ").append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z).append("\n");
+            sb.append("  Server calculated: ").append(serverTarget.x).append(",").append(serverTarget.y).append(",").append(serverTarget.z).append("\n");
+            sb.append("  Status: DESYNC DETECTED");
+            if (ENABLE_POSITION_FIX) {
+                sb.append(" -> FIXING");
+            }
+            LOGGER.info(sb.toString());
+        }
+
+        // Apply the fix
+        if (ENABLE_POSITION_FIX && desynced) {
+            cpb.position = new BlockPosition(serverTarget.x, serverTarget.y, serverTarget.z);
+        }
     }
 
     private static void handleSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
