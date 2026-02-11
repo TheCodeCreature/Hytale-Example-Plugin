@@ -1,11 +1,18 @@
 package com.UnobstructedThirdPerson.debug;
 
+import com.UnobstructedThirdPerson.camera.CameraSettingsApplier;
 import com.hypixel.hytale.protocol.ServerCameraSettings;
 import com.hypixel.hytale.protocol.packets.camera.SetServerCamera;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 
@@ -13,15 +20,59 @@ public class CameraDebugManager {
 
     private static final Logger LOGGER = Logger.getLogger("CameraDebug");
     private static final Set<UUID> debugEnabledPlayers = new HashSet<>();
+    private static final Map<UUID, PlayerRef> activePlayerRefs = new ConcurrentHashMap<>();
+    private static ScheduledExecutorService scheduler;
+    private static ScheduledFuture<?> pollingTask;
 
     public static void enableDebug(@Nonnull PlayerRef playerRef) {
         debugEnabledPlayers.add(playerRef.getUuid());
+        activePlayerRefs.put(playerRef.getUuid(), playerRef);
         LOGGER.info("[CameraDebug] Debug enabled for player: " + playerRef.getUsername());
+        startPollingIfNeeded();
     }
 
     public static void disableDebug(@Nonnull PlayerRef playerRef) {
         debugEnabledPlayers.remove(playerRef.getUuid());
+        activePlayerRefs.remove(playerRef.getUuid());
         LOGGER.info("[CameraDebug] Debug disabled for player: " + playerRef.getUsername());
+        stopPollingIfNotNeeded();
+    }
+    
+    private static void startPollingIfNeeded() {
+        if (!debugEnabledPlayers.isEmpty() && pollingTask == null) {
+            if (scheduler == null || scheduler.isShutdown()) {
+                scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+                    Thread t = new Thread(r, "CameraDebug-Poller");
+                    t.setDaemon(true);
+                    return t;
+                });
+            }
+            
+            pollingTask = scheduler.scheduleAtFixedRate(
+                CameraDebugManager::applyToAllDebugPlayers,
+                5, 5, TimeUnit.SECONDS
+            );
+            LOGGER.info("[CameraDebug] Started auto-apply polling (every 5 seconds)");
+        }
+    }
+    
+    private static void stopPollingIfNotNeeded() {
+        if (debugEnabledPlayers.isEmpty() && pollingTask != null) {
+            pollingTask.cancel(false);
+            pollingTask = null;
+            LOGGER.info("[CameraDebug] Stopped auto-apply polling");
+        }
+    }
+    
+    private static void applyToAllDebugPlayers() {
+        CameraSettingsApplier.reloadSettings();
+        for (PlayerRef playerRef : activePlayerRefs.values()) {
+            try {
+                CameraSettingsApplier.applyToPlayer(playerRef);
+            } catch (Exception e) {
+                LOGGER.warning("[CameraDebug] Failed to apply to player: " + playerRef.getUsername());
+            }
+        }
     }
 
     public static boolean isDebugEnabled(@Nonnull PlayerRef playerRef) {
