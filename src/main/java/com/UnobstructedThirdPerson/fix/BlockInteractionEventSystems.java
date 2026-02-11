@@ -52,12 +52,18 @@ public class BlockInteractionEventSystems {
             Vector3i serverTarget = InteractionPositionFixer.getCachedServerTarget(playerUuid);
             Vector3i originalTarget = event.getTargetBlock();
 
-            if (serverTarget != null && InteractionPositionFixer.isRedirectMode()) {
-                // Redirect to server-calculated position
-                event.setTargetBlock(serverTarget);
-                LOGGER.info("[BlockEvent] REDIRECTED PlaceBlockEvent from " + 
-                    originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + " to " +
-                    serverTarget.x + "," + serverTarget.y + "," + serverTarget.z);
+            if (InteractionPositionFixer.isRedirectMode()) {
+                // Redirect mode - fix position if we have a server target
+                if (serverTarget != null) {
+                    event.setTargetBlock(serverTarget);
+                    LOGGER.info("[BlockEvent] REDIRECTED PlaceBlockEvent from " + 
+                        originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + " to " +
+                        serverTarget.x + "," + serverTarget.y + "," + serverTarget.z);
+                } else {
+                    // No server target yet - let it pass through with original position
+                    LOGGER.info("[BlockEvent] PlaceBlockEvent - no server target, using original: " +
+                        originalTarget.x + "," + originalTarget.y + "," + originalTarget.z);
+                }
             } else {
                 // Block mode - cancel the event
                 event.setCancelled(true);
@@ -104,12 +110,18 @@ public class BlockInteractionEventSystems {
             Vector3i serverTarget = InteractionPositionFixer.getCachedServerTarget(playerUuid);
             Vector3i originalTarget = event.getTargetBlock();
 
-            if (serverTarget != null && InteractionPositionFixer.isRedirectMode()) {
-                // Redirect to server-calculated position
-                event.setTargetBlock(serverTarget);
-                LOGGER.info("[BlockEvent] REDIRECTED BreakBlockEvent from " + 
-                    originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + " to " +
-                    serverTarget.x + "," + serverTarget.y + "," + serverTarget.z);
+            if (InteractionPositionFixer.isRedirectMode()) {
+                // Redirect mode - fix position if we have a server target
+                if (serverTarget != null) {
+                    event.setTargetBlock(serverTarget);
+                    LOGGER.info("[BlockEvent] REDIRECTED BreakBlockEvent from " + 
+                        originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + " to " +
+                        serverTarget.x + "," + serverTarget.y + "," + serverTarget.z);
+                } else {
+                    // No server target yet - let it pass through with original position
+                    LOGGER.info("[BlockEvent] BreakBlockEvent - no server target, using original: " +
+                        originalTarget.x + "," + originalTarget.y + "," + originalTarget.z);
+                }
             } else {
                 // Block mode - cancel the event
                 event.setCancelled(true);
