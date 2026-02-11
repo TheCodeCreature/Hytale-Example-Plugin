@@ -45,21 +45,16 @@ public class CameraSettingsApplier {
             CameraDebugManager.logForPlayer(playerRef, "ExtendedCameraSettings before toPacket():\n" + settings.toFullString());
             
             ServerCameraSettings packet = settings.toPacket();
-            
-            // Use Custom view to avoid the Custom view bug that breaks block targeting
-            // FirstPerson and ThirdPerson view ignores all settings, so we can't use that either
-            ClientCameraView cameraView = ClientCameraView.Custom;
-            
-            // If the settings indicate first person, we still need to use Custom
-            // because FirstPerson and ThirdPerson ignores ServerCameraSettings
-            // The distance=0 and isFirstPerson=true will give first-person-like behavior
-            if (settings.isFirstPerson()) {
-                packet.distance = 0.0f;
-                packet.isFirstPerson = true;
-            }
+//            // If the settings indicate first person, we still need to use Custom
+//            // because FirstPerson and ThirdPerson ignores ServerCameraSettings
+//            // The distance=0 and isFirstPerson=true will give first-person-like behavior
+//            if (settings.isFirstPerson()) {
+//                packet.distance = 0.0f;
+//                packet.isFirstPerson = true;
+//            }
             
             // Debug: Log the packet before sending
-            SetServerCamera setServerCamera = new SetServerCamera(cameraView, false, packet);
+            SetServerCamera setServerCamera = new SetServerCamera(ClientCameraView.Custom, false, packet);
             CameraDebugManager.logPacket(playerRef, setServerCamera);
             
             playerRef.getPacketHandler().writeNoCache(setServerCamera);
