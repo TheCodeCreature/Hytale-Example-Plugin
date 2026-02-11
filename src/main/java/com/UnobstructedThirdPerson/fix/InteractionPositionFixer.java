@@ -173,9 +173,10 @@ public class InteractionPositionFixer {
             handleMouseInteraction(handler, mi);
         }
 
-        // Handle SyncInteractionChains - BLOCK this packet for enabled players to prevent place/break
+        // Handle SyncInteractionChains - let packet through so events can fire
+        // The BlockInteractionEventSystems will cancel PlaceBlockEvent/BreakBlockEvent
         if (packet instanceof SyncInteractionChains sic) {
-            return shouldBlockSyncInteractionChains(handler, sic);
+            logSyncInteractionChains(handler, sic);
         }
 
         // Handle ClientPlaceBlock - BLOCK this packet for enabled players
@@ -214,41 +215,40 @@ public class InteractionPositionFixer {
         return true; // Block the packet
     }
 
-    private static boolean shouldBlockSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
+    private static void logSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
+        if (!LOG_SYNC_INTERACTION_CHAINS) {
+            return;
+        }
+        
         if (!(handler instanceof GamePacketHandler gph)) {
-            return false; // Not a game packet handler, let it through
+            return;
         }
 
         PlayerRef playerRef = gph.getPlayerRef();
         UUID playerId = playerRef.getUuid();
 
-        // Only block for enabled players
+        // Only log for enabled players
         if (!ENABLED_PLAYERS.contains(playerId)) {
-            return false; // Not enabled, let packet through
+            return;
         }
 
-        // Log and block the packet entirely
-        if (LOG_SYNC_INTERACTION_CHAINS) {
-            for (SyncInteractionChain chain : sic.updates) {
-                if (chain.interactionData != null) {
-                    for (InteractionSyncData data : chain.interactionData) {
-                        if (data != null && data.blockPosition != null) {
-                            BlockPosition clientPos = data.blockPosition;
-                            StringBuilder sb = new StringBuilder();
-                            sb.append("[SyncInteractionChains] BLOCKING for player: ").append(playerRef.getUsername()).append("\n");
-                            sb.append("  Chain ID: ").append(chain.chainId);
-                            sb.append(", State: ").append(chain.state);
-                            sb.append(", Type: ").append(chain.interactionType).append("\n");
-                            sb.append("  Client blockPosition: ").append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z);
-                            LOGGER.info(sb.toString());
-                        }
+        // Log chain details
+        for (SyncInteractionChain chain : sic.updates) {
+            if (chain.interactionData != null) {
+                for (InteractionSyncData data : chain.interactionData) {
+                    if (data != null && data.blockPosition != null) {
+                        BlockPosition clientPos = data.blockPosition;
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("[SyncInteractionChains] Player: ").append(playerRef.getUsername()).append("\n");
+                        sb.append("  Chain ID: ").append(chain.chainId);
+                        sb.append(", State: ").append(chain.state);
+                        sb.append(", Type: ").append(chain.interactionType).append("\n");
+                        sb.append("  Client blockPosition: ").append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z);
+                        LOGGER.info(sb.toString());
                     }
                 }
             }
         }
-
-        // Block the packet entirely to prevent client-side place/break
-        return true;
     }
 
     private static void handleOutboundPacket(PacketHandler handler, Packet packet) {
