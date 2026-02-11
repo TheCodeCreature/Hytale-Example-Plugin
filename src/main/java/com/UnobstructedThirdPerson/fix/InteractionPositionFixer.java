@@ -17,14 +17,18 @@ import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
 import com.hypixel.hytale.server.core.io.adapter.PacketFilter;
 import com.hypixel.hytale.server.core.io.handlers.game.GamePacketHandler;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.TargetUtil;
+import com.hypixel.hytale.server.core.HytaleServer;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class InteractionPositionFixer {
@@ -49,18 +53,32 @@ public class InteractionPositionFixer {
     // Fix behavior
     private static final boolean ENABLE_POSITION_FIX = true;  // Enable the actual fix
     private static final int RAYCAST_DISTANCE = 30;           // Max distance for server raycast
+    private static final long CACHE_UPDATE_INTERVAL_MS = 50;  // How often to update cached target (ms)
 
     // ===== END CONFIGURABLE FILTERS =====
 
     private static final Set<UUID> ENABLED_PLAYERS = ConcurrentHashMap.newKeySet();
     private static final Map<UUID, BlockPosition> lastClientPositions = new ConcurrentHashMap<>();
     private static final Map<UUID, BlockPosition> lastServerPositions = new ConcurrentHashMap<>();
+    private static final Map<UUID, Vector3i> cachedServerTargets = new ConcurrentHashMap<>();
+    private static final Map<UUID, ScheduledFuture<?>> activeTasks = new ConcurrentHashMap<>();
     private static PacketFilter registeredInboundFilter;
     private static PacketFilter registeredOutboundFilter;
 
-    public static void enableForPlayer(@Nonnull UUID playerId) {
+    public static void enableForPlayer(@Nonnull PlayerRef playerRef) {
+        UUID playerId = playerRef.getUuid();
+        
+        // Already enabled
+        if (ENABLED_PLAYERS.contains(playerId)) {
+            return;
+        }
+        
         ENABLED_PLAYERS.add(playerId);
         ensureFiltersRegistered();
+        
+        // Start scheduled task to update cached target on world thread
+        startCacheUpdateTask(playerId, playerRef);
+        
         LOGGER.info("[InteractionFix] Enabled for player: " + playerId);
     }
 
@@ -68,7 +86,57 @@ public class InteractionPositionFixer {
         ENABLED_PLAYERS.remove(playerId);
         lastClientPositions.remove(playerId);
         lastServerPositions.remove(playerId);
+        cachedServerTargets.remove(playerId);
+        
+        // Cancel scheduled task
+        ScheduledFuture<?> task = activeTasks.remove(playerId);
+        if (task != null) {
+            task.cancel(false);
+        }
+        
         LOGGER.info("[InteractionFix] Disabled for player: " + playerId);
+    }
+    
+    private static void startCacheUpdateTask(@Nonnull UUID playerId, @Nonnull PlayerRef playerRef) {
+        Ref<EntityStore> ref = playerRef.getReference();
+        if (ref == null || !ref.isValid()) {
+            LOGGER.warning("[InteractionFix] Cannot start cache task - invalid player reference");
+            return;
+        }
+        
+        Store<EntityStore> store = ref.getStore();
+        World world = store.getExternalData().getWorld();
+        
+        ScheduledFuture<?> task = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> {
+            // Execute on world thread
+            world.execute(() -> updateCachedTarget(playerId, playerRef));
+        }, 0L, CACHE_UPDATE_INTERVAL_MS, TimeUnit.MILLISECONDS);
+        
+        activeTasks.put(playerId, task);
+        LOGGER.info("[InteractionFix] Started cache update task for player: " + playerId);
+    }
+    
+    private static void updateCachedTarget(@Nonnull UUID playerId, @Nonnull PlayerRef playerRef) {
+        // Check if still enabled
+        if (!ENABLED_PLAYERS.contains(playerId)) {
+            return;
+        }
+        
+        Ref<EntityStore> ref = playerRef.getReference();
+        if (ref == null || !ref.isValid()) {
+            return;
+        }
+        
+        Store<EntityStore> store = ref.getStore();
+        
+        try {
+            Vector3i target = TargetUtil.getTargetBlock(ref, RAYCAST_DISTANCE, store);
+            if (target != null) {
+                cachedServerTargets.put(playerId, target);
+            }
+        } catch (Exception e) {
+            // Silently ignore - player may have disconnected
+        }
     }
 
     public static boolean isEnabledForPlayer(@Nonnull UUID playerId) {
@@ -125,22 +193,10 @@ public class InteractionPositionFixer {
             return;
         }
 
-        Ref<EntityStore> ref = playerRef.getReference();
-        if (ref == null || !ref.isValid()) {
-            return;
-        }
-
-        Store<EntityStore> store = ref.getStore();
-
-        // Calculate server-side target once
-        Vector3i serverTarget = null;
-        try {
-            serverTarget = TargetUtil.getTargetBlock(ref, RAYCAST_DISTANCE, store);
-        } catch (Exception e) {
-            LOGGER.warning("[InteractionFix] Failed to calculate server target: " + e.getMessage());
-        }
-
+        // Get cached server target (updated on world thread)
+        Vector3i serverTarget = cachedServerTargets.get(playerId);
         if (serverTarget == null) {
+            // No cached target yet
             return;
         }
 
@@ -201,20 +257,8 @@ public class InteractionPositionFixer {
             return;
         }
 
-        Ref<EntityStore> ref = playerRef.getReference();
-        if (ref == null || !ref.isValid()) {
-            return;
-        }
-
-        Store<EntityStore> store = ref.getStore();
-        
-        // Calculate server-side target
-        Vector3i serverTarget = null;
-        try {
-            serverTarget = TargetUtil.getTargetBlock(ref, RAYCAST_DISTANCE, store);
-        } catch (Exception e) {
-            LOGGER.warning("[InteractionFix] Failed to calculate server target: " + e.getMessage());
-        }
+        // Get cached server target (updated on world thread)
+        Vector3i serverTarget = cachedServerTargets.get(playerId);
 
         // Get client position for logging
         BlockPosition clientPos = null;
@@ -376,6 +420,12 @@ public class InteractionPositionFixer {
     }
 
     public static void shutdown() {
+        // Cancel all scheduled tasks
+        for (ScheduledFuture<?> task : activeTasks.values()) {
+            task.cancel(false);
+        }
+        activeTasks.clear();
+        
         if (registeredInboundFilter != null) {
             try {
                 PacketAdapters.deregisterInbound(registeredInboundFilter);
@@ -395,6 +445,7 @@ public class InteractionPositionFixer {
         ENABLED_PLAYERS.clear();
         lastClientPositions.clear();
         lastServerPositions.clear();
+        cachedServerTargets.clear();
         LOGGER.info("[InteractionFix] Shutdown complete");
     }
 }

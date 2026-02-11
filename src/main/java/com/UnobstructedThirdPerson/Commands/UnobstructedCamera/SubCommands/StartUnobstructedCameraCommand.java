@@ -34,7 +34,7 @@ public class StartUnobstructedCameraCommand extends AbstractPlayerCommand {
         if(distance != null) settings.distance = distance;
 
         // Enable the interaction position fixer to correct stale block positions
-        InteractionPositionFixer.enableForPlayer(playerRef.getUuid());
+        InteractionPositionFixer.enableForPlayer(playerRef);
 
         playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, settings));
     }

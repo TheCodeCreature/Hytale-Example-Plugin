@@ -339,7 +339,7 @@ public class TransparentAreaCommand extends CommandBase {
         }
 
         // Enable the interaction position fixer to correct stale block positions
-        InteractionPositionFixer.enableForPlayer(playerId);
+        InteractionPositionFixer.enableForPlayer(playerRef);
 
         ServerCameraSettings settings = new ServerCameraSettings();
         settings.positionLerpSpeed = 0.99f;
