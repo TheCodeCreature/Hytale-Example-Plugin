@@ -8,6 +8,8 @@ import com.google.gson.JsonParser;
 import com.hypixel.hytale.protocol.ApplyLookType;
 import com.hypixel.hytale.protocol.ApplyMovementType;
 import com.hypixel.hytale.protocol.AttachedToType;
+import com.hypixel.hytale.protocol.CameraAxis;
+import com.hypixel.hytale.protocol.CameraNode;
 import com.hypixel.hytale.protocol.CanMoveType;
 import com.hypixel.hytale.protocol.Direction;
 import com.hypixel.hytale.protocol.MouseInputTargetType;
@@ -16,6 +18,7 @@ import com.hypixel.hytale.protocol.MovementForceRotationType;
 import com.hypixel.hytale.protocol.Position;
 import com.hypixel.hytale.protocol.PositionDistanceOffsetType;
 import com.hypixel.hytale.protocol.PositionType;
+import com.hypixel.hytale.protocol.Rangef;
 import com.hypixel.hytale.protocol.RotationType;
 import com.hypixel.hytale.protocol.ServerCameraSettings;
 import com.hypixel.hytale.protocol.Vector2f;
@@ -141,7 +144,21 @@ public class CameraSettingsLoader {
         // Vector2f field
         settings.lookMultiplier = getVector2f(cameraJson, "LookMultiplier");
 
+        // Model CameraSettings fields (Yaw and Pitch with AngleRange and TargetNodes)
+        settings.yaw = getCameraAxis(cameraJson, "Yaw");
+        settings.pitch = getCameraAxis(cameraJson, "Pitch");
+
         LOGGER.log(Level.INFO, "Loaded extended camera settings: " + settings);
+        if (settings.yaw != null) {
+            LOGGER.log(Level.INFO, "[CameraDebug] Yaw: AngleRange=" + 
+                (settings.yaw.angleRange != null ? settings.yaw.angleRange.min + " to " + settings.yaw.angleRange.max : "null") +
+                ", TargetNodes=" + java.util.Arrays.toString(settings.yaw.targetNodes));
+        }
+        if (settings.pitch != null) {
+            LOGGER.log(Level.INFO, "[CameraDebug] Pitch: AngleRange=" + 
+                (settings.pitch.angleRange != null ? settings.pitch.angleRange.min + " to " + settings.pitch.angleRange.max : "null") +
+                ", TargetNodes=" + java.util.Arrays.toString(settings.pitch.targetNodes));
+        }
         return settings;
     }
 
@@ -264,5 +281,43 @@ public class CameraSettingsLoader {
             }
         }
         return defaultValue;
+    }
+
+    @Nullable
+    private static CameraAxis getCameraAxis(JsonObject json, String key) {
+        JsonElement element = json.get(key);
+        if (element != null && element.isJsonObject()) {
+            JsonObject obj = element.getAsJsonObject();
+            CameraAxis axis = new CameraAxis();
+            
+            // Parse AngleRange
+            JsonElement angleRangeElement = obj.get("AngleRange");
+            if (angleRangeElement != null && angleRangeElement.isJsonObject()) {
+                JsonObject angleRangeObj = angleRangeElement.getAsJsonObject();
+                Rangef range = new Rangef();
+                range.min = getFloat(angleRangeObj, "Min", 0.0f);
+                range.max = getFloat(angleRangeObj, "Max", 0.0f);
+                axis.angleRange = range;
+            }
+            
+            // Parse TargetNodes
+            JsonElement targetNodesElement = obj.get("TargetNodes");
+            if (targetNodesElement != null && targetNodesElement.isJsonArray()) {
+                com.google.gson.JsonArray nodesArray = targetNodesElement.getAsJsonArray();
+                CameraNode[] nodes = new CameraNode[nodesArray.size()];
+                for (int i = 0; i < nodesArray.size(); i++) {
+                    try {
+                        String nodeName = nodesArray.get(i).getAsString();
+                        nodes[i] = CameraNode.valueOf(nodeName);
+                    } catch (Exception e) {
+                        nodes[i] = CameraNode.None;
+                    }
+                }
+                axis.targetNodes = nodes;
+            }
+            
+            return axis;
+        }
+        return null;
     }
 }

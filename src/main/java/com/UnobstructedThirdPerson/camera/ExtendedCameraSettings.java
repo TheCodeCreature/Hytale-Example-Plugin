@@ -3,6 +3,8 @@ package com.UnobstructedThirdPerson.camera;
 import com.hypixel.hytale.protocol.ApplyLookType;
 import com.hypixel.hytale.protocol.ApplyMovementType;
 import com.hypixel.hytale.protocol.AttachedToType;
+import com.hypixel.hytale.protocol.CameraAxis;
+import com.hypixel.hytale.protocol.CameraNode;
 import com.hypixel.hytale.protocol.CanMoveType;
 import com.hypixel.hytale.protocol.Direction;
 import com.hypixel.hytale.protocol.MouseInputTargetType;
@@ -11,6 +13,7 @@ import com.hypixel.hytale.protocol.MovementForceRotationType;
 import com.hypixel.hytale.protocol.Position;
 import com.hypixel.hytale.protocol.PositionDistanceOffsetType;
 import com.hypixel.hytale.protocol.PositionType;
+import com.hypixel.hytale.protocol.Rangef;
 import com.hypixel.hytale.protocol.RotationType;
 import com.hypixel.hytale.protocol.ServerCameraSettings;
 import com.hypixel.hytale.protocol.Vector2f;
@@ -18,7 +21,13 @@ import com.hypixel.hytale.protocol.Vector3f;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ExtendedCameraSettings extends ServerCameraSettings{
+public class ExtendedCameraSettings extends ServerCameraSettings {
+
+    // Model CameraSettings fields (from Player.json Camera section)
+    @Nullable
+    protected CameraAxis yaw;
+    @Nullable
+    protected CameraAxis pitch;
 
 //    // All 30 fields from ServerCameraSettings with defaults
 //    protected float positionLerpSpeed = 1.0f;
@@ -104,6 +113,9 @@ public class ExtendedCameraSettings extends ServerCameraSettings{
         this.lookMultiplier = other.lookMultiplier;
         this.mouseInputType = other.mouseInputType;
         this.planeNormal = other.planeNormal;
+        // Model CameraSettings fields
+        this.yaw = other.yaw;
+        this.pitch = other.pitch;
     }
 
     @Nonnull
@@ -173,6 +185,14 @@ public class ExtendedCameraSettings extends ServerCameraSettings{
     @Nullable public Vector2f getLookMultiplier() { return lookMultiplier; }
     @Nonnull public MouseInputType getMouseInputType() { return mouseInputType; }
     @Nullable public Vector3f getPlaneNormal() { return planeNormal; }
+    
+    // Model CameraSettings getters
+    @Nullable public CameraAxis getYaw() { return yaw; }
+    @Nullable public CameraAxis getPitch() { return pitch; }
+    
+    // Model CameraSettings setters
+    public void setYaw(@Nullable CameraAxis value) { this.yaw = value; }
+    public void setPitch(@Nullable CameraAxis value) { this.pitch = value; }
 
     @Override
     public String toString() {
@@ -219,6 +239,20 @@ public class ExtendedCameraSettings extends ServerCameraSettings{
         sb.append("  lookMultiplier=").append(lookMultiplier).append("\n");
         sb.append("  mouseInputType=").append(mouseInputType).append("\n");
         sb.append("  planeNormal=").append(planeNormal).append("\n");
+        sb.append("  yaw=").append(yaw != null ? formatCameraAxis(yaw) : "null").append("\n");
+        sb.append("  pitch=").append(pitch != null ? formatCameraAxis(pitch) : "null").append("\n");
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private String formatCameraAxis(CameraAxis axis) {
+        StringBuilder sb = new StringBuilder("CameraAxis{");
+        if (axis.angleRange != null) {
+            sb.append("angleRange=[").append(axis.angleRange.min).append(" to ").append(axis.angleRange.max).append("]");
+        } else {
+            sb.append("angleRange=null");
+        }
+        sb.append(", targetNodes=").append(java.util.Arrays.toString(axis.targetNodes));
         sb.append("}");
         return sb.toString();
     }
