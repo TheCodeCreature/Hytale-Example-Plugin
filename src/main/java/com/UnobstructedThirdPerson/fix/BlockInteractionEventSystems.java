@@ -49,24 +49,17 @@ public class BlockInteractionEventSystems {
                 return;
             }
 
-            Vector3i serverTarget = InteractionPositionFixer.getCachedServerTarget(playerUuid);
             Vector3i originalTarget = event.getTargetBlock();
 
+            // Always cancel client events - we handle placement manually via SyncInteractionChains
+            // when REDIRECT_MODE is true, or simply block all placement when false
+            event.setCancelled(true);
+            
             if (InteractionPositionFixer.isRedirectMode()) {
-                // Redirect mode - fix position if we have a server target
-                if (serverTarget != null) {
-                    event.setTargetBlock(serverTarget);
-                    LOGGER.info("[BlockEvent] REDIRECTED PlaceBlockEvent from " + 
-                        originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + " to " +
-                        serverTarget.x + "," + serverTarget.y + "," + serverTarget.z);
-                } else {
-                    // No server target yet - let it pass through with original position
-                    LOGGER.info("[BlockEvent] PlaceBlockEvent - no server target, using original: " +
-                        originalTarget.x + "," + originalTarget.y + "," + originalTarget.z);
-                }
+                LOGGER.info("[BlockEvent] CANCELLED PlaceBlockEvent at client pos " + 
+                    originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + 
+                    " (redirect mode - handled via SyncInteractionChains)");
             } else {
-                // Block mode - cancel the event
-                event.setCancelled(true);
                 LOGGER.info("[BlockEvent] CANCELLED PlaceBlockEvent at " + 
                     originalTarget.x + "," + originalTarget.y + "," + originalTarget.z);
             }
@@ -107,24 +100,17 @@ public class BlockInteractionEventSystems {
                 return;
             }
 
-            Vector3i serverTarget = InteractionPositionFixer.getCachedServerTarget(playerUuid);
             Vector3i originalTarget = event.getTargetBlock();
 
+            // Always cancel client events - we handle breaking manually via SyncInteractionChains
+            // when REDIRECT_MODE is true, or simply block all breaking when false
+            event.setCancelled(true);
+            
             if (InteractionPositionFixer.isRedirectMode()) {
-                // Redirect mode - fix position if we have a server target
-                if (serverTarget != null) {
-                    event.setTargetBlock(serverTarget);
-                    LOGGER.info("[BlockEvent] REDIRECTED BreakBlockEvent from " + 
-                        originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + " to " +
-                        serverTarget.x + "," + serverTarget.y + "," + serverTarget.z);
-                } else {
-                    // No server target yet - let it pass through with original position
-                    LOGGER.info("[BlockEvent] BreakBlockEvent - no server target, using original: " +
-                        originalTarget.x + "," + originalTarget.y + "," + originalTarget.z);
-                }
+                LOGGER.info("[BlockEvent] CANCELLED BreakBlockEvent at client pos " + 
+                    originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + 
+                    " (redirect mode - handled via SyncInteractionChains)");
             } else {
-                // Block mode - cancel the event
-                event.setCancelled(true);
                 LOGGER.info("[BlockEvent] CANCELLED BreakBlockEvent at " + 
                     originalTarget.x + "," + originalTarget.y + "," + originalTarget.z);
             }
