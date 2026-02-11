@@ -40,10 +40,8 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
     @Override
     protected void start() {
-        // Register system to apply camera settings when player spawns
-        this.getEntityStoreRegistry().registerSystem(new ApplyCameraOnSpawnSystem());
-
-        // Register listener to reload and reapply camera settings when Player.json is modified
-        this.getEventRegistry().register(LoadedAssetsEvent.class, ModelAsset.class, CameraAssetChangeListener::onModelAssetLoaded);
+        // Disabled for debugging - use /cameradebug apply instead
+        // this.getEntityStoreRegistry().registerSystem(new ApplyCameraOnSpawnSystem());
+        // this.getEventRegistry().register(LoadedAssetsEvent.class, ModelAsset.class, CameraAssetChangeListener::onModelAssetLoaded);
     }
 }
