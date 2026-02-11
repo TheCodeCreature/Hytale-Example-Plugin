@@ -4,8 +4,10 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.BlockPosition;
+import com.hypixel.hytale.protocol.InteractionSyncData;
 import com.hypixel.hytale.protocol.Packet;
 import com.hypixel.hytale.protocol.packets.camera.SetServerCamera;
+import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChain;
 import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChains;
 import com.hypixel.hytale.protocol.packets.player.ClientPlaceBlock;
 import com.hypixel.hytale.protocol.packets.player.MouseInteraction;
@@ -33,7 +35,7 @@ public class InteractionPositionFixer {
     private static final boolean LOG_MOUSE_INTERACTION = true;
     private static final boolean LOG_CLIENT_MOVEMENT = false;  // Reserved for future use
     private static final boolean LOG_SET_SERVER_CAMERA = true;
-    private static final boolean LOG_SYNC_INTERACTION_CHAINS = true;
+    private static final boolean LOG_SYNC_INTERACTION_CHAINS = true;  // Log interaction chains with block positions
     private static final boolean LOG_CLIENT_PLACE_BLOCK = true;
     private static final boolean LOG_ALL_PLAYER_PACKETS = false;  // Verbose - logs all packets in player package
     private static final boolean LOG_ALL_CAMERA_PACKETS = false;  // Logs all packets in camera package
@@ -41,7 +43,7 @@ public class InteractionPositionFixer {
 
     // Logging detail levels
     private static final boolean LOG_PACKET_CONTENTS = true;  // Log full packet data
-    private static final boolean LOG_ONLY_CHANGES = true;     // Only log when position differs from last
+    private static final boolean LOG_ONLY_CHANGES = false;    // Log ALL packets, not just changes
     private static final boolean LOG_TO_CHAT = false;         // Also send logs to player chat
 
     // Fix behavior
@@ -102,6 +104,82 @@ public class InteractionPositionFixer {
         // Handle MouseInteraction specifically
         if (packet instanceof MouseInteraction mi) {
             handleMouseInteraction(handler, mi);
+        }
+
+        // Handle SyncInteractionChains - this is where block positions for placement/breaking are sent
+        if (packet instanceof SyncInteractionChains sic) {
+            handleSyncInteractionChains(handler, sic);
+        }
+    }
+
+    private static void handleSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
+        if (!(handler instanceof GamePacketHandler gph)) {
+            return;
+        }
+
+        PlayerRef playerRef = gph.getPlayerRef();
+        UUID playerId = playerRef.getUuid();
+
+        // Only process for enabled players
+        if (!ENABLED_PLAYERS.contains(playerId)) {
+            return;
+        }
+
+        Ref<EntityStore> ref = playerRef.getReference();
+        if (ref == null || !ref.isValid()) {
+            return;
+        }
+
+        Store<EntityStore> store = ref.getStore();
+
+        // Calculate server-side target once
+        Vector3i serverTarget = null;
+        try {
+            serverTarget = TargetUtil.getTargetBlock(ref, RAYCAST_DISTANCE, store);
+        } catch (Exception e) {
+            LOGGER.warning("[InteractionFix] Failed to calculate server target: " + e.getMessage());
+        }
+
+        if (serverTarget == null) {
+            return;
+        }
+
+        // Process each chain
+        for (SyncInteractionChain chain : sic.updates) {
+            if (chain.interactionData != null) {
+                for (InteractionSyncData data : chain.interactionData) {
+                    if (data != null && data.blockPosition != null) {
+                        BlockPosition clientPos = data.blockPosition;
+
+                        // Log the desync
+                        boolean desynced = clientPos.x != serverTarget.x ||
+                                          clientPos.y != serverTarget.y ||
+                                          clientPos.z != serverTarget.z;
+
+                        if (LOG_SYNC_INTERACTION_CHAINS) {
+                            StringBuilder sb = new StringBuilder();
+                            sb.append("[SyncInteractionChains] Player: ").append(playerRef.getUsername()).append("\n");
+                            sb.append("  Chain ID: ").append(chain.chainId);
+                            sb.append(", State: ").append(chain.state);
+                            sb.append(", Type: ").append(chain.interactionType).append("\n");
+                            sb.append("  Client blockPosition: ").append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z).append("\n");
+                            sb.append("  Server calculated:    ").append(serverTarget.x).append(",").append(serverTarget.y).append(",").append(serverTarget.z).append("\n");
+                            sb.append("  Status: ").append(desynced ? "DESYNC DETECTED" : "In sync");
+                            if (desynced && ENABLE_POSITION_FIX) {
+                                sb.append(" -> FIXING");
+                            }
+                            LOGGER.info(sb.toString());
+                        }
+
+                        // Apply the fix
+                        if (ENABLE_POSITION_FIX && desynced) {
+                            data.blockPosition = new BlockPosition(
+                                serverTarget.x, serverTarget.y, serverTarget.z
+                            );
+                        }
+                    }
+                }
+            }
         }
     }
 
