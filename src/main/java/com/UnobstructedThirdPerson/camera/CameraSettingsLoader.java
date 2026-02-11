@@ -40,34 +40,23 @@ public class CameraSettingsLoader {
     @Nullable
     public static ExtendedCameraSettings loadFromPlayerModel() {
         try {
-            ModelAsset playerModel = ModelAsset.getAssetMap().getAsset(PLAYER_MODEL_ID);
-            if (playerModel == null) {
-                LOGGER.log(Level.WARNING, "Player model asset not found: " + PLAYER_MODEL_ID);
-                return null;
-            }
-            return loadFromModelAsset(playerModel);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to load camera settings from player model", e);
-            return null;
-        }
-    }
-
-    @Nullable
-    public static ExtendedCameraSettings loadFromModelAsset(@Nonnull ModelAsset modelAsset) {
-        try {
-            // Try to load from resource file directly
+            // Load directly from resource file - don't depend on ModelAsset being loaded
             String resourcePath = "/" + PLAYER_MODEL_PATH;
+            LOGGER.log(Level.INFO, "[CameraDebug] Attempting to load from resource: " + resourcePath);
+            
             InputStream inputStream = CameraSettingsLoader.class.getResourceAsStream(resourcePath);
             
             if (inputStream == null) {
-                LOGGER.log(Level.WARNING, "Could not find resource: " + resourcePath);
+                LOGGER.log(Level.WARNING, "[CameraDebug] Could not find resource: " + resourcePath);
                 return createDefaultSettings();
             }
+            
+            LOGGER.log(Level.INFO, "[CameraDebug] Resource found, parsing JSON...");
 
             try (InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
                 JsonElement rootElement = JsonParser.parseReader(reader);
                 if (!rootElement.isJsonObject()) {
-                    LOGGER.log(Level.WARNING, "Player.json root is not a JSON object");
+                    LOGGER.log(Level.WARNING, "[CameraDebug] Player.json root is not a JSON object");
                     return createDefaultSettings();
                 }
 
@@ -75,16 +64,23 @@ public class CameraSettingsLoader {
                 JsonElement cameraElement = rootObject.get("Camera");
                 
                 if (cameraElement == null || !cameraElement.isJsonObject()) {
-                    LOGGER.log(Level.INFO, "No Camera section found in Player.json, using defaults");
+                    LOGGER.log(Level.INFO, "[CameraDebug] No Camera section found in Player.json, using defaults");
                     return createDefaultSettings();
                 }
-
+                
+                LOGGER.log(Level.INFO, "[CameraDebug] Camera section found, parsing...");
                 return parseFromJson(cameraElement.getAsJsonObject());
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to load camera settings from model asset", e);
+            LOGGER.log(Level.SEVERE, "[CameraDebug] Failed to load camera settings from player model", e);
             return createDefaultSettings();
         }
+    }
+
+    @Nullable
+    public static ExtendedCameraSettings loadFromModelAsset(@Nonnull ModelAsset modelAsset) {
+        // Delegate to the main loader - ModelAsset parameter kept for API compatibility
+        return loadFromPlayerModel();
     }
 
     @Nonnull
