@@ -7,6 +7,7 @@ import com.UnobstructedThirdPerson.camera.CameraAssetChangeListener;
 import com.UnobstructedThirdPerson.camera.PeekTestCommand;
 import com.UnobstructedThirdPerson.camera.TransparentAreaCommand;
 import com.UnobstructedThirdPerson.debug.CameraDebugCommand;
+import com.UnobstructedThirdPerson.fix.BlockInteractionEventSystems;
 import com.hypixel.hytale.assetstore.event.LoadedAssetsEvent;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.asset.GenerateSchemaEvent;
@@ -45,5 +46,10 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         
         // // Re-apply camera settings when assets are reloaded (e.g., Player.json changes)
         // this.getEventRegistry().register(LoadedAssetsEvent.class, ModelAsset.class, CameraAssetChangeListener::onModelAssetLoaded);
+        
+        // Register block event systems to cancel place/break for enabled players
+        this.getEntityStoreRegistry().registerSystem(new BlockInteractionEventSystems.PlaceBlockEventSystem());
+        this.getEntityStoreRegistry().registerSystem(new BlockInteractionEventSystems.BreakBlockEventSystem());
+        LOGGER.atInfo().log("Registered BlockInteractionEventSystems for place/break cancellation");
     }
 }
