@@ -1309,9 +1309,11 @@
   "GradientId": "02",
   "Camera": {
     "PositionLerpSpeed": 0.1,
-    "Distance": 20,
     "PositionOffset": {
+      "X": 1,
+      "Y": 1,
       "Z": 10
-    }
+    },
+    "Distance": 20
   }
 }
