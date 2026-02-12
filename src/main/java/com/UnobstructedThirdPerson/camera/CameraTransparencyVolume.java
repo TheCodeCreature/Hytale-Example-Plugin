@@ -31,6 +31,7 @@ public class CameraTransparencyVolume {
 
     private static final Logger LOGGER = Logger.getLogger("CameraTransparencyVolume");
     private static final int APPLY_DELAY_MILLIS = 500;
+    private static final int FEET_Y_OFFSET = 1;
     private static final long UPDATE_INTERVAL_MILLIS = 100;
 
     private static final Map<UUID, CameraTransparencyVolume> INSTANCES = new ConcurrentHashMap<>();
@@ -100,7 +101,10 @@ public class CameraTransparencyVolume {
                     var store = ref.getStore();
                     Vector3i origin = CameraPositionUtil.getCameraOriginBlock(ref, store);
                     if (origin != null) {
-                        update(origin);
+                        // Get player foot-level Y to filter out blocks below feet
+                        var look = com.hypixel.hytale.server.core.util.TargetUtil.getLook(ref, store);
+                        int minY = (int) Math.floor(look.getPosition().y) - FEET_Y_OFFSET;
+                        update(origin, minY);
                     } else {
                         LOGGER.fine("[CameraTransparency] getCameraOriginBlock returned null");
                     }
@@ -125,7 +129,7 @@ public class CameraTransparencyVolume {
      * Only runs the diff if the integer block anchor has changed.
      * Must be called on the world thread.
      */
-    public void update(@Nonnull Vector3i newAnchor) {
+    public void update(@Nonnull Vector3i newAnchor, int minY) {
         // Early exit if anchor hasn't changed
         if (lastAnchor != null && lastAnchor.x == newAnchor.x && lastAnchor.y == newAnchor.y && lastAnchor.z == newAnchor.z) {
             return;
@@ -141,6 +145,10 @@ public class CameraTransparencyVolume {
         Map<Long, BlockSnapshot> newSnapshots = new HashMap<>();
 
         shape.forEachBlock(newAnchor.x, newAnchor.y, newAnchor.z, (x, y, z) -> {
+            // Skip blocks below the player's feet
+            if (y < minY) {
+                return true;
+            }
             BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
             if (snapshot != null && snapshot.blockId() != 0) {
                 BlockType baseType = BlockType.getAssetMap().getAsset(snapshot.blockId());

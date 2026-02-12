@@ -71,7 +71,9 @@ final class CameraPositionUtil {
         if (origin != null) {
             CameraTransparencyVolume volume = CameraTransparencyVolume.get(playerId);
             if (volume != null) {
-                volume.update(origin);
+                Transform look = TargetUtil.getLook(ref, store);
+                int minY = (int) Math.floor(look.getPosition().y) - 1;
+                volume.update(origin, minY);
             }
         }
         return origin;
