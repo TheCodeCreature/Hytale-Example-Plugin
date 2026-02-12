@@ -68,7 +68,7 @@ public class CameraTransparencyVolume {
             LOGGER.info("[CameraTransparency] Replaced stale volume for player: " + playerRef.getUsername());
         }
         CameraTransparencyVolume instance = new CameraTransparencyVolume(playerRef, world, shape);
-        TransparentBlockUtils.preloadTransparentType(playerRef);
+        TransparentBlockUtils.preloadAllTransparentTypes(playerRef);
         instance.startUpdateLoop();
         INSTANCES.put(playerId, instance);
         LOGGER.info("[CameraTransparency] Created volume for player: " + playerRef.getUsername());
@@ -181,7 +181,7 @@ public class CameraTransparencyVolume {
         // Ensure transparent types are sent to client
         boolean sentNewTypes = false;
         if (!fakeIdByBaseId.isEmpty()) {
-            sentNewTypes = TransparentBlockUtils.ensureTransparentTypesSent(playerRef, fakeIdByBaseId, true);
+            sentNewTypes = TransparentBlockUtils.ensureTransparentTypesSent(playerRef, fakeIdByBaseId);
         }
 
         LOGGER.info("[CameraTransparency] Diff: " + newPositions.size() + " total, +" + toAdd.size() + " add, -" + toRemove.size() + " remove, sentNewTypes=" + sentNewTypes);

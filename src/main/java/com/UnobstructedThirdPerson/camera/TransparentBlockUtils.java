@@ -208,6 +208,51 @@ public final class TransparentBlockUtils {
         sendTransparentBlockType(playerRef, fakeId, baseType, true);
     }
 
+    /**
+     * Pre-registers transparent variants for ALL known block types in a single
+     * batched UpdateBlockTypes packet. This avoids repeated texture atlas rebuilds
+     * as the player encounters new block types during gameplay.
+     */
+    public static void preloadAllTransparentTypes(@Nonnull PlayerRef playerRef) {
+        Set<Integer> sent = SENT_FAKE_IDS.computeIfAbsent(playerRef.getUuid(), _id -> ConcurrentHashMap.newKeySet());
+
+        Map<Integer, com.hypixel.hytale.protocol.BlockType> batchedTypes = new HashMap<>();
+        int maxIndex = BlockType.getAssetMap().getNextIndex();
+        int maxFakeId = maxIndex;
+
+        for (int baseId = 0; baseId < maxIndex; baseId++) {
+            BlockType baseType = BlockType.getAssetMap().getAsset(baseId);
+            if (baseType == null || baseType.isUnknown()) {
+                continue;
+            }
+
+            int fakeId = getTransparentVariantId(baseId);
+            if (sent.contains(fakeId)) {
+                continue;
+            }
+
+            com.hypixel.hytale.protocol.BlockType packetBlock = buildTransparentPacketBlock(baseType);
+            batchedTypes.put(fakeId, packetBlock);
+            sent.add(fakeId);
+            maxFakeId = Math.max(maxFakeId, fakeId + 1);
+        }
+
+        if (batchedTypes.isEmpty()) {
+            return;
+        }
+
+        UpdateBlockTypes update = new UpdateBlockTypes();
+        update.type = UpdateType.AddOrUpdate;
+        update.maxId = maxFakeId;
+        update.blockTypes = batchedTypes;
+        update.updateBlockTextures = true;
+        update.updateModelTextures = false;
+        update.updateModels = false;
+        update.updateMapGeometry = false;
+
+        playerRef.getPacketHandler().writeNoCache(update);
+    }
+
     public static void resetPlayer(@Nonnull UUID playerId) {
         SENT_FAKE_IDS.remove(playerId);
     }
