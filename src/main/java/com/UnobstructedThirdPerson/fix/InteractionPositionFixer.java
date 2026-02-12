@@ -17,8 +17,12 @@ import com.hypixel.hytale.server.core.io.PacketHandler;
 import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
 import com.hypixel.hytale.server.core.io.adapter.PacketFilter;
 import com.hypixel.hytale.server.core.io.handlers.game.GamePacketHandler;
+import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.chunk.BlockChunk;
+import com.hypixel.hytale.server.core.universe.world.chunk.section.BlockSection;
+import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.TargetUtil;
 import com.hypixel.hytale.protocol.BlockFace;
@@ -363,10 +367,17 @@ public class InteractionPositionFixer {
         // SyncInteractionChains (PlaceBlockInteraction) already handles placement
         // through the interaction chain system. Re-injecting ClientPlaceBlock would
         // cause duplicate placement via BlockPlaceUtils.placeBlock().
+        BlockPosition pos = cpb.position;
         if (LOG_CLIENT_PLACE_BLOCK) {
             LOGGER.info("[ClientPlaceBlock] Killed packet (position=" +
-                (cpb.position != null ? cpb.position.x + "," + cpb.position.y + "," + cpb.position.z : "null") +
+                (pos != null ? pos.x + "," + pos.y + "," + pos.z : "null") +
                 ", blockId=" + cpb.placedBlockId + ") — placement handled by SyncInteractionChains");
+        }
+
+        // Force-resync the block at the client's predicted position so the client
+        // undoes its local prediction (ghost block) at the wrong position.
+        if (pos != null) {
+            scheduleBlockInvalidation(playerRef, pos.x, pos.y, pos.z);
         }
 
         return true; // Block the original packet, do not re-inject
@@ -451,6 +462,13 @@ public class InteractionPositionFixer {
                             " (chain=" + chain.chainId + ", state=" + chain.state +
                             ", entityId=" + (cachedEntityId != null ? cachedEntityId : "none") + ")");
                     }
+
+                    // Force-resync the block at the client's ORIGINAL (wrong) position
+                    // to undo client-side prediction ghosts before correcting to server position
+                    if (clientPos.x != serverPos.x || clientPos.y != serverPos.y || clientPos.z != serverPos.z) {
+                        scheduleBlockInvalidation(playerRef, clientPos.x, clientPos.y, clientPos.z);
+                    }
+
                     data.blockPosition = new BlockPosition(serverPos.x, serverPos.y, serverPos.z);
 
                     // For placement, also correct the block face so the engine
@@ -552,6 +570,47 @@ public class InteractionPositionFixer {
             sb.append("  worldInteraction: null");
         }
         return sb.toString();
+    }
+
+    /**
+     * Force-resync a block at the given position to the client by marking it dirty
+     * in the chunk's changed-positions set. This undoes any client-side prediction
+     * ghost that the server disagrees with.
+     * Must be called on the world thread (use world.execute() if needed).
+     */
+    private static void invalidateBlockAt(Ref<EntityStore> ref, Store<EntityStore> store, int x, int y, int z) {
+        try {
+            World world = store.getExternalData().getWorld();
+            Store<ChunkStore> chunkStore = world.getChunkStore().getStore();
+            long chunkIndex = ChunkUtil.indexChunkFromBlock(x, z);
+            Ref<ChunkStore> chunkRef = chunkStore.getExternalData().getChunkReference(chunkIndex);
+            if (chunkRef != null && chunkRef.isValid()) {
+                BlockChunk blockChunk = chunkStore.getComponent(chunkRef, BlockChunk.getComponentType());
+                if (blockChunk != null) {
+                    BlockSection section = blockChunk.getSectionAtBlockY(y);
+                    if (section != null) {
+                        section.invalidateBlock(x, y, z);
+                        LOGGER.info("[InteractionFix] Invalidated block at " + x + "," + y + "," + z +
+                            " to resync client prediction");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warning("[InteractionFix] Failed to invalidate block at " +
+                x + "," + y + "," + z + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Schedule a block invalidation on the world thread for the given position.
+     * This is safe to call from the Netty IO thread (packet filter context).
+     */
+    private static void scheduleBlockInvalidation(PlayerRef playerRef, int x, int y, int z) {
+        Ref<EntityStore> ref = playerRef.getReference();
+        if (ref == null || !ref.isValid()) return;
+        Store<EntityStore> store = ref.getStore();
+        World world = store.getExternalData().getWorld();
+        world.execute(() -> invalidateBlockAt(ref, store, x, y, z));
     }
 
     public static void shutdown() {
