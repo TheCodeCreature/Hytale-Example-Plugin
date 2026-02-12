@@ -8,8 +8,8 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
+import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import javax.annotation.Nonnull;
@@ -17,6 +17,7 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -30,6 +31,7 @@ public class CameraTransparencySphere {
     private static final Logger LOGGER = Logger.getLogger("CameraTransparencySphere");
     private static final double DEFAULT_RADIUS = 10.0;
     private static final int APPLY_DELAY_MILLIS = 50;
+    private static final long UPDATE_INTERVAL_MILLIS = 100;
 
     private static final Map<UUID, CameraTransparencySphere> INSTANCES = new ConcurrentHashMap<>();
 
@@ -43,6 +45,8 @@ public class CameraTransparencySphere {
     private final Map<Long, BlockSnapshot> activeBlocks = new HashMap<>();
     // Last anchor used for diff check
     private Vector3i lastAnchor = null;
+    // Scheduled update task
+    private ScheduledFuture<?> updateTask = null;
 
     public CameraTransparencySphere(@Nonnull PlayerRef playerRef, @Nonnull World world, double radius) {
         this.playerRef = playerRef;
@@ -60,6 +64,7 @@ public class CameraTransparencySphere {
             return existing;
         }
         CameraTransparencySphere instance = new CameraTransparencySphere(playerRef, world, DEFAULT_RADIUS);
+        instance.startUpdateLoop();
         INSTANCES.put(playerId, instance);
         LOGGER.info("[CameraTransparency] Created sphere for player: " + playerRef.getUsername());
         return instance;
@@ -78,21 +83,30 @@ public class CameraTransparencySphere {
         }
     }
 
-    // ===== External trigger =====
+    // ===== Scheduled update loop =====
 
-    /**
-     * Called from external packages (e.g. InteractionPositionFixer) to trigger a sphere update.
-     * Computes the camera origin via CameraPositionUtil and calls update() if a sphere exists.
-     * Must be called on the world thread.
-     */
-    public static void updateForPlayer(@Nonnull UUID playerId, @Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store) {
-        CameraTransparencySphere sphere = INSTANCES.get(playerId);
-        if (sphere == null) {
-            return;
-        }
-        Vector3i origin = CameraPositionUtil.getCameraOriginBlock(ref, store);
-        if (origin != null) {
-            sphere.update(origin);
+    private void startUpdateLoop() {
+        updateTask = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> {
+            try {
+                Ref<EntityStore> ref = playerRef.getReference();
+                if (ref == null || !ref.isValid()) {
+                    return;
+                }
+                var store = ref.getStore();
+                Vector3i origin = CameraPositionUtil.getCameraOriginBlock(ref, store);
+                if (origin != null) {
+                    world.execute(() -> update(origin));
+                }
+            } catch (Exception e) {
+                LOGGER.warning("[CameraTransparency] Error in update loop: " + e.getMessage());
+            }
+        }, 0, UPDATE_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+    }
+
+    private void stopUpdateLoop() {
+        if (updateTask != null) {
+            updateTask.cancel(false);
+            updateTask = null;
         }
     }
 
@@ -215,6 +229,8 @@ public class CameraTransparencySphere {
      * Restores all transparent blocks to their originals and clears state.
      */
     public void shutdown() {
+        stopUpdateLoop();
+
         // Restore all active blocks
         for (BlockSnapshot original : activeBlocks.values()) {
             playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
