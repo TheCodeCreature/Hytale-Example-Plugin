@@ -296,18 +296,25 @@ public class InteractionPositionFixer {
             return false;
         }
 
-        // Rewrite position to server-computed placement position
+        // Always kill the original client packet and re-inject a new one
+        // with corrected coordinates to avoid duplicate placement
         Vector3i placementPos = cachedPlacementPositions.get(playerId);
         if (placementPos != null && cpb.position != null) {
+            ClientPlaceBlock corrected = cpb.clone();
+            corrected.position = new BlockPosition(placementPos.x, placementPos.y, placementPos.z);
+
             if (LOG_CLIENT_PLACE_BLOCK) {
-                LOGGER.info("[ClientPlaceBlock] Rewrote position from " +
+                LOGGER.info("[ClientPlaceBlock] Blocked original, re-injecting with position " +
                     cpb.position.x + "," + cpb.position.y + "," + cpb.position.z +
                     " -> " + placementPos.x + "," + placementPos.y + "," + placementPos.z);
             }
-            cpb.position = new BlockPosition(placementPos.x, placementPos.y, placementPos.z);
+
+            gph.handle(corrected);
+        } else if (LOG_CLIENT_PLACE_BLOCK) {
+            LOGGER.fine("[ClientPlaceBlock] No cached placement position, dropping packet");
         }
 
-        return false; // Let the rewritten packet through
+        return true; // Block the original packet
     }
 
     private static boolean handleSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
@@ -326,11 +333,13 @@ public class InteractionPositionFixer {
             return false; // Let packet through unmodified
         }
 
-        // Rewrite block positions in the packet to use server-computed targets,
-        // then let the packet flow through the normal engine interaction pipeline.
-        // This preserves: block rotations, survival damage, placement validation,
+        // Always kill the original client packet and re-inject a new one
+        // with corrected coordinates to avoid duplicate interactions.
+        // Deep-clone preserves: block rotations, survival damage, placement validation,
         // inventory management, events, and all other engine behavior.
-        for (SyncInteractionChain chain : sic.updates) {
+        SyncInteractionChains corrected = sic.clone();
+
+        for (SyncInteractionChain chain : corrected.updates) {
             if (chain.interactionData == null) {
                 continue;
             }
@@ -357,8 +366,8 @@ public class InteractionPositionFixer {
 
                 if (serverPos != null) {
                     if (LOG_SYNC_INTERACTION_CHAINS) {
-                        LOGGER.info("[SyncInteractionChains] Rewrote " + chain.interactionType +
-                            " blockPosition from " + clientPos.x + "," + clientPos.y + "," + clientPos.z +
+                        LOGGER.info("[SyncInteractionChains] Blocked original, re-injecting " + chain.interactionType +
+                            " blockPosition " + clientPos.x + "," + clientPos.y + "," + clientPos.z +
                             " -> " + serverPos.x + "," + serverPos.y + "," + serverPos.z +
                             " (chain=" + chain.chainId + ", state=" + chain.state + ")");
                     }
@@ -374,12 +383,13 @@ public class InteractionPositionFixer {
                     }
                 } else if (LOG_SYNC_INTERACTION_CHAINS) {
                     LOGGER.fine("[SyncInteractionChains] No cached server position for " +
-                        chain.interactionType + " - letting client position through");
+                        chain.interactionType + " - keeping client position in clone");
                 }
             }
         }
 
-        return false; // Let the rewritten packet through to the engine
+        gph.handle(corrected);
+        return true; // Block the original packet
     }
 
     private static void handleOutboundPacket(PacketHandler handler, Packet packet) {
