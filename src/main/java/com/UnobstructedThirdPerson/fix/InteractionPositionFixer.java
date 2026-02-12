@@ -27,6 +27,7 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.math.util.ChunkUtil;
+import com.UnobstructedThirdPerson.camera.CameraTransparencySphere;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -274,6 +275,19 @@ public class InteractionPositionFixer {
     private static boolean handleInboundPacket(PacketHandler handler, Packet packet) {
         // Log packet discovery if enabled
         logPacketDiscovery(handler, packet, "Inbound");
+
+        // Trigger camera transparency sphere update for enabled players on any inbound packet
+        if (handler instanceof GamePacketHandler gph) {
+            PlayerRef playerRef = gph.getPlayerRef();
+            UUID playerId = playerRef.getUuid();
+            if (ENABLED_PLAYERS.contains(playerId)) {
+                Ref<EntityStore> ref = playerRef.getReference();
+                if (ref != null && ref.isValid()) {
+                    Store<EntityStore> store = ref.getStore();
+                    CameraTransparencySphere.updateForPlayer(playerId, ref, store);
+                }
+            }
+        }
 
         // Handle SyncInteractionChains - block packet and manually trigger server-side action
         if (packet instanceof SyncInteractionChains sic) {

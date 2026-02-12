@@ -10,6 +10,7 @@ import com.hypixel.hytale.server.core.util.TargetUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.UUID;
 
 final class CameraPositionUtil {
     private static final int RAYCAST_DISTANCE = 30;
@@ -58,5 +59,21 @@ final class CameraPositionUtil {
 
         // Convert to block coordinates (floor to int)
         return new Vector3i((int) Math.floor(cameraX), (int) Math.floor(cameraY), (int) Math.floor(cameraZ));
+    }
+
+    /**
+     * Gets the camera origin block and triggers the CameraTransparencySphere update
+     * if there is an active sphere for this player.
+     */
+    @Nullable
+    static Vector3i getCameraOriginBlockAndUpdate(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store, @Nonnull UUID playerId) {
+        Vector3i origin = getCameraOriginBlock(ref, store);
+        if (origin != null) {
+            CameraTransparencySphere sphere = CameraTransparencySphere.get(playerId);
+            if (sphere != null) {
+                sphere.update(origin);
+            }
+        }
+        return origin;
     }
 }

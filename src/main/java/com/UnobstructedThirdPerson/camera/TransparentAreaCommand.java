@@ -7,7 +7,6 @@ import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.*;
-import com.hypixel.hytale.protocol.packets.assets.UpdateBlockTypes;
 import com.hypixel.hytale.protocol.packets.camera.SetServerCamera;
 import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.Message;
@@ -24,7 +23,6 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.UnobstructedThirdPerson.fix.InteractionPositionFixer;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +31,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nonnull;
 
 public class TransparentAreaCommand extends CommandBase {
@@ -41,16 +38,8 @@ public class TransparentAreaCommand extends CommandBase {
     private static final int RADIUS = 5;
     private static final long PEEK_INTERVAL_MILLIS = 100;
     private static final int APPLY_DELAY_MILLIS = 50;
-    private static final Map<UUID, Set<Integer>> SENT_FAKE_IDS = new ConcurrentHashMap<>();
     private static final Map<UUID, PeekState> ACTIVE_PEEKS = new ConcurrentHashMap<>();
     private static final Map<UUID, ClientCameraView> PREVIOUS_CAMERA_VIEW = new ConcurrentHashMap<>();
-    private static volatile int preloadBlockId = Integer.MIN_VALUE;
-    
-    // Transparent texture and ID management
-    private static final String TRANSPARENT_TEXTURE = "hytale:block/debug/alpha_test";
-    private static final Map<Integer, Integer> TRANSPARENT_VARIANT_IDS = new ConcurrentHashMap<>();
-    private static volatile AtomicInteger nextFakeId;
-    private static final Object ID_LOCK = new Object();
     
     // Transparent block manager infrastructure
     private static final Map<UUID, TransparentBlockManager> MANAGERS = new ConcurrentHashMap<>();
@@ -257,73 +246,18 @@ public class TransparentAreaCommand extends CommandBase {
     }
 
     public static void preloadTransparentType(@Nonnull PlayerRef playerRef) {
-        int fakeId = getPreloadBlockId();
-        BlockType baseType = findAnyBlockType();
-        if (baseType == null) {
-            return;
-        }
-
-        sendTransparentBlockType(playerRef, fakeId, baseType, true);
-    }
-
-    private static void sendTransparentBlockType(
-        @Nonnull PlayerRef playerRef,
-        int fakeId,
-        @Nonnull BlockType baseType,
-        boolean rebuildTextures
-    ) {
-        com.hypixel.hytale.protocol.BlockType packetBlock = new com.hypixel.hytale.protocol.BlockType(baseType.toPacket());
-        if (packetBlock.drawType == DrawType.Model || packetBlock.drawType == DrawType.CubeWithModel) {
-            packetBlock.drawType = DrawType.Cube;
-            packetBlock.model = null;
-            packetBlock.modelTexture = null;
-        }
-        packetBlock.name = null;
-        packetBlock.item = null;
-        packetBlock.modelAnimation = null;
-        packetBlock.cubeSideMaskTexture = null;
-        packetBlock.blockParticleSetId = null;
-        packetBlock.blockBreakingDecalId = null;
-        packetBlock.transitionTexture = null;
-        packetBlock.interactionHint = null;
-        packetBlock.states = null;
-        packetBlock.tagIndexes = null;
-        packetBlock.opacity = Opacity.Transparent;
-        packetBlock.requiresAlphaBlending = true;
-
-        BlockTextures transparent = new BlockTextures();
-        transparent.top = TRANSPARENT_TEXTURE;
-        transparent.bottom = TRANSPARENT_TEXTURE;
-        transparent.front = TRANSPARENT_TEXTURE;
-        transparent.back = TRANSPARENT_TEXTURE;
-        transparent.left = TRANSPARENT_TEXTURE;
-        transparent.right = TRANSPARENT_TEXTURE;
-        transparent.weight = 1.0F;
-        packetBlock.cubeTextures = new BlockTextures[] { transparent };
-
-        UpdateBlockTypes update = new UpdateBlockTypes();
-        update.type = UpdateType.AddOrUpdate;
-        update.maxId = Math.max(BlockType.getAssetMap().getNextIndex(), fakeId + 1);
-        Map<Integer, com.hypixel.hytale.protocol.BlockType> blockTypes = new HashMap<>();
-        blockTypes.put(fakeId, packetBlock);
-        update.blockTypes = blockTypes;
-        update.updateBlockTextures = rebuildTextures;
-        update.updateModelTextures = false;
-        update.updateModels = false;
-        update.updateMapGeometry = false;
-
-        playerRef.getPacketHandler().writeNoCache(update);
+        TransparentBlockUtils.preloadTransparentType(playerRef);
     }
 
     private static int getTransparentVariantId(int baseId) {
-        return TRANSPARENT_VARIANT_IDS.computeIfAbsent(baseId, _id -> allocateFakeId());
+        return TransparentBlockUtils.getTransparentVariantId(baseId);
     }
 
     public static void resetPlayer(@Nonnull PlayerRef playerRef) {
         var playerId = playerRef.getUuid();
         stopPeek(playerId);
         removeManager(playerId);
-        SENT_FAKE_IDS.remove(playerId);
+        TransparentBlockUtils.resetPlayer(playerId);
         PREVIOUS_CAMERA_VIEW.remove(playerId);
         applyPeekCamera(playerRef, false);
     }
@@ -356,76 +290,12 @@ public class TransparentAreaCommand extends CommandBase {
         playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, settings));
     }
 
-    private static int getPreloadBlockId() {
-        int current = preloadBlockId;
-        if (current != Integer.MIN_VALUE) {
-            return current;
-        }
-
-        int next = allocateFakeId();
-        preloadBlockId = next;
-        return next;
-    }
-
-    private static int allocateFakeId() {
-        AtomicInteger allocator = nextFakeId;
-        if (allocator == null) {
-            synchronized (ID_LOCK) {
-                if (nextFakeId == null) {
-                    nextFakeId = new AtomicInteger(BlockType.getAssetMap().getNextIndex());
-                }
-                allocator = nextFakeId;
-            }
-        }
-
-        return allocator.getAndIncrement();
-    }
-
-    private static BlockType findAnyBlockType() {
-        int max = BlockType.getAssetMap().getNextIndex();
-        for (int i = 0; i < max; i++) {
-            BlockType type = BlockType.getAssetMap().getAsset(i);
-            if (type != null && !type.isUnknown() && isEligibleBlockType(type)) {
-                return type;
-            }
-        }
-
-        return null;
-    }
-
     private static boolean isEligibleBlockType(@Nonnull BlockType type) {
-        DrawType drawType = type.getDrawType();
-//        if (drawType != DrawType.Cube && drawType != DrawType.GizmoCube) {
-//            return false;
-//        }
-
-//        if (drawType == DrawType.Empty || type.getState() != null) {
-//            return false;
-//        }
-//
-//        return type.getBlockEntity() == null;
-        return (type.getState() != null);
+        return TransparentBlockUtils.isEligibleBlockType(type);
     }
 
     private static boolean ensureTransparentTypesSent(@Nonnull PlayerRef playerRef, @Nonnull Map<Integer, Integer> fakeIdByBaseId) {
-        boolean sentAny = false;
-        Set<Integer> sent = SENT_FAKE_IDS.computeIfAbsent(playerRef.getUuid(), _id -> ConcurrentHashMap.newKeySet());
-        for (Map.Entry<Integer, Integer> entry : fakeIdByBaseId.entrySet()) {
-            int fakeId = entry.getValue();
-            if (sent.contains(fakeId)) {
-                continue;
-            }
-
-            BlockType baseType = BlockType.getAssetMap().getAsset(entry.getKey());
-            if (baseType == null) {
-                continue;
-            }
-
-            sendTransparentBlockType(playerRef, fakeId, baseType, false);
-            sent.add(fakeId);
-            sentAny = true;
-        }
-        return sentAny;
+        return TransparentBlockUtils.ensureTransparentTypesSent(playerRef, fakeIdByBaseId);
     }
 
 

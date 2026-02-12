@@ -1,5 +1,6 @@
 package com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands;
 
+import com.UnobstructedThirdPerson.camera.CameraTransparencySphere;
 import com.UnobstructedThirdPerson.fix.InteractionPositionFixer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -20,6 +21,9 @@ public class ResetCameraCommand extends AbstractPlayerCommand {
     protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
         // Disable the interaction position fixer when resetting camera
         InteractionPositionFixer.disableForPlayer(playerRef.getUuid());
+
+        // Shutdown camera transparency sphere - restores all transparent blocks
+        CameraTransparencySphere.remove(playerRef.getUuid());
 
         playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, null));
     }
