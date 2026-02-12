@@ -57,43 +57,52 @@ public final class TransparentBlockUtils {
     }
 
     public static boolean ensureTransparentTypesSent(@Nonnull PlayerRef playerRef, @Nonnull Map<Integer, Integer> fakeIdByBaseId, boolean rebuildTextures) {
-        boolean sentAny = false;
+        if (!rebuildTextures) {
+            // Fall back to per-type sending
+            return ensureTransparentTypesSent(playerRef, fakeIdByBaseId);
+        }
+
         Set<Integer> sent = SENT_FAKE_IDS.computeIfAbsent(playerRef.getUuid(), _id -> ConcurrentHashMap.newKeySet());
 
-        // Collect types that need sending
-        java.util.List<Map.Entry<Integer, Integer>> toSend = new java.util.ArrayList<>();
+        // Build a single batched UpdateBlockTypes packet with all new types
+        Map<Integer, com.hypixel.hytale.protocol.BlockType> batchedTypes = new HashMap<>();
+        int maxFakeId = BlockType.getAssetMap().getNextIndex();
+
         for (Map.Entry<Integer, Integer> entry : fakeIdByBaseId.entrySet()) {
             int fakeId = entry.getValue();
-            if (!sent.contains(fakeId)) {
-                BlockType baseType = BlockType.getAssetMap().getAsset(entry.getKey());
-                if (baseType != null) {
-                    toSend.add(entry);
-                }
+            if (sent.contains(fakeId)) {
+                continue;
             }
+
+            BlockType baseType = BlockType.getAssetMap().getAsset(entry.getKey());
+            if (baseType == null) {
+                continue;
+            }
+
+            com.hypixel.hytale.protocol.BlockType packetBlock = buildTransparentPacketBlock(baseType);
+            batchedTypes.put(fakeId, packetBlock);
+            sent.add(fakeId);
+            maxFakeId = Math.max(maxFakeId, fakeId + 1);
         }
 
-        int count = toSend.size();
-        int i = 0;
-        for (Map.Entry<Integer, Integer> entry : toSend) {
-            i++;
-            int fakeId = entry.getValue();
-            BlockType baseType = BlockType.getAssetMap().getAsset(entry.getKey());
-            if (baseType == null) continue;
-            // Rebuild textures on the last type sent if requested
-            boolean doRebuild = rebuildTextures && (i == count);
-            sendTransparentBlockType(playerRef, fakeId, baseType, doRebuild);
-            sent.add(fakeId);
-            sentAny = true;
+        if (batchedTypes.isEmpty()) {
+            return false;
         }
-        return sentAny;
+
+        UpdateBlockTypes update = new UpdateBlockTypes();
+        update.type = UpdateType.AddOrUpdate;
+        update.maxId = maxFakeId;
+        update.blockTypes = batchedTypes;
+        update.updateBlockTextures = true;
+        update.updateModelTextures = false;
+        update.updateModels = false;
+        update.updateMapGeometry = false;
+
+        playerRef.getPacketHandler().writeNoCache(update);
+        return true;
     }
 
-    public static void sendTransparentBlockType(
-        @Nonnull PlayerRef playerRef,
-        int fakeId,
-        @Nonnull BlockType baseType,
-        boolean rebuildTextures
-    ) {
+    private static com.hypixel.hytale.protocol.BlockType buildTransparentPacketBlock(@Nonnull BlockType baseType) {
         com.hypixel.hytale.protocol.BlockType packetBlock = new com.hypixel.hytale.protocol.BlockType(baseType.toPacket());
         if (packetBlock.drawType == DrawType.Model || packetBlock.drawType == DrawType.CubeWithModel) {
             packetBlock.drawType = DrawType.Cube;
@@ -122,6 +131,16 @@ public final class TransparentBlockUtils {
         transparent.right = TRANSPARENT_TEXTURE;
         transparent.weight = 1.0F;
         packetBlock.cubeTextures = new BlockTextures[] { transparent };
+        return packetBlock;
+    }
+
+    public static void sendTransparentBlockType(
+        @Nonnull PlayerRef playerRef,
+        int fakeId,
+        @Nonnull BlockType baseType,
+        boolean rebuildTextures
+    ) {
+        com.hypixel.hytale.protocol.BlockType packetBlock = buildTransparentPacketBlock(baseType);
 
         UpdateBlockTypes update = new UpdateBlockTypes();
         update.type = UpdateType.AddOrUpdate;
