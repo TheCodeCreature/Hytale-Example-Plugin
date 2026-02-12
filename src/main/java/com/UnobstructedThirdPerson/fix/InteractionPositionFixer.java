@@ -21,6 +21,7 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.TargetUtil;
+import com.hypixel.hytale.protocol.BlockFace;
 import com.hypixel.hytale.protocol.InteractionType;
 
 
@@ -65,6 +66,7 @@ public class InteractionPositionFixer {
     private static final Map<UUID, Vector3i> cachedPlacementPositions = new ConcurrentHashMap<>();
     private static final Map<UUID, Vector3d> cachedHitLocations = new ConcurrentHashMap<>();
     private static final Map<UUID, String> cachedHitFaces = new ConcurrentHashMap<>();
+    private static final Map<UUID, BlockFace> cachedBlockFaces = new ConcurrentHashMap<>();
     private static PacketFilter registeredInboundFilter;
     private static PacketFilter registeredOutboundFilter;
 
@@ -90,6 +92,7 @@ public class InteractionPositionFixer {
         cachedPlacementPositions.remove(playerId);
         cachedHitLocations.remove(playerId);
         cachedHitFaces.remove(playerId);
+        cachedBlockFaces.remove(playerId);
         
         LOGGER.info("[InteractionFix] Disabled for player: " + playerId);
     }
@@ -174,53 +177,48 @@ public class InteractionPositionFixer {
         // Determine offset direction based on which face was hit
         int offsetX = 0, offsetY = 0, offsetZ = 0;
         String hitFace = "unknown";
+        BlockFace blockFace = BlockFace.None;
         
         // Check X faces (West = 0.0, East = 1.0)
         if (Math.abs(dx) < 0.001) {
-            offsetX = -1; // Hit west face
-            hitFace = "WEST (-X)";
+            offsetX = -1; hitFace = "WEST (-X)"; blockFace = BlockFace.West;
         } else if (Math.abs(dx - 1.0) < 0.001) {
-            offsetX = 1;  // Hit east face
-            hitFace = "EAST (+X)";
+            offsetX = 1; hitFace = "EAST (+X)"; blockFace = BlockFace.East;
         }
         // Check Y faces (Bottom = 0.0, Top = 1.0)
         else if (Math.abs(dy) < 0.001) {
-            offsetY = -1; // Hit bottom face
-            hitFace = "BOTTOM (-Y)";
+            offsetY = -1; hitFace = "BOTTOM (-Y)"; blockFace = BlockFace.Down;
         } else if (Math.abs(dy - 1.0) < 0.001) {
-            offsetY = 1;  // Hit top face
-            hitFace = "TOP (+Y)";
+            offsetY = 1; hitFace = "TOP (+Y)"; blockFace = BlockFace.Up;
         }
         // Check Z faces (North = 0.0, South = 1.0)
         else if (Math.abs(dz) < 0.001) {
-            offsetZ = -1; // Hit north face
-            hitFace = "NORTH (-Z)";
+            offsetZ = -1; hitFace = "NORTH (-Z)"; blockFace = BlockFace.North;
         } else if (Math.abs(dz - 1.0) < 0.001) {
-            offsetZ = 1;  // Hit south face
-            hitFace = "SOUTH (+Z)";
+            offsetZ = 1; hitFace = "SOUTH (+Z)"; blockFace = BlockFace.South;
         }
         // Fallback: use closest face based on which delta is closest to a boundary
         else {
-            // Find which coordinate is closest to 0 or 1
-            double distWest = Math.abs(dx);           // Distance to west face (x=0)
-            double distEast = Math.abs(dx - 1.0);     // Distance to east face (x=1)
-            double distBottom = Math.abs(dy);         // Distance to bottom face (y=0)
-            double distTop = Math.abs(dy - 1.0);      // Distance to top face (y=1)
-            double distNorth = Math.abs(dz);          // Distance to north face (z=0)
-            double distSouth = Math.abs(dz - 1.0);    // Distance to south face (z=1)
+            double distWest = Math.abs(dx);
+            double distEast = Math.abs(dx - 1.0);
+            double distBottom = Math.abs(dy);
+            double distTop = Math.abs(dy - 1.0);
+            double distNorth = Math.abs(dz);
+            double distSouth = Math.abs(dz - 1.0);
             
             double minDist = Math.min(distWest, Math.min(distEast, Math.min(distBottom, 
                              Math.min(distTop, Math.min(distNorth, distSouth)))));
             
-            if (minDist == distWest) { offsetX = -1; hitFace = "WEST (-X) [fallback]"; }
-            else if (minDist == distEast) { offsetX = 1; hitFace = "EAST (+X) [fallback]"; }
-            else if (minDist == distBottom) { offsetY = -1; hitFace = "BOTTOM (-Y) [fallback]"; }
-            else if (minDist == distTop) { offsetY = 1; hitFace = "TOP (+Y) [fallback]"; }
-            else if (minDist == distNorth) { offsetZ = -1; hitFace = "NORTH (-Z) [fallback]"; }
-            else { offsetZ = 1; hitFace = "SOUTH (+Z) [fallback]"; }
+            if (minDist == distWest) { offsetX = -1; hitFace = "WEST (-X) [fallback]"; blockFace = BlockFace.West; }
+            else if (minDist == distEast) { offsetX = 1; hitFace = "EAST (+X) [fallback]"; blockFace = BlockFace.East; }
+            else if (minDist == distBottom) { offsetY = -1; hitFace = "BOTTOM (-Y) [fallback]"; blockFace = BlockFace.Down; }
+            else if (minDist == distTop) { offsetY = 1; hitFace = "TOP (+Y) [fallback]"; blockFace = BlockFace.Up; }
+            else if (minDist == distNorth) { offsetZ = -1; hitFace = "NORTH (-Z) [fallback]"; blockFace = BlockFace.North; }
+            else { offsetZ = 1; hitFace = "SOUTH (+Z) [fallback]"; blockFace = BlockFace.South; }
         }
         
         cachedHitFaces.put(playerId, hitFace);
+        cachedBlockFaces.put(playerId, blockFace);
         Vector3i placementPos = new Vector3i(targetBlock.x + offsetX, targetBlock.y + offsetY, targetBlock.z + offsetZ);
         
         LOGGER.info("[PlacementCalc] Hit face: " + hitFace + " -> Placement: " + 
@@ -346,12 +344,15 @@ public class InteractionPositionFixer {
 
                 // Choose the correct server position based on interaction type
                 Vector3i serverPos = null;
-                if (chain.interactionType == InteractionType.Primary) {
-                    // Primary (left-click) = break/damage: use the server raycast target block
-                    serverPos = cachedServerTargets.get(playerId);
-                } else if (chain.interactionType == InteractionType.Secondary) {
-                    // Secondary (right-click) = place/use: use the adjacent placement position
+                boolean isPlacement = false;
+                if (chain.interactionType == InteractionType.Secondary) {
+                    // Secondary (right-click) = place: use the adjacent placement position
                     serverPos = cachedPlacementPositions.get(playerId);
+                    isPlacement = true;
+                } else {
+                    // Primary (break), Use (doors/chests), Pick (middle-click),
+                    // and any other type: target the existing block
+                    serverPos = cachedServerTargets.get(playerId);
                 }
 
                 if (serverPos != null) {
@@ -362,6 +363,15 @@ public class InteractionPositionFixer {
                             " (chain=" + chain.chainId + ", state=" + chain.state + ")");
                     }
                     data.blockPosition = new BlockPosition(serverPos.x, serverPos.y, serverPos.z);
+
+                    // For placement, also correct the block face so the engine
+                    // computes the right placement normal for connected blocks
+                    if (isPlacement) {
+                        BlockFace correctedFace = cachedBlockFaces.get(playerId);
+                        if (correctedFace != null) {
+                            data.blockFace = correctedFace;
+                        }
+                    }
                 } else if (LOG_SYNC_INTERACTION_CHAINS) {
                     LOGGER.fine("[SyncInteractionChains] No cached server position for " +
                         chain.interactionType + " - letting client position through");
@@ -478,6 +488,7 @@ public class InteractionPositionFixer {
         cachedPlacementPositions.clear();
         cachedHitLocations.clear();
         cachedHitFaces.clear();
+        cachedBlockFaces.clear();
         LOGGER.info("[InteractionFix] Shutdown complete");
     }
 }
