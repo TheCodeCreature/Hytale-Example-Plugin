@@ -50,7 +50,10 @@ public class DebugTargetCommand extends AbstractPlayerCommand {
     protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
         UUID playerId = playerRef.getUuid();
         
-        // Get cached positions from InteractionPositionFixer
+        // Compute server target + placement on-demand (we're already on world thread)
+        InteractionPositionFixer.computeAndCacheTarget(playerId, playerRef);
+        
+        // Read freshly computed data from cache
         BlockPosition clientPos = InteractionPositionFixer.getLastClientPosition(playerId);
         Vector3i serverTarget = InteractionPositionFixer.getCachedServerTarget(playerId);
         Vector3i placementPos = InteractionPositionFixer.getCachedPlacementPosition(playerId);

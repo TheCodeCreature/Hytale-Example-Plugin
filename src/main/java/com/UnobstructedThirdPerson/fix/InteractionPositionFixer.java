@@ -21,7 +21,6 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.TargetUtil;
-import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
@@ -35,8 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class InteractionPositionFixer {
@@ -44,7 +41,6 @@ public class InteractionPositionFixer {
 
     // ===== CONFIGURABLE PACKET FILTERS =====
     // Set to true to log packets of each type
-    private static final boolean LOG_MOUSE_INTERACTION = true;
     private static final boolean LOG_CLIENT_MOVEMENT = false;  // Reserved for future use
     private static final boolean LOG_SET_SERVER_CAMERA = true;
     private static final boolean LOG_SYNC_INTERACTION_CHAINS = true;  // Log interaction chains with block positions
@@ -59,9 +55,7 @@ public class InteractionPositionFixer {
     private static final boolean LOG_TO_CHAT = false;         // Also send logs to player chat
 
     // Fix behavior
-    private static final boolean ENABLE_POSITION_FIX = true;  // Enable the actual fix
     private static final int RAYCAST_DISTANCE = 30;           // Max distance for server raycast
-    private static final long CACHE_UPDATE_INTERVAL_MS = 50;  // How often to update cached target (ms)
 
     // Redirect mode: true = redirect to server position, false = block entirely
     private static boolean REDIRECT_MODE = true;
@@ -76,7 +70,6 @@ public class InteractionPositionFixer {
     private static final Map<UUID, Vector3d> cachedHitLocations = new ConcurrentHashMap<>();
     private static final Map<UUID, String> cachedHitFaces = new ConcurrentHashMap<>();
     private static final Map<UUID, Set<Integer>> processedChainIds = new ConcurrentHashMap<>();
-    private static final Map<UUID, ScheduledFuture<?>> activeTasks = new ConcurrentHashMap<>();
     private static PacketFilter registeredInboundFilter;
     private static PacketFilter registeredOutboundFilter;
 
@@ -91,9 +84,6 @@ public class InteractionPositionFixer {
         ENABLED_PLAYERS.add(playerId);
         ensureFiltersRegistered();
         
-        // Start scheduled task to update cached target on world thread
-        startCacheUpdateTask(playerId, playerRef);
-        
         LOGGER.info("[InteractionFix] Enabled for player: " + playerId);
     }
 
@@ -102,41 +92,19 @@ public class InteractionPositionFixer {
         lastClientPositions.remove(playerId);
         lastServerPositions.remove(playerId);
         cachedServerTargets.remove(playerId);
-        
-        // Cancel scheduled task
-        ScheduledFuture<?> task = activeTasks.remove(playerId);
-        if (task != null) {
-            task.cancel(false);
-        }
+        cachedPlacementPositions.remove(playerId);
+        cachedHitLocations.remove(playerId);
+        cachedHitFaces.remove(playerId);
+        processedChainIds.remove(playerId);
         
         LOGGER.info("[InteractionFix] Disabled for player: " + playerId);
     }
     
-    private static void startCacheUpdateTask(@Nonnull UUID playerId, @Nonnull PlayerRef playerRef) {
-        Ref<EntityStore> ref = playerRef.getReference();
-        if (ref == null || !ref.isValid()) {
-            LOGGER.warning("[InteractionFix] Cannot start cache task - invalid player reference");
-            return;
-        }
-        
-        Store<EntityStore> store = ref.getStore();
-        World world = store.getExternalData().getWorld();
-        
-        ScheduledFuture<?> task = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> {
-            // Execute on world thread
-            world.execute(() -> updateCachedTarget(playerId, playerRef));
-        }, 0L, CACHE_UPDATE_INTERVAL_MS, TimeUnit.MILLISECONDS);
-        
-        activeTasks.put(playerId, task);
-        LOGGER.info("[InteractionFix] Started cache update task for player: " + playerId);
-    }
-    
-    private static void updateCachedTarget(@Nonnull UUID playerId, @Nonnull PlayerRef playerRef) {
-        // Check if still enabled
-        if (!ENABLED_PLAYERS.contains(playerId)) {
-            return;
-        }
-        
+    /**
+     * Compute and cache the server target + placement position on-demand.
+     * Must be called on the world thread.
+     */
+    public static void computeAndCacheTarget(@Nonnull UUID playerId, @Nonnull PlayerRef playerRef) {
         Ref<EntityStore> ref = playerRef.getReference();
         if (ref == null || !ref.isValid()) {
             return;
@@ -145,12 +113,10 @@ public class InteractionPositionFixer {
         Store<EntityStore> store = ref.getStore();
         
         try {
-            // Get the target block (for breaking)
             Vector3i target = TargetUtil.getTargetBlock(ref, RAYCAST_DISTANCE, store);
             if (target != null) {
                 cachedServerTargets.put(playerId, target);
                 
-                // Calculate placement position (adjacent block) based on ray hit
                 World world = store.getExternalData().getWorld();
                 Vector3i placementPos = calculatePlacementPosition(ref, target, world, store, playerId);
                 if (placementPos != null) {
@@ -158,7 +124,7 @@ public class InteractionPositionFixer {
                 }
             }
         } catch (Exception e) {
-            // Silently ignore - player may have disconnected
+            LOGGER.warning("[InteractionFix] Error computing target: " + e.getMessage());
         }
     }
 
@@ -309,11 +275,6 @@ public class InteractionPositionFixer {
         // Log packet discovery if enabled
         logPacketDiscovery(handler, packet, "Inbound");
 
-        // Handle MouseInteraction specifically
-        if (packet instanceof MouseInteraction mi) {
-            handleMouseInteraction(handler, mi);
-        }
-
         // Handle SyncInteractionChains - block packet and manually trigger server-side action
         if (packet instanceof SyncInteractionChains sic) {
             return handleSyncInteractionChains(handler, sic);
@@ -368,9 +329,6 @@ public class InteractionPositionFixer {
             return false;
         }
 
-        // Get cached server target
-        Vector3i serverTarget = cachedServerTargets.get(playerId);
-
         // Get or create the set of processed chain IDs for this player
         Set<Integer> playerProcessedChains = processedChainIds.computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet());
         
@@ -397,21 +355,18 @@ public class InteractionPositionFixer {
                             sb.append(", Type: ").append(chain.interactionType);
                             sb.append(", Already processed: ").append(alreadyProcessed).append("\n");
                             sb.append("  Client blockPosition: ").append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z);
-                            if (serverTarget != null) {
-                                sb.append("\n  Server target: ").append(serverTarget.x).append(",").append(serverTarget.y).append(",").append(serverTarget.z);
-                            }
                             LOGGER.info(sb.toString());
                         }
                         
                         // When redirect mode is enabled, block packet and manually trigger action
                         // Only trigger once per chain ID to avoid duplicate placements
-                        if (REDIRECT_MODE && serverTarget != null && !alreadyProcessed) {
+                        if (REDIRECT_MODE && !alreadyProcessed) {
                             // Mark this chain as processed
                             playerProcessedChains.add(chain.chainId);
                             alreadyProcessed = true; // Prevent further triggers in this loop
                             
-                            // Trigger server-side action at server target
-                            triggerServerSideBlockAction(playerRef, chain.interactionType, serverTarget, clientPos);
+                            // Trigger server-side action - target computed on world thread
+                            triggerServerSideBlockAction(playerRef, chain.interactionType, clientPos);
                         }
                     }
                 }
@@ -423,40 +378,60 @@ public class InteractionPositionFixer {
             }
         }
         
-        return false;
+        // Log packet handling decision
+        if (LOG_SYNC_INTERACTION_CHAINS) {
+            LOGGER.info("[SyncInteractionChains] REDIRECT_MODE=" + REDIRECT_MODE + 
+                " -> packet will be " + (REDIRECT_MODE ? "BLOCKED" : "ALLOWED"));
+        }
+        
+        // In redirect mode, block the original packet entirely
+        // When redirect mode is OFF, we let the packet through but BlockInteractionEventSystems will cancel the events
+        return REDIRECT_MODE;
     }
     
     private static void triggerServerSideBlockAction(PlayerRef playerRef, InteractionType interactionType, 
-                                                      Vector3i serverTarget, BlockPosition clientPos) {
+                                                      BlockPosition clientPos) {
         Ref<EntityStore> ref = playerRef.getReference();
         if (ref == null || !ref.isValid()) {
             LOGGER.warning("[InteractionFix] Cannot trigger action - invalid player reference");
             return;
         }
         
+        UUID playerId = playerRef.getUuid();
         Store<EntityStore> store = ref.getStore();
         World world = store.getExternalData().getWorld();
         
-        // Execute on world thread
+        // Execute on world thread - compute target fresh then act
         world.execute(() -> {
             try {
-                long chunkIndex = ChunkUtil.indexChunkFromBlock(serverTarget.x, serverTarget.z);
-                WorldChunk chunk = world.getChunkIfLoaded(chunkIndex);
-                
-                if (chunk == null) {
-                    LOGGER.warning("[InteractionFix] Chunk not loaded at server target position");
+                // Compute server target on-demand via raycast
+                Vector3i serverTarget = TargetUtil.getTargetBlock(ref, RAYCAST_DISTANCE, store);
+                if (serverTarget == null) {
+                    LOGGER.warning("[InteractionFix] No server target from raycast");
                     return;
+                }
+                cachedServerTargets.put(playerId, serverTarget);
+                
+                if (LOG_SYNC_INTERACTION_CHAINS) {
+                    LOGGER.info("[InteractionFix] Computed server target: " + 
+                        serverTarget.x + "," + serverTarget.y + "," + serverTarget.z);
                 }
                 
                 if (interactionType == InteractionType.Primary) {
                     // Primary = Break/attack (left-click)
-                    handleServerSideBreak(world, chunk, serverTarget, playerRef, store);
+                    long chunkIndex = ChunkUtil.indexChunkFromBlock(serverTarget.x, serverTarget.z);
+                    WorldChunk chunk = world.getChunkIfLoaded(chunkIndex);
+                    if (chunk != null) {
+                        handleServerSideBreak(world, chunk, serverTarget, playerRef, store);
+                    } else {
+                        LOGGER.warning("[InteractionFix] Chunk not loaded at server target position");
+                    }
                 } else if (interactionType == InteractionType.Secondary) {
                     // Secondary = Place/use (right-click)
-                    // Use the placement position (adjacent block) not the target block
-                    Vector3i placementPos = cachedPlacementPositions.get(playerRef.getUuid());
+                    // Calculate placement position on-demand
+                    Vector3i placementPos = calculatePlacementPosition(ref, serverTarget, world, store, playerId);
                     if (placementPos != null) {
-                        // Get chunk for placement position (may be different chunk)
+                        cachedPlacementPositions.put(playerId, placementPos);
                         long placeChunkIndex = ChunkUtil.indexChunkFromBlock(placementPos.x, placementPos.z);
                         WorldChunk placeChunk = world.getChunkIfLoaded(placeChunkIndex);
                         if (placeChunk != null) {
@@ -465,7 +440,7 @@ public class InteractionPositionFixer {
                             LOGGER.warning("[InteractionFix] Chunk not loaded at placement position");
                         }
                     } else {
-                        LOGGER.warning("[InteractionFix] No cached placement position for player");
+                        LOGGER.warning("[InteractionFix] Could not calculate placement position");
                     }
                 }
             } catch (Exception e) {
@@ -532,39 +507,6 @@ public class InteractionPositionFixer {
         logPacketDiscovery(handler, packet, "Outbound");
     }
 
-    private static void handleMouseInteraction(PacketHandler handler, MouseInteraction mi) {
-        if (!(handler instanceof GamePacketHandler gph)) {
-            return;
-        }
-
-        PlayerRef playerRef = gph.getPlayerRef();
-        UUID playerId = playerRef.getUuid();
-
-        // Only process for enabled players
-        if (!ENABLED_PLAYERS.contains(playerId)) {
-            return;
-        }
-
-        // Get cached server target (updated on world thread)
-        Vector3i serverTarget = cachedServerTargets.get(playerId);
-
-        // Get client position for logging
-        BlockPosition clientPos = null;
-        if (mi.worldInteraction != null) {
-            clientPos = mi.worldInteraction.blockPosition;
-        }
-
-        // Log the interaction details
-        logMouseInteractionDetails(playerRef, mi, clientPos, serverTarget);
-
-        // Apply the fix if enabled
-        if (ENABLE_POSITION_FIX && serverTarget != null && mi.worldInteraction != null) {
-            mi.worldInteraction.blockPosition = new BlockPosition(
-                serverTarget.x, serverTarget.y, serverTarget.z
-            );
-        }
-    }
-
     private static void logPacketDiscovery(PacketHandler handler, Packet packet, String direction) {
         String packetName = packet.getClass().getName();
 
@@ -575,7 +517,6 @@ public class InteractionPositionFixer {
         if (LOG_ALL_INTERACTION_PACKETS && packetName.contains(".packets.interaction.")) shouldLog = true;
 
         // Filter by specific packet type
-        if (LOG_MOUSE_INTERACTION && packet instanceof MouseInteraction) shouldLog = true;
         if (LOG_SET_SERVER_CAMERA && packet instanceof SetServerCamera) shouldLog = true;
         if (LOG_SYNC_INTERACTION_CHAINS && packet instanceof SyncInteractionChains) shouldLog = true;
         if (LOG_CLIENT_PLACE_BLOCK && packet instanceof ClientPlaceBlock) shouldLog = true;
@@ -608,70 +549,6 @@ public class InteractionPositionFixer {
         if (LOG_TO_CHAT && handler instanceof GamePacketHandler gph) {
             PlayerRef playerRef = gph.getPlayerRef();
             playerRef.sendMessage(Message.raw(sb.toString()));
-        }
-    }
-
-    private static void logMouseInteractionDetails(PlayerRef playerRef, MouseInteraction mi,
-                                                    BlockPosition clientPos, Vector3i serverTarget) {
-        if (!LOG_MOUSE_INTERACTION) {
-            return;
-        }
-
-        UUID playerId = playerRef.getUuid();
-        BlockPosition lastClient = lastClientPositions.get(playerId);
-
-        // Skip if LOG_ONLY_CHANGES and nothing changed
-        if (LOG_ONLY_CHANGES && lastClient != null && clientPos != null) {
-            if (lastClient.x == clientPos.x && lastClient.y == clientPos.y && lastClient.z == clientPos.z) {
-                return; // No change, skip logging
-            }
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("[MouseInteraction] Player: ").append(playerRef.getUsername()).append("\n");
-
-        // Client data
-        sb.append("  Client blockPosition: ");
-        if (clientPos != null) {
-            sb.append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z);
-        } else {
-            sb.append("null");
-        }
-        sb.append("\n");
-
-        // Server calculated
-        sb.append("  Server calculated:    ");
-        if (serverTarget != null) {
-            sb.append(serverTarget.x).append(",").append(serverTarget.y).append(",").append(serverTarget.z);
-        } else {
-            sb.append("null");
-        }
-        sb.append("\n");
-
-        // Desync detection
-        if (clientPos != null && serverTarget != null) {
-            boolean desynced = clientPos.x != serverTarget.x ||
-                              clientPos.y != serverTarget.y ||
-                              clientPos.z != serverTarget.z;
-            sb.append("  Status: ").append(desynced ? "DESYNC DETECTED" : "In sync");
-            if (desynced && ENABLE_POSITION_FIX) {
-                sb.append(" -> FIXED");
-            }
-        }
-
-        LOGGER.info(sb.toString());
-
-        if (LOG_TO_CHAT) {
-            playerRef.sendMessage(Message.raw(sb.toString()));
-        }
-
-        // Update last known positions
-        if (clientPos != null) {
-            lastClientPositions.put(playerId, clientPos);
-        }
-        if (serverTarget != null) {
-            lastServerPositions.put(playerId, new BlockPosition(
-                serverTarget.x, serverTarget.y, serverTarget.z));
         }
     }
 
@@ -708,12 +585,6 @@ public class InteractionPositionFixer {
     }
 
     public static void shutdown() {
-        // Cancel all scheduled tasks
-        for (ScheduledFuture<?> task : activeTasks.values()) {
-            task.cancel(false);
-        }
-        activeTasks.clear();
-        
         if (registeredInboundFilter != null) {
             try {
                 PacketAdapters.deregisterInbound(registeredInboundFilter);
@@ -734,6 +605,10 @@ public class InteractionPositionFixer {
         lastClientPositions.clear();
         lastServerPositions.clear();
         cachedServerTargets.clear();
+        cachedPlacementPositions.clear();
+        cachedHitLocations.clear();
+        cachedHitFaces.clear();
+        processedChainIds.clear();
         LOGGER.info("[InteractionFix] Shutdown complete");
     }
 }
