@@ -62,16 +62,16 @@ final class CameraPositionUtil {
     }
 
     /**
-     * Gets the camera origin block and triggers the CameraTransparencySphere update
-     * if there is an active sphere for this player.
+     * Gets the camera origin block and triggers the CameraTransparencyVolume update
+     * if there is an active volume for this player.
      */
     @Nullable
     static Vector3i getCameraOriginBlockAndUpdate(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store, @Nonnull UUID playerId) {
         Vector3i origin = getCameraOriginBlock(ref, store);
         if (origin != null) {
-            CameraTransparencySphere sphere = CameraTransparencySphere.get(playerId);
-            if (sphere != null) {
-                sphere.update(origin);
+            CameraTransparencyVolume volume = CameraTransparencyVolume.get(playerId);
+            if (volume != null) {
+                volume.update(origin);
             }
         }
         return origin;

@@ -1,7 +1,7 @@
 package com.UnobstructedThirdPerson.camera;
 
 import com.hypixel.hytale.math.block.BlockUtil;
-import com.hypixel.hytale.math.shape.Ellipsoid;
+import com.hypixel.hytale.math.shape.Shape;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -22,22 +22,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
- * Makes blocks transparent in a sphere around the camera origin.
- * Uses a diff-based cache: only sends packets for blocks entering/leaving the sphere
+ * Makes blocks transparent in an arbitrary volume around the camera origin.
+ * Uses a diff-based cache: only sends packets for blocks entering/leaving the volume
  * when the camera crosses a whole-number coordinate boundary.
+ * Accepts any {@link Shape} (Ellipsoid, Cylinder, Box, etc.).
  */
-public class CameraTransparencySphere {
+public class CameraTransparencyVolume {
 
-    private static final Logger LOGGER = Logger.getLogger("CameraTransparencySphere");
-    private static final double DEFAULT_RADIUS = 10.0;
+    private static final Logger LOGGER = Logger.getLogger("CameraTransparencyVolume");
     private static final int APPLY_DELAY_MILLIS = 500;
     private static final long UPDATE_INTERVAL_MILLIS = 100;
 
-    private static final Map<UUID, CameraTransparencySphere> INSTANCES = new ConcurrentHashMap<>();
+    private static final Map<UUID, CameraTransparencyVolume> INSTANCES = new ConcurrentHashMap<>();
 
     private final PlayerRef playerRef;
     private final World world;
-    private final Ellipsoid sphere;
+    private final Shape shape;
 
     // Packed block positions currently made transparent
     private final Set<Long> currentPositions = new HashSet<>();
@@ -48,42 +48,42 @@ public class CameraTransparencySphere {
     // Scheduled update task
     private ScheduledFuture<?> updateTask = null;
 
-    public CameraTransparencySphere(@Nonnull PlayerRef playerRef, @Nonnull World world, double radius) {
+    public CameraTransparencyVolume(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull Shape shape) {
         this.playerRef = playerRef;
         this.world = world;
-        this.sphere = new Ellipsoid(radius);
+        this.shape = shape;
     }
 
     // ===== Static instance management =====
 
     @Nonnull
-    public static CameraTransparencySphere getOrCreate(@Nonnull PlayerRef playerRef, @Nonnull World world) {
+    public static CameraTransparencyVolume getOrCreate(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull Shape shape) {
         UUID playerId = playerRef.getUuid();
-        CameraTransparencySphere existing = INSTANCES.get(playerId);
+        CameraTransparencyVolume existing = INSTANCES.get(playerId);
         if (existing != null) {
             // Shut down stale instance (e.g. from a crash) and create fresh
             existing.shutdown();
             INSTANCES.remove(playerId);
-            LOGGER.info("[CameraTransparency] Replaced stale sphere for player: " + playerRef.getUsername());
+            LOGGER.info("[CameraTransparency] Replaced stale volume for player: " + playerRef.getUsername());
         }
-        CameraTransparencySphere instance = new CameraTransparencySphere(playerRef, world, DEFAULT_RADIUS);
+        CameraTransparencyVolume instance = new CameraTransparencyVolume(playerRef, world, shape);
         TransparentBlockUtils.preloadTransparentType(playerRef);
         instance.startUpdateLoop();
         INSTANCES.put(playerId, instance);
-        LOGGER.info("[CameraTransparency] Created sphere for player: " + playerRef.getUsername());
+        LOGGER.info("[CameraTransparency] Created volume for player: " + playerRef.getUsername());
         return instance;
     }
 
     @Nullable
-    public static CameraTransparencySphere get(@Nonnull UUID playerId) {
+    public static CameraTransparencyVolume get(@Nonnull UUID playerId) {
         return INSTANCES.get(playerId);
     }
 
     public static void remove(@Nonnull UUID playerId) {
-        CameraTransparencySphere instance = INSTANCES.remove(playerId);
+        CameraTransparencyVolume instance = INSTANCES.remove(playerId);
         if (instance != null) {
             instance.shutdown();
-            LOGGER.info("[CameraTransparency] Removed sphere for player: " + playerId);
+            LOGGER.info("[CameraTransparency] Removed volume for player: " + playerId);
         }
     }
 
@@ -136,11 +136,11 @@ public class CameraTransparencySphere {
 
         ChunkStore chunkStore = world.getChunkStore();
 
-        // Build new set of positions inside the sphere
+        // Build new set of positions inside the volume
         Set<Long> newPositions = new HashSet<>();
         Map<Long, BlockSnapshot> newSnapshots = new HashMap<>();
 
-        sphere.forEachBlock(newAnchor.x, newAnchor.y, newAnchor.z, (x, y, z) -> {
+        shape.forEachBlock(newAnchor.x, newAnchor.y, newAnchor.z, (x, y, z) -> {
             BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
             if (snapshot != null && snapshot.blockId() != 0) {
                 BlockType baseType = BlockType.getAssetMap().getAsset(snapshot.blockId());
@@ -153,11 +153,11 @@ public class CameraTransparencySphere {
             return true; // continue iteration
         });
 
-        // Compute diff: blocks to add (entered sphere)
+        // Compute diff: blocks to add (entered volume)
         Set<Long> toAdd = new HashSet<>(newPositions);
         toAdd.removeAll(currentPositions);
 
-        // Compute diff: blocks to remove (left sphere)
+        // Compute diff: blocks to remove (left volume)
         Set<Long> toRemove = new HashSet<>(currentPositions);
         toRemove.removeAll(newPositions);
 
@@ -210,7 +210,7 @@ public class CameraTransparencySphere {
     private void applyDiff(@Nonnull Set<Long> toAdd, @Nonnull Set<Long> toRemove,
                            @Nonnull Map<Long, BlockSnapshot> newSnapshots,
                            @Nonnull Map<Integer, Integer> fakeIdByBaseId) {
-        // Restore blocks that left the sphere
+        // Restore blocks that left the volume
         for (Long pos : toRemove) {
             BlockSnapshot original = activeBlocks.get(pos);
             if (original != null) {

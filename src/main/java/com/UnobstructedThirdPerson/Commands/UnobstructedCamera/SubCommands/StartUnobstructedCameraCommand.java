@@ -1,7 +1,8 @@
 package com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands;
 
 import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.Settings.CustomCameraSettings;
-import com.UnobstructedThirdPerson.camera.CameraTransparencySphere;
+import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
+import com.hypixel.hytale.math.shape.Ellipsoid;
 import com.UnobstructedThirdPerson.fix.InteractionPositionFixer;
 import com.hypixel.hytale.codec.validation.Validators;
 import com.hypixel.hytale.component.Ref;
@@ -45,8 +46,8 @@ public class StartUnobstructedCameraCommand extends AbstractPlayerCommand {
         // Enable the interaction position fixer to correct stale block positions
         InteractionPositionFixer.enableForPlayer(playerRef);
 
-        // Create camera transparency sphere for this player
-        CameraTransparencySphere.getOrCreate(playerRef, world);
+        // Create camera transparency volume for this player
+        CameraTransparencyVolume.getOrCreate(playerRef, world, new Ellipsoid(10));
 
         playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, settings));
     }

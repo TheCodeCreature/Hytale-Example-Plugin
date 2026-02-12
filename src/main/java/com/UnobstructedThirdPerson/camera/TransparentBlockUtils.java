@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Shared utilities for creating and managing fake transparent block types on the client.
- * Extracted from TransparentAreaCommand so both it and CameraTransparencySphere can share.
+ * Extracted from TransparentAreaCommand so both it and CameraTransparencyVolume can share.
  */
 public final class TransparentBlockUtils {
 
