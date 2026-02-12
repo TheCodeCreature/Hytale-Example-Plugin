@@ -21,12 +21,7 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.TargetUtil;
-import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.inventory.Inventory;
-import com.hypixel.hytale.server.core.inventory.ItemStack;
-import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.protocol.InteractionType;
-import com.hypixel.hytale.math.util.ChunkUtil;
 
 
 import javax.annotation.Nonnull;
@@ -58,7 +53,7 @@ public class InteractionPositionFixer {
     // Fix behavior
     private static final int RAYCAST_DISTANCE = 30;           // Max distance for server raycast
 
-    // Redirect mode: true = redirect to server position, false = block entirely
+    // Redirect mode: true = rewrite positions to server target, false = let packets through unmodified
     private static boolean REDIRECT_MODE = true;
 
     // ===== END CONFIGURABLE FILTERS =====
@@ -70,7 +65,6 @@ public class InteractionPositionFixer {
     private static final Map<UUID, Vector3i> cachedPlacementPositions = new ConcurrentHashMap<>();
     private static final Map<UUID, Vector3d> cachedHitLocations = new ConcurrentHashMap<>();
     private static final Map<UUID, String> cachedHitFaces = new ConcurrentHashMap<>();
-    private static final Map<UUID, Set<Integer>> processedChainIds = new ConcurrentHashMap<>();
     private static PacketFilter registeredInboundFilter;
     private static PacketFilter registeredOutboundFilter;
 
@@ -96,7 +90,6 @@ public class InteractionPositionFixer {
         cachedPlacementPositions.remove(playerId);
         cachedHitLocations.remove(playerId);
         cachedHitFaces.remove(playerId);
-        processedChainIds.remove(playerId);
         
         LOGGER.info("[InteractionFix] Disabled for player: " + playerId);
     }
@@ -276,13 +269,12 @@ public class InteractionPositionFixer {
         // Log packet discovery if enabled
         logPacketDiscovery(handler, packet, "Inbound");
 
-        // Handle SyncInteractionChains - block packet and manually trigger server-side action
+        // Handle SyncInteractionChains - rewrite block positions to server-computed targets
         if (packet instanceof SyncInteractionChains sic) {
             return handleSyncInteractionChains(handler, sic);
         }
 
-        // Handle ClientPlaceBlock - BLOCK this packet for enabled players
-        // The SyncInteractionChains path will handle placement instead
+        // Handle ClientPlaceBlock - rewrite position to server-computed placement target
         if (packet instanceof ClientPlaceBlock cpb) {
             return shouldBlockClientPlaceBlock(handler, cpb);
         }
@@ -292,29 +284,32 @@ public class InteractionPositionFixer {
 
     private static boolean shouldBlockClientPlaceBlock(PacketHandler handler, ClientPlaceBlock cpb) {
         if (!(handler instanceof GamePacketHandler gph)) {
-            return false; // Not a game packet handler, let it through
+            return false;
         }
 
         PlayerRef playerRef = gph.getPlayerRef();
         UUID playerId = playerRef.getUuid();
 
-        // Only block for enabled players
         if (!ENABLED_PLAYERS.contains(playerId)) {
-            return false; // Not enabled, let packet through
+            return false;
         }
 
-        // Block this packet - SyncInteractionChains will handle placement
-        if (LOG_CLIENT_PLACE_BLOCK) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("[ClientPlaceBlock] Player: ").append(playerRef.getUsername()).append("\n");
-            if (cpb.position != null) {
-                sb.append("  Client position: ").append(cpb.position.x).append(",").append(cpb.position.y).append(",").append(cpb.position.z).append("\n");
+        if (!REDIRECT_MODE) {
+            return false;
+        }
+
+        // Rewrite position to server-computed placement position
+        Vector3i placementPos = cachedPlacementPositions.get(playerId);
+        if (placementPos != null && cpb.position != null) {
+            if (LOG_CLIENT_PLACE_BLOCK) {
+                LOGGER.info("[ClientPlaceBlock] Rewrote position from " +
+                    cpb.position.x + "," + cpb.position.y + "," + cpb.position.z +
+                    " -> " + placementPos.x + "," + placementPos.y + "," + placementPos.z);
             }
-            sb.append("  Action: BLOCKED (SyncInteractionChains will handle placement)");
-            LOGGER.info(sb.toString());
+            cpb.position = new BlockPosition(placementPos.x, placementPos.y, placementPos.z);
         }
 
-        return true; // Block the packet
+        return false; // Let the rewritten packet through
     }
 
     private static boolean handleSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
@@ -325,182 +320,56 @@ public class InteractionPositionFixer {
         PlayerRef playerRef = gph.getPlayerRef();
         UUID playerId = playerRef.getUuid();
 
-        // Only process for enabled players
         if (!ENABLED_PLAYERS.contains(playerId)) {
             return false;
         }
 
-        // Get or create the set of processed chain IDs for this player
-        Set<Integer> playerProcessedChains = processedChainIds.computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet());
-        
-        // Process chains and trigger server-side actions
+        if (!REDIRECT_MODE) {
+            return false; // Let packet through unmodified
+        }
+
+        // Rewrite block positions in the packet to use server-computed targets,
+        // then let the packet flow through the normal engine interaction pipeline.
+        // This preserves: block rotations, survival damage, placement validation,
+        // inventory management, events, and all other engine behavior.
         for (SyncInteractionChain chain : sic.updates) {
-            // Check if we've already processed this chain
-            boolean alreadyProcessed = playerProcessedChains.contains(chain.chainId);
-            
-            if (chain.interactionData != null) {
-                for (InteractionSyncData data : chain.interactionData) {
-                    if (data != null && data.blockPosition != null) {
-                        BlockPosition clientPos = data.blockPosition;
-                        
-                        // Store client position for debug command
-                        lastClientPositions.put(playerId, clientPos);
-                        
-                        // Log if enabled
-                        if (LOG_SYNC_INTERACTION_CHAINS) {
-                            StringBuilder sb = new StringBuilder();
-                            sb.append("[SyncInteractionChains] Player: ").append(playerRef.getUsername());
-                            sb.append(" | REDIRECT_MODE=").append(REDIRECT_MODE).append("\n");
-                            sb.append("  Chain ID: ").append(chain.chainId);
-                            sb.append(", State: ").append(chain.state);
-                            sb.append(", Type: ").append(chain.interactionType);
-                            sb.append(", Already processed: ").append(alreadyProcessed).append("\n");
-                            sb.append("  Client blockPosition: ").append(clientPos.x).append(",").append(clientPos.y).append(",").append(clientPos.z);
-                            LOGGER.info(sb.toString());
-                        }
-                        
-                        // When redirect mode is enabled, block packet and manually trigger action
-                        // Only trigger once per chain ID to avoid duplicate placements
-                        if (REDIRECT_MODE && !alreadyProcessed) {
-                            // Mark this chain as processed
-                            playerProcessedChains.add(chain.chainId);
-                            alreadyProcessed = true; // Prevent further triggers in this loop
-                            
-                            // Trigger server-side action - target computed on world thread
-                            triggerServerSideBlockAction(playerRef, chain.interactionType, clientPos);
-                        }
+            if (chain.interactionData == null) {
+                continue;
+            }
+            for (InteractionSyncData data : chain.interactionData) {
+                if (data == null || data.blockPosition == null) {
+                    continue;
+                }
+
+                BlockPosition clientPos = data.blockPosition;
+                lastClientPositions.put(playerId, clientPos);
+
+                // Choose the correct server position based on interaction type
+                Vector3i serverPos = null;
+                if (chain.interactionType == InteractionType.Primary) {
+                    // Primary (left-click) = break/damage: use the server raycast target block
+                    serverPos = cachedServerTargets.get(playerId);
+                } else if (chain.interactionType == InteractionType.Secondary) {
+                    // Secondary (right-click) = place/use: use the adjacent placement position
+                    serverPos = cachedPlacementPositions.get(playerId);
+                }
+
+                if (serverPos != null) {
+                    if (LOG_SYNC_INTERACTION_CHAINS) {
+                        LOGGER.info("[SyncInteractionChains] Rewrote " + chain.interactionType +
+                            " blockPosition from " + clientPos.x + "," + clientPos.y + "," + clientPos.z +
+                            " -> " + serverPos.x + "," + serverPos.y + "," + serverPos.z +
+                            " (chain=" + chain.chainId + ", state=" + chain.state + ")");
                     }
+                    data.blockPosition = new BlockPosition(serverPos.x, serverPos.y, serverPos.z);
+                } else if (LOG_SYNC_INTERACTION_CHAINS) {
+                    LOGGER.fine("[SyncInteractionChains] No cached server position for " +
+                        chain.interactionType + " - letting client position through");
                 }
             }
-            
-            // Clean up finished chains from the tracking set
-            if (chain.state != null && chain.state.toString().equals("Finished")) {
-                playerProcessedChains.remove(chain.chainId);
-            }
         }
-        
-        // Log packet handling decision
-        if (LOG_SYNC_INTERACTION_CHAINS) {
-            LOGGER.info("[SyncInteractionChains] REDIRECT_MODE=" + REDIRECT_MODE + 
-                " -> packet will be " + (REDIRECT_MODE ? "BLOCKED" : "ALLOWED"));
-        }
-        
-        // In redirect mode, block the original packet entirely
-        // When redirect mode is OFF, we let the packet through but BlockInteractionEventSystems will cancel the events
-        return REDIRECT_MODE;
-    }
-    
-    private static void triggerServerSideBlockAction(PlayerRef playerRef, InteractionType interactionType, 
-                                                      BlockPosition clientPos) {
-        Ref<EntityStore> ref = playerRef.getReference();
-        if (ref == null || !ref.isValid()) {
-            LOGGER.warning("[InteractionFix] Cannot trigger action - invalid player reference");
-            return;
-        }
-        
-        UUID playerId = playerRef.getUuid();
-        Store<EntityStore> store = ref.getStore();
-        World world = store.getExternalData().getWorld();
-        
-        // Execute on world thread - compute target fresh then act
-        world.execute(() -> {
-            try {
-                // Compute server target on-demand via raycast
-                Vector3i serverTarget = TargetUtil.getTargetBlock(ref, RAYCAST_DISTANCE, store);
-                if (serverTarget == null) {
-                    LOGGER.warning("[InteractionFix] No server target from raycast");
-                    return;
-                }
-                cachedServerTargets.put(playerId, serverTarget);
-                
-                if (LOG_SYNC_INTERACTION_CHAINS) {
-                    LOGGER.info("[InteractionFix] Computed server target: " + 
-                        serverTarget.x + "," + serverTarget.y + "," + serverTarget.z);
-                }
-                
-                if (interactionType == InteractionType.Primary) {
-                    // Primary = Break/attack (left-click)
-                    long chunkIndex = ChunkUtil.indexChunkFromBlock(serverTarget.x, serverTarget.z);
-                    WorldChunk chunk = world.getChunkIfLoaded(chunkIndex);
-                    if (chunk != null) {
-                        handleServerSideBreak(world, chunk, serverTarget, playerRef, store);
-                    } else {
-                        LOGGER.warning("[InteractionFix] Chunk not loaded at server target position");
-                    }
-                } else if (interactionType == InteractionType.Secondary) {
-                    // Secondary = Place/use (right-click)
-                    // Calculate placement position on-demand
-                    Vector3i placementPos = calculatePlacementPosition(ref, serverTarget, world, store, playerId);
-                    if (placementPos != null) {
-                        cachedPlacementPositions.put(playerId, placementPos);
-                        long placeChunkIndex = ChunkUtil.indexChunkFromBlock(placementPos.x, placementPos.z);
-                        WorldChunk placeChunk = world.getChunkIfLoaded(placeChunkIndex);
-                        if (placeChunk != null) {
-                            handleServerSidePlace(world, placeChunk, placementPos, playerRef, store);
-                        } else {
-                            LOGGER.warning("[InteractionFix] Chunk not loaded at placement position");
-                        }
-                    } else {
-                        LOGGER.warning("[InteractionFix] Could not calculate placement position");
-                    }
-                }
-            } catch (Exception e) {
-                LOGGER.warning("[InteractionFix] Error triggering server-side action: " + e.getMessage());
-            }
-        });
-    }
-    
-    private static void handleServerSideBreak(World world, WorldChunk chunk, Vector3i target, 
-                                               PlayerRef playerRef, Store<EntityStore> store) {
-        // Break block at server target
-        boolean success = chunk.breakBlock(target.x, target.y, target.z, 0);
-        
-        if (LOG_SYNC_INTERACTION_CHAINS) {
-            LOGGER.info("[InteractionFix] Server-side BREAK at " + 
-                target.x + "," + target.y + "," + target.z + " - success: " + success);
-        }
-    }
-    
-    private static void handleServerSidePlace(World world, WorldChunk chunk, Vector3i target, 
-                                               PlayerRef playerRef, Store<EntityStore> store) {
-        Ref<EntityStore> ref = playerRef.getReference();
-        if (ref == null || !ref.isValid()) {
-            return;
-        }
-        
-        // Get player's held item to determine what block to place
-        Player player = store.getComponent(ref, Player.getComponentType());
-        if (player == null) {
-            LOGGER.warning("[InteractionFix] Cannot get player entity for placement");
-            return;
-        }
-        
-        Inventory inventory = player.getInventory();
-        if (inventory == null) {
-            LOGGER.warning("[InteractionFix] Player has no inventory");
-            return;
-        }
-        
-        ItemStack heldItem = inventory.getItemInHand();
-        if (heldItem == null) {
-            LOGGER.info("[InteractionFix] No item in hand for placement");
-            return;
-        }
-        
-        String blockKey = heldItem.getBlockKey();
-        if (blockKey == null || blockKey.isEmpty()) {
-            LOGGER.info("[InteractionFix] Held item is not a block: " + heldItem.getItemId());
-            return;
-        }
-        
-        // Place block at placement position (adjacent to target block)
-        boolean success = chunk.placeBlock(target.x, target.y, target.z, blockKey, 
-            com.hypixel.hytale.server.core.asset.type.blocktype.config.RotationTuple.NONE, 0, false);
-        
-        if (LOG_SYNC_INTERACTION_CHAINS) {
-            LOGGER.info("[InteractionFix] Server-side PLACE '" + blockKey + "' at placement pos " + 
-                target.x + "," + target.y + "," + target.z + " - success: " + success);
-        }
+
+        return false; // Let the rewritten packet through to the engine
     }
 
     private static void handleOutboundPacket(PacketHandler handler, Packet packet) {
@@ -609,7 +478,6 @@ public class InteractionPositionFixer {
         cachedPlacementPositions.clear();
         cachedHitLocations.clear();
         cachedHitFaces.clear();
-        processedChainIds.clear();
         LOGGER.info("[InteractionFix] Shutdown complete");
     }
 }

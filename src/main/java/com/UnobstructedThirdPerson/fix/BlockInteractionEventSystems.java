@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 
 public class BlockInteractionEventSystems {
     private static final Logger LOGGER = Logger.getLogger("BlockInteractionEvents");
+    private static final boolean LOG_EVENTS = true;
 
     public static class PlaceBlockEventSystem extends EntityEventSystem<EntityStore, PlaceBlockEvent> {
         public PlaceBlockEventSystem() {
@@ -49,17 +50,15 @@ public class BlockInteractionEventSystems {
                 return;
             }
 
-            Vector3i originalTarget = event.getTargetBlock();
+            Vector3i targetBlock = event.getTargetBlock();
 
-            // Always cancel client events - we handle placement manually via SyncInteractionChains
-            // when REDIRECT_MODE is true, or simply block all placement when false
-            boolean redirectMode = InteractionPositionFixer.isRedirectMode();
-            event.setCancelled(true);
-            
-            LOGGER.info("[BlockEvent] CANCELLED PlaceBlockEvent at client pos " + 
-                originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + 
-                " | REDIRECT_MODE=" + redirectMode + 
-                " | isCancelled=" + event.isCancelled());
+            // Positions are rewritten in the packet filter before reaching the engine,
+            // so events fire with corrected positions. No need to cancel.
+            if (LOG_EVENTS) {
+                LOGGER.info("[BlockEvent] PlaceBlockEvent at " + 
+                    targetBlock.x + "," + targetBlock.y + "," + targetBlock.z +
+                    " | REDIRECT_MODE=" + InteractionPositionFixer.isRedirectMode());
+            }
         }
 
         @Nullable
@@ -97,17 +96,15 @@ public class BlockInteractionEventSystems {
                 return;
             }
 
-            Vector3i originalTarget = event.getTargetBlock();
+            Vector3i targetBlock = event.getTargetBlock();
 
-            // Always cancel client events - we handle breaking manually via SyncInteractionChains
-            // when REDIRECT_MODE is true, or simply block all breaking when false
-            boolean redirectMode = InteractionPositionFixer.isRedirectMode();
-            event.setCancelled(true);
-            
-            LOGGER.info("[BlockEvent] CANCELLED BreakBlockEvent at client pos " + 
-                originalTarget.x + "," + originalTarget.y + "," + originalTarget.z + 
-                " | REDIRECT_MODE=" + redirectMode + 
-                " | isCancelled=" + event.isCancelled());
+            // Positions are rewritten in the packet filter before reaching the engine,
+            // so events fire with corrected positions. No need to cancel.
+            if (LOG_EVENTS) {
+                LOGGER.info("[BlockEvent] BreakBlockEvent at " + 
+                    targetBlock.x + "," + targetBlock.y + "," + targetBlock.z +
+                    " | REDIRECT_MODE=" + InteractionPositionFixer.isRedirectMode());
+            }
         }
 
         @Nullable

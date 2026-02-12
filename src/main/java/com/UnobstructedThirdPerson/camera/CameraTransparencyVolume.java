@@ -99,6 +99,11 @@ public class CameraTransparencyVolume {
                         return;
                     }
                     var store = ref.getStore();
+
+                    // Update cached server target for block interaction position fixing
+                    com.UnobstructedThirdPerson.fix.InteractionPositionFixer.computeAndCacheTarget(
+                        playerRef.getUuid(), playerRef);
+
                     Vector3i origin = CameraPositionUtil.getCameraOriginBlock(ref, store);
                     if (origin != null) {
                         // Get player foot-level Y to filter out blocks below feet
