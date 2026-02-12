@@ -47,7 +47,7 @@ public class StartUnobstructedCameraCommand extends AbstractPlayerCommand {
         InteractionPositionFixer.enableForPlayer(playerRef);
 
         // Create camera transparency volume for this player
-        CameraTransparencyVolume.getOrCreate(playerRef, world, new Ellipsoid(10));
+        CameraTransparencyVolume.getOrCreate(playerRef, world, new Ellipsoid(5));
 
         playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, settings));
     }

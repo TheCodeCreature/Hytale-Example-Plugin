@@ -58,8 +58,21 @@ public final class TransparentBlockUtils {
 
     public static boolean ensureTransparentTypesSent(@Nonnull PlayerRef playerRef, @Nonnull Map<Integer, Integer> fakeIdByBaseId, boolean rebuildTextures) {
         if (!rebuildTextures) {
-            // Fall back to per-type sending
-            return ensureTransparentTypesSent(playerRef, fakeIdByBaseId);
+            // Per-type sending without texture rebuild
+            boolean sentAny = false;
+            Set<Integer> perTypeSent = SENT_FAKE_IDS.computeIfAbsent(playerRef.getUuid(), _id -> ConcurrentHashMap.newKeySet());
+            for (Map.Entry<Integer, Integer> entry : fakeIdByBaseId.entrySet()) {
+                int fakeId = entry.getValue();
+                if (!perTypeSent.contains(fakeId)) {
+                    BlockType baseType = BlockType.getAssetMap().getAsset(entry.getKey());
+                    if (baseType != null) {
+                        sendTransparentBlockType(playerRef, fakeId, baseType, false);
+                        perTypeSent.add(fakeId);
+                        sentAny = true;
+                    }
+                }
+            }
+            return sentAny;
         }
 
         Set<Integer> sent = SENT_FAKE_IDS.computeIfAbsent(playerRef.getUuid(), _id -> ConcurrentHashMap.newKeySet());
