@@ -23,6 +23,14 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
 }
 
+// Make server/protocol classes available on the test classpath so unit tests
+// can reference types like PlacementResult from InteractionPositionFixer
+configurations {
+    testImplementation {
+        extendsFrom(configurations.compileOnly.get())
+    }
+}
+
 hytale {
 //     uncomment if you want to add the Assets.zip file to your external libraries;
 //     ⚠️ CAUTION, this file is very big and might make your IDE unresponsive for some time!

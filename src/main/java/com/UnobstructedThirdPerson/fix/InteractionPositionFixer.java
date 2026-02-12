@@ -23,6 +23,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.TargetUtil;
 import com.hypixel.hytale.protocol.BlockFace;
 import com.hypixel.hytale.protocol.InteractionType;
+import com.hypixel.hytale.server.core.modules.entity.tracker.NetworkId;
 
 
 import javax.annotation.Nonnull;
@@ -67,6 +68,7 @@ public class InteractionPositionFixer {
     private static final Map<UUID, Vector3d> cachedHitLocations = new ConcurrentHashMap<>();
     private static final Map<UUID, String> cachedHitFaces = new ConcurrentHashMap<>();
     private static final Map<UUID, BlockFace> cachedBlockFaces = new ConcurrentHashMap<>();
+    private static final Map<UUID, Integer> cachedEntityTargets = new ConcurrentHashMap<>();
     private static PacketFilter registeredInboundFilter;
     private static PacketFilter registeredOutboundFilter;
 
@@ -93,6 +95,7 @@ public class InteractionPositionFixer {
         cachedHitLocations.remove(playerId);
         cachedHitFaces.remove(playerId);
         cachedBlockFaces.remove(playerId);
+        cachedEntityTargets.remove(playerId);
         
         LOGGER.info("[InteractionFix] Disabled for player: " + playerId);
     }
@@ -119,6 +122,19 @@ public class InteractionPositionFixer {
                 if (placementPos != null) {
                     cachedPlacementPositions.put(playerId, placementPos);
                 }
+            }
+            
+            // Also cache entity target for entity interactions
+            Ref<EntityStore> targetEntity = TargetUtil.getTargetEntity(ref, (float) RAYCAST_DISTANCE, store);
+            if (targetEntity != null && targetEntity.isValid()) {
+                NetworkId networkId = store.getComponent(targetEntity, NetworkId.getComponentType());
+                if (networkId != null) {
+                    cachedEntityTargets.put(playerId, networkId.getId());
+                } else {
+                    cachedEntityTargets.remove(playerId);
+                }
+            } else {
+                cachedEntityTargets.remove(playerId);
             }
         } catch (Exception e) {
             LOGGER.warning("[InteractionFix] Error computing target: " + e.getMessage());
@@ -149,6 +165,86 @@ public class InteractionPositionFixer {
     }
     
     /**
+     * Pure result of placement face detection and position calculation.
+     * Package-private for testability.
+     */
+    static final class PlacementResult {
+        final int x, y, z;
+        final String face;
+        final String blockFaceName;
+
+        PlacementResult(int x, int y, int z, String face, String blockFaceName) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.face = face;
+            this.blockFaceName = blockFaceName;
+        }
+    }
+
+    /**
+     * Pure placement calculation: given a target block and hit location, determine
+     * which face was hit and compute the adjacent placement position.
+     * No engine dependencies — testable with primitives only.
+     * Package-private for testability.
+     */
+    static PlacementResult calculatePlacementFromHit(
+            int targetX, int targetY, int targetZ,
+            double hitX, double hitY, double hitZ) {
+
+        double dx = hitX - targetX;
+        double dy = hitY - targetY;
+        double dz = hitZ - targetZ;
+
+        int offsetX = 0, offsetY = 0, offsetZ = 0;
+        String hitFace = "unknown";
+        String blockFaceName = "None";
+
+        // Check X faces (West = 0.0, East = 1.0)
+        if (Math.abs(dx) < 0.001) {
+            offsetX = -1; hitFace = "WEST (-X)"; blockFaceName = "West";
+        } else if (Math.abs(dx - 1.0) < 0.001) {
+            offsetX = 1; hitFace = "EAST (+X)"; blockFaceName = "East";
+        }
+        // Check Y faces (Bottom = 0.0, Top = 1.0)
+        else if (Math.abs(dy) < 0.001) {
+            offsetY = -1; hitFace = "BOTTOM (-Y)"; blockFaceName = "Down";
+        } else if (Math.abs(dy - 1.0) < 0.001) {
+            offsetY = 1; hitFace = "TOP (+Y)"; blockFaceName = "Up";
+        }
+        // Check Z faces (North = 0.0, South = 1.0)
+        else if (Math.abs(dz) < 0.001) {
+            offsetZ = -1; hitFace = "NORTH (-Z)"; blockFaceName = "North";
+        } else if (Math.abs(dz - 1.0) < 0.001) {
+            offsetZ = 1; hitFace = "SOUTH (+Z)"; blockFaceName = "South";
+        }
+        // Fallback: use closest face based on which delta is closest to a boundary
+        else {
+            double distWest = Math.abs(dx);
+            double distEast = Math.abs(dx - 1.0);
+            double distBottom = Math.abs(dy);
+            double distTop = Math.abs(dy - 1.0);
+            double distNorth = Math.abs(dz);
+            double distSouth = Math.abs(dz - 1.0);
+
+            double minDist = Math.min(distWest, Math.min(distEast, Math.min(distBottom,
+                             Math.min(distTop, Math.min(distNorth, distSouth)))));
+
+            if (minDist == distWest) { offsetX = -1; hitFace = "WEST (-X) [fallback]"; blockFaceName = "West"; }
+            else if (minDist == distEast) { offsetX = 1; hitFace = "EAST (+X) [fallback]"; blockFaceName = "East"; }
+            else if (minDist == distBottom) { offsetY = -1; hitFace = "BOTTOM (-Y) [fallback]"; blockFaceName = "Down"; }
+            else if (minDist == distTop) { offsetY = 1; hitFace = "TOP (+Y) [fallback]"; blockFaceName = "Up"; }
+            else if (minDist == distNorth) { offsetZ = -1; hitFace = "NORTH (-Z) [fallback]"; blockFaceName = "North"; }
+            else { offsetZ = 1; hitFace = "SOUTH (+Z) [fallback]"; blockFaceName = "South"; }
+        }
+
+        return new PlacementResult(
+            targetX + offsetX, targetY + offsetY, targetZ + offsetZ,
+            hitFace, blockFaceName
+        );
+    }
+
+    /**
      * Calculate the placement position (adjacent air block) based on which face of the target block
      * the ray hits. This uses the precise hit location to determine the face.
      */
@@ -165,63 +261,30 @@ public class InteractionPositionFixer {
         // Cache hit location for debug display
         cachedHitLocations.put(playerId, hitLocation);
         
-        // Calculate which face was hit by checking which coordinate is closest to block boundary
-        double dx = hitLocation.x - targetBlock.x;
-        double dy = hitLocation.y - targetBlock.y;
-        double dz = hitLocation.z - targetBlock.z;
-        
         LOGGER.info("[PlacementCalc] Target: " + targetBlock.x + "," + targetBlock.y + "," + targetBlock.z +
-            " HitLoc: " + String.format("%.3f,%.3f,%.3f", hitLocation.x, hitLocation.y, hitLocation.z) +
-            " Delta: " + String.format("%.3f,%.3f,%.3f", dx, dy, dz));
+            " HitLoc: " + String.format("%.3f,%.3f,%.3f", hitLocation.x, hitLocation.y, hitLocation.z));
         
-        // Determine offset direction based on which face was hit
-        int offsetX = 0, offsetY = 0, offsetZ = 0;
-        String hitFace = "unknown";
-        BlockFace blockFace = BlockFace.None;
+        // Delegate to the pure, testable calculation method
+        PlacementResult result = calculatePlacementFromHit(
+            targetBlock.x, targetBlock.y, targetBlock.z,
+            hitLocation.x, hitLocation.y, hitLocation.z
+        );
         
-        // Check X faces (West = 0.0, East = 1.0)
-        if (Math.abs(dx) < 0.001) {
-            offsetX = -1; hitFace = "WEST (-X)"; blockFace = BlockFace.West;
-        } else if (Math.abs(dx - 1.0) < 0.001) {
-            offsetX = 1; hitFace = "EAST (+X)"; blockFace = BlockFace.East;
-        }
-        // Check Y faces (Bottom = 0.0, Top = 1.0)
-        else if (Math.abs(dy) < 0.001) {
-            offsetY = -1; hitFace = "BOTTOM (-Y)"; blockFace = BlockFace.Down;
-        } else if (Math.abs(dy - 1.0) < 0.001) {
-            offsetY = 1; hitFace = "TOP (+Y)"; blockFace = BlockFace.Up;
-        }
-        // Check Z faces (North = 0.0, South = 1.0)
-        else if (Math.abs(dz) < 0.001) {
-            offsetZ = -1; hitFace = "NORTH (-Z)"; blockFace = BlockFace.North;
-        } else if (Math.abs(dz - 1.0) < 0.001) {
-            offsetZ = 1; hitFace = "SOUTH (+Z)"; blockFace = BlockFace.South;
-        }
-        // Fallback: use closest face based on which delta is closest to a boundary
-        else {
-            double distWest = Math.abs(dx);
-            double distEast = Math.abs(dx - 1.0);
-            double distBottom = Math.abs(dy);
-            double distTop = Math.abs(dy - 1.0);
-            double distNorth = Math.abs(dz);
-            double distSouth = Math.abs(dz - 1.0);
-            
-            double minDist = Math.min(distWest, Math.min(distEast, Math.min(distBottom, 
-                             Math.min(distTop, Math.min(distNorth, distSouth)))));
-            
-            if (minDist == distWest) { offsetX = -1; hitFace = "WEST (-X) [fallback]"; blockFace = BlockFace.West; }
-            else if (minDist == distEast) { offsetX = 1; hitFace = "EAST (+X) [fallback]"; blockFace = BlockFace.East; }
-            else if (minDist == distBottom) { offsetY = -1; hitFace = "BOTTOM (-Y) [fallback]"; blockFace = BlockFace.Down; }
-            else if (minDist == distTop) { offsetY = 1; hitFace = "TOP (+Y) [fallback]"; blockFace = BlockFace.Up; }
-            else if (minDist == distNorth) { offsetZ = -1; hitFace = "NORTH (-Z) [fallback]"; blockFace = BlockFace.North; }
-            else { offsetZ = 1; hitFace = "SOUTH (+Z) [fallback]"; blockFace = BlockFace.South; }
-        }
-        
-        cachedHitFaces.put(playerId, hitFace);
+        cachedHitFaces.put(playerId, result.face);
+        // Map blockFaceName back to BlockFace enum
+        BlockFace blockFace = switch (result.blockFaceName) {
+            case "West" -> BlockFace.West;
+            case "East" -> BlockFace.East;
+            case "Down" -> BlockFace.Down;
+            case "Up" -> BlockFace.Up;
+            case "North" -> BlockFace.North;
+            case "South" -> BlockFace.South;
+            default -> BlockFace.None;
+        };
         cachedBlockFaces.put(playerId, blockFace);
-        Vector3i placementPos = new Vector3i(targetBlock.x + offsetX, targetBlock.y + offsetY, targetBlock.z + offsetZ);
+        Vector3i placementPos = new Vector3i(result.x, result.y, result.z);
         
-        LOGGER.info("[PlacementCalc] Hit face: " + hitFace + " -> Placement: " + 
+        LOGGER.info("[PlacementCalc] Hit face: " + result.face + " -> Placement: " + 
             placementPos.x + "," + placementPos.y + "," + placementPos.z);
         
         return placementPos;
@@ -296,25 +359,17 @@ public class InteractionPositionFixer {
             return false;
         }
 
-        // Always kill the original client packet and re-inject a new one
-        // with corrected coordinates to avoid duplicate placement
-        Vector3i placementPos = cachedPlacementPositions.get(playerId);
-        if (placementPos != null && cpb.position != null) {
-            ClientPlaceBlock corrected = cpb.clone();
-            corrected.position = new BlockPosition(placementPos.x, placementPos.y, placementPos.z);
-
-            if (LOG_CLIENT_PLACE_BLOCK) {
-                LOGGER.info("[ClientPlaceBlock] Blocked original, re-injecting with position " +
-                    cpb.position.x + "," + cpb.position.y + "," + cpb.position.z +
-                    " -> " + placementPos.x + "," + placementPos.y + "," + placementPos.z);
-            }
-
-            gph.handle(corrected);
-        } else if (LOG_CLIENT_PLACE_BLOCK) {
-            LOGGER.fine("[ClientPlaceBlock] No cached placement position, dropping packet");
+        // Kill the ClientPlaceBlock packet entirely — do NOT re-inject.
+        // SyncInteractionChains (PlaceBlockInteraction) already handles placement
+        // through the interaction chain system. Re-injecting ClientPlaceBlock would
+        // cause duplicate placement via BlockPlaceUtils.placeBlock().
+        if (LOG_CLIENT_PLACE_BLOCK) {
+            LOGGER.info("[ClientPlaceBlock] Killed packet (position=" +
+                (cpb.position != null ? cpb.position.x + "," + cpb.position.y + "," + cpb.position.z : "null") +
+                ", blockId=" + cpb.placedBlockId + ") — placement handled by SyncInteractionChains");
         }
 
-        return true; // Block the original packet
+        return true; // Block the original packet, do not re-inject
     }
 
     private static boolean handleSyncInteractionChains(PacketHandler handler, SyncInteractionChains sic) {
@@ -339,12 +394,36 @@ public class InteractionPositionFixer {
         // inventory management, events, and all other engine behavior.
         SyncInteractionChains corrected = sic.clone();
 
+        // Correct entity targeting in chain data (InteractionChainData)
+        Integer cachedEntityId = cachedEntityTargets.get(playerId);
         for (SyncInteractionChain chain : corrected.updates) {
+            // Correct chain.data entity and block targeting
+            var chainData = chain.data;
+            if (chainData != null) {
+                if (cachedEntityId != null) {
+                    chainData.entityId = cachedEntityId;
+                }
+                // Correct chain.data.blockPosition with server target
+                Vector3i chainBlockTarget = cachedServerTargets.get(playerId);
+                if (chainBlockTarget != null) {
+                    chainData.blockPosition = new BlockPosition(chainBlockTarget.x, chainBlockTarget.y, chainBlockTarget.z);
+                }
+            }
+
             if (chain.interactionData == null) {
                 continue;
             }
             for (InteractionSyncData data : chain.interactionData) {
-                if (data == null || data.blockPosition == null) {
+                if (data == null) {
+                    continue;
+                }
+
+                // Correct entity targeting in InteractionSyncData
+                if (cachedEntityId != null && data.entityId >= 0) {
+                    data.entityId = cachedEntityId;
+                }
+
+                if (data.blockPosition == null) {
                     continue;
                 }
 
@@ -369,7 +448,8 @@ public class InteractionPositionFixer {
                         LOGGER.info("[SyncInteractionChains] Blocked original, re-injecting " + chain.interactionType +
                             " blockPosition " + clientPos.x + "," + clientPos.y + "," + clientPos.z +
                             " -> " + serverPos.x + "," + serverPos.y + "," + serverPos.z +
-                            " (chain=" + chain.chainId + ", state=" + chain.state + ")");
+                            " (chain=" + chain.chainId + ", state=" + chain.state +
+                            ", entityId=" + (cachedEntityId != null ? cachedEntityId : "none") + ")");
                     }
                     data.blockPosition = new BlockPosition(serverPos.x, serverPos.y, serverPos.z);
 
@@ -499,6 +579,7 @@ public class InteractionPositionFixer {
         cachedHitLocations.clear();
         cachedHitFaces.clear();
         cachedBlockFaces.clear();
+        cachedEntityTargets.clear();
         LOGGER.info("[InteractionFix] Shutdown complete");
     }
 }
