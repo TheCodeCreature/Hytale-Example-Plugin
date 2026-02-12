@@ -13,9 +13,9 @@ public class CustomCameraSettings extends CameraSettings {
     public ServerCameraSettings DefaultCameraSettings(){
         ServerCameraSettings settings = new ServerCameraSettings();
         settings.isFirstPerson = false;
-        settings.positionLerpSpeed = 0.5f;
-        settings.rotationLerpSpeed = 0.5f;
-        settings.distance = 10f;
+        settings.positionLerpSpeed = 0.9f;
+        settings.rotationLerpSpeed = 0.9f;
+        settings.distance = 3f;
         settings.eyeOffset = true;
         settings.displayReticle = true;
 //        settings.sendMouseMotion = true;  // Allow client to control camera rotation

@@ -30,7 +30,7 @@ import java.util.logging.Logger;
 public class CameraTransparencyVolume {
 
     private static final Logger LOGGER = Logger.getLogger("CameraTransparencyVolume");
-    private static final int APPLY_DELAY_MILLIS = 500;
+    private static final int APPLY_DELAY_MILLIS = 100;
     private static final int FEET_Y_OFFSET = 1;
     private static final long UPDATE_INTERVAL_MILLIS = 100;
 
