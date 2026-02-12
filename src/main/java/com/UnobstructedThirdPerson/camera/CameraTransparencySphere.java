@@ -88,15 +88,17 @@ public class CameraTransparencySphere {
     private void startUpdateLoop() {
         updateTask = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> {
             try {
-                Ref<EntityStore> ref = playerRef.getReference();
-                if (ref == null || !ref.isValid()) {
-                    return;
-                }
-                var store = ref.getStore();
-                Vector3i origin = CameraPositionUtil.getCameraOriginBlock(ref, store);
-                if (origin != null) {
-                    world.execute(() -> update(origin));
-                }
+                world.execute(() -> {
+                    Ref<EntityStore> ref = playerRef.getReference();
+                    if (ref == null || !ref.isValid()) {
+                        return;
+                    }
+                    var store = ref.getStore();
+                    Vector3i origin = CameraPositionUtil.getCameraOriginBlock(ref, store);
+                    if (origin != null) {
+                        update(origin);
+                    }
+                });
             } catch (Exception e) {
                 LOGGER.warning("[CameraTransparency] Error in update loop: " + e.getMessage());
             }
