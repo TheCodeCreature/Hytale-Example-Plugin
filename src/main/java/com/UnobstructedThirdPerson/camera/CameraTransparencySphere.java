@@ -30,7 +30,7 @@ public class CameraTransparencySphere {
 
     private static final Logger LOGGER = Logger.getLogger("CameraTransparencySphere");
     private static final double DEFAULT_RADIUS = 10.0;
-    private static final int APPLY_DELAY_MILLIS = 50;
+    private static final int APPLY_DELAY_MILLIS = 500;
     private static final long UPDATE_INTERVAL_MILLIS = 100;
 
     private static final Map<UUID, CameraTransparencySphere> INSTANCES = new ConcurrentHashMap<>();
@@ -144,7 +144,7 @@ public class CameraTransparencySphere {
             BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
             if (snapshot != null && snapshot.blockId() != 0) {
                 BlockType baseType = BlockType.getAssetMap().getAsset(snapshot.blockId());
-                if (baseType != null && TransparentBlockUtils.isEligibleBlockType(baseType)) {
+                if (baseType != null) {
                     long pos = BlockUtil.packUnchecked(x, y, z);
                     newPositions.add(pos);
                     newSnapshots.put(pos, snapshot);
@@ -173,7 +173,7 @@ public class CameraTransparencySphere {
         // Ensure transparent types are sent to client
         boolean sentNewTypes = false;
         if (!fakeIdByBaseId.isEmpty()) {
-            sentNewTypes = TransparentBlockUtils.ensureTransparentTypesSent(playerRef, fakeIdByBaseId);
+            sentNewTypes = TransparentBlockUtils.ensureTransparentTypesSent(playerRef, fakeIdByBaseId, true);
         }
 
         LOGGER.info("[CameraTransparency] Diff: " + newPositions.size() + " total, +" + toAdd.size() + " add, -" + toRemove.size() + " remove, sentNewTypes=" + sentNewTypes);

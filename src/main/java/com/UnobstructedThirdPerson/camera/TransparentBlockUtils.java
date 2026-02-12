@@ -53,20 +53,35 @@ public final class TransparentBlockUtils {
     }
 
     public static boolean ensureTransparentTypesSent(@Nonnull PlayerRef playerRef, @Nonnull Map<Integer, Integer> fakeIdByBaseId) {
+        return ensureTransparentTypesSent(playerRef, fakeIdByBaseId, false);
+    }
+
+    public static boolean ensureTransparentTypesSent(@Nonnull PlayerRef playerRef, @Nonnull Map<Integer, Integer> fakeIdByBaseId, boolean rebuildTextures) {
         boolean sentAny = false;
         Set<Integer> sent = SENT_FAKE_IDS.computeIfAbsent(playerRef.getUuid(), _id -> ConcurrentHashMap.newKeySet());
+
+        // Collect types that need sending
+        java.util.List<Map.Entry<Integer, Integer>> toSend = new java.util.ArrayList<>();
         for (Map.Entry<Integer, Integer> entry : fakeIdByBaseId.entrySet()) {
             int fakeId = entry.getValue();
-            if (sent.contains(fakeId)) {
-                continue;
+            if (!sent.contains(fakeId)) {
+                BlockType baseType = BlockType.getAssetMap().getAsset(entry.getKey());
+                if (baseType != null) {
+                    toSend.add(entry);
+                }
             }
+        }
 
+        int count = toSend.size();
+        int i = 0;
+        for (Map.Entry<Integer, Integer> entry : toSend) {
+            i++;
+            int fakeId = entry.getValue();
             BlockType baseType = BlockType.getAssetMap().getAsset(entry.getKey());
-            if (baseType == null) {
-                continue;
-            }
-
-            sendTransparentBlockType(playerRef, fakeId, baseType, false);
+            if (baseType == null) continue;
+            // Rebuild textures on the last type sent if requested
+            boolean doRebuild = rebuildTextures && (i == count);
+            sendTransparentBlockType(playerRef, fakeId, baseType, doRebuild);
             sent.add(fakeId);
             sentAny = true;
         }
