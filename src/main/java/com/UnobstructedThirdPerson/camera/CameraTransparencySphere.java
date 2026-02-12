@@ -61,9 +61,13 @@ public class CameraTransparencySphere {
         UUID playerId = playerRef.getUuid();
         CameraTransparencySphere existing = INSTANCES.get(playerId);
         if (existing != null) {
-            return existing;
+            // Shut down stale instance (e.g. from a crash) and create fresh
+            existing.shutdown();
+            INSTANCES.remove(playerId);
+            LOGGER.info("[CameraTransparency] Replaced stale sphere for player: " + playerRef.getUsername());
         }
         CameraTransparencySphere instance = new CameraTransparencySphere(playerRef, world, DEFAULT_RADIUS);
+        TransparentBlockUtils.preloadTransparentType(playerRef);
         instance.startUpdateLoop();
         INSTANCES.put(playerId, instance);
         LOGGER.info("[CameraTransparency] Created sphere for player: " + playerRef.getUsername());
@@ -97,12 +101,14 @@ public class CameraTransparencySphere {
                     Vector3i origin = CameraPositionUtil.getCameraOriginBlock(ref, store);
                     if (origin != null) {
                         update(origin);
+                    } else {
+                        LOGGER.fine("[CameraTransparency] getCameraOriginBlock returned null");
                     }
                 });
             } catch (Exception e) {
                 LOGGER.warning("[CameraTransparency] Error in update loop: " + e.getMessage());
             }
-        }, 0, UPDATE_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+        }, 200, UPDATE_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
     }
 
     private void stopUpdateLoop() {
@@ -125,6 +131,7 @@ public class CameraTransparencySphere {
             return;
         }
 
+        LOGGER.info("[CameraTransparency] Anchor changed to: " + newAnchor.x + ", " + newAnchor.y + ", " + newAnchor.z);
         lastAnchor = newAnchor;
 
         ChunkStore chunkStore = world.getChunkStore();
@@ -168,6 +175,8 @@ public class CameraTransparencySphere {
         if (!fakeIdByBaseId.isEmpty()) {
             sentNewTypes = TransparentBlockUtils.ensureTransparentTypesSent(playerRef, fakeIdByBaseId);
         }
+
+        LOGGER.info("[CameraTransparency] Diff: " + newPositions.size() + " total, +" + toAdd.size() + " add, -" + toRemove.size() + " remove, sentNewTypes=" + sentNewTypes);
 
         // Apply changes — delay if new types were sent
         if (sentNewTypes) {
@@ -241,9 +250,10 @@ public class CameraTransparencySphere {
             ));
         }
 
+        int restored = activeBlocks.size();
         activeBlocks.clear();
         currentPositions.clear();
         lastAnchor = null;
-        LOGGER.info("[CameraTransparency] Shutdown - restored " + activeBlocks.size() + " blocks");
+        LOGGER.info("[CameraTransparency] Shutdown - restored " + restored + " blocks");
     }
 }
