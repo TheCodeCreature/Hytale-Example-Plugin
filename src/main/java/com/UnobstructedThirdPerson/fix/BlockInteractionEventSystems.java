@@ -56,8 +56,7 @@ public class BlockInteractionEventSystems {
             // so events fire with corrected positions. No need to cancel.
             if (LOG_EVENTS) {
                 LOGGER.info("[BlockEvent] PlaceBlockEvent at " + 
-                    targetBlock.x + "," + targetBlock.y + "," + targetBlock.z +
-                    " | REDIRECT_MODE=" + InteractionPositionFixer.isRedirectMode());
+                    targetBlock.x + "," + targetBlock.y + "," + targetBlock.z);
             }
         }
 
@@ -102,8 +101,7 @@ public class BlockInteractionEventSystems {
             // so events fire with corrected positions. No need to cancel.
             if (LOG_EVENTS) {
                 LOGGER.info("[BlockEvent] BreakBlockEvent at " + 
-                    targetBlock.x + "," + targetBlock.y + "," + targetBlock.z +
-                    " | REDIRECT_MODE=" + InteractionPositionFixer.isRedirectMode());
+                    targetBlock.x + "," + targetBlock.y + "," + targetBlock.z);
             }
         }
 

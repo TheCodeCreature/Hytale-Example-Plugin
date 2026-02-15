@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.debug;
+package com.UnobstructedThirdPerson.AssetEditor.Commands;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;

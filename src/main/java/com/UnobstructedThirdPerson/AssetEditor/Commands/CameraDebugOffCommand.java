@@ -1,6 +1,5 @@
-package com.UnobstructedThirdPerson.debug;
+package com.UnobstructedThirdPerson.AssetEditor.Commands;
 
-import com.UnobstructedThirdPerson.camera.CameraSettingsApplier;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.Message;
@@ -11,18 +10,16 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
-public class CameraDebugApplyCommand extends AbstractPlayerCommand {
+public class CameraDebugOffCommand extends AbstractPlayerCommand {
 
-    public CameraDebugApplyCommand() {
-        super("apply", "Force re-apply camera settings");
+    public CameraDebugOffCommand() {
+        super("off", "Disable camera debug logging");
     }
 
     @Override
     protected void execute(@NonNull CommandContext context, @NonNull Store<EntityStore> store, 
                           @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
-        CameraDebugManager.log("Force applying camera settings to " + playerRef.getUsername());
-        CameraSettingsApplier.reloadSettings();
-        CameraSettingsApplier.applyToPlayer(playerRef);
-        playerRef.sendMessage(Message.translation("Camera settings reloaded and applied"));
+        CameraDebugManager.disableDebug(playerRef);
+        playerRef.sendMessage(Message.translation("Camera debug logging disabled"));
     }
 }

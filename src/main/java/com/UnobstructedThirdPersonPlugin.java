@@ -2,16 +2,13 @@ package com;
 
 import com.UnobstructedThirdPerson.AssetEditor.CameraSchemaExtension;
 import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.UnobstructedCameraCommand;
-import com.UnobstructedThirdPerson.camera.ApplyCameraOnSpawnSystem;
-import com.UnobstructedThirdPerson.camera.CameraAssetChangeListener;
+import com.UnobstructedThirdPerson.Commands.debug.DebugTargetCommand;
 import com.UnobstructedThirdPerson.camera.PeekTestCommand;
 import com.UnobstructedThirdPerson.camera.TransparentAreaCommand;
-import com.UnobstructedThirdPerson.debug.CameraDebugCommand;
+import com.UnobstructedThirdPerson.AssetEditor.Commands.CameraDebugCommand;
 import com.UnobstructedThirdPerson.fix.BlockInteractionEventSystems;
-import com.hypixel.hytale.assetstore.event.LoadedAssetsEvent;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.asset.GenerateSchemaEvent;
-import com.hypixel.hytale.server.core.asset.type.model.config.ModelAsset;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import org.jspecify.annotations.NonNull;
@@ -29,8 +26,8 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         LOGGER.atInfo().log("Hello from %s version %s SETUP", this.getName(), this.getManifest().getVersion().toString());
         this.getCommandRegistry().registerCommand(new UnobstructedCameraCommand());
         this.getCommandRegistry().registerCommand(new PeekTestCommand());
-        this.getCommandRegistry().registerCommand(new ExampleCommand(this.getName(), this.getManifest().getVersion().toString()));
         this.getCommandRegistry().registerCommand(new TransparentAreaCommand());
+        this.getCommandRegistry().registerCommand(new DebugTargetCommand());
 
         // Register schema extension to add all 30 camera settings fields to AssetEditor
         this.getEventRegistry().register(GenerateSchemaEvent.class, CameraSchemaExtension::extendCameraSchema);

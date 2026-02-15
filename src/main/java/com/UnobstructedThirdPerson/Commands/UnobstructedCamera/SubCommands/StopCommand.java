@@ -13,8 +13,8 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
-public class ResetCameraCommand extends AbstractPlayerCommand {
-    public ResetCameraCommand(){
+public class StopCommand extends AbstractPlayerCommand {
+    public StopCommand(){
         super("Stop","Stops the camera");
     }
     @Override

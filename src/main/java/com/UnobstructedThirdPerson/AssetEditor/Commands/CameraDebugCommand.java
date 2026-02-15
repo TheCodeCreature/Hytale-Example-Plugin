@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.debug;
+package com.UnobstructedThirdPerson.AssetEditor.Commands;
 
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractCommandCollection;
 

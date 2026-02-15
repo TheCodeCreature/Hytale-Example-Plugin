@@ -18,16 +18,13 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
-public class StartUnobstructedCameraCommand extends AbstractPlayerCommand {
+public class StartCommand extends AbstractPlayerCommand {
     private final OptionalArg<Float> distanceArg;
-    private final OptionalArg<Boolean> redirectModeArg;
 
-    public StartUnobstructedCameraCommand(){
+    public StartCommand(){
         super("Start","Starts the camera");
         this.distanceArg = withOptionalArg("Distance", "Set the Distance from the camera.", ArgTypes.FLOAT).addValidator(Validators.greaterThan(0f));
-        this.redirectModeArg = withOptionalArg("RedirectBlocks", "Redirect block interactions to camera target (true) or block them (false). Default: true", ArgTypes.BOOLEAN);
     }
 
     @Override
@@ -36,12 +33,6 @@ public class StartUnobstructedCameraCommand extends AbstractPlayerCommand {
 
         var distance = distanceArg.get(commandContext);
         if(distance != null) settings.distance = distance;
-
-        // Set redirect mode if specified
-        var redirectMode = redirectModeArg.get(commandContext);
-        if(redirectMode != null) {
-            InteractionPositionFixer.setRedirectMode(redirectMode);
-        }
 
         // Enable the interaction position fixer to correct stale block positions
         InteractionPositionFixer.enableForPlayer(playerRef);

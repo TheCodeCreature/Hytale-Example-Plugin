@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.debug;
+package com.UnobstructedThirdPerson.AssetEditor.Commands;
 
 import com.UnobstructedThirdPerson.camera.CameraSettingsApplier;
 import com.UnobstructedThirdPerson.camera.ExtendedCameraSettings;
@@ -12,22 +12,21 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
-public class CameraDebugDumpCommand extends AbstractPlayerCommand {
+public class CameraDebugReloadCommand extends AbstractPlayerCommand {
 
-    public CameraDebugDumpCommand() {
-        super("dump", "Dump cached camera settings to console");
+    public CameraDebugReloadCommand() {
+        super("reload", "Reload camera settings from Player.json");
     }
 
     @Override
     protected void execute(@NonNull CommandContext context, @NonNull Store<EntityStore> store, 
                           @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
+        CameraDebugManager.log("Reloading camera settings from Player.json");
+        CameraSettingsApplier.reloadSettings();
         ExtendedCameraSettings settings = CameraSettingsApplier.getCachedSettings();
         if (settings != null) {
-            CameraDebugManager.log("Cached ExtendedCameraSettings:\n" + settings.toFullString());
-            playerRef.sendMessage(Message.translation("Camera settings dumped to console"));
-        } else {
-            CameraDebugManager.log("No cached camera settings");
-            playerRef.sendMessage(Message.translation("No cached camera settings"));
+            CameraDebugManager.log("Reloaded settings:\n" + settings.toFullString());
         }
+        playerRef.sendMessage(Message.translation("Camera settings reloaded from Player.json"));
     }
 }

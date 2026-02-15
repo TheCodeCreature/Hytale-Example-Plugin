@@ -1,6 +1,6 @@
 package com.UnobstructedThirdPerson.camera;
 
-import com.UnobstructedThirdPerson.debug.CameraDebugManager;
+import com.UnobstructedThirdPerson.AssetEditor.Commands.CameraDebugManager;
 import com.hypixel.hytale.protocol.ClientCameraView;
 import com.hypixel.hytale.protocol.ServerCameraSettings;
 import com.hypixel.hytale.protocol.packets.camera.SetServerCamera;

@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands;
+package com.UnobstructedThirdPerson.Commands.debug;
 
 import com.UnobstructedThirdPerson.fix.InteractionPositionFixer;
 import com.hypixel.hytale.component.Ref;
@@ -60,8 +60,7 @@ public class DebugTargetCommand extends AbstractPlayerCommand {
         Vector3d hitLocation = InteractionPositionFixer.getCachedHitLocation(playerId);
         String hitFace = InteractionPositionFixer.getCachedHitFace(playerId);
         boolean isEnabled = InteractionPositionFixer.isEnabledForPlayer(playerId);
-        boolean isRedirectMode = InteractionPositionFixer.isRedirectMode();
-        
+
         // Get player transform and head rotation
         TransformComponent transformComponent = store.getComponent(ref, TransformComponent.getComponentType());
         HeadRotation headRotation = store.getComponent(ref, HeadRotation.getComponentType());
@@ -166,9 +165,6 @@ public class DebugTargetCommand extends AbstractPlayerCommand {
         
         sb.append("§eEnabled: §f").append(isEnabled).append("\n");
         logSb.append("  Enabled: ").append(isEnabled).append("\n");
-        
-        sb.append("§eRedirect Mode: §f").append(isRedirectMode).append("\n");
-        logSb.append("  Redirect Mode: ").append(isRedirectMode).append("\n");
         
         sb.append("§ePlayer Pos: §f").append(fmtPos(playerPos)).append("\n");
         logSb.append("  Player Pos: ").append(fmtPos(playerPos)).append("\n");

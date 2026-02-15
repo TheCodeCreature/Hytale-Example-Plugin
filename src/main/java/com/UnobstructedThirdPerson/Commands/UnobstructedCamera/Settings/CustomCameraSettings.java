@@ -1,8 +1,6 @@
 package com.UnobstructedThirdPerson.Commands.UnobstructedCamera.Settings;
 
-import com.hypixel.hytale.protocol.CameraSettings;
-import com.hypixel.hytale.protocol.PositionDistanceOffsetType;
-import com.hypixel.hytale.protocol.ServerCameraSettings;
+import com.hypixel.hytale.protocol.*;
 
 public class CustomCameraSettings extends CameraSettings {
     public final ServerCameraSettings Settings;
@@ -18,6 +16,7 @@ public class CustomCameraSettings extends CameraSettings {
         settings.distance = 3f;
         settings.eyeOffset = true;
         settings.displayReticle = true;
+        settings.positionOffset = new Position(0f,1f,0f);
 //        settings.sendMouseMotion = true;  // Allow client to control camera rotation
 //        settings.mouseInputType = MouseInputType.LookAtTargetEntity;
 //        settings.mouseInputTargetType = MouseInputTargetType.Any;

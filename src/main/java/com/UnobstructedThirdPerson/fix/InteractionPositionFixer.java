@@ -59,9 +59,6 @@ public class InteractionPositionFixer {
     // Fix behavior
     private static final int RAYCAST_DISTANCE = 30;           // Max distance for server raycast
 
-    // Redirect mode: true = rewrite positions to server target, false = let packets through unmodified
-    private static boolean REDIRECT_MODE = true;
-
     // ===== END CONFIGURABLE FILTERS =====
 
     private static final Set<UUID> ENABLED_PLAYERS = ConcurrentHashMap.newKeySet();
@@ -147,15 +144,6 @@ public class InteractionPositionFixer {
 
     public static boolean isEnabledForPlayer(@Nonnull UUID playerId) {
         return ENABLED_PLAYERS.contains(playerId);
-    }
-
-    public static boolean isRedirectMode() {
-        return REDIRECT_MODE;
-    }
-
-    public static void setRedirectMode(boolean redirectMode) {
-        REDIRECT_MODE = redirectMode;
-        LOGGER.info("[InteractionFix] Redirect mode set to: " + redirectMode);
     }
 
     @Nullable
@@ -359,10 +347,6 @@ public class InteractionPositionFixer {
             return false;
         }
 
-        if (!REDIRECT_MODE) {
-            return false;
-        }
-
         // Kill the ClientPlaceBlock packet entirely — do NOT re-inject.
         // SyncInteractionChains (PlaceBlockInteraction) already handles placement
         // through the interaction chain system. Re-injecting ClientPlaceBlock would
@@ -393,10 +377,6 @@ public class InteractionPositionFixer {
 
         if (!ENABLED_PLAYERS.contains(playerId)) {
             return false;
-        }
-
-        if (!REDIRECT_MODE) {
-            return false; // Let packet through unmodified
         }
 
         // Always kill the original client packet and re-inject a new one

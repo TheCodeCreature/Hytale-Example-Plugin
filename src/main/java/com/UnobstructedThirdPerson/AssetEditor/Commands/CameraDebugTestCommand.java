@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.debug;
+package com.UnobstructedThirdPerson.AssetEditor.Commands;
 
 import com.UnobstructedThirdPerson.camera.CameraSettingsApplier;
 import com.UnobstructedThirdPerson.camera.ExtendedCameraSettings;
