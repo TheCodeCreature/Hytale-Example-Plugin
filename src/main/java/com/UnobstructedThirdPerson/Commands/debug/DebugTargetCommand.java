@@ -4,6 +4,7 @@ import com.UnobstructedThirdPerson.fix.InteractionPositionFixer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Transform;
+import com.hypixel.hytale.math.vector.Vector2d;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
@@ -11,6 +12,7 @@ import com.hypixel.hytale.protocol.BlockPosition;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
+import com.hypixel.hytale.server.core.entity.entities.player.CameraManager;
 import com.hypixel.hytale.server.core.modules.debug.DebugUtils;
 import com.hypixel.hytale.server.core.modules.entity.component.HeadRotation;
 import com.hypixel.hytale.server.core.modules.entity.component.ModelComponent;
@@ -41,6 +43,7 @@ public class DebugTargetCommand extends AbstractPlayerCommand {
     private static final Vector3f COLOR_PURPLE = new Vector3f(0.8f, 0.2f, 1.0f);
     private static final Vector3f COLOR_MAGENTA = new Vector3f(1.0f, 0.0f, 0.5f);
     private static final Vector3f COLOR_WHITE = new Vector3f(1.0f, 1.0f, 1.0f);
+    private static final Vector3f COLOR_LIME = new Vector3f(0.5f, 1.0f, 0.0f);
 
     public DebugTargetCommand() {
         super("DebugTarget", "Shows client target vs server calculated target positions with visual debug shapes");
@@ -61,15 +64,20 @@ public class DebugTargetCommand extends AbstractPlayerCommand {
         String hitFace = InteractionPositionFixer.getCachedHitFace(playerId);
         boolean isEnabled = InteractionPositionFixer.isEnabledForPlayer(playerId);
 
-        // Get player transform and head rotation
+        // Get player transform, head rotation, and camera manager
         TransformComponent transformComponent = store.getComponent(ref, TransformComponent.getComponentType());
         HeadRotation headRotation = store.getComponent(ref, HeadRotation.getComponentType());
         ModelComponent modelComponent = store.getComponent(ref, ModelComponent.getComponentType());
+        CameraManager cameraManager = store.getComponent(ref, CameraManager.getComponentType());
         
         if (transformComponent == null || headRotation == null) {
             playerRef.sendMessage(Message.raw("§cError: Could not get player transform components"));
             return;
         }
+        
+        // Get reticle target from CameraManager (client-reported target block via MouseInteraction)
+        Vector3i reticleTarget = (cameraManager != null) ? cameraManager.getLastTargetBlock() : null;
+        Vector2d screenPoint = (cameraManager != null) ? cameraManager.getLastScreenPoint() : null;
         
         // Get player position and eye height
         Vector3d playerPos = transformComponent.getPosition();
@@ -120,6 +128,12 @@ public class DebugTargetCommand extends AbstractPlayerCommand {
         if (serverTarget != null) {
             Vector3d serverBlockCenter = new Vector3d(serverTarget.x + 0.5, serverTarget.y + 0.5, serverTarget.z + 0.5);
             DebugUtils.addCube(world, serverBlockCenter, COLOR_GREEN, 1.0, DEBUG_DURATION);
+        }
+        
+        // 5b. Reticle target block - Lime cube (what the client's reticle/crosshair reports)
+        if (reticleTarget != null) {
+            Vector3d reticleBlockCenter = new Vector3d(reticleTarget.x + 0.5, reticleTarget.y + 0.5, reticleTarget.z + 0.5);
+            DebugUtils.addCube(world, reticleBlockCenter, COLOR_LIME, 1.1, DEBUG_DURATION);
         }
         
         // 6. Placement position - Magenta cube (adjacent block where placement would happen)
@@ -221,14 +235,41 @@ public class DebugTargetCommand extends AbstractPlayerCommand {
             logSb.append("  Hit Face: (not calculated)\n");
         }
         
+        if (reticleTarget != null) {
+            sb.append("§bReticle Target: §f").append(reticleTarget.x).append(", ").append(reticleTarget.y).append(", ").append(reticleTarget.z).append("\n");
+            logSb.append("  Reticle Target: ").append(reticleTarget.x).append(", ").append(reticleTarget.y).append(", ").append(reticleTarget.z).append("\n");
+        } else {
+            sb.append("§bReticle Target: §7(no CameraManager data)\n");
+            logSb.append("  Reticle Target: (no CameraManager data)\n");
+        }
+        
+        if (screenPoint != null) {
+            sb.append("§bScreen Point: §f").append(String.format("%.1f, %.1f", screenPoint.x, screenPoint.y)).append("\n");
+            logSb.append("  Screen Point: ").append(String.format("%.1f, %.1f", screenPoint.x, screenPoint.y)).append("\n");
+        } else {
+            sb.append("§bScreen Point: §7(no CameraManager data)\n");
+            logSb.append("  Screen Point: (no CameraManager data)\n");
+        }
+        
         if (clientPos != null && serverTarget != null) {
             boolean match = clientPos.x == serverTarget.x && clientPos.y == serverTarget.y && clientPos.z == serverTarget.z;
             if (match) {
-                sb.append("§aPositions MATCH\n");
-                logSb.append("  Status: POSITIONS MATCH\n");
+                sb.append("§aClient/Server MATCH\n");
+                logSb.append("  Client/Server: MATCH\n");
             } else {
-                sb.append("§cPositions DIFFER - redirect active\n");
-                logSb.append("  Status: POSITIONS DIFFER - redirect active\n");
+                sb.append("§cClient/Server DIFFER - redirect active\n");
+                logSb.append("  Client/Server: DIFFER - redirect active\n");
+            }
+        }
+        
+        if (reticleTarget != null && serverTarget != null) {
+            boolean reticleMatch = reticleTarget.x == serverTarget.x && reticleTarget.y == serverTarget.y && reticleTarget.z == serverTarget.z;
+            if (reticleMatch) {
+                sb.append("§aReticle/Server MATCH\n");
+                logSb.append("  Reticle/Server: MATCH\n");
+            } else {
+                sb.append("§cReticle/Server DIFFER\n");
+                logSb.append("  Reticle/Server: DIFFER\n");
             }
         }
         
