@@ -37,6 +37,9 @@ public class StartCommand extends AbstractPlayerCommand {
         // Enable the interaction position fixer to correct stale block positions
         InteractionPositionFixer.enableForPlayer(playerRef);
 
+        // Store the camera settings so the server raycast uses the same offset/distance
+        InteractionPositionFixer.setActiveCameraSettings(playerRef.getUuid(), settings);
+
         // Create camera transparency volume for this player
         CameraTransparencyVolume.getOrCreate(playerRef, world, new Ellipsoid(5));
 

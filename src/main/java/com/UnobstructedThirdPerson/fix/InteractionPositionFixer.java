@@ -1,7 +1,5 @@
 package com.UnobstructedThirdPerson.fix;
 
-import com.UnobstructedThirdPerson.camera.CameraSettingsApplier;
-import com.UnobstructedThirdPerson.camera.ExtendedCameraSettings;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Transform;
@@ -13,6 +11,7 @@ import com.hypixel.hytale.protocol.InteractionSyncData;
 import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.protocol.Packet;
 import com.hypixel.hytale.protocol.Position;
+import com.hypixel.hytale.protocol.ServerCameraSettings;
 import com.hypixel.hytale.protocol.packets.camera.SetServerCamera;
 import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChain;
 import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChains;
@@ -79,6 +78,7 @@ public class InteractionPositionFixer {
     private static final Map<UUID, String> cachedHitFaces = new ConcurrentHashMap<>();
     private static final Map<UUID, BlockFace> cachedBlockFaces = new ConcurrentHashMap<>();
     private static final Map<UUID, Integer> cachedEntityTargets = new ConcurrentHashMap<>();
+    private static final Map<UUID, ServerCameraSettings> activeCameraSettings = new ConcurrentHashMap<>();
     private static PacketFilter registeredInboundFilter;
     private static PacketFilter registeredOutboundFilter;
 
@@ -96,6 +96,23 @@ public class InteractionPositionFixer {
         LOGGER.info("[InteractionFix] Enabled for player: " + playerId);
     }
 
+    /**
+     * Store the active camera settings for a player so that server-side raycasting
+     * uses the same offset/distance as the client camera.
+     */
+    public static void setActiveCameraSettings(@Nonnull UUID playerId, @Nullable ServerCameraSettings settings) {
+        if (settings != null) {
+            activeCameraSettings.put(playerId, settings);
+        } else {
+            activeCameraSettings.remove(playerId);
+        }
+    }
+
+    @Nullable
+    public static ServerCameraSettings getActiveCameraSettings(@Nonnull UUID playerId) {
+        return activeCameraSettings.get(playerId);
+    }
+
     public static void disableForPlayer(@Nonnull UUID playerId) {
         ENABLED_PLAYERS.remove(playerId);
         lastClientPositions.remove(playerId);
@@ -106,6 +123,7 @@ public class InteractionPositionFixer {
         cachedHitFaces.remove(playerId);
         cachedBlockFaces.remove(playerId);
         cachedEntityTargets.remove(playerId);
+        activeCameraSettings.remove(playerId);
         
         LOGGER.info("[InteractionFix] Disabled for player: " + playerId);
     }
@@ -132,7 +150,7 @@ public class InteractionPositionFixer {
             Vector3d lookDir = lookTransform.getDirection();
             
             // Compute the camera origin using the active camera settings
-            Vector3d cameraOrigin = computeCameraOrigin(eyePos, lookDir);
+            Vector3d cameraOrigin = computeCameraOrigin(playerId, eyePos, lookDir);
             // Raycast from camera origin along look direction for block targeting
             Vector3i target = TargetUtil.getTargetBlock(
                 world, (blockId, fluidId) -> blockId != 0,
@@ -176,11 +194,11 @@ public class InteractionPositionFixer {
      */
     @Nonnull
     private static Vector3d computeCameraOrigin(
-        @Nonnull Vector3d eyePos, @Nonnull Vector3d lookDir
+        @Nonnull UUID playerId, @Nonnull Vector3d eyePos, @Nonnull Vector3d lookDir
     ) {
-        ExtendedCameraSettings settings = CameraSettingsApplier.getCachedSettings();
+        ServerCameraSettings settings = activeCameraSettings.get(playerId);
         if (settings == null) {
-            // No custom camera — fall back to eye position
+            // No custom camera for this player — fall back to eye position
             return eyePos;
         }
         
@@ -192,7 +210,7 @@ public class InteractionPositionFixer {
         // Apply positionOffset in the camera's local coordinate frame
         // so that the offset rotates with the camera's pitch and yaw.
         // (0, 1, 0) means "1 unit up from the camera's perspective", not world Y.
-        Position posOffset = settings.getPositionOffset();
+        Position posOffset = settings.positionOffset;
         if (posOffset != null && (posOffset.x != 0 || posOffset.y != 0 || posOffset.z != 0)) {
             // Compute camera local axes from look direction
             // right = normalize(worldUp × lookDir)
@@ -230,7 +248,7 @@ public class InteractionPositionFixer {
         }
         
         // Move backward along look direction by camera distance
-        float distance = settings.getDistance();
+        float distance = settings.distance;
         if (distance > 0) {
             ox -= lookDir.x * distance;
             oy -= lookDir.y * distance;
