@@ -1,23 +1,32 @@
 package com.UnobstructedThirdPerson.fix;
 
+import com.UnobstructedThirdPerson.camera.CameraSettingsApplier;
+import com.UnobstructedThirdPerson.camera.ExtendedCameraSettings;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.protocol.BlockFace;
 import com.hypixel.hytale.protocol.BlockPosition;
 import com.hypixel.hytale.protocol.InteractionSyncData;
+import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.protocol.Packet;
+import com.hypixel.hytale.protocol.Position;
 import com.hypixel.hytale.protocol.packets.camera.SetServerCamera;
 import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChain;
 import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChains;
 import com.hypixel.hytale.protocol.packets.player.ClientPlaceBlock;
 import com.hypixel.hytale.protocol.packets.player.MouseInteraction;
+import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.io.PacketHandler;
 import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
 import com.hypixel.hytale.server.core.io.adapter.PacketFilter;
 import com.hypixel.hytale.server.core.io.handlers.game.GamePacketHandler;
-import com.hypixel.hytale.math.util.ChunkUtil;
+import com.hypixel.hytale.server.core.modules.entity.component.BoundingBox;
+import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.modules.entity.tracker.NetworkId;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.chunk.BlockChunk;
@@ -25,9 +34,9 @@ import com.hypixel.hytale.server.core.universe.world.chunk.section.BlockSection;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.TargetUtil;
-import com.hypixel.hytale.protocol.BlockFace;
-import com.hypixel.hytale.protocol.InteractionType;
-import com.hypixel.hytale.server.core.modules.entity.tracker.NetworkId;
+import com.hypixel.hytale.math.shape.Box;
+import com.hypixel.hytale.math.vector.Vector2d;
+import com.hypixel.hytale.server.core.modules.collision.CollisionMath;
 
 
 import javax.annotation.Nonnull;
@@ -103,6 +112,8 @@ public class InteractionPositionFixer {
     
     /**
      * Compute and cache the server target + placement position on-demand.
+     * Raycasts from the camera position (accounting for positionOffset and distance)
+     * to match the client's reticle targeting.
      * Must be called on the world thread.
      */
     public static void computeAndCacheTarget(@Nonnull UUID playerId, @Nonnull PlayerRef playerRef) {
@@ -112,21 +123,36 @@ public class InteractionPositionFixer {
         }
         
         Store<EntityStore> store = ref.getStore();
+        World world = store.getExternalData().getWorld();
         
         try {
-            Vector3i target = TargetUtil.getTargetBlock(ref, RAYCAST_DISTANCE, store);
+            // Get the player's look transform (eye position + head rotation direction)
+            Transform lookTransform = TargetUtil.getLook(ref, store);
+            Vector3d eyePos = lookTransform.getPosition();
+            Vector3d lookDir = lookTransform.getDirection();
+            
+            // Compute the camera origin using the active camera settings
+            Vector3d cameraOrigin = computeCameraOrigin(eyePos, lookDir);
+            // Raycast from camera origin along look direction for block targeting
+            Vector3i target = TargetUtil.getTargetBlock(
+                world, (blockId, fluidId) -> blockId != 0,
+                cameraOrigin.x, cameraOrigin.y, cameraOrigin.z,
+                lookDir.x, lookDir.y, lookDir.z,
+                RAYCAST_DISTANCE
+            );
             if (target != null) {
                 cachedServerTargets.put(playerId, target);
                 
-                World world = store.getExternalData().getWorld();
-                Vector3i placementPos = calculatePlacementPosition(ref, target, world, store, playerId);
+                Vector3i placementPos = calculatePlacementPosition(
+                    cameraOrigin, lookDir, target, world, store, playerId);
                 if (placementPos != null) {
                     cachedPlacementPositions.put(playerId, placementPos);
                 }
             }
             
-            // Also cache entity target for entity interactions
-            Ref<EntityStore> targetEntity = TargetUtil.getTargetEntity(ref, (float) RAYCAST_DISTANCE, store);
+            // Entity targeting from camera origin along look direction
+            Ref<EntityStore> targetEntity = getTargetEntityFromCamera(
+                ref, cameraOrigin, lookDir, (float) RAYCAST_DISTANCE, store);
             if (targetEntity != null && targetEntity.isValid()) {
                 NetworkId networkId = store.getComponent(targetEntity, NetworkId.getComponentType());
                 if (networkId != null) {
@@ -140,6 +166,128 @@ public class InteractionPositionFixer {
         } catch (Exception e) {
             LOGGER.warning("[InteractionFix] Error computing target: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Compute the camera origin position based on the active camera settings.
+     * This mirrors what the client does: start at the eye position, apply the
+     * positionOffset in the camera's local coordinate frame (accounting for pitch),
+     * then move backward along the look direction by the camera distance.
+     */
+    @Nonnull
+    private static Vector3d computeCameraOrigin(
+        @Nonnull Vector3d eyePos, @Nonnull Vector3d lookDir
+    ) {
+        ExtendedCameraSettings settings = CameraSettingsApplier.getCachedSettings();
+        if (settings == null) {
+            // No custom camera — fall back to eye position
+            return eyePos;
+        }
+        
+        // Start from eye position (eyeOffset is already accounted for in getLook)
+        double ox = eyePos.x;
+        double oy = eyePos.y;
+        double oz = eyePos.z;
+        
+        // Apply positionOffset in the camera's local coordinate frame
+        // so that the offset rotates with the camera's pitch and yaw.
+        // (0, 1, 0) means "1 unit up from the camera's perspective", not world Y.
+        Position posOffset = settings.getPositionOffset();
+        if (posOffset != null && (posOffset.x != 0 || posOffset.y != 0 || posOffset.z != 0)) {
+            // Compute camera local axes from look direction
+            // right = normalize(worldUp × lookDir)
+            // up    = lookDir × right
+            double worldUpX = 0, worldUpY = 1, worldUpZ = 0;
+            
+            // right = worldUp × lookDir
+            double rx = worldUpY * lookDir.z - worldUpZ * lookDir.y; //  lookDir.z
+            double ry = worldUpZ * lookDir.x - worldUpX * lookDir.z; //  0
+            double rz = worldUpX * lookDir.y - worldUpY * lookDir.x; // -lookDir.x
+            double rLen = Math.sqrt(rx * rx + ry * ry + rz * rz);
+            
+            if (rLen < 0.001) {
+                // Degenerate case: looking straight up or down, cross product is zero.
+                // Fall back to world-space offset since the local frame is undefined.
+                ox += posOffset.x;
+                oy += posOffset.y;
+                oz += posOffset.z;
+            } else {
+                // Normalize right vector
+                rx /= rLen; ry /= rLen; rz /= rLen;
+                
+                // up = lookDir × right
+                double ux = lookDir.y * rz - lookDir.z * ry;
+                double uy = lookDir.z * rx - lookDir.x * rz;
+                double uz = lookDir.x * ry - lookDir.y * rx;
+                // up is already unit length (cross of two unit perpendicular vectors)
+                
+                // Transform offset from camera-local to world space:
+                //   world = right * offset.x + up * offset.y + lookDir * offset.z
+                ox += rx * posOffset.x + ux * posOffset.y + lookDir.x * posOffset.z;
+                oy += ry * posOffset.x + uy * posOffset.y + lookDir.y * posOffset.z;
+                oz += rz * posOffset.x + uz * posOffset.y + lookDir.z * posOffset.z;
+            }
+        }
+        
+        // Move backward along look direction by camera distance
+        float distance = settings.getDistance();
+        if (distance > 0) {
+            ox -= lookDir.x * distance;
+            oy -= lookDir.y * distance;
+            oz -= lookDir.z * distance;
+        }
+        
+        return new Vector3d(ox, oy, oz);
+    }
+    
+    /**
+     * Find the closest entity hit by a ray from the camera origin.
+     * Mirrors TargetUtil.getTargetEntity but using a custom ray origin/direction.
+     */
+    @Nullable
+    private static Ref<EntityStore> getTargetEntityFromCamera(
+        @Nonnull Ref<EntityStore> selfRef,
+        @Nonnull Vector3d cameraOrigin, @Nonnull Vector3d lookDir,
+        float radius, @Nonnull Store<EntityStore> store
+    ) {
+        java.util.List<Ref<EntityStore>> candidates = TargetUtil.getAllEntitiesInSphere(cameraOrigin, radius, store);
+        
+        // Remove self and entities not hit by the camera ray
+        candidates.removeIf(candidate -> {
+            if (candidate == null || !candidate.isValid() || candidate.equals(selfRef)) return true;
+            
+            BoundingBox bb = store.getComponent(candidate, BoundingBox.getComponentType());
+            TransformComponent tc = store.getComponent(candidate, TransformComponent.getComponentType());
+            if (bb == null || tc == null) return true;
+            
+            Box box = bb.getBoundingBox();
+            Vector3d pos = tc.getPosition();
+            Vector2d minMax = new Vector2d();
+            return !CollisionMath.intersectRayAABB(cameraOrigin, lookDir, pos.getX(), pos.getY(), pos.getZ(), box, minMax);
+        });
+        
+        if (candidates.isEmpty()) return null;
+        
+        // Return closest entity along the ray (smallest parametric t from intersectRayAABB)
+        Ref<EntityStore> closest = null;
+        double minT = Double.MAX_VALUE;
+        for (Ref<EntityStore> candidate : candidates) {
+            if (candidate != null && candidate.isValid()) {
+                BoundingBox bb = store.getComponent(candidate, BoundingBox.getComponentType());
+                TransformComponent tc = store.getComponent(candidate, TransformComponent.getComponentType());
+                if (bb != null && tc != null) {
+                    Vector2d tRange = new Vector2d();
+                    Vector3d pos = tc.getPosition();
+                    CollisionMath.intersectRayAABB(cameraOrigin, lookDir, pos.getX(), pos.getY(), pos.getZ(), bb.getBoundingBox(), tRange);
+                    // tRange.x is the near intersection parameter along the ray
+                    if (tRange.x < minT) {
+                        minT = tRange.x;
+                        closest = candidate;
+                    }
+                }
+            }
+        }
+        return closest;
     }
 
     public static boolean isEnabledForPlayer(@Nonnull UUID playerId) {
@@ -238,13 +386,18 @@ public class InteractionPositionFixer {
 
     /**
      * Calculate the placement position (adjacent air block) based on which face of the target block
-     * the ray hits. This uses the precise hit location to determine the face.
+     * the ray hits. Uses the camera origin to get the precise hit location on the block surface.
      */
     @Nullable
-    private static Vector3i calculatePlacementPosition(Ref<EntityStore> ref, Vector3i targetBlock, 
-                                                        World world, Store<EntityStore> store, UUID playerId) {
-        // Get the precise hit location on the block surface
-        Vector3d hitLocation = TargetUtil.getTargetLocation(ref, RAYCAST_DISTANCE, store);
+    private static Vector3i calculatePlacementPosition(Vector3d cameraOrigin, Vector3d lookDir,
+        Vector3i targetBlock, World world, Store<EntityStore> store, UUID playerId) {
+        // Get the precise hit location on the block surface from camera origin
+        Vector3d hitLocation = TargetUtil.getTargetLocation(
+            world, blockId -> blockId != 0,
+            cameraOrigin.x, cameraOrigin.y, cameraOrigin.z,
+            lookDir.x, lookDir.y, lookDir.z,
+            RAYCAST_DISTANCE
+        );
         if (hitLocation == null) {
             LOGGER.info("[PlacementCalc] No hit location from TargetUtil");
             return null;
