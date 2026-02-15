@@ -247,13 +247,9 @@ public class InteractionPositionFixer {
             }
         }
         
-        // Move backward along look direction by camera distance
-        float distance = settings.distance;
-        if (distance > 0) {
-            ox -= lookDir.x * distance;
-            oy -= lookDir.y * distance;
-            oz -= lookDir.z * distance;
-        }
+        // NOTE: The camera distance moves the camera behind the player for rendering,
+        // but the reticle ray should originate from the player's anchor point (eye + offset),
+        // not from behind the player. Distance is NOT applied here.
         
         return new Vector3d(ox, oy, oz);
     }
