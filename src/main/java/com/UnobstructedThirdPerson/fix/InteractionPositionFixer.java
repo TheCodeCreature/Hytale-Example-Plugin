@@ -9,6 +9,7 @@ import com.hypixel.hytale.protocol.BlockFace;
 import com.hypixel.hytale.protocol.BlockPosition;
 import com.hypixel.hytale.protocol.InteractionSyncData;
 import com.hypixel.hytale.protocol.InteractionType;
+import com.hypixel.hytale.protocol.ClientCameraView;
 import com.hypixel.hytale.protocol.Packet;
 import com.hypixel.hytale.protocol.Position;
 import com.hypixel.hytale.protocol.ServerCameraSettings;
@@ -66,6 +67,7 @@ public class InteractionPositionFixer {
 
     // Fix behavior
     private static final int RAYCAST_DISTANCE = 30;           // Max distance for server raycast
+    private static final double FIRST_PERSON_PITCH_THRESHOLD = -45.0; // Degrees; switch to first person below this
 
     // ===== END CONFIGURABLE FILTERS =====
 
@@ -79,6 +81,7 @@ public class InteractionPositionFixer {
     private static final Map<UUID, BlockFace> cachedBlockFaces = new ConcurrentHashMap<>();
     private static final Map<UUID, Integer> cachedEntityTargets = new ConcurrentHashMap<>();
     private static final Map<UUID, ServerCameraSettings> activeCameraSettings = new ConcurrentHashMap<>();
+    private static final Map<UUID, Boolean> currentFirstPersonState = new ConcurrentHashMap<>();
     private static PacketFilter registeredInboundFilter;
     private static PacketFilter registeredOutboundFilter;
 
@@ -124,6 +127,7 @@ public class InteractionPositionFixer {
         cachedBlockFaces.remove(playerId);
         cachedEntityTargets.remove(playerId);
         activeCameraSettings.remove(playerId);
+        currentFirstPersonState.remove(playerId);
         
         LOGGER.info("[InteractionFix] Disabled for player: " + playerId);
     }
@@ -148,6 +152,11 @@ public class InteractionPositionFixer {
             Transform lookTransform = TargetUtil.getLook(ref, store);
             Vector3d eyePos = lookTransform.getPosition();
             Vector3d lookDir = lookTransform.getDirection();
+            
+            // Check pitch for first-person toggle
+            // lookDir.y = sin(pitch), so pitch in degrees = asin(lookDir.y) * (180/PI)
+            double pitchDegrees = Math.asin(lookDir.y) * (180.0 / Math.PI);
+            updateFirstPersonState(playerId, playerRef, pitchDegrees);
             
             // Compute the camera origin using the active camera settings
             Vector3d cameraOrigin = computeCameraOrigin(playerId, eyePos, lookDir);
@@ -186,6 +195,32 @@ public class InteractionPositionFixer {
         }
     }
     
+    /**
+     * Toggle isFirstPerson on the active camera settings when pitch crosses the threshold.
+     * Below -45° pitch → first person; above → third person.
+     * Only sends a packet when the state actually changes.
+     */
+    private static void updateFirstPersonState(@Nonnull UUID playerId, @Nonnull PlayerRef playerRef, double pitchDegrees) {
+        ServerCameraSettings settings = activeCameraSettings.get(playerId);
+        if (settings == null) return;
+
+        boolean shouldBeFirstPerson = pitchDegrees <= FIRST_PERSON_PITCH_THRESHOLD;
+        Boolean wasFirstPerson = currentFirstPersonState.get(playerId);
+
+        // Only send a packet when state changes (or on first check)
+        if (wasFirstPerson == null || wasFirstPerson != shouldBeFirstPerson) {
+            settings.isFirstPerson = shouldBeFirstPerson;
+            currentFirstPersonState.put(playerId, shouldBeFirstPerson);
+
+            playerRef.getPacketHandler().writeNoCache(
+                new SetServerCamera(ClientCameraView.Custom, false, settings));
+
+            LOGGER.info("[InteractionFix] Camera switched to " +
+                (shouldBeFirstPerson ? "FIRST PERSON" : "THIRD PERSON") +
+                " (pitch=" + String.format("%.1f", pitchDegrees) + "°)");
+        }
+    }
+
     /**
      * Compute the camera origin position based on the active camera settings.
      * This mirrors what the client does: start at the eye position, apply the
