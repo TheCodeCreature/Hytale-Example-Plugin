@@ -67,7 +67,8 @@ public class InteractionPositionFixer {
 
     // Fix behavior
     private static final int RAYCAST_DISTANCE = 30;           // Max distance for server raycast
-    private static final double FIRST_PERSON_PITCH_THRESHOLD = -45.0; // Degrees; switch to first person below this
+    private static final double FIRST_PERSON_PITCH_DOWN = -55.0;  // Degrees; switch to first person when looking below this
+    private static final double FIRST_PERSON_PITCH_UP   =  55.0;  // Degrees; switch to first person when looking above this
 
     // ===== END CONFIGURABLE FILTERS =====
 
@@ -204,7 +205,7 @@ public class InteractionPositionFixer {
         ServerCameraSettings settings = activeCameraSettings.get(playerId);
         if (settings == null) return;
 
-        boolean shouldBeFirstPerson = pitchDegrees <= FIRST_PERSON_PITCH_THRESHOLD;
+        boolean shouldBeFirstPerson = pitchDegrees <= FIRST_PERSON_PITCH_DOWN || pitchDegrees >= FIRST_PERSON_PITCH_UP;
         Boolean wasFirstPerson = currentFirstPersonState.get(playerId);
 
         // Only send a packet when state changes (or on first check)
