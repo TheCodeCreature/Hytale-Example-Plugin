@@ -37,10 +37,12 @@ import com.hypixel.hytale.server.core.util.TargetUtil;
 import com.hypixel.hytale.math.shape.Box;
 import com.hypixel.hytale.math.vector.Vector2d;
 import com.hypixel.hytale.server.core.modules.collision.CollisionMath;
-
+import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -161,21 +163,42 @@ public class InteractionPositionFixer {
             
             // Compute the camera origin using the active camera settings
             Vector3d cameraOrigin = computeCameraOrigin(playerId, eyePos, lookDir);
-            // Raycast from camera origin along look direction for block targeting
-            Vector3i target = TargetUtil.getTargetBlock(
-                world, (blockId, fluidId) -> blockId != 0,
+
+            // Build the set of transparent block positions to skip during raycast.
+            // The client can see through these blocks, so the server must skip them too.
+            LinkedList<LongOpenHashSet> blocksToIgnore = new LinkedList<>();
+            CameraTransparencyVolume volume = CameraTransparencyVolume.get(playerId);
+            if (volume != null) {
+                LongOpenHashSet transparentPositions = volume.getTransparentPositions();
+                if (!transparentPositions.isEmpty()) {
+                    blocksToIgnore.add(transparentPositions);
+                }
+            }
+
+            // Raycast from camera origin along look direction, skipping transparent blocks
+            Vector3i target = TargetUtil.getTargetBlockAvoidLocations(
+                world, blockId -> blockId != 0,
                 cameraOrigin.x, cameraOrigin.y, cameraOrigin.z,
                 lookDir.x, lookDir.y, lookDir.z,
-                RAYCAST_DISTANCE
+                RAYCAST_DISTANCE,
+                blocksToIgnore
             );
             if (target != null) {
                 cachedServerTargets.put(playerId, target);
                 
                 Vector3i placementPos = calculatePlacementPosition(
-                    cameraOrigin, lookDir, target, world, store, playerId);
+                    cameraOrigin, lookDir, target, world, store, playerId, blocksToIgnore);
                 if (placementPos != null) {
                     cachedPlacementPositions.put(playerId, placementPos);
                 }
+            } else {
+                // No target found — clear stale caches so we don't rewrite
+                // interactions to a block the player was previously looking at
+                cachedServerTargets.remove(playerId);
+                cachedPlacementPositions.remove(playerId);
+                cachedHitLocations.remove(playerId);
+                cachedHitFaces.remove(playerId);
+                cachedBlockFaces.remove(playerId);
             }
             
             // Entity targeting from camera origin along look direction
@@ -424,19 +447,87 @@ public class InteractionPositionFixer {
     }
 
     /**
+     * Analytically compute where a ray hits a block's axis-aligned bounding box.
+     * Returns the surface hit point, or null if the ray doesn't intersect.
+     */
+    @Nullable
+    private static Vector3d computeRayBlockHit(Vector3d origin, Vector3d dir, Vector3i block) {
+        // Block spans [block.x, block.x+1] x [block.y, block.y+1] x [block.z, block.z+1]
+        double tMin = Double.NEGATIVE_INFINITY;
+        double tMax = Double.POSITIVE_INFINITY;
+
+        // X slab
+        if (Math.abs(dir.x) > 1e-12) {
+            double t1 = (block.x - origin.x) / dir.x;
+            double t2 = (block.x + 1.0 - origin.x) / dir.x;
+            if (t1 > t2) { double tmp = t1; t1 = t2; t2 = tmp; }
+            tMin = Math.max(tMin, t1);
+            tMax = Math.min(tMax, t2);
+        } else if (origin.x < block.x || origin.x > block.x + 1.0) {
+            return null;
+        }
+
+        // Y slab
+        if (Math.abs(dir.y) > 1e-12) {
+            double t1 = (block.y - origin.y) / dir.y;
+            double t2 = (block.y + 1.0 - origin.y) / dir.y;
+            if (t1 > t2) { double tmp = t1; t1 = t2; t2 = tmp; }
+            tMin = Math.max(tMin, t1);
+            tMax = Math.min(tMax, t2);
+        } else if (origin.y < block.y || origin.y > block.y + 1.0) {
+            return null;
+        }
+
+        // Z slab
+        if (Math.abs(dir.z) > 1e-12) {
+            double t1 = (block.z - origin.z) / dir.z;
+            double t2 = (block.z + 1.0 - origin.z) / dir.z;
+            if (t1 > t2) { double tmp = t1; t1 = t2; t2 = tmp; }
+            tMin = Math.max(tMin, t1);
+            tMax = Math.min(tMax, t2);
+        } else if (origin.z < block.z || origin.z > block.z + 1.0) {
+            return null;
+        }
+
+        if (tMax < tMin || tMax < 0) return null;
+
+        // Use tMin if in front of origin, otherwise tMax (origin inside block)
+        double t = tMin >= 0 ? tMin : tMax;
+        return new Vector3d(origin.x + dir.x * t, origin.y + dir.y * t, origin.z + dir.z * t);
+    }
+
+    /**
      * Calculate the placement position (adjacent air block) based on which face of the target block
      * the ray hits. Uses the camera origin to get the precise hit location on the block surface.
      */
     @Nullable
     private static Vector3i calculatePlacementPosition(Vector3d cameraOrigin, Vector3d lookDir,
-        Vector3i targetBlock, World world, Store<EntityStore> store, UUID playerId) {
-        // Get the precise hit location on the block surface from camera origin
+        Vector3i targetBlock, World world, Store<EntityStore> store, UUID playerId,
+        LinkedList<LongOpenHashSet> blocksToIgnore) {
+        // Get the precise hit location on the block surface from camera origin.
+        // We need a location-aware raycast that skips transparent blocks, but
+        // getTargetLocation has no avoid-locations variant. Instead, use the
+        // target block position to compute the hit analytically from the ray.
+        // For now, use getTargetLocation and verify the hit is on the correct block.
         Vector3d hitLocation = TargetUtil.getTargetLocation(
             world, blockId -> blockId != 0,
             cameraOrigin.x, cameraOrigin.y, cameraOrigin.z,
             lookDir.x, lookDir.y, lookDir.z,
             RAYCAST_DISTANCE
         );
+        // If the hit location is on a transparent block (not our target), compute
+        // the hit point analytically on the target block's nearest face.
+        if (hitLocation != null) {
+            int hitBlockX = (int) Math.floor(hitLocation.x);
+            int hitBlockY = (int) Math.floor(hitLocation.y);
+            int hitBlockZ = (int) Math.floor(hitLocation.z);
+            // Edge case: hit exactly on block boundary belongs to the block at lower coord
+            // Check if the hit location corresponds to the actual target block
+            if (hitBlockX != targetBlock.x || hitBlockY != targetBlock.y || hitBlockZ != targetBlock.z) {
+                // The hit is on a transparent block — compute hit analytically
+                hitLocation = computeRayBlockHit(cameraOrigin, lookDir, targetBlock);
+            }
+        }
         if (hitLocation == null) {
             LOGGER.info("[PlacementCalc] No hit location from TargetUtil");
             return null;

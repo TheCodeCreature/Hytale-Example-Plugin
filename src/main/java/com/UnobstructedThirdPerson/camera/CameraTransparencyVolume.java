@@ -82,6 +82,15 @@ public class CameraTransparencyVolume {
         return INSTANCES.get(playerId);
     }
 
+    /**
+     * Returns a snapshot of the currently transparent block positions (packed longs)
+     * for use by the server raycast to skip blocks the client can see through.
+     */
+    @Nonnull
+    public it.unimi.dsi.fastutil.longs.LongOpenHashSet getTransparentPositions() {
+        return new it.unimi.dsi.fastutil.longs.LongOpenHashSet(currentPositions);
+    }
+
     public static void remove(@Nonnull UUID playerId) {
         CameraTransparencyVolume instance = INSTANCES.remove(playerId);
         if (instance != null) {
