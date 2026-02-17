@@ -243,43 +243,32 @@ public class InteractionPositionFixer {
         double oy = eyePos.y;
         double oz = eyePos.z;
         
-        // Apply positionOffset in the camera's local coordinate frame
-        // so that the offset rotates with the camera's pitch and yaw.
-        // (0, 1, 0) means "1 unit up from the camera's perspective", not world Y.
+        // Apply positionOffset using yaw-only rotation (no pitch influence).
+        // Y offset is always world-up. X/Z rotate with horizontal facing direction.
+        // This prevents pitch from shifting the ray origin forward/backward.
         Position posOffset = settings.positionOffset;
         if (posOffset != null && (posOffset.x != 0 || posOffset.y != 0 || posOffset.z != 0)) {
-            // Compute camera local axes from look direction
-            // right = normalize(worldUp × lookDir)
-            // up    = lookDir × right
-            double worldUpX = 0, worldUpY = 1, worldUpZ = 0;
+            // Project lookDir onto the horizontal plane for yaw-only rotation
+            double hLen = Math.sqrt(lookDir.x * lookDir.x + lookDir.z * lookDir.z);
             
-            // right = worldUp × lookDir
-            double rx = worldUpY * lookDir.z - worldUpZ * lookDir.y; //  lookDir.z
-            double ry = worldUpZ * lookDir.x - worldUpX * lookDir.z; //  0
-            double rz = worldUpX * lookDir.y - worldUpY * lookDir.x; // -lookDir.x
-            double rLen = Math.sqrt(rx * rx + ry * ry + rz * rz);
-            
-            if (rLen < 0.001) {
-                // Degenerate case: looking straight up or down, cross product is zero.
-                // Fall back to world-space offset since the local frame is undefined.
+            if (hLen < 0.001) {
+                // Looking straight up/down — no horizontal direction, use world-space offset
                 ox += posOffset.x;
                 oy += posOffset.y;
                 oz += posOffset.z;
             } else {
-                // Normalize right vector
-                rx /= rLen; ry /= rLen; rz /= rLen;
+                // Horizontal forward (yaw direction only)
+                double fwdX = lookDir.x / hLen;
+                double fwdZ = lookDir.z / hLen;
                 
-                // up = lookDir × right
-                double ux = lookDir.y * rz - lookDir.z * ry;
-                double uy = lookDir.z * rx - lookDir.x * rz;
-                double uz = lookDir.x * ry - lookDir.y * rx;
-                // up is already unit length (cross of two unit perpendicular vectors)
+                // Horizontal right = (fwdZ, 0, -fwdX)
+                double rightX = fwdZ;
+                double rightZ = -fwdX;
                 
-                // Transform offset from camera-local to world space:
-                //   world = right * offset.x + up * offset.y + lookDir * offset.z
-                ox += rx * posOffset.x + ux * posOffset.y + lookDir.x * posOffset.z;
-                oy += ry * posOffset.x + uy * posOffset.y + lookDir.y * posOffset.z;
-                oz += rz * posOffset.x + uz * posOffset.y + lookDir.z * posOffset.z;
+                // Apply: right * offset.x + worldUp * offset.y + forward * offset.z
+                ox += rightX * posOffset.x + fwdX * posOffset.z;
+                oy += posOffset.y;
+                oz += rightZ * posOffset.x + fwdZ * posOffset.z;
             }
         }
         
