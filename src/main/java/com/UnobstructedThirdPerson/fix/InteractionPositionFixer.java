@@ -284,9 +284,9 @@ public class InteractionPositionFixer {
                 double fwdX = lookDir.x / hLen;
                 double fwdZ = lookDir.z / hLen;
                 
-                // Horizontal right = (fwdZ, 0, -fwdX)
-                double rightX = fwdZ;
-                double rightZ = -fwdX;
+                // Horizontal right = forward × up = (-fwdZ, 0, fwdX)
+                double rightX = -fwdZ;
+                double rightZ = fwdX;
                 
                 // Apply: right * offset.x + worldUp * offset.y + forward * offset.z
                 ox += rightX * posOffset.x + fwdX * posOffset.z;
