@@ -10,7 +10,7 @@
   "PlayerAnimationsId": "Block",
   "Set": "Soil",
   "BlockType": {
-    "Material": "Solid",
+    "Material": "Empty",
     "DrawType": "Cube",
     "Group": "Dirt",
     "Flags": {},
