@@ -268,5 +268,12 @@ public final class TransparentBlockUtils {
 
     public static void resetPlayer(@Nonnull UUID playerId) {
         SENT_FAKE_IDS.remove(playerId);
+        // Clear cached variant IDs and reset the ID allocator so that fresh
+        // fake block type IDs are allocated. This forces the client to treat
+        // them as new types and properly rebuild its texture atlas.
+        TRANSPARENT_VARIANT_IDS.clear();
+        synchronized (ID_LOCK) {
+            nextFakeId = null;
+        }
     }
 }

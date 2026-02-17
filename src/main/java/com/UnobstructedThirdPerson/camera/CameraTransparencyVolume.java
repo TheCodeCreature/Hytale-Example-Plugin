@@ -68,6 +68,8 @@ public class CameraTransparencyVolume {
             LOGGER.info("[CameraTransparency] Replaced stale volume for player: " + playerRef.getUsername());
         }
         CameraTransparencyVolume instance = new CameraTransparencyVolume(playerRef, world, shape);
+        // Always reset sent-types tracking so a reconnecting client gets the types re-sent
+        TransparentBlockUtils.resetPlayer(playerId);
         TransparentBlockUtils.preloadAllTransparentTypes(playerRef);
         instance.startUpdateLoop();
         INSTANCES.put(playerId, instance);
