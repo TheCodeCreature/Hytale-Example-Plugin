@@ -11,7 +11,8 @@
   "Set": "Soil",
   "BlockType": {
     "Material": "Empty",
-    "DrawType": "Cube",
+    "DrawType": "Empty",
+    "Opacity": "Transparent",
     "Group": "Dirt",
     "Flags": {},
     "Textures": [

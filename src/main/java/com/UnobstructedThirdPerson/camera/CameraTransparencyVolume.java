@@ -16,7 +16,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -30,7 +29,6 @@ import java.util.logging.Logger;
 public class CameraTransparencyVolume {
 
     private static final Logger LOGGER = Logger.getLogger("CameraTransparencyVolume");
-    private static final int APPLY_DELAY_MILLIS = 100;
     private static final int FEET_Y_OFFSET = 1;
     private static final long UPDATE_INTERVAL_MILLIS = 100;
 
@@ -68,9 +66,6 @@ public class CameraTransparencyVolume {
             LOGGER.info("[CameraTransparency] Replaced stale volume for player: " + playerRef.getUsername());
         }
         CameraTransparencyVolume instance = new CameraTransparencyVolume(playerRef, world, shape);
-        // Always reset sent-types tracking so a reconnecting client gets the types re-sent
-        TransparentBlockUtils.resetPlayer(playerId);
-        TransparentBlockUtils.preloadAllTransparentTypes(playerRef);
         instance.startUpdateLoop();
         INSTANCES.put(playerId, instance);
         LOGGER.info("[CameraTransparency] Created volume for player: " + playerRef.getUsername());
@@ -185,35 +180,10 @@ public class CameraTransparencyVolume {
         Set<Long> toRemove = new HashSet<>(currentPositions);
         toRemove.removeAll(newPositions);
 
-        // Build fake ID map for new blocks
-        Map<Integer, Integer> fakeIdByBaseId = new HashMap<>();
-        for (Long pos : toAdd) {
-            BlockSnapshot snapshot = newSnapshots.get(pos);
-            if (snapshot != null) {
-                fakeIdByBaseId.computeIfAbsent(snapshot.blockId(), TransparentBlockUtils::getTransparentVariantId);
-            }
-        }
+        LOGGER.info("[CameraTransparency] Diff: " + newPositions.size() + " total, +" + toAdd.size() + " add, -" + toRemove.size() + " remove");
 
-        // Ensure transparent types are sent to client
-        boolean sentNewTypes = false;
-        if (!fakeIdByBaseId.isEmpty()) {
-            sentNewTypes = TransparentBlockUtils.ensureTransparentTypesSent(playerRef, fakeIdByBaseId);
-        }
-
-        LOGGER.info("[CameraTransparency] Diff: " + newPositions.size() + " total, +" + toAdd.size() + " add, -" + toRemove.size() + " remove, sentNewTypes=" + sentNewTypes);
-
-        // Apply changes — delay if new types were sent
-        if (sentNewTypes) {
-            // Capture for lambda
-            final Set<Long> capturedToAdd = toAdd;
-            final Set<Long> capturedToRemove = toRemove;
-            final Map<Long, BlockSnapshot> capturedNewSnapshots = newSnapshots;
-            CompletableFuture.delayedExecutor(APPLY_DELAY_MILLIS, TimeUnit.MILLISECONDS).execute(() -> {
-                world.execute(() -> applyDiff(capturedToAdd, capturedToRemove, capturedNewSnapshots, fakeIdByBaseId));
-            });
-        } else {
-            applyDiff(toAdd, toRemove, newSnapshots, fakeIdByBaseId);
-        }
+        // Apply changes immediately
+        applyDiff(toAdd, toRemove, newSnapshots);
 
         // Update current state
         currentPositions.clear();
@@ -232,8 +202,7 @@ public class CameraTransparencyVolume {
     }
 
     private void applyDiff(@Nonnull Set<Long> toAdd, @Nonnull Set<Long> toRemove,
-                           @Nonnull Map<Long, BlockSnapshot> newSnapshots,
-                           @Nonnull Map<Integer, Integer> fakeIdByBaseId) {
+                           @Nonnull Map<Long, BlockSnapshot> newSnapshots) {
         // Restore blocks that left the volume
         for (Long pos : toRemove) {
             BlockSnapshot original = activeBlocks.get(pos);
@@ -245,17 +214,14 @@ public class CameraTransparencyVolume {
             }
         }
 
-        // Make new blocks transparent
+        // Replace blocks in volume with Empty (air, ID 0) — client-side only
         for (Long pos : toAdd) {
             BlockSnapshot snapshot = newSnapshots.get(pos);
             if (snapshot != null) {
-                Integer fakeId = fakeIdByBaseId.get(snapshot.blockId());
-                if (fakeId != null) {
-                    playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
-                        snapshot.x(), snapshot.y(), snapshot.z(),
-                        fakeId, snapshot.filler(), snapshot.rotation()
-                    ));
-                }
+                playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
+                    snapshot.x(), snapshot.y(), snapshot.z(),
+                    0, (short) 0, (byte) 0
+                ));
             }
         }
     }
