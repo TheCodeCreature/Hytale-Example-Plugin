@@ -29,56 +29,6 @@ public class ExtendedCameraSettings extends ServerCameraSettings {
     @Nullable
     protected CameraAxis pitch;
 
-//    // All 30 fields from ServerCameraSettings with defaults
-//    protected float positionLerpSpeed = 1.0f;
-//    protected float rotationLerpSpeed = 1.0f;
-//    protected float distance = 0.0f;
-//    protected float speedModifier = 1.0f;
-//    protected boolean allowPitchControls = false;
-//    protected boolean displayCursor = false;
-//    protected boolean displayReticle = false;
-//    @Nonnull
-//    protected MouseInputTargetType mouseInputTargetType = MouseInputTargetType.Any;
-//    protected boolean sendMouseMotion = false;
-//    protected boolean skipCharacterPhysics = false;
-//    protected boolean isFirstPerson = true;
-//    @Nonnull
-//    protected MovementForceRotationType movementForceRotationType = MovementForceRotationType.AttachedToHead;
-//    @Nullable
-//    protected Direction movementForceRotation = null;
-//    @Nonnull
-//    protected AttachedToType attachedToType = AttachedToType.LocalPlayer;
-//    protected int attachedToEntityId = 0;
-//    protected boolean eyeOffset = false;
-//    @Nonnull
-//    protected PositionDistanceOffsetType positionDistanceOffsetType = PositionDistanceOffsetType.DistanceOffset;
-//    @Nullable
-//    protected Position positionOffset = null;
-//    @Nullable
-//    protected Direction rotationOffset = null;
-//    @Nonnull
-//    protected PositionType positionType = PositionType.AttachedToPlusOffset;
-//    @Nullable
-//    protected Position position = null;
-//    @Nonnull
-//    protected RotationType rotationType = RotationType.AttachedToPlusOffset;
-//    @Nullable
-//    protected Direction rotation = null;
-//    @Nonnull
-//    protected CanMoveType canMoveType = CanMoveType.AttachedToLocalPlayer;
-//    @Nonnull
-//    protected ApplyMovementType applyMovementType = ApplyMovementType.CharacterController;
-//    @Nullable
-//    protected Vector3f movementMultiplier = null;
-//    @Nonnull
-//    protected ApplyLookType applyLookType = ApplyLookType.LocalPlayerLookOrientation;
-//    @Nullable
-//    protected Vector2f lookMultiplier = null;
-//    @Nonnull
-//    protected MouseInputType mouseInputType = MouseInputType.LookAtTarget;
-//    @Nullable
-//    protected Vector3f planeNormal = null;
-
     public ExtendedCameraSettings() {
     }
 
