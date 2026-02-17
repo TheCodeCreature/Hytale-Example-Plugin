@@ -385,65 +385,113 @@ public class InteractionPositionFixer {
     }
 
     /**
-     * Pure placement calculation: given a target block and hit location, determine
-     * which face was hit and compute the adjacent placement position.
+     * Pure placement calculation with look direction for proper face disambiguation.
+     * When the hit point is on a block edge or corner (multiple faces within epsilon),
+     * uses the look direction to determine which face the ray actually entered from:
+     * the entry face is the one whose outward normal is most opposed to the look
+     * direction (most negative dot product).
      * No engine dependencies — testable with primitives only.
      * Package-private for testability.
      */
     static PlacementResult calculatePlacementFromHit(
             int targetX, int targetY, int targetZ,
-            double hitX, double hitY, double hitZ) {
+            double hitX, double hitY, double hitZ,
+            double lookDirX, double lookDirY, double lookDirZ) {
 
         double dx = hitX - targetX;
         double dy = hitY - targetY;
         double dz = hitZ - targetZ;
 
-        int offsetX = 0, offsetY = 0, offsetZ = 0;
-        String hitFace = "unknown";
-        String blockFaceName = "None";
+        // Identify all faces the hit point lies on (within epsilon tolerance).
+        boolean onWest   = Math.abs(dx) < 0.001;
+        boolean onEast   = Math.abs(dx - 1.0) < 0.001;
+        boolean onBottom = Math.abs(dy) < 0.001;
+        boolean onTop    = Math.abs(dy - 1.0) < 0.001;
+        boolean onNorth  = Math.abs(dz) < 0.001;
+        boolean onSouth  = Math.abs(dz - 1.0) < 0.001;
 
-        // Check X faces (West = 0.0, East = 1.0)
-        if (Math.abs(dx) < 0.001) {
-            offsetX = -1; hitFace = "WEST (-X)"; blockFaceName = "West";
-        } else if (Math.abs(dx - 1.0) < 0.001) {
-            offsetX = 1; hitFace = "EAST (+X)"; blockFaceName = "East";
-        }
-        // Check Y faces (Bottom = 0.0, Top = 1.0)
-        else if (Math.abs(dy) < 0.001) {
-            offsetY = -1; hitFace = "BOTTOM (-Y)"; blockFaceName = "Down";
-        } else if (Math.abs(dy - 1.0) < 0.001) {
-            offsetY = 1; hitFace = "TOP (+Y)"; blockFaceName = "Up";
-        }
-        // Check Z faces (North = 0.0, South = 1.0)
-        else if (Math.abs(dz) < 0.001) {
-            offsetZ = -1; hitFace = "NORTH (-Z)"; blockFaceName = "North";
-        } else if (Math.abs(dz - 1.0) < 0.001) {
-            offsetZ = 1; hitFace = "SOUTH (+Z)"; blockFaceName = "South";
-        }
-        // Fallback: use closest face based on which delta is closest to a boundary
-        else {
-            double distWest = Math.abs(dx);
-            double distEast = Math.abs(dx - 1.0);
-            double distBottom = Math.abs(dy);
-            double distTop = Math.abs(dy - 1.0);
-            double distNorth = Math.abs(dz);
-            double distSouth = Math.abs(dz - 1.0);
+        int matchCount = (onWest ? 1 : 0) + (onEast ? 1 : 0) + (onBottom ? 1 : 0)
+                       + (onTop ? 1 : 0) + (onNorth ? 1 : 0) + (onSouth ? 1 : 0);
 
-            double minDist = Math.min(distWest, Math.min(distEast, Math.min(distBottom,
-                             Math.min(distTop, Math.min(distNorth, distSouth)))));
-
-            if (minDist == distWest) { offsetX = -1; hitFace = "WEST (-X) [fallback]"; blockFaceName = "West"; }
-            else if (minDist == distEast) { offsetX = 1; hitFace = "EAST (+X) [fallback]"; blockFaceName = "East"; }
-            else if (minDist == distBottom) { offsetY = -1; hitFace = "BOTTOM (-Y) [fallback]"; blockFaceName = "Down"; }
-            else if (minDist == distTop) { offsetY = 1; hitFace = "TOP (+Y) [fallback]"; blockFaceName = "Up"; }
-            else if (minDist == distNorth) { offsetZ = -1; hitFace = "NORTH (-Z) [fallback]"; blockFaceName = "North"; }
-            else { offsetZ = 1; hitFace = "SOUTH (+Z) [fallback]"; blockFaceName = "South"; }
+        if (matchCount == 1) {
+            // Unambiguous: exactly one face matches
+            if (onWest)   return new PlacementResult(targetX - 1, targetY, targetZ, "WEST (-X)", "West");
+            if (onEast)   return new PlacementResult(targetX + 1, targetY, targetZ, "EAST (+X)", "East");
+            if (onBottom) return new PlacementResult(targetX, targetY - 1, targetZ, "BOTTOM (-Y)", "Down");
+            if (onTop)    return new PlacementResult(targetX, targetY + 1, targetZ, "TOP (+Y)", "Up");
+            if (onNorth)  return new PlacementResult(targetX, targetY, targetZ - 1, "NORTH (-Z)", "North");
+            /*onSouth*/   return new PlacementResult(targetX, targetY, targetZ + 1, "SOUTH (+Z)", "South");
         }
 
-        return new PlacementResult(
-            targetX + offsetX, targetY + offsetY, targetZ + offsetZ,
-            hitFace, blockFaceName
-        );
+        if (matchCount >= 2) {
+            // Ambiguous: hit is on a block edge or corner — multiple faces match.
+            // Use the look direction to disambiguate: the entry face is the one
+            // whose outward normal has the most negative dot product with lookDir.
+            boolean hasLookDir = (lookDirX != 0 || lookDirY != 0 || lookDirZ != 0);
+
+            if (hasLookDir) {
+                // dot(outwardNormal, lookDir) for each candidate face:
+                //   West (-1,0,0) → -lookDirX    East (+1,0,0) → +lookDirX
+                //   Down (0,-1,0) → -lookDirY    Up   (0,+1,0) → +lookDirY
+                //   North(0,0,-1) → -lookDirZ    South(0,0,+1) → +lookDirZ
+                int bestFace = -1;
+                double bestDot = Double.MAX_VALUE;
+
+                if (onWest)   { double d = -lookDirX; if (d < bestDot) { bestDot = d; bestFace = 0; } }
+                if (onEast)   { double d =  lookDirX; if (d < bestDot) { bestDot = d; bestFace = 1; } }
+                if (onBottom) { double d = -lookDirY; if (d < bestDot) { bestDot = d; bestFace = 2; } }
+                if (onTop)    { double d =  lookDirY; if (d < bestDot) { bestDot = d; bestFace = 3; } }
+                if (onNorth)  { double d = -lookDirZ; if (d < bestDot) { bestDot = d; bestFace = 4; } }
+                if (onSouth)  { double d =  lookDirZ; if (d < bestDot) { bestDot = d; bestFace = 5; } }
+
+                return switch (bestFace) {
+                    case 0  -> new PlacementResult(targetX - 1, targetY, targetZ, "WEST (-X)", "West");
+                    case 1  -> new PlacementResult(targetX + 1, targetY, targetZ, "EAST (+X)", "East");
+                    case 2  -> new PlacementResult(targetX, targetY - 1, targetZ, "BOTTOM (-Y)", "Down");
+                    case 3  -> new PlacementResult(targetX, targetY + 1, targetZ, "TOP (+Y)", "Up");
+                    case 4  -> new PlacementResult(targetX, targetY, targetZ - 1, "NORTH (-Z)", "North");
+                    case 5  -> new PlacementResult(targetX, targetY, targetZ + 1, "SOUTH (+Z)", "South");
+                    default -> new PlacementResult(targetX - 1, targetY, targetZ, "WEST (-X)", "West");
+                };
+            }
+
+            // No look direction provided — fall back to priority order (X > Y > Z)
+            if (onWest)   return new PlacementResult(targetX - 1, targetY, targetZ, "WEST (-X)", "West");
+            if (onEast)   return new PlacementResult(targetX + 1, targetY, targetZ, "EAST (+X)", "East");
+            if (onBottom) return new PlacementResult(targetX, targetY - 1, targetZ, "BOTTOM (-Y)", "Down");
+            if (onTop)    return new PlacementResult(targetX, targetY + 1, targetZ, "TOP (+Y)", "Up");
+            if (onNorth)  return new PlacementResult(targetX, targetY, targetZ - 1, "NORTH (-Z)", "North");
+            /*onSouth*/   return new PlacementResult(targetX, targetY, targetZ + 1, "SOUTH (+Z)", "South");
+        }
+
+        // matchCount == 0: hit is in the block interior — fallback to closest face
+        double distWest   = Math.abs(dx);
+        double distEast   = Math.abs(dx - 1.0);
+        double distBottom = Math.abs(dy);
+        double distTop    = Math.abs(dy - 1.0);
+        double distNorth  = Math.abs(dz);
+        double distSouth  = Math.abs(dz - 1.0);
+
+        double minDist = Math.min(distWest, Math.min(distEast, Math.min(distBottom,
+                         Math.min(distTop, Math.min(distNorth, distSouth)))));
+
+        if (minDist == distWest)   return new PlacementResult(targetX - 1, targetY, targetZ, "WEST (-X) [fallback]", "West");
+        if (minDist == distEast)   return new PlacementResult(targetX + 1, targetY, targetZ, "EAST (+X) [fallback]", "East");
+        if (minDist == distBottom) return new PlacementResult(targetX, targetY - 1, targetZ, "BOTTOM (-Y) [fallback]", "Down");
+        if (minDist == distTop)    return new PlacementResult(targetX, targetY + 1, targetZ, "TOP (+Y) [fallback]", "Up");
+        if (minDist == distNorth)  return new PlacementResult(targetX, targetY, targetZ - 1, "NORTH (-Z) [fallback]", "North");
+        /*distSouth*/              return new PlacementResult(targetX, targetY, targetZ + 1, "SOUTH (+Z) [fallback]", "South");
+    }
+
+    /**
+     * Pure placement calculation without look direction (backwards-compatible overload).
+     * Falls back to priority ordering (X > Y > Z) for ambiguous edge/corner hits.
+     * Package-private for testability.
+     */
+    static PlacementResult calculatePlacementFromHit(
+            int targetX, int targetY, int targetZ,
+            double hitX, double hitY, double hitZ) {
+        return calculatePlacementFromHit(targetX, targetY, targetZ, hitX, hitY, hitZ, 0, 0, 0);
     }
 
     /**
@@ -542,7 +590,8 @@ public class InteractionPositionFixer {
         // Delegate to the pure, testable calculation method
         PlacementResult result = calculatePlacementFromHit(
             targetBlock.x, targetBlock.y, targetBlock.z,
-            hitLocation.x, hitLocation.y, hitLocation.z
+            hitLocation.x, hitLocation.y, hitLocation.z,
+            lookDir.x, lookDir.y, lookDir.z
         );
         
         cachedHitFaces.put(playerId, result.face);

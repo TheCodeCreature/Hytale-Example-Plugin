@@ -320,6 +320,115 @@ class InteractionPositionFixerTest {
         }
     }
 
+    // ===== Edge/Corner Disambiguation with Look Direction =====
+
+    @Nested
+    @DisplayName("Edge/corner disambiguation with look direction")
+    class EdgeDisambiguation {
+
+        @Test
+        @DisplayName("North face edge (dx=0, dz=0), facing south → North wins over West")
+        void northFaceEdgeFacingSouth() {
+            PlacementResult r = InteractionPositionFixer.calculatePlacementFromHit(
+                10, 64, 10,
+                10.0, 64.5, 10.0,
+                0.0, 0.0, 1.0
+            );
+            assertEquals("North", r.blockFaceName);
+            assertEquals(10, r.x);
+            assertEquals(64, r.y);
+            assertEquals(9, r.z);
+        }
+
+        @Test
+        @DisplayName("South face edge (dx=0, dz=1), facing north → South wins over West")
+        void southFaceEdgeFacingNorth() {
+            PlacementResult r = InteractionPositionFixer.calculatePlacementFromHit(
+                10, 64, 10,
+                10.0, 64.5, 11.0,
+                0.0, 0.0, -1.0
+            );
+            assertEquals("South", r.blockFaceName);
+            assertEquals(10, r.x);
+            assertEquals(64, r.y);
+            assertEquals(11, r.z);
+        }
+
+        @Test
+        @DisplayName("West face edge (dx=0, dz=0), facing east → West wins over North")
+        void westFaceEdgeFacingEast() {
+            PlacementResult r = InteractionPositionFixer.calculatePlacementFromHit(
+                10, 64, 10,
+                10.0, 64.5, 10.0,
+                1.0, 0.0, 0.0
+            );
+            assertEquals("West", r.blockFaceName);
+            assertEquals(9, r.x);
+            assertEquals(64, r.y);
+            assertEquals(10, r.z);
+        }
+
+        @Test
+        @DisplayName("Top-North edge (dy=1, dz=0), facing south+down → North wins over Up")
+        void topNorthEdgeFacingSouthDown() {
+            PlacementResult r = InteractionPositionFixer.calculatePlacementFromHit(
+                10, 64, 10,
+                10.5, 65.0, 10.0,
+                0.0, -0.3, 0.95
+            );
+            assertEquals("North", r.blockFaceName);
+            assertEquals(10, r.x);
+            assertEquals(64, r.y);
+            assertEquals(9, r.z);
+        }
+
+        @Test
+        @DisplayName("Bottom-East edge (dy=0, dx=1), facing west+up → East wins over Down")
+        void bottomEastEdgeFacingWestUp() {
+            PlacementResult r = InteractionPositionFixer.calculatePlacementFromHit(
+                10, 64, 10,
+                11.0, 64.0, 10.5,
+                -0.95, 0.3, 0.0
+            );
+            assertEquals("East", r.blockFaceName);
+            assertEquals(11, r.x);
+            assertEquals(64, r.y);
+            assertEquals(10, r.z);
+        }
+
+        @Test
+        @DisplayName("Corner hit with look direction facing south → North face wins")
+        void cornerFacingSouth() {
+            PlacementResult r = InteractionPositionFixer.calculatePlacementFromHit(
+                10, 64, 10,
+                10.0, 64.0, 10.0,
+                0.0, 0.0, 1.0
+            );
+            assertEquals("North", r.blockFaceName);
+            assertEquals(10, r.x);
+            assertEquals(64, r.y);
+            assertEquals(9, r.z);
+        }
+
+        @Test
+        @DisplayName("Regression: facing south, looking slightly up, hit on north face at west edge")
+        void regressionSouthLookingUp() {
+            // This is the scenario described in the bug report:
+            // Player facing south (+Z), looking slightly up, ray hits north face
+            // at the west edge of the block. Without fix, West face was detected
+            // instead of North, causing interaction failure.
+            PlacementResult r = InteractionPositionFixer.calculatePlacementFromHit(
+                10, 64, 10,
+                10.0, 64.7, 10.0,
+                0.0, 0.2, 0.98
+            );
+            assertEquals("North", r.blockFaceName);
+            assertEquals(10, r.x);
+            assertEquals(64, r.y);
+            assertEquals(9, r.z);
+        }
+    }
+
     // ===== Edge Cases =====
 
     @Nested
