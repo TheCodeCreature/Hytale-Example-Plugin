@@ -4,10 +4,6 @@ import com.UnobstructedThirdPerson.camera.TransparentBlockUtils;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3i;
-import com.hypixel.hytale.protocol.Opacity;
-import com.hypixel.hytale.protocol.Tint;
-import com.hypixel.hytale.protocol.UpdateType;
-import com.hypixel.hytale.protocol.packets.assets.UpdateBlockTypes;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
 import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.Message;
@@ -22,8 +18,6 @@ import com.hypixel.hytale.server.core.util.TargetUtil;
 import com.UnobstructedThirdPerson.camera.BlockSnapshot;
 import org.jspecify.annotations.NonNull;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -71,59 +65,25 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
             return;
         }
 
-        // Clone the protocol packet — this preserves all original textures, model, draw type, etc.
-        com.hypixel.hytale.protocol.BlockType packetBlock = new com.hypixel.hytale.protocol.BlockType(baseType.toPacket());
+        // Use the hardcoded Debug_Cube block type (ID 2) — always available
+        int debugCubeId = BlockType.DEBUG_CUBE_ID;
 
-        // Only change opacity + alpha to make it look like a preview ghost
-        packetBlock.opacity = Opacity.Transparent;
-        packetBlock.requiresAlphaBlending = true;
+        LOGGER.info("[PreviewBlock] Replacing block at " + target.x + "," + target.y + "," + target.z +
+            " with Debug_Cube (id=" + debugCubeId + ") client-side");
 
-        // Apply a semi-transparent white tint on all faces to control alpha level
-        // ARGB format: 0xAARRGGBB — 0x80 = ~50% alpha, FFFFFF = white (no color shift)
-        int semiTransparentWhite = 0x80FFFFFF;
-        packetBlock.tint = new Tint();
-        packetBlock.tint.top = semiTransparentWhite;
-        packetBlock.tint.bottom = semiTransparentWhite;
-        packetBlock.tint.front = semiTransparentWhite;
-        packetBlock.tint.back = semiTransparentWhite;
-        packetBlock.tint.left = semiTransparentWhite;
-        packetBlock.tint.right = semiTransparentWhite;
-
-        // Strip fields that could interfere with game logic on the fake type
-        packetBlock.states = null;
-        packetBlock.tagIndexes = null;
-        packetBlock.name = null;
-        packetBlock.item = null;
-
-        // Allocate a unique fake block ID
-        int fakeId = TransparentBlockUtils.allocateFakeId();
-
-        // Send the fake block type definition to the client
-        UpdateBlockTypes update = new UpdateBlockTypes();
-        update.type = UpdateType.AddOrUpdate;
-        update.maxId = Math.max(BlockType.getAssetMap().getNextIndex(), fakeId + 1);
-        Map<Integer, com.hypixel.hytale.protocol.BlockType> blockTypes = new HashMap<>();
-        blockTypes.put(fakeId, packetBlock);
-        update.blockTypes = blockTypes;
-        update.updateBlockTextures = true;
-        update.updateModelTextures = false;
-        update.updateModels = false;
-        update.updateMapGeometry = false;
-        playerRef.getPacketHandler().writeNoCache(update);
-
-        // Replace the block at the target position with the fake transparent variant (client-side only)
+        // Set the block to the real Debug_Cube ID — client already has its textures
         playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
             target.x, target.y, target.z,
-            fakeId, snapshot.filler(), snapshot.rotation()
+            debugCubeId, snapshot.filler(), snapshot.rotation()
         ));
 
         String blockName = baseType.getId();
         playerRef.sendMessage(Message.raw(
             "§aPreview block placed at §f" + target.x + ", " + target.y + ", " + target.z +
-            " §a(§f" + blockName + "§a, fakeId=" + fakeId + "). Restoring in 5s..."
+            " §a(§f" + blockName + " §a-> §fDebug_Cube§a). Restoring in 5s..."
         ));
         LOGGER.info("[PreviewBlock] Player " + playerRef.getUsername() +
-            " previewing " + blockName + " (id=" + baseId + ", fakeId=" + fakeId +
+            " replaced " + blockName + " (id=" + baseId + ") with Debug_Cube (id=" + debugCubeId +
             ") at " + target.x + "," + target.y + "," + target.z);
 
         // Schedule restoration of the original block after the delay
