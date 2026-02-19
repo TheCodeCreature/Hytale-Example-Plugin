@@ -1,13 +1,21 @@
 package com;
 
-import com.UnobstructedThirdPerson.AssetEditor.CameraSchemaExtension;
+import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands.StartCommand;
 import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.UnobstructedCameraCommand;
-import com.UnobstructedThirdPerson.Commands.debug.DebugTargetCommand;
-import com.UnobstructedThirdPerson.fix.BlockInteractionEventSystems;
+import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.server.core.asset.GenerateSchemaEvent;
+import com.hypixel.hytale.math.shape.Ellipsoid;
+import com.hypixel.hytale.math.shape.Shape;
+import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.commands.world.WorldListCommand;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
 public class UnobstructedThirdPersonPlugin extends JavaPlugin {
@@ -20,21 +28,37 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
     @Override
     protected void setup(){
-        LOGGER.atInfo().log("Hello from %s version %s SETUP", this.getName(), this.getManifest().getVersion().toString());
         this.getCommandRegistry().registerCommand(new UnobstructedCameraCommand());
-        this.getCommandRegistry().registerCommand(new DebugTargetCommand());
-
-        // Register schema extension to add all 30 camera settings fields to AssetEditor
-        this.getEventRegistry().register(GenerateSchemaEvent.class, CameraSchemaExtension::extendCameraSchema);
-        
+        this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, UnobstructedThirdPersonPlugin::onPlayerReady);
+        this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, UnobstructedThirdPersonPlugin::onPlayerDisconnect);
     }
 
-    @Override
-    protected void start() {
-        
-        // Register block event systems to cancel place/break for enabled players
-        this.getEntityStoreRegistry().registerSystem(new BlockInteractionEventSystems.PlaceBlockEventSystem());
-        this.getEntityStoreRegistry().registerSystem(new BlockInteractionEventSystems.BreakBlockEventSystem());
-        LOGGER.atInfo().log("Registered BlockInteractionEventSystems for place/break cancellation");
+    private static void onPlayerReady(PlayerReadyEvent event) {
+        Ref<EntityStore> ref = event.getPlayerRef();
+        if (ref == null || !ref.isValid()) {
+            return;
+        }
+
+        Store<EntityStore> store = ref.getStore();
+        if (store == null) {
+            return;
+        }
+
+        PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
+        if (playerRef == null) {
+            return;
+        }
+
+        EntityStore entityStore = store.getExternalData();
+        World world = entityStore.getWorld();
+
+        float radius = 6;
+        // Create camera transparency volume for this player
+        CameraTransparencyVolume.getOrCreate(playerRef, world, new Shape[]{new Ellipsoid(radius)});
+    }
+
+    private static void onPlayerDisconnect(PlayerDisconnectEvent event) {
+        PlayerRef playerRef = event.getPlayerRef();
+        CameraTransparencyVolume.remove(playerRef.getUuid());
     }
 }

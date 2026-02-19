@@ -36,7 +36,7 @@ public class CameraTransparencyVolume {
 
     private final PlayerRef playerRef;
     private final World world;
-    private final Shape shape;
+    private final Shape[] shapes;
 
     // Packed block positions currently made transparent
     private final Set<Long> currentPositions = new HashSet<>();
@@ -47,16 +47,16 @@ public class CameraTransparencyVolume {
     // Scheduled update task
     private ScheduledFuture<?> updateTask = null;
 
-    public CameraTransparencyVolume(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull Shape shape) {
+    public CameraTransparencyVolume(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull Shape[] shape) {
         this.playerRef = playerRef;
         this.world = world;
-        this.shape = shape;
+        this.shapes = shape;
     }
 
     // ===== Static instance management =====
 
     @Nonnull
-    public static CameraTransparencyVolume getOrCreate(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull Shape shape) {
+    public static CameraTransparencyVolume getOrCreate(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull Shape[] shape) {
         UUID playerId = playerRef.getUuid();
         CameraTransparencyVolume existing = INSTANCES.get(playerId);
         if (existing != null) {
@@ -106,15 +106,11 @@ public class CameraTransparencyVolume {
                     }
                     var store = ref.getStore();
 
-                    // Update cached server target for block interaction position fixing
-                    com.UnobstructedThirdPerson.fix.InteractionPositionFixer.computeAndCacheTarget(
-                        playerRef.getUuid(), playerRef);
-
                     Vector3i origin = CameraPositionUtil.getCameraOriginBlock(ref, store);
                     if (origin != null) {
                         // Get player foot-level Y to filter out blocks below feet
                         var look = com.hypixel.hytale.server.core.util.TargetUtil.getLook(ref, store);
-                        int minY = (int) Math.floor(look.getPosition().y) - FEET_Y_OFFSET;
+                        int minY = (int) Math.floor(look.getPosition().y) + FEET_Y_OFFSET;
                         update(origin, minY);
                     } else {
                         LOGGER.fine("[CameraTransparency] getCameraOriginBlock returned null");
@@ -146,7 +142,7 @@ public class CameraTransparencyVolume {
             return;
         }
 
-        LOGGER.info("[CameraTransparency] Anchor changed to: " + newAnchor.x + ", " + newAnchor.y + ", " + newAnchor.z);
+//        LOGGER.info("[CameraTransparency] Anchor changed to: " + newAnchor.x + ", " + newAnchor.y + ", " + newAnchor.z);
         lastAnchor = newAnchor;
 
         ChunkStore chunkStore = world.getChunkStore();
@@ -155,22 +151,24 @@ public class CameraTransparencyVolume {
         Set<Long> newPositions = new HashSet<>();
         Map<Long, BlockSnapshot> newSnapshots = new HashMap<>();
 
-        shape.forEachBlock(newAnchor.x, newAnchor.y, newAnchor.z, (x, y, z) -> {
-            // Skip blocks below the player's feet
-            if (y < minY) {
-                return true;
-            }
-            BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
-            if (snapshot != null && snapshot.blockId() != 0) {
-                BlockType baseType = BlockType.getAssetMap().getAsset(snapshot.blockId());
-                if (baseType != null) {
-                    long pos = BlockUtil.packUnchecked(x, y, z);
-                    newPositions.add(pos);
-                    newSnapshots.put(pos, snapshot);
+        for (Shape shape: shapes) {
+            shape.forEachBlock(newAnchor.x, newAnchor.y, newAnchor.z, (x, y, z) -> {
+                // Skip blocks below the player's feet
+                long pos = BlockUtil.packUnchecked(x, y, z);
+                if (y < minY) {
+                    return true;
                 }
-            }
-            return true; // continue iteration
-        });
+                BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
+                if (snapshot != null && snapshot.blockId() != 0) {
+                    BlockType baseType = BlockType.getAssetMap().getAsset(snapshot.blockId());
+                    if (baseType != null) {
+                        newPositions.add(pos);
+                        newSnapshots.put(pos, snapshot);
+                    }
+                }
+                return true; // continue iteration
+            });
+        }
 
         // Compute diff: blocks to add (entered volume)
         Set<Long> toAdd = new HashSet<>(newPositions);
@@ -180,7 +178,7 @@ public class CameraTransparencyVolume {
         Set<Long> toRemove = new HashSet<>(currentPositions);
         toRemove.removeAll(newPositions);
 
-        LOGGER.info("[CameraTransparency] Diff: " + newPositions.size() + " total, +" + toAdd.size() + " add, -" + toRemove.size() + " remove");
+//        LOGGER.info("[CameraTransparency] Diff: " + newPositions.size() + " total, +" + toAdd.size() + " add, -" + toRemove.size() + " remove");
 
         // Apply changes immediately
         applyDiff(toAdd, toRemove, newSnapshots);

@@ -1,15 +1,11 @@
 package com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands;
 
-import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.Settings.CustomCameraSettings;
 import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
 import com.hypixel.hytale.math.shape.Ellipsoid;
-import com.UnobstructedThirdPerson.fix.InteractionPositionFixer;
 import com.hypixel.hytale.codec.validation.Validators;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.protocol.ClientCameraView;
-import com.hypixel.hytale.protocol.ServerCameraSettings;
-import com.hypixel.hytale.protocol.packets.camera.SetServerCamera;
+import com.hypixel.hytale.math.shape.Shape;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.OptionalArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
@@ -20,29 +16,19 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
 public class StartCommand extends AbstractPlayerCommand {
-    private final OptionalArg<Float> distanceArg;
+    private final OptionalArg<Float> radiusArg;
 
     public StartCommand(){
         super("Start","Starts the camera");
-        this.distanceArg = withOptionalArg("Distance", "Set the Distance from the camera.", ArgTypes.FLOAT).addValidator(Validators.greaterThan(0f));
+        this.radiusArg = withOptionalArg("Radius", "Set the size of the transparency radius", ArgTypes.FLOAT).addValidator(Validators.greaterThan(0f)).addValidator(Validators.lessThan(20f));
     }
 
     @Override
-    protected void execute(@NonNull CommandContext commandContext, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
-        ServerCameraSettings settings = new CustomCameraSettings().Settings;
-
-        var distance = distanceArg.get(commandContext);
-        if(distance != null) settings.distance = distance;
-
-        // Enable the interaction position fixer to correct stale block positions
-        InteractionPositionFixer.enableForPlayer(playerRef);
-
-        // Store the camera settings so the server raycast uses the same offset/distance
-        InteractionPositionFixer.setActiveCameraSettings(playerRef.getUuid(), settings);
+    protected void execute(@NonNull CommandContext context, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
+        float DEFAULT_RADIUS = 6;
+        float radius = this.radiusArg.provided(context)? this.radiusArg.get(context): DEFAULT_RADIUS;
 
         // Create camera transparency volume for this player
-        CameraTransparencyVolume.getOrCreate(playerRef, world, new Ellipsoid(5));
-
-        playerRef.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, false, settings));
+        CameraTransparencyVolume.getOrCreate(playerRef, world, new Shape[]{new Ellipsoid(radius)});
     }
 }
