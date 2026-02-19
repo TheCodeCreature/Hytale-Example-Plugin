@@ -1,10 +1,18 @@
 package com.UnobstructedThirdPerson.Commands.debug;
 
+import com.UnobstructedThirdPerson.camera.BlockSnapshot;
 import com.UnobstructedThirdPerson.camera.TransparentBlockUtils;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.protocol.BlockPosition;
+import com.hypixel.hytale.protocol.BlockTextures;
+import com.hypixel.hytale.protocol.Opacity;
+import com.hypixel.hytale.protocol.ShaderType;
+import com.hypixel.hytale.protocol.UpdateType;
+import com.hypixel.hytale.protocol.packets.assets.UpdateBlockTypes;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
+import com.hypixel.hytale.protocol.packets.world.UpdateBlockDamage;
 import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -15,9 +23,10 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.TargetUtil;
-import com.UnobstructedThirdPerson.camera.BlockSnapshot;
 import org.jspecify.annotations.NonNull;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -67,38 +76,95 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
 
         // Use the hardcoded Debug_Cube block type (ID 2) — always available
         int debugCubeId = BlockType.DEBUG_CUBE_ID;
+        BlockType debugCubeType = BlockType.DEBUG_CUBE;
 
-        LOGGER.info("[PreviewBlock] Replacing block at " + target.x + "," + target.y + "," + target.z +
-            " with Debug_Cube (id=" + debugCubeId + ") client-side");
+        // Save the original Debug_Cube packet so we can restore it later
+        com.hypixel.hytale.protocol.BlockType originalDebugPacket = debugCubeType.toPacket();
 
-        // Set the block to the real Debug_Cube ID — client already has its textures
+        // Clone Debug_Cube and override with the original block's textures + a mask
+        com.hypixel.hytale.protocol.BlockType basePacket = baseType.toPacket();
+        com.hypixel.hytale.protocol.BlockType modifiedPacket = new com.hypixel.hytale.protocol.BlockType(originalDebugPacket);
+
+        // Copy the original block's cube textures so it looks like the target block
+        modifiedPacket.cubeTextures = basePacket.cubeTextures;
+        modifiedPacket.requiresAlphaBlending = true;
+        modifiedPacket.opacity = Opacity.Semitransparent;
+
+        // Use the Ice shader — real ice/glass blocks use this for semi-transparent rendering
+        modifiedPacket.shaderEffect = new ShaderType[] { ShaderType.Ice };
+
+        LOGGER.info("[PreviewBlock] Using ShaderType.Ice + Semitransparent" +
+            ", base textures from " + baseType.getId());
+
+        // Step 1: Send modified Debug_Cube type definition to the client
+        UpdateBlockTypes update = new UpdateBlockTypes();
+        update.type = UpdateType.AddOrUpdate;
+        update.maxId = BlockType.getAssetMap().getNextIndex();
+        Map<Integer, com.hypixel.hytale.protocol.BlockType> blockTypes = new HashMap<>();
+        blockTypes.put(debugCubeId, modifiedPacket);
+        update.blockTypes = blockTypes;
+        update.updateBlockTextures = true;
+        update.updateModelTextures = false;
+        update.updateModels = false;
+        update.updateMapGeometry = true;
+        playerRef.getPacketHandler().writeNoCache(update);
+
+        // Step 2: Set the target block to Debug_Cube
         playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
             target.x, target.y, target.z,
             debugCubeId, snapshot.filler(), snapshot.rotation()
         ));
 
-        String blockName = baseType.getId();
-        playerRef.sendMessage(Message.raw(
-            "§aPreview block placed at §f" + target.x + ", " + target.y + ", " + target.z +
-            " §a(§f" + blockName + " §a-> §fDebug_Cube§a). Restoring in 5s..."
-        ));
-        LOGGER.info("[PreviewBlock] Player " + playerRef.getUsername() +
-            " replaced " + blockName + " (id=" + baseId + ") with Debug_Cube (id=" + debugCubeId +
-            ") at " + target.x + "," + target.y + "," + target.z);
+        // Step 3: Apply a damage overlay on top of the Debug_Cube (alpha decal test)
+        UpdateBlockDamage damagePacket = new UpdateBlockDamage();
+        damagePacket.blockPosition = new BlockPosition(target.x, target.y, target.z);
+        damagePacket.damage = 0.5f;
+        damagePacket.delta = 0.0f;
+        playerRef.getPacketHandler().writeNoCache(damagePacket);
 
-        // Schedule restoration of the original block after the delay
+        String blockName = baseType.getId();
+        LOGGER.info("[PreviewBlock] Player " + playerRef.getUsername() +
+            " previewing " + blockName + " (id=" + baseId + ") as transparent Debug_Cube at " +
+            target.x + "," + target.y + "," + target.z);
+        playerRef.sendMessage(Message.raw(
+            "§aTransparent preview at §f" + target.x + ", " + target.y + ", " + target.z +
+            " §a(§f" + blockName + " §a-> §ftransparent Debug_Cube§a). Restoring in 5s..."
+        ));
+
+        // Schedule restoration: restore both block type definition and the block itself
         HytaleServer.SCHEDULED_EXECUTOR.schedule(() -> {
             try {
                 world.execute(() -> {
+                    // Restore original Debug_Cube type definition
+                    UpdateBlockTypes restore = new UpdateBlockTypes();
+                    restore.type = UpdateType.AddOrUpdate;
+                    restore.maxId = BlockType.getAssetMap().getNextIndex();
+                    Map<Integer, com.hypixel.hytale.protocol.BlockType> restoreTypes = new HashMap<>();
+                    restoreTypes.put(debugCubeId, originalDebugPacket);
+                    restore.blockTypes = restoreTypes;
+                    restore.updateBlockTextures = true;
+                    restore.updateModelTextures = false;
+                    restore.updateModels = false;
+                    restore.updateMapGeometry = true;
+                    playerRef.getPacketHandler().writeNoCache(restore);
+
+                    // Clear the damage overlay
+                    UpdateBlockDamage clearDamage = new UpdateBlockDamage();
+                    clearDamage.blockPosition = new BlockPosition(target.x, target.y, target.z);
+                    clearDamage.damage = 0.0f;
+                    clearDamage.delta = 0.0f;
+                    playerRef.getPacketHandler().writeNoCache(clearDamage);
+
+                    // Restore original block at the target position
                     playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
                         snapshot.x(), snapshot.y(), snapshot.z(),
                         snapshot.blockId(), snapshot.filler(), snapshot.rotation()
                     ));
-                    LOGGER.info("[PreviewBlock] Restored block at " +
+                    LOGGER.info("[PreviewBlock] Restored block and Debug_Cube type at " +
                         snapshot.x() + "," + snapshot.y() + "," + snapshot.z());
                 });
             } catch (Exception e) {
-                LOGGER.warning("[PreviewBlock] Failed to restore block: " + e.getMessage());
+                LOGGER.warning("[PreviewBlock] Failed to restore: " + e.getMessage());
             }
         }, RESTORE_DELAY_MS, TimeUnit.MILLISECONDS);
     }
