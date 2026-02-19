@@ -15,7 +15,6 @@ import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.commands.world.WorldListCommand;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
@@ -30,6 +29,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
     @Override
     protected void setup(){
         this.getCommandRegistry().registerCommand(new UnobstructedCameraCommand());
+        this.getCommandRegistry().registerCommand(new PreviewBlockCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, UnobstructedThirdPersonPlugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, UnobstructedThirdPersonPlugin::onPlayerDisconnect);
     }
