@@ -5,6 +5,7 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.Opacity;
+import com.hypixel.hytale.protocol.Tint;
 import com.hypixel.hytale.protocol.UpdateType;
 import com.hypixel.hytale.protocol.packets.assets.UpdateBlockTypes;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
@@ -76,6 +77,17 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
         // Only change opacity + alpha to make it look like a preview ghost
         packetBlock.opacity = Opacity.Transparent;
         packetBlock.requiresAlphaBlending = true;
+
+        // Apply a semi-transparent white tint on all faces to control alpha level
+        // ARGB format: 0xAARRGGBB — 0x80 = ~50% alpha, FFFFFF = white (no color shift)
+        int semiTransparentWhite = 0x80FFFFFF;
+        packetBlock.tint = new Tint();
+        packetBlock.tint.top = semiTransparentWhite;
+        packetBlock.tint.bottom = semiTransparentWhite;
+        packetBlock.tint.front = semiTransparentWhite;
+        packetBlock.tint.back = semiTransparentWhite;
+        packetBlock.tint.left = semiTransparentWhite;
+        packetBlock.tint.right = semiTransparentWhite;
 
         // Strip fields that could interfere with game logic on the fake type
         packetBlock.states = null;
