@@ -3,6 +3,7 @@ package com;
 import com.UnobstructedThirdPerson.AssetEditor.CameraSchemaExtension;
 import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.UnobstructedCameraCommand;
 import com.UnobstructedThirdPerson.Commands.debug.DebugTargetCommand;
+import com.UnobstructedThirdPerson.Commands.debug.PreviewBlockCommand;
 import com.UnobstructedThirdPerson.fix.BlockInteractionEventSystems;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.asset.GenerateSchemaEvent;
@@ -23,6 +24,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         LOGGER.atInfo().log("Hello from %s version %s SETUP", this.getName(), this.getManifest().getVersion().toString());
         this.getCommandRegistry().registerCommand(new UnobstructedCameraCommand());
         this.getCommandRegistry().registerCommand(new DebugTargetCommand());
+        this.getCommandRegistry().registerCommand(new PreviewBlockCommand());
 
         // Register schema extension to add all 30 camera settings fields to AssetEditor
         this.getEventRegistry().register(GenerateSchemaEvent.class, CameraSchemaExtension::extendCameraSchema);
