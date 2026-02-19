@@ -5,14 +5,11 @@ import com.UnobstructedThirdPerson.camera.TransparentBlockUtils;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3i;
-import com.hypixel.hytale.protocol.BlockPosition;
-import com.hypixel.hytale.protocol.BlockTextures;
 import com.hypixel.hytale.protocol.Opacity;
 import com.hypixel.hytale.protocol.ShaderType;
 import com.hypixel.hytale.protocol.UpdateType;
 import com.hypixel.hytale.protocol.packets.assets.UpdateBlockTypes;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
-import com.hypixel.hytale.protocol.packets.world.UpdateBlockDamage;
 import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -81,20 +78,19 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
         // Save the original Debug_Cube packet so we can restore it later
         com.hypixel.hytale.protocol.BlockType originalDebugPacket = debugCubeType.toPacket();
 
-        // Clone Debug_Cube and override with the original block's textures + a mask
+        // Clone Debug_Cube and override with the original block's textures
         com.hypixel.hytale.protocol.BlockType basePacket = baseType.toPacket();
         com.hypixel.hytale.protocol.BlockType modifiedPacket = new com.hypixel.hytale.protocol.BlockType(originalDebugPacket);
 
         // Copy the original block's cube textures so it looks like the target block
         modifiedPacket.cubeTextures = basePacket.cubeTextures;
+        // Match Water_Source fluid rendering: Solid opacity + alpha blending + Water shader
         modifiedPacket.requiresAlphaBlending = true;
-        modifiedPacket.opacity = Opacity.Semitransparent;
+        modifiedPacket.opacity = Opacity.Solid;
+        modifiedPacket.shaderEffect = new ShaderType[] { ShaderType.Water };
 
-        // Use the Ice shader — real ice/glass blocks use this for semi-transparent rendering
-        modifiedPacket.shaderEffect = new ShaderType[] { ShaderType.Ice };
-
-        LOGGER.info("[PreviewBlock] Using ShaderType.Ice + Semitransparent" +
-            ", base textures from " + baseType.getId());
+        LOGGER.info("[PreviewBlock] Using Debug_Cube + Water shader + alpha blending" +
+            ", textures from " + baseType.getId());
 
         // Step 1: Send modified Debug_Cube type definition to the client
         UpdateBlockTypes update = new UpdateBlockTypes();
@@ -109,18 +105,11 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
         update.updateMapGeometry = true;
         playerRef.getPacketHandler().writeNoCache(update);
 
-        // Step 2: Set the target block to Debug_Cube
+        // Step 2: Set the target block to Debug_Cube (renders as a solid cube)
         playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
             target.x, target.y, target.z,
             debugCubeId, snapshot.filler(), snapshot.rotation()
         ));
-
-        // Step 3: Apply a damage overlay on top of the Debug_Cube (alpha decal test)
-        UpdateBlockDamage damagePacket = new UpdateBlockDamage();
-        damagePacket.blockPosition = new BlockPosition(target.x, target.y, target.z);
-        damagePacket.damage = 0.5f;
-        damagePacket.delta = 0.0f;
-        playerRef.getPacketHandler().writeNoCache(damagePacket);
 
         String blockName = baseType.getId();
         LOGGER.info("[PreviewBlock] Player " + playerRef.getUsername() +
@@ -128,10 +117,10 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
             target.x + "," + target.y + "," + target.z);
         playerRef.sendMessage(Message.raw(
             "§aTransparent preview at §f" + target.x + ", " + target.y + ", " + target.z +
-            " §a(§f" + blockName + " §a-> §ftransparent Debug_Cube§a). Restoring in 5s..."
+            " §a(§f" + blockName + " §a-> §fDebug_Cube + Water shader§a). Restoring in 5s..."
         ));
 
-        // Schedule restoration: restore both block type definition and the block itself
+        // Schedule restoration: restore block type definition and the block itself
         HytaleServer.SCHEDULED_EXECUTOR.schedule(() -> {
             try {
                 world.execute(() -> {
@@ -147,13 +136,6 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
                     restore.updateModels = false;
                     restore.updateMapGeometry = true;
                     playerRef.getPacketHandler().writeNoCache(restore);
-
-                    // Clear the damage overlay
-                    UpdateBlockDamage clearDamage = new UpdateBlockDamage();
-                    clearDamage.blockPosition = new BlockPosition(target.x, target.y, target.z);
-                    clearDamage.damage = 0.0f;
-                    clearDamage.delta = 0.0f;
-                    playerRef.getPacketHandler().writeNoCache(clearDamage);
 
                     // Restore original block at the target position
                     playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
