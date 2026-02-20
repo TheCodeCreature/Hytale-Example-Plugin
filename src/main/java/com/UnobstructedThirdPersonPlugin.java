@@ -23,7 +23,6 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
     public UnobstructedThirdPersonPlugin(@NonNull JavaPluginInit init) {
         super(init);
-        LOGGER.atInfo().log("Hello from %s version %s", this.getName(), this.getManifest().getVersion().toString());
     }
 
     @Override
