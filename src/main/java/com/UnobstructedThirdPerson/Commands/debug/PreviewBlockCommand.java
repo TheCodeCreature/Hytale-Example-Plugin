@@ -87,25 +87,22 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
         String editorEmptyTexture = "BlockTextures/Editor_Empty.png";
         DrawType drawType = basePacket.drawType;
 
-        if (drawType == DrawType.Cube || drawType == DrawType.GizmoCube) {
-            // For cube blocks, set all 6 cube face textures to Editor_Empty
-            BlockTextures emptyTextures = new BlockTextures(
-                editorEmptyTexture, // top
-                editorEmptyTexture, // bottom
-                editorEmptyTexture, // front
-                editorEmptyTexture, // back
-                editorEmptyTexture, // left
-                editorEmptyTexture, // right
-                1.0f // weight
-            );
-            modifiedPacket.cubeTextures = new BlockTextures[] { emptyTextures };
-            LOGGER.info("[PreviewBlock] Using Cube drawType with Editor_Empty textures");
-        } else if (drawType == DrawType.Model || drawType == DrawType.CubeWithModel) {
-            // For model blocks, set model texture to Editor_Empty
-            ModelTexture emptyModelTexture = new ModelTexture(editorEmptyTexture, 1.0f);
-            modifiedPacket.modelTexture = new ModelTexture[] { emptyModelTexture };
-            LOGGER.info("[PreviewBlock] Using Model drawType with Editor_Empty texture");
-        }
+        // For cube blocks, set all 6 cube face textures to Editor_Empty
+        BlockTextures emptyTextures = new BlockTextures(
+            editorEmptyTexture, // top
+            editorEmptyTexture, // bottom
+            editorEmptyTexture, // front
+            editorEmptyTexture, // back
+            editorEmptyTexture, // left
+            editorEmptyTexture, // right
+            1.0f // weight
+        );
+        modifiedPacket.cubeTextures = new BlockTextures[] { emptyTextures };
+        LOGGER.info("[PreviewBlock] Using Cube drawType with Editor_Empty textures");
+        // For model blocks, set model texture to Editor_Empty
+        ModelTexture emptyModelTexture = new ModelTexture(editorEmptyTexture, 1.0f);
+        modifiedPacket.modelTexture = new ModelTexture[] { emptyModelTexture };
+        LOGGER.info("[PreviewBlock] Using Model drawType with Editor_Empty texture");
 
         // Preserve the original drawType so geometry renders correctly
         modifiedPacket.drawType = drawType;
