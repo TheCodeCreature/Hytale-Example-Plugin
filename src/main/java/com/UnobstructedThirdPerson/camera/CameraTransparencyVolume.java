@@ -1,7 +1,7 @@
 package com.UnobstructedThirdPerson.camera;
 
-import com.hypixel.hytale.math.block.BlockUtil;
 import com.hypixel.hytale.math.shape.Shape;
+import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -29,7 +29,6 @@ import java.util.logging.Logger;
 public class CameraTransparencyVolume {
 
     private static final Logger LOGGER = Logger.getLogger("CameraTransparencyVolume");
-    private static final int FEET_Y_OFFSET = 1;
     private static final long UPDATE_INTERVAL_MILLIS = 100;
 
     private static final Map<UUID, CameraTransparencyVolume> INSTANCES = new ConcurrentHashMap<>();
@@ -195,17 +194,15 @@ public class CameraTransparencyVolume {
                     if (ref == null || !ref.isValid()) {
                         return;
                     }
-                    var store = ref.getStore();
 
-                    Vector3i origin = CameraPositionUtil.getCameraOriginBlock(ref, store);
-                    if (origin != null) {
-                        // Get player foot-level Y to filter out blocks below feet
-                        var look = com.hypixel.hytale.server.core.util.TargetUtil.getLook(ref, store);
-                        int minY = (int) Math.floor(look.getPosition().y) + FEET_Y_OFFSET;
-                        update(origin, minY);
-                    } else {
-                        LOGGER.fine("[CameraTransparency] getCameraOriginBlock returned null");
-                    }
+                    // Vector3i origin = CameraPositionUtil.getCameraOriginBlock(ref, store);
+                    Vector3d playerPos = playerRef.getTransform().getPosition();
+                    Vector3i origin = new Vector3i(
+                            (int) Math.floor(playerPos.x),
+                            (int) Math.floor(playerPos.y),
+                            (int) Math.floor(playerPos.z)
+                    );
+                    update(origin);
                 });
             } catch (Exception e) {
                 LOGGER.warning("[CameraTransparency] Error in update loop: " + e.getMessage());
@@ -227,7 +224,7 @@ public class CameraTransparencyVolume {
      * Only runs the diff if the integer block anchor has changed.
      * Must be called on the world thread.
      */
-    public void update(@Nonnull Vector3i newAnchor, int minY) {
+    public void update(@Nonnull Vector3i newAnchor) {
         // Early exit if anchor hasn't changed
         if (lastAnchor != null && lastAnchor.x == newAnchor.x && lastAnchor.y == newAnchor.y && lastAnchor.z == newAnchor.z) {
             return;
@@ -242,7 +239,7 @@ public class CameraTransparencyVolume {
         compositor.setAnchor(newAnchor);
         
         // Compose the region using the parametric compositor
-        ComposedRegion region = compositor.compose(chunkStore, minY);
+        ComposedRegion region = compositor.compose(chunkStore);
         
         // Filter out ignored blocks
         Map<Long, BlockSnapshot> newSnapshots = new HashMap<>();

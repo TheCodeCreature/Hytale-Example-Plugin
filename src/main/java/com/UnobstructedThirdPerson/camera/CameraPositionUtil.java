@@ -94,7 +94,7 @@ final class CameraPositionUtil {
             if (volume != null) {
                 Transform look = TargetUtil.getLook(ref, store);
                 int minY = (int) Math.floor(look.getPosition().y) - 1;
-                volume.update(origin, minY);
+                volume.update(origin);
             }
         }
         return origin;

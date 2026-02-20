@@ -172,7 +172,7 @@ public class ShapeCompositor {
      * This is the main "replay" method that produces reproducible results.
      */
     @Nonnull
-    public ComposedRegion compose(@Nonnull ChunkStore chunkStore, int minY) {
+    public ComposedRegion compose(@Nonnull ChunkStore chunkStore) {
         Map<Long, BlockSnapshot> originalBlocks = new HashMap<>();
         Map<Long, BlockFillType> blockFills = new HashMap<>();
         Map<Long, Integer> computedBlockIds = new HashMap<>();
@@ -195,12 +195,12 @@ public class ShapeCompositor {
             
             switch (operation.getType()) {
                 case DEFINE:
-                    executeDefine(operation, chunkStore, minY, originalBlocks, blockFills, 
+                    executeDefine(operation, chunkStore, originalBlocks, blockFills, 
                             blockOwners, operationPositions, excludedPositions);
                     break;
                     
                 case INTERSECT:
-                    executeIntersect(operation, chunkStore, minY, originalBlocks, blockFills,
+                    executeIntersect(operation, chunkStore, originalBlocks, blockFills,
                             blockOwners, operationPositions, operationRegions, excludedPositions);
                     break;
                     
@@ -215,7 +215,7 @@ public class ShapeCompositor {
                     break;
                     
                 case EXCLUDE:
-                    executeExclude(operation, chunkStore, minY, excludedPositions, operationPositions);
+                    executeExclude(operation, chunkStore, excludedPositions, operationPositions);
                     break;
             }
             
@@ -238,7 +238,7 @@ public class ShapeCompositor {
                 excludedPositions, operationRegions, timeline);
     }
     
-    private void executeDefine(ShapeOperation operation, ChunkStore chunkStore, int minY,
+    private void executeDefine(ShapeOperation operation, ChunkStore chunkStore,
                                Map<Long, BlockSnapshot> originalBlocks,
                                Map<Long, BlockFillType> blockFills,
                                Map<Long, String> blockOwners,
@@ -253,10 +253,6 @@ public class ShapeCompositor {
         BlockFillType fillType = operation.getFillType();
         
         shape.forEachBlock(anchor.x, anchor.y, anchor.z, (x, y, z) -> {
-            if (y < minY) {
-                return true;
-            }
-            
             long pos = BlockUtil.packUnchecked(x, y, z);
             
             // Skip excluded positions
@@ -279,7 +275,7 @@ public class ShapeCompositor {
         });
     }
     
-    private void executeIntersect(ShapeOperation operation, ChunkStore chunkStore, int minY,
+    private void executeIntersect(ShapeOperation operation, ChunkStore chunkStore,
                                   Map<Long, BlockSnapshot> originalBlocks,
                                   Map<Long, BlockFillType> blockFills,
                                   Map<Long, String> blockOwners,
@@ -302,10 +298,6 @@ public class ShapeCompositor {
         BlockFillType fillType = operation.getFillType();
         
         shape.forEachBlock(anchor.x, anchor.y, anchor.z, (x, y, z) -> {
-            if (y < minY) {
-                return true;
-            }
-            
             long pos = BlockUtil.packUnchecked(x, y, z);
             
             // Skip excluded positions
@@ -410,7 +402,7 @@ public class ShapeCompositor {
         }
     }
     
-    private void executeExclude(ShapeOperation operation, ChunkStore chunkStore, int minY,
+    private void executeExclude(ShapeOperation operation, ChunkStore chunkStore,
                                Set<Long> excludedPositions, Set<Long> operationPositions) {
         Shape shape = operation.getShape();
         
@@ -420,10 +412,6 @@ public class ShapeCompositor {
         }
         
         shape.forEachBlock(anchor.x, anchor.y, anchor.z, (x, y, z) -> {
-            if (y < minY) {
-                return true;
-            }
-            
             long pos = BlockUtil.packUnchecked(x, y, z);
             excludedPositions.add(pos);
             operationPositions.add(pos);
