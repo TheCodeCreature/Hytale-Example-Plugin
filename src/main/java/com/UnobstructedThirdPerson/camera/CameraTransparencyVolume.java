@@ -40,25 +40,65 @@ public class CameraTransparencyVolume {
 
     private final PlayerRef playerRef;
     private final World world;
-    private final Shape[] shapes;
+    private final ShapeCompositor compositor;
 
     // Packed block positions currently made transparent
     private final Set<Long> currentPositions = new HashSet<>();
     // Position -> original block snapshot for restoration
     private final Map<Long, BlockSnapshot> activeBlocks = new HashMap<>();
+    // Position -> computed block ID for this position
+    private final Map<Long, Integer> activeBlockIds = new HashMap<>();
     // Last anchor used for diff check
     private Vector3i lastAnchor = null;
     // Scheduled update task
     private ScheduledFuture<?> updateTask = null;
 
-    public CameraTransparencyVolume(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull Shape[] shape) {
+    public CameraTransparencyVolume(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull ShapeCompositor compositor) {
         this.playerRef = playerRef;
         this.world = world;
-        this.shapes = shape;
+        this.compositor = compositor;
+    }
+    
+    // Legacy constructor for backward compatibility
+    @Deprecated
+    public CameraTransparencyVolume(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull Shape[] shapes) {
+        this.playerRef = playerRef;
+        this.world = world;
+        // Create simple compositor with empty blocks for all shapes
+        this.compositor = new ShapeCompositor(new Vector3i(0, 0, 0));
+        for (int i = 0; i < shapes.length; i++) {
+            compositor.addOperation("shape_" + i, shapes[i], OperationType.DEFINE, new EmptyBlockFill());
+        }
     }
 
     // ===== Static instance management =====
 
+    /**
+     * Get or create a CameraTransparencyVolume using the parametric ShapeCompositor API.
+     * This is the preferred method for creating new volumes.
+     */
+    @Nonnull
+    public static CameraTransparencyVolume getOrCreate(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull ShapeCompositor compositor) {
+        UUID playerId = playerRef.getUuid();
+        CameraTransparencyVolume existing = INSTANCES.get(playerId);
+        if (existing != null) {
+            // Shut down stale instance (e.g. from a crash) and create fresh
+            existing.shutdown();
+            INSTANCES.remove(playerId);
+            LOGGER.info("[CameraTransparency] Replaced stale volume for player: " + playerRef.getUsername());
+        }
+        CameraTransparencyVolume instance = new CameraTransparencyVolume(playerRef, world, compositor);
+        instance.startUpdateLoop();
+        INSTANCES.put(playerId, instance);
+        LOGGER.info("[CameraTransparency] Created volume for player: " + playerRef.getUsername());
+        return instance;
+    }
+    
+    /**
+     * Legacy method - creates a simple compositor with empty blocks for all shapes.
+     * Use getOrCreate(PlayerRef, World, ShapeCompositor) for parametric control.
+     */
+    @Deprecated
     @Nonnull
     public static CameraTransparencyVolume getOrCreate(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull Shape[] shape) {
         UUID playerId = playerRef.getUuid();
@@ -198,27 +238,37 @@ public class CameraTransparencyVolume {
 
         ChunkStore chunkStore = world.getChunkStore();
 
-        // Build new set of positions inside the volume
-        Set<Long> newPositions = new HashSet<>();
+        // Compose the region using the parametric compositor
+        ComposedRegion region = compositor.compose(chunkStore, minY);
+        
+        // Filter out ignored blocks
         Map<Long, BlockSnapshot> newSnapshots = new HashMap<>();
-
-        for (Shape shape: shapes) {
-            shape.forEachBlock(newAnchor.x, newAnchor.y, newAnchor.z, (x, y, z) -> {
-                // Skip blocks below the player's feet
-                long pos = BlockUtil.packUnchecked(x, y, z);
-                if (y < minY) {
-                    return true;
-                }
-                BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
-                if (snapshot != null && snapshot.blockId() != 0) {
-                    BlockType baseType = BlockType.getAssetMap().getAsset(snapshot.blockId());
-                    if (baseType != null && !shouldIgnoreBlock(baseType)) {
-                        newPositions.add(pos);
-                        newSnapshots.put(pos, snapshot);
-                    }
-                }
-                return true; // continue iteration
-            });
+        Set<Long> newPositions = new HashSet<>();
+        Map<Long, Integer> newBlockIds = new HashMap<>();
+        
+        for (Map.Entry<Long, BlockSnapshot> entry : region.getOriginalBlocks().entrySet()) {
+            Long pos = entry.getKey();
+            BlockSnapshot snapshot = entry.getValue();
+            
+            // Skip excluded positions
+            if (region.getExcludedPositions().contains(pos)) {
+                continue;
+            }
+            
+            // Check if block should be ignored
+            BlockType baseType = BlockType.getAssetMap().getAsset(snapshot.blockId());
+            if (baseType != null && shouldIgnoreBlock(baseType)) {
+                continue;
+            }
+            
+            newPositions.add(pos);
+            newSnapshots.put(pos, snapshot);
+            
+            // Get computed block ID if available
+            Integer blockId = region.getComputedBlockIds().get(pos);
+            if (blockId != null) {
+                newBlockIds.put(pos, blockId);
+            }
         }
 
         // Compute diff: blocks to add (entered volume)
@@ -232,7 +282,7 @@ public class CameraTransparencyVolume {
 //        LOGGER.info("[CameraTransparency] Diff: " + newPositions.size() + " total, +" + toAdd.size() + " add, -" + toRemove.size() + " remove");
 
         // Apply changes immediately
-        applyDiff(toAdd, toRemove, newSnapshots);
+        applyDiff(toAdd, toRemove, newSnapshots, newBlockIds);
 
         // Update current state
         currentPositions.clear();
@@ -241,17 +291,23 @@ public class CameraTransparencyVolume {
         // Update active blocks map: remove departed, add new
         for (Long pos : toRemove) {
             activeBlocks.remove(pos);
+            activeBlockIds.remove(pos);
         }
         for (Long pos : toAdd) {
             BlockSnapshot snapshot = newSnapshots.get(pos);
             if (snapshot != null) {
                 activeBlocks.put(pos, snapshot);
+                Integer blockId = newBlockIds.get(pos);
+                if (blockId != null) {
+                    activeBlockIds.put(pos, blockId);
+                }
             }
         }
     }
 
     private void applyDiff(@Nonnull Set<Long> toAdd, @Nonnull Set<Long> toRemove,
-                           @Nonnull Map<Long, BlockSnapshot> newSnapshots) {
+                           @Nonnull Map<Long, BlockSnapshot> newSnapshots,
+                           @Nonnull Map<Long, Integer> newBlockIds) {
         // Restore blocks that left the volume
         for (Long pos : toRemove) {
             BlockSnapshot original = activeBlocks.get(pos);
@@ -263,13 +319,17 @@ public class CameraTransparencyVolume {
             }
         }
 
-        // Replace blocks in volume with Empty (air, ID 0) — client-side only
+        // Replace blocks in volume with computed block IDs from compositor
         for (Long pos : toAdd) {
             BlockSnapshot snapshot = newSnapshots.get(pos);
             if (snapshot != null) {
+                // Use computed block ID if available, otherwise default to air (0)
+                Integer blockId = newBlockIds.get(pos);
+                int replacementId = blockId != null ? blockId : 0;
+                
                 playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
                     snapshot.x(), snapshot.y(), snapshot.z(),
-                    0, (short) 0, (byte) 0
+                    replacementId, (short) 0, (byte) 0
                 ));
             }
         }
