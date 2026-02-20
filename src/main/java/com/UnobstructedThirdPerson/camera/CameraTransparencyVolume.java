@@ -238,6 +238,9 @@ public class CameraTransparencyVolume {
 
         ChunkStore chunkStore = world.getChunkStore();
 
+        // Update compositor anchor to current camera position
+        compositor.setAnchor(newAnchor);
+        
         // Compose the region using the parametric compositor
         ComposedRegion region = compositor.compose(chunkStore, minY);
         

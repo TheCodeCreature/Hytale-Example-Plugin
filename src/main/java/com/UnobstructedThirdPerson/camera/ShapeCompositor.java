@@ -19,7 +19,7 @@ public class ShapeCompositor {
     
     private static final Logger LOGGER = Logger.getLogger("ShapeCompositor");
     
-    private final Vector3i anchor;
+    private Vector3i anchor;
     private final Map<String, ShapeOperation> operations;
     private final List<String> operationOrder;
     
@@ -27,6 +27,19 @@ public class ShapeCompositor {
         this.anchor = anchor;
         this.operations = new LinkedHashMap<>();
         this.operationOrder = new ArrayList<>();
+    }
+    
+    /**
+     * Update the anchor position for shape evaluation.
+     * This should be called before compose() if the anchor has changed.
+     */
+    public void setAnchor(@Nonnull Vector3i newAnchor) {
+        this.anchor = newAnchor;
+    }
+    
+    @Nonnull
+    public Vector3i getAnchor() {
+        return anchor;
     }
     
     /**
