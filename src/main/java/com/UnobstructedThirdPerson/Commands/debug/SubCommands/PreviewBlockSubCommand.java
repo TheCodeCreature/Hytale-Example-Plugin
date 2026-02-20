@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.Commands.debug;
+package com.UnobstructedThirdPerson.Commands.debug.SubCommands;
 
 import com.UnobstructedThirdPerson.camera.BlockSnapshot;
 import com.UnobstructedThirdPerson.camera.TransparentBlockUtils;
@@ -36,13 +36,13 @@ import java.util.logging.Logger;
  * Usage: /PreviewBlock
  * The effect is client-side only and auto-restores after 5 seconds.
  */
-public class PreviewBlockCommand extends AbstractPlayerCommand {
+public class PreviewBlockSubCommand extends AbstractPlayerCommand {
 
-    private static final Logger LOGGER = Logger.getLogger(PreviewBlockCommand.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(PreviewBlockSubCommand.class.getName());
     private static final double MAX_DISTANCE = 8.0;
     private static final long RESTORE_DELAY_MS = 5000;
 
-    public PreviewBlockCommand() {
+    public PreviewBlockSubCommand() {
         super("PreviewBlock", "Turns the targeted block into a transparent preview ghost (client-side, 5s)");
     }
 
@@ -72,12 +72,18 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
             return;
         }
 
-        // Use the hardcoded Debug_Cube block type (ID 2) — always available
-        int debugCubeId = BlockType.DEBUG_CUBE_ID;
-        BlockType debugCubeType = BlockType.DEBUG_CUBE;
+        // Use custom Debug_Block_Empty asset for preview
+        String customBlockId = "Debug_Block_Empty";
+        BlockType customBlockType = BlockType.getAssetMap().getAsset(customBlockId);
+        if (customBlockType == null) {
+            playerRef.sendMessage(Message.raw("§cCustom block Debug_Block_Empty not found!"));
+            LOGGER.severe("[PreviewBlock] Debug_Block_Empty asset not loaded");
+            return;
+        }
+        int customBlockNumericId = BlockType.getAssetMap().getIndex(customBlockId);
 
-        // Save the original Debug_Cube packet so we can restore it later
-        com.hypixel.hytale.protocol.BlockType originalDebugPacket = debugCubeType.toPacket();
+        // Save the original custom block packet so we can restore it later
+        com.hypixel.hytale.protocol.BlockType originalCustomPacket = customBlockType.toPacket();
 
         // Clone the TARGET block's full packet (preserves drawType, model, hitbox, etc.)
         com.hypixel.hytale.protocol.BlockType basePacket = baseType.toPacket();
@@ -116,7 +122,7 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
         update.type = UpdateType.AddOrUpdate;
         update.maxId = BlockType.getAssetMap().getNextIndex();
         Map<Integer, com.hypixel.hytale.protocol.BlockType> blockTypes = new HashMap<>();
-        blockTypes.put(debugCubeId, modifiedPacket);
+        blockTypes.put(customBlockNumericId, modifiedPacket);
         update.blockTypes = blockTypes;
         update.updateBlockTextures = true;
         update.updateModelTextures = true;
@@ -124,31 +130,31 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
         update.updateMapGeometry = true;
         playerRef.getPacketHandler().writeNoCache(update);
 
-        // Step 2: Set the target block to Debug_Cube (renders as a solid cube)
+        // Step 2: Set the target block to custom Debug_Block_Empty
         playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
             target.x, target.y, target.z,
-            debugCubeId, snapshot.filler(), snapshot.rotation()
+            customBlockNumericId, snapshot.filler(), snapshot.rotation()
         ));
 
         String blockName = baseType.getId();
         LOGGER.info("[PreviewBlock] Player " + playerRef.getUsername() +
-            " previewing " + blockName + " (id=" + baseId + ") as transparent Debug_Cube at " +
+            " previewing " + blockName + " (id=" + baseId + ") as transparent Debug_Block_Empty at " +
             target.x + "," + target.y + "," + target.z);
         playerRef.sendMessage(Message.raw(
             "§aTransparent preview at §f" + target.x + ", " + target.y + ", " + target.z +
-            " §a(§f" + blockName + " §a-> §fDebug_Cube + Water shader§a). Restoring in 5s..."
+            " §a(§f" + blockName + " §a-> §fDebug_Block_Empty§a). Restoring in 5s..."
         ));
 
         // Schedule restoration: restore block type definition and the block itself
         HytaleServer.SCHEDULED_EXECUTOR.schedule(() -> {
             try {
                 world.execute(() -> {
-                    // Restore original Debug_Cube type definition
+                    // Restore original custom block type definition
                     UpdateBlockTypes restore = new UpdateBlockTypes();
                     restore.type = UpdateType.AddOrUpdate;
                     restore.maxId = BlockType.getAssetMap().getNextIndex();
                     Map<Integer, com.hypixel.hytale.protocol.BlockType> restoreTypes = new HashMap<>();
-                    restoreTypes.put(debugCubeId, originalDebugPacket);
+                    restoreTypes.put(customBlockNumericId, originalCustomPacket);
                     restore.blockTypes = restoreTypes;
                     restore.updateBlockTextures = true;
                     restore.updateModelTextures = true;

@@ -3,7 +3,8 @@ package com;
 import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands.StartCommand;
 import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.UnobstructedCameraCommand;
 import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
-import com.UnobstructedThirdPerson.Commands.debug.PreviewBlockCommand;
+import com.UnobstructedThirdPerson.Commands.debug.DebugCommand;
+import com.UnobstructedThirdPerson.Commands.debug.SubCommands.PreviewBlockSubCommand;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
@@ -28,7 +29,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
     @Override
     protected void setup(){
         this.getCommandRegistry().registerCommand(new UnobstructedCameraCommand());
-        this.getCommandRegistry().registerCommand(new PreviewBlockCommand());
+        this.getCommandRegistry().registerCommand(new DebugCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, UnobstructedThirdPersonPlugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, UnobstructedThirdPersonPlugin::onPlayerDisconnect);
     }
