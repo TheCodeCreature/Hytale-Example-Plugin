@@ -20,6 +20,7 @@ public class ShapeCompositor {
     private static final Logger LOGGER = Logger.getLogger("ShapeCompositor");
     
     private Vector3i anchor;
+    private double yawRotation = 0.0; // Player's yaw rotation in radians
     private final Map<String, ShapeOperation> operations;
     private final List<String> operationOrder;
     
@@ -40,6 +41,23 @@ public class ShapeCompositor {
     @Nonnull
     public Vector3i getAnchor() {
         return anchor;
+    }
+    
+    /**
+     * Set the rotation to apply to all shapes (typically player's yaw).
+     * This allows shapes to rotate with the player's view direction.
+     * 
+     * @param yawRadians Yaw rotation in radians (0 = facing +Z, π/2 = facing +X)
+     */
+    public void setRotation(double yawRadians) {
+        this.yawRotation = yawRadians;
+    }
+    
+    /**
+     * Get the current rotation in radians.
+     */
+    public double getRotation() {
+        return yawRotation;
     }
     
     /**
@@ -238,17 +256,32 @@ public class ShapeCompositor {
                 excludedPositions, operationRegions, timeline);
     }
     
+    /**
+     * Apply the current rotation to a shape if rotation is set.
+     * Returns the original shape if no rotation is needed.
+     */
+    private Shape applyRotation(Shape shape) {
+        if (shape == null || yawRotation == 0.0) {
+            return shape;
+        }
+        // Apply yaw rotation around Y axis
+        return new TransformedShape(shape, 0, 0, 0, yawRotation, 0, 0);
+    }
+    
     private void executeDefine(ShapeOperation operation, ChunkStore chunkStore,
                                Map<Long, BlockSnapshot> originalBlocks,
                                Map<Long, BlockFillType> blockFills,
                                Map<Long, String> blockOwners,
                                Set<Long> operationPositions,
                                Set<Long> excludedPositions) {
-        Shape shape = operation.getShape();
-        if (shape == null) {
+        Shape baseShape = operation.getShape();
+        if (baseShape == null) {
             LOGGER.warning("DEFINE operation '" + operation.getId() + "' has no shape");
             return;
         }
+        
+        // Apply rotation to the shape
+        Shape shape = applyRotation(baseShape);
         
         BlockFillType fillType = operation.getFillType();
         
@@ -282,13 +315,16 @@ public class ShapeCompositor {
                                   Set<Long> operationPositions,
                                   Map<String, Set<Long>> operationRegions,
                                   Set<Long> excludedPositions) {
-        Shape shape = operation.getShape();
+        Shape baseShape = operation.getShape();
         String referenceId = operation.getReferenceId();
         
-        if (shape == null) {
+        if (baseShape == null) {
             LOGGER.warning("INTERSECT operation '" + operation.getId() + "' has no shape");
             return;
         }
+        
+        // Apply rotation to the shape
+        Shape shape = applyRotation(baseShape);
         
         // Get reference region
         Set<Long> referencePositions = referenceId != null ? 
@@ -404,12 +440,15 @@ public class ShapeCompositor {
     
     private void executeExclude(ShapeOperation operation, ChunkStore chunkStore,
                                Set<Long> excludedPositions, Set<Long> operationPositions) {
-        Shape shape = operation.getShape();
+        Shape baseShape = operation.getShape();
         
-        if (shape == null) {
+        if (baseShape == null) {
             LOGGER.warning("EXCLUDE operation '" + operation.getId() + "' has no shape");
             return;
         }
+        
+        // Apply rotation to the shape
+        Shape shape = applyRotation(baseShape);
         
         shape.forEachBlock(anchor.x, anchor.y, anchor.z, (x, y, z) -> {
             long pos = BlockUtil.packUnchecked(x, y, z);

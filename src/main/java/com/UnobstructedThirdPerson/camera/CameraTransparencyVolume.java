@@ -195,13 +195,21 @@ public class CameraTransparencyVolume {
                         return;
                     }
 
-                    // Vector3i origin = CameraPositionUtil.getCameraOriginBlock(ref, store);
+                    // Get player position
                     Vector3d playerPos = playerRef.getTransform().getPosition();
                     Vector3i origin = new Vector3i(
                             (int) Math.floor(playerPos.x),
                             (int) Math.floor(playerPos.y),
                             (int) Math.floor(playerPos.z)
                     );
+                    
+                    // Get player yaw rotation (horizontal rotation)
+                    // Transform.getRotation().y returns yaw in radians
+                    double yawRadians = playerRef.getTransform().getRotation().y;
+                    
+                    // Set rotation on compositor so shapes rotate with player view
+                    compositor.setRotation(yawRadians);
+                    
                     update(origin);
                 });
             } catch (Exception e) {
