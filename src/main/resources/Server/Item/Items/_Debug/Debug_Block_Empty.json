@@ -1,0 +1,30 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Debug_Block_Empty.name"
+  },
+  "Icon": "Icons/ItemsGenerated/Editor_Empty.png",
+  "Categories": [],
+  "Quality": "Developer",
+  "PlayerAnimationsId": "Block",
+  "Tags": {
+    "Type": [
+      "Debug"
+    ]
+  },
+  "BlockType": {
+    "Material": "Solid",
+    "DrawType": "Cube",
+    "Textures": [
+      {
+        "All": "BlockTextures/Clay_Smooth_White.png"
+      }
+    ],
+    "ParticleColor": "#0000f4",
+    "RequiresAlphaBlending": true,
+    "Opacity": "Solid",
+    "Tint": [
+      "#7979f0"
+    ]
+  },
+  "ClipsGeometry": false
+}
