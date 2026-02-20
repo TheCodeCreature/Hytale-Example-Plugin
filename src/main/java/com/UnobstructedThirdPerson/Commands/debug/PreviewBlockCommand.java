@@ -5,8 +5,9 @@ import com.UnobstructedThirdPerson.camera.TransparentBlockUtils;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3i;
-import com.hypixel.hytale.protocol.Opacity;
-import com.hypixel.hytale.protocol.ShaderType;
+import com.hypixel.hytale.protocol.BlockTextures;
+import com.hypixel.hytale.protocol.DrawType;
+import com.hypixel.hytale.protocol.ModelTexture;
 import com.hypixel.hytale.protocol.UpdateType;
 import com.hypixel.hytale.protocol.packets.assets.UpdateBlockTypes;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
@@ -78,19 +79,40 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
         // Save the original Debug_Cube packet so we can restore it later
         com.hypixel.hytale.protocol.BlockType originalDebugPacket = debugCubeType.toPacket();
 
-        // Clone Debug_Cube and override with the original block's textures
+        // Clone the TARGET block's full packet (preserves drawType, model, hitbox, etc.)
         com.hypixel.hytale.protocol.BlockType basePacket = baseType.toPacket();
-        com.hypixel.hytale.protocol.BlockType modifiedPacket = new com.hypixel.hytale.protocol.BlockType(originalDebugPacket);
+        com.hypixel.hytale.protocol.BlockType modifiedPacket = new com.hypixel.hytale.protocol.BlockType(basePacket);
 
-        // Copy the original block's cube textures so it looks like the target block
-        modifiedPacket.cubeTextures = basePacket.cubeTextures;
-        // Match Water_Source fluid rendering: Solid opacity + alpha blending + Water shader
+        // Override textures to Editor_Empty based on drawType
+        String editorEmptyTexture = "BlockTextures/Editor_Empty.png";
+        DrawType drawType = basePacket.drawType;
+
+        if (drawType == DrawType.Cube || drawType == DrawType.GizmoCube) {
+            // For cube blocks, set all 6 cube face textures to Editor_Empty
+            BlockTextures emptyTextures = new BlockTextures(
+                editorEmptyTexture, // top
+                editorEmptyTexture, // bottom
+                editorEmptyTexture, // front
+                editorEmptyTexture, // back
+                editorEmptyTexture, // left
+                editorEmptyTexture, // right
+                1.0f // weight
+            );
+            modifiedPacket.cubeTextures = new BlockTextures[] { emptyTextures };
+            LOGGER.info("[PreviewBlock] Using Cube drawType with Editor_Empty textures");
+        } else if (drawType == DrawType.Model || drawType == DrawType.CubeWithModel) {
+            // For model blocks, set model texture to Editor_Empty
+            ModelTexture emptyModelTexture = new ModelTexture(editorEmptyTexture, 1.0f);
+            modifiedPacket.modelTexture = new ModelTexture[] { emptyModelTexture };
+            LOGGER.info("[PreviewBlock] Using Model drawType with Editor_Empty texture");
+        }
+
+        // Preserve the original drawType so geometry renders correctly
+        modifiedPacket.drawType = drawType;
         modifiedPacket.requiresAlphaBlending = true;
-        modifiedPacket.opacity = Opacity.Solid;
-        modifiedPacket.shaderEffect = new ShaderType[] { ShaderType.Water };
 
-        LOGGER.info("[PreviewBlock] Using Debug_Cube + Water shader + alpha blending" +
-            ", textures from " + baseType.getId());
+        LOGGER.info("[PreviewBlock] Preview block with drawType=" + drawType +
+            ", original block=" + baseType.getId());
 
         // Step 1: Send modified Debug_Cube type definition to the client
         UpdateBlockTypes update = new UpdateBlockTypes();
@@ -100,8 +122,8 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
         blockTypes.put(debugCubeId, modifiedPacket);
         update.blockTypes = blockTypes;
         update.updateBlockTextures = true;
-        update.updateModelTextures = false;
-        update.updateModels = false;
+        update.updateModelTextures = true;
+        update.updateModels = true;
         update.updateMapGeometry = true;
         playerRef.getPacketHandler().writeNoCache(update);
 
@@ -132,8 +154,8 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
                     restoreTypes.put(debugCubeId, originalDebugPacket);
                     restore.blockTypes = restoreTypes;
                     restore.updateBlockTextures = true;
-                    restore.updateModelTextures = false;
-                    restore.updateModels = false;
+                    restore.updateModelTextures = true;
+                    restore.updateModels = true;
                     restore.updateMapGeometry = true;
                     playerRef.getPacketHandler().writeNoCache(restore);
 
