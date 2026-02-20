@@ -1,11 +1,13 @@
 package com.UnobstructedThirdPerson.Commands.debug;
 
+import com.UnobstructedThirdPerson.camera.BlockSnapshot;
 import com.UnobstructedThirdPerson.camera.TransparentBlockUtils;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3i;
-import com.hypixel.hytale.protocol.Opacity;
-import com.hypixel.hytale.protocol.Tint;
+import com.hypixel.hytale.protocol.BlockTextures;
+import com.hypixel.hytale.protocol.DrawType;
+import com.hypixel.hytale.protocol.ModelTexture;
 import com.hypixel.hytale.protocol.UpdateType;
 import com.hypixel.hytale.protocol.packets.assets.UpdateBlockTypes;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
@@ -19,7 +21,6 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.TargetUtil;
-import com.UnobstructedThirdPerson.camera.BlockSnapshot;
 import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
@@ -71,74 +72,100 @@ public class PreviewBlockCommand extends AbstractPlayerCommand {
             return;
         }
 
-        // Clone the protocol packet — this preserves all original textures, model, draw type, etc.
-        com.hypixel.hytale.protocol.BlockType packetBlock = new com.hypixel.hytale.protocol.BlockType(baseType.toPacket());
+        // Use the hardcoded Debug_Cube block type (ID 2) — always available
+        int debugCubeId = BlockType.DEBUG_CUBE_ID;
+        BlockType debugCubeType = BlockType.DEBUG_CUBE;
 
-        // Only change opacity + alpha to make it look like a preview ghost
-        packetBlock.opacity = Opacity.Transparent;
-        packetBlock.requiresAlphaBlending = true;
+        // Save the original Debug_Cube packet so we can restore it later
+        com.hypixel.hytale.protocol.BlockType originalDebugPacket = debugCubeType.toPacket();
 
-        // Apply a semi-transparent white tint on all faces to control alpha level
-        // ARGB format: 0xAARRGGBB — 0x80 = ~50% alpha, FFFFFF = white (no color shift)
-        int semiTransparentWhite = 0x80FFFFFF;
-        packetBlock.tint = new Tint();
-        packetBlock.tint.top = semiTransparentWhite;
-        packetBlock.tint.bottom = semiTransparentWhite;
-        packetBlock.tint.front = semiTransparentWhite;
-        packetBlock.tint.back = semiTransparentWhite;
-        packetBlock.tint.left = semiTransparentWhite;
-        packetBlock.tint.right = semiTransparentWhite;
+        // Clone the TARGET block's full packet (preserves drawType, model, hitbox, etc.)
+        com.hypixel.hytale.protocol.BlockType basePacket = baseType.toPacket();
+        com.hypixel.hytale.protocol.BlockType modifiedPacket = new com.hypixel.hytale.protocol.BlockType(basePacket);
 
-        // Strip fields that could interfere with game logic on the fake type
-        packetBlock.states = null;
-        packetBlock.tagIndexes = null;
-        packetBlock.name = null;
-        packetBlock.item = null;
+        // Override textures to Editor_Empty based on drawType
+        String editorEmptyTexture = "BlockTextures/Editor_Empty.png";
+        DrawType drawType = basePacket.drawType;
 
-        // Allocate a unique fake block ID
-        int fakeId = TransparentBlockUtils.allocateFakeId();
+        // For cube blocks, set all 6 cube face textures to Editor_Empty
+        BlockTextures emptyTextures = new BlockTextures(
+            editorEmptyTexture, // top
+            editorEmptyTexture, // bottom
+            editorEmptyTexture, // front
+            editorEmptyTexture, // back
+            editorEmptyTexture, // left
+            editorEmptyTexture, // right
+            1.0f // weight
+        );
+        modifiedPacket.cubeTextures = new BlockTextures[] { emptyTextures };
+        LOGGER.info("[PreviewBlock] Using Cube drawType with Editor_Empty textures");
+        // For model blocks, set model texture to Editor_Empty
+        ModelTexture emptyModelTexture = new ModelTexture(editorEmptyTexture, 1.0f);
+        modifiedPacket.modelTexture = new ModelTexture[] { emptyModelTexture };
+        LOGGER.info("[PreviewBlock] Using Model drawType with Editor_Empty texture");
 
-        // Send the fake block type definition to the client
+        // Preserve the original drawType so geometry renders correctly
+        modifiedPacket.drawType = drawType;
+        modifiedPacket.requiresAlphaBlending = true;
+
+        LOGGER.info("[PreviewBlock] Preview block with drawType=" + drawType +
+            ", original block=" + baseType.getId());
+
+        // Step 1: Send modified Debug_Cube type definition to the client
         UpdateBlockTypes update = new UpdateBlockTypes();
         update.type = UpdateType.AddOrUpdate;
-        update.maxId = Math.max(BlockType.getAssetMap().getNextIndex(), fakeId + 1);
+        update.maxId = BlockType.getAssetMap().getNextIndex();
         Map<Integer, com.hypixel.hytale.protocol.BlockType> blockTypes = new HashMap<>();
-        blockTypes.put(fakeId, packetBlock);
+        blockTypes.put(debugCubeId, modifiedPacket);
         update.blockTypes = blockTypes;
         update.updateBlockTextures = true;
-        update.updateModelTextures = false;
-        update.updateModels = false;
-        update.updateMapGeometry = false;
+        update.updateModelTextures = true;
+        update.updateModels = true;
+        update.updateMapGeometry = true;
         playerRef.getPacketHandler().writeNoCache(update);
 
-        // Replace the block at the target position with the fake transparent variant (client-side only)
+        // Step 2: Set the target block to Debug_Cube (renders as a solid cube)
         playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
             target.x, target.y, target.z,
-            fakeId, snapshot.filler(), snapshot.rotation()
+            debugCubeId, snapshot.filler(), snapshot.rotation()
         ));
 
         String blockName = baseType.getId();
-        playerRef.sendMessage(Message.raw(
-            "§aPreview block placed at §f" + target.x + ", " + target.y + ", " + target.z +
-            " §a(§f" + blockName + "§a, fakeId=" + fakeId + "). Restoring in 5s..."
-        ));
         LOGGER.info("[PreviewBlock] Player " + playerRef.getUsername() +
-            " previewing " + blockName + " (id=" + baseId + ", fakeId=" + fakeId +
-            ") at " + target.x + "," + target.y + "," + target.z);
+            " previewing " + blockName + " (id=" + baseId + ") as transparent Debug_Cube at " +
+            target.x + "," + target.y + "," + target.z);
+        playerRef.sendMessage(Message.raw(
+            "§aTransparent preview at §f" + target.x + ", " + target.y + ", " + target.z +
+            " §a(§f" + blockName + " §a-> §fDebug_Cube + Water shader§a). Restoring in 5s..."
+        ));
 
-        // Schedule restoration of the original block after the delay
+        // Schedule restoration: restore block type definition and the block itself
         HytaleServer.SCHEDULED_EXECUTOR.schedule(() -> {
             try {
                 world.execute(() -> {
+                    // Restore original Debug_Cube type definition
+                    UpdateBlockTypes restore = new UpdateBlockTypes();
+                    restore.type = UpdateType.AddOrUpdate;
+                    restore.maxId = BlockType.getAssetMap().getNextIndex();
+                    Map<Integer, com.hypixel.hytale.protocol.BlockType> restoreTypes = new HashMap<>();
+                    restoreTypes.put(debugCubeId, originalDebugPacket);
+                    restore.blockTypes = restoreTypes;
+                    restore.updateBlockTextures = true;
+                    restore.updateModelTextures = true;
+                    restore.updateModels = true;
+                    restore.updateMapGeometry = true;
+                    playerRef.getPacketHandler().writeNoCache(restore);
+
+                    // Restore original block at the target position
                     playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
                         snapshot.x(), snapshot.y(), snapshot.z(),
                         snapshot.blockId(), snapshot.filler(), snapshot.rotation()
                     ));
-                    LOGGER.info("[PreviewBlock] Restored block at " +
+                    LOGGER.info("[PreviewBlock] Restored block and Debug_Cube type at " +
                         snapshot.x() + "," + snapshot.y() + "," + snapshot.z());
                 });
             } catch (Exception e) {
-                LOGGER.warning("[PreviewBlock] Failed to restore block: " + e.getMessage());
+                LOGGER.warning("[PreviewBlock] Failed to restore: " + e.getMessage());
             }
         }, RESTORE_DELAY_MS, TimeUnit.MILLISECONDS);
     }

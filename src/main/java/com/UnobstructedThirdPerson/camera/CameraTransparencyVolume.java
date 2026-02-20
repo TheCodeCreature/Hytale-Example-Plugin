@@ -34,6 +34,10 @@ public class CameraTransparencyVolume {
 
     private static final Map<UUID, CameraTransparencyVolume> INSTANCES = new ConcurrentHashMap<>();
 
+    // ===== Ignored block filtering =====
+    private static final Set<String> IGNORED_GROUPS = ConcurrentHashMap.newKeySet();
+    private static final Set<String> IGNORED_BLOCK_IDS = ConcurrentHashMap.newKeySet();
+
     private final PlayerRef playerRef;
     private final World world;
     private final Shape[] shapes;
@@ -92,6 +96,53 @@ public class CameraTransparencyVolume {
             instance.shutdown();
             LOGGER.info("[CameraTransparency] Removed volume for player: " + playerId);
         }
+    }
+
+    // ===== Ignored block helpers =====
+
+    private static boolean shouldIgnoreBlock(@Nonnull BlockType type) {
+        // Climbable (ladders, vines, etc.)
+        if (type.getMovementSettings().isClimbable()) return true;
+        // Crafting stations / workbenches
+        if (type.getBench() != null) return true;
+        // General interactable blocks
+        if (type.getFlags().isUsable) return true;
+        // Seats
+        if (type.getSeats() != null) return true;
+        // Beds
+        if (type.getBeds() != null) return true;
+        // Group-based exclusion
+        String group = type.getGroup();
+        if (group != null && IGNORED_GROUPS.contains(group)) return true;
+        // Specific block ID fallback
+        if (IGNORED_BLOCK_IDS.contains(type.getId())) return true;
+        return false;
+    }
+
+    public static void addIgnoredGroup(@Nonnull String group) {
+        IGNORED_GROUPS.add(group);
+    }
+
+    public static void removeIgnoredGroup(@Nonnull String group) {
+        IGNORED_GROUPS.remove(group);
+    }
+
+    @Nonnull
+    public static Set<String> getIgnoredGroups() {
+        return Collections.unmodifiableSet(IGNORED_GROUPS);
+    }
+
+    public static void addIgnoredBlockId(@Nonnull String blockTypeId) {
+        IGNORED_BLOCK_IDS.add(blockTypeId);
+    }
+
+    public static void removeIgnoredBlockId(@Nonnull String blockTypeId) {
+        IGNORED_BLOCK_IDS.remove(blockTypeId);
+    }
+
+    @Nonnull
+    public static Set<String> getIgnoredBlockIds() {
+        return Collections.unmodifiableSet(IGNORED_BLOCK_IDS);
     }
 
     // ===== Scheduled update loop =====
@@ -161,7 +212,7 @@ public class CameraTransparencyVolume {
                 BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
                 if (snapshot != null && snapshot.blockId() != 0) {
                     BlockType baseType = BlockType.getAssetMap().getAsset(snapshot.blockId());
-                    if (baseType != null) {
+                    if (baseType != null && !shouldIgnoreBlock(baseType)) {
                         newPositions.add(pos);
                         newSnapshots.put(pos, snapshot);
                     }
