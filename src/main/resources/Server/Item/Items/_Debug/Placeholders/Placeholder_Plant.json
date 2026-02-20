@@ -1,0 +1,19 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Placeholder_Plant.name"
+  },
+  "Icon": "Icons/ItemsGenerated/Editor_Empty.png",
+  "Quality": "Developer",
+  "BlockType": {
+    "Material": "Solid",
+    "DrawType": "Model",
+    "HitboxType": "Plant_Medium",
+    "Textures": [
+      {
+        "All": "BlockTextures/Editor_Empty.png"
+      }
+    ],
+    "RequiresAlphaBlending": true,
+    "Opacity": "Solid"
+  }
+}

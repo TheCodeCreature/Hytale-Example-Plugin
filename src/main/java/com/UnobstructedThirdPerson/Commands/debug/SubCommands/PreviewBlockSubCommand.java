@@ -1,5 +1,6 @@
 package com.UnobstructedThirdPerson.Commands.debug.SubCommands;
 
+import com.UnobstructedThirdPerson.Commands.debug.PlaceholderBlockManager;
 import com.UnobstructedThirdPerson.camera.BlockSnapshot;
 import com.UnobstructedThirdPerson.camera.TransparentBlockUtils;
 import com.hypixel.hytale.component.Ref;
@@ -72,18 +73,20 @@ public class PreviewBlockSubCommand extends AbstractPlayerCommand {
             return;
         }
 
-        // Use custom Debug_Block_Empty asset for preview
-        String customBlockId = "Debug_Block_Empty";
-        BlockType customBlockType = BlockType.getAssetMap().getAsset(customBlockId);
-        if (customBlockType == null) {
-            playerRef.sendMessage(Message.raw("§cCustom block Debug_Block_Empty not found!"));
-            LOGGER.severe("[PreviewBlock] Debug_Block_Empty asset not loaded");
+        // Get the appropriate placeholder based on the target block's hitbox type
+        String hitboxType = baseType.getHitboxType();
+        String placeholderId = PlaceholderBlockManager.getPlaceholderForHitbox(hitboxType);
+        
+        BlockType placeholderType = BlockType.getAssetMap().getAsset(placeholderId);
+        if (placeholderType == null) {
+            playerRef.sendMessage(Message.raw("§cPlaceholder block " + placeholderId + " not found!"));
+            LOGGER.severe("[PreviewBlock] Placeholder " + placeholderId + " not loaded for hitbox " + hitboxType);
             return;
         }
-        int customBlockNumericId = BlockType.getAssetMap().getIndex(customBlockId);
+        int placeholderNumericId = BlockType.getAssetMap().getIndex(placeholderId);
 
-        // Save the original custom block packet so we can restore it later
-        com.hypixel.hytale.protocol.BlockType originalCustomPacket = customBlockType.toPacket();
+        // Save the original placeholder packet so we can restore it later
+        com.hypixel.hytale.protocol.BlockType originalPlaceholderPacket = placeholderType.toPacket();
 
         // Clone the TARGET block's full packet (preserves drawType, model, hitbox, etc.)
         com.hypixel.hytale.protocol.BlockType basePacket = baseType.toPacket();
@@ -115,14 +118,14 @@ public class PreviewBlockSubCommand extends AbstractPlayerCommand {
         modifiedPacket.requiresAlphaBlending = true;
 
         LOGGER.info("[PreviewBlock] Preview block with drawType=" + drawType +
-            ", original block=" + baseType.getId());
+            ", original block=" + baseType.getId() + ", hitbox=" + hitboxType + ", placeholder=" + placeholderId);
 
         // Step 1: Send modified Debug_Cube type definition to the client
         UpdateBlockTypes update = new UpdateBlockTypes();
         update.type = UpdateType.AddOrUpdate;
         update.maxId = BlockType.getAssetMap().getNextIndex();
         Map<Integer, com.hypixel.hytale.protocol.BlockType> blockTypes = new HashMap<>();
-        blockTypes.put(customBlockNumericId, modifiedPacket);
+        blockTypes.put(placeholderNumericId, modifiedPacket);
         update.blockTypes = blockTypes;
         update.updateBlockTextures = true;
         update.updateModelTextures = true;
@@ -130,31 +133,31 @@ public class PreviewBlockSubCommand extends AbstractPlayerCommand {
         update.updateMapGeometry = true;
         playerRef.getPacketHandler().writeNoCache(update);
 
-        // Step 2: Set the target block to custom Debug_Block_Empty
+        // Step 2: Set the target block to the selected placeholder
         playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
             target.x, target.y, target.z,
-            customBlockNumericId, snapshot.filler(), snapshot.rotation()
+            placeholderNumericId, snapshot.filler(), snapshot.rotation()
         ));
 
         String blockName = baseType.getId();
         LOGGER.info("[PreviewBlock] Player " + playerRef.getUsername() +
-            " previewing " + blockName + " (id=" + baseId + ") as transparent Debug_Block_Empty at " +
+            " previewing " + blockName + " (id=" + baseId + ") as transparent " + placeholderId + " at " +
             target.x + "," + target.y + "," + target.z);
         playerRef.sendMessage(Message.raw(
             "§aTransparent preview at §f" + target.x + ", " + target.y + ", " + target.z +
-            " §a(§f" + blockName + " §a-> §fDebug_Block_Empty§a). Restoring in 5s..."
+            " §a(§f" + blockName + " §a-> §f" + placeholderId + "§a). Restoring in 5s..."
         ));
 
         // Schedule restoration: restore block type definition and the block itself
         HytaleServer.SCHEDULED_EXECUTOR.schedule(() -> {
             try {
                 world.execute(() -> {
-                    // Restore original custom block type definition
+                    // Restore original placeholder block type definition
                     UpdateBlockTypes restore = new UpdateBlockTypes();
                     restore.type = UpdateType.AddOrUpdate;
                     restore.maxId = BlockType.getAssetMap().getNextIndex();
                     Map<Integer, com.hypixel.hytale.protocol.BlockType> restoreTypes = new HashMap<>();
-                    restoreTypes.put(customBlockNumericId, originalCustomPacket);
+                    restoreTypes.put(placeholderNumericId, originalPlaceholderPacket);
                     restore.blockTypes = restoreTypes;
                     restore.updateBlockTextures = true;
                     restore.updateModelTextures = true;
@@ -167,7 +170,7 @@ public class PreviewBlockSubCommand extends AbstractPlayerCommand {
                         snapshot.x(), snapshot.y(), snapshot.z(),
                         snapshot.blockId(), snapshot.filler(), snapshot.rotation()
                     ));
-                    LOGGER.info("[PreviewBlock] Restored block and Debug_Cube type at " +
+                    LOGGER.info("[PreviewBlock] Restored block and placeholder type at " +
                         snapshot.x() + "," + snapshot.y() + "," + snapshot.z());
                 });
             } catch (Exception e) {
