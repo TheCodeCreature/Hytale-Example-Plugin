@@ -241,7 +241,7 @@ public class CameraTransparencyVolume {
         // Compose the region using the parametric compositor
         ComposedRegion region = compositor.compose(chunkStore);
         
-        // Filter out ignored blocks
+        // Filter out ignored blocks and prepare transparent placeholders
         Map<Long, BlockSnapshot> newSnapshots = new HashMap<>();
         Set<Long> newPositions = new HashSet<>();
         Map<Long, Integer> newBlockIds = new HashMap<>();
@@ -267,7 +267,26 @@ public class CameraTransparencyVolume {
             // Get computed block ID if available
             Integer blockId = region.getComputedBlockIds().get(pos);
             if (blockId != null) {
-                newBlockIds.put(pos, blockId);
+                // Check if this is a placeholder block that needs transparency preparation
+                BlockType replacementType = BlockType.getAssetMap().getAsset(blockId);
+                if (replacementType != null && replacementType.getId().startsWith("Placeholder_") && baseType != null) {
+                    // Prepare transparent placeholder using the utility
+                    String hitboxType = baseType.getHitboxType();
+                    if (hitboxType != null) {
+                        Integer transparentPlaceholderId = PlaceholderTransparencyUtil.prepareTransparentPlaceholder(
+                                playerRef, snapshot.blockId(), hitboxType);
+                        
+                        if (transparentPlaceholderId != null) {
+                            newBlockIds.put(pos, transparentPlaceholderId);
+                        } else {
+                            newBlockIds.put(pos, blockId);
+                        }
+                    } else {
+                        newBlockIds.put(pos, blockId);
+                    }
+                } else {
+                    newBlockIds.put(pos, blockId);
+                }
             }
         }
 
@@ -278,17 +297,30 @@ public class CameraTransparencyVolume {
         // Compute diff: blocks to remove (left volume)
         Set<Long> toRemove = new HashSet<>(currentPositions);
         toRemove.removeAll(newPositions);
+        
+        // Compute blocks that stayed but may have changed block IDs
+        Set<Long> toUpdate = new HashSet<>();
+        for (Long pos : newPositions) {
+            if (currentPositions.contains(pos)) {
+                // Block stayed in volume - check if block ID changed
+                Integer oldBlockId = activeBlockIds.get(pos);
+                Integer newBlockId = newBlockIds.get(pos);
+                if (!Objects.equals(oldBlockId, newBlockId)) {
+                    toUpdate.add(pos);
+                }
+            }
+        }
 
-//        LOGGER.info("[CameraTransparency] Diff: " + newPositions.size() + " total, +" + toAdd.size() + " add, -" + toRemove.size() + " remove");
+//        LOGGER.info("[CameraTransparency] Diff: " + newPositions.size() + " total, +" + toAdd.size() + " add, -" + toRemove.size() + " remove, ~" + toUpdate.size() + " update");
 
         // Apply changes immediately
-        applyDiff(toAdd, toRemove, newSnapshots, newBlockIds);
+        applyDiff(toAdd, toRemove, toUpdate, newSnapshots, newBlockIds);
 
         // Update current state
         currentPositions.clear();
         currentPositions.addAll(newPositions);
 
-        // Update active blocks map: remove departed, add new
+        // Update active blocks map: remove departed, add new, update changed
         for (Long pos : toRemove) {
             activeBlocks.remove(pos);
             activeBlockIds.remove(pos);
@@ -303,9 +335,15 @@ public class CameraTransparencyVolume {
                 }
             }
         }
+        for (Long pos : toUpdate) {
+            Integer blockId = newBlockIds.get(pos);
+            if (blockId != null) {
+                activeBlockIds.put(pos, blockId);
+            }
+        }
     }
 
-    private void applyDiff(@Nonnull Set<Long> toAdd, @Nonnull Set<Long> toRemove,
+    private void applyDiff(@Nonnull Set<Long> toAdd, @Nonnull Set<Long> toRemove, @Nonnull Set<Long> toUpdate,
                            @Nonnull Map<Long, BlockSnapshot> newSnapshots,
                            @Nonnull Map<Long, Integer> newBlockIds) {
         // Restore blocks that left the volume
@@ -319,11 +357,25 @@ public class CameraTransparencyVolume {
             }
         }
 
-        // Replace blocks in volume with computed block IDs from compositor
+        // Replace blocks entering volume with computed block IDs from compositor
         for (Long pos : toAdd) {
             BlockSnapshot snapshot = newSnapshots.get(pos);
             if (snapshot != null) {
                 // Use computed block ID if available, otherwise default to air (0)
+                Integer blockId = newBlockIds.get(pos);
+                int replacementId = blockId != null ? blockId : 0;
+                
+                playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
+                    snapshot.x(), snapshot.y(), snapshot.z(),
+                    replacementId, (short) 0, (byte) 0
+                ));
+            }
+        }
+        
+        // Update blocks that stayed in volume but changed block IDs
+        for (Long pos : toUpdate) {
+            BlockSnapshot snapshot = activeBlocks.get(pos);
+            if (snapshot != null) {
                 Integer blockId = newBlockIds.get(pos);
                 int replacementId = blockId != null ? blockId : 0;
                 
@@ -348,9 +400,13 @@ public class CameraTransparencyVolume {
                 original.blockId(), original.filler(), original.rotation()
             ));
         }
+        
+        // Restore all modified placeholder block type definitions
+        PlaceholderTransparencyUtil.restoreAllPlaceholders(playerRef);
 
         int restored = activeBlocks.size();
         activeBlocks.clear();
+        activeBlockIds.clear();
         currentPositions.clear();
         lastAnchor = null;
         LOGGER.info("[CameraTransparency] Shutdown - restored " + restored + " blocks");
