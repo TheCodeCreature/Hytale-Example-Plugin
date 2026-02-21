@@ -59,6 +59,12 @@ public class StartCommand extends AbstractPlayerCommand {
                 new Box(-1, -1, -1, 1, 2, 1),
                 OperationType.EXCLUDE,
                 null).build();
+            
+            // Operation 5: Exclude floor
+            compositor.addOperation("floor_exclusion",
+                new Box(-radius, -radius, -radius, radius, radius, 0),
+                OperationType.EXCLUDE,
+                null).build();
 
             // Create camera transparency volume with parametric compositor
             CameraTransparencyVolume.getOrCreate(playerRef, world, compositor);

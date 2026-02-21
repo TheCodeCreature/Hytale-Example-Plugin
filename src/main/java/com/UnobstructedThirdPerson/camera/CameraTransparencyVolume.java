@@ -286,11 +286,7 @@ public class CameraTransparencyVolume {
                 continue;
             }
             
-            // Check if block should be ignored
             BlockType baseType = BlockType.getAssetMap().getAsset(snapshot.blockId());
-            if (baseType != null && shouldIgnoreBlock(baseType)) {
-                continue;
-            }
             
             newPositions.add(pos);
             newSnapshots.put(pos, snapshot);
