@@ -128,7 +128,7 @@ public class TransformedShape implements Shape {
         for (int x = minX; x < maxX; x++) {
             for (int y = minY; y < maxY; y++) {
                 for (int z = minZ; z < maxZ; z++) {
-                    if (!containsPosition(x + 0.5, y + 0.5, z + 0.5)) {
+                    if (!containsPosition(x + 0.5 - anchorX, y + 0.5 - anchorY, z + 0.5 - anchorZ)) {
                         continue;
                     }
                     if (!consumer.test(x, y, z)) {
@@ -155,7 +155,7 @@ public class TransformedShape implements Shape {
         for (int x = minX; x < maxX; x++) {
             for (int y = minY; y < maxY; y++) {
                 for (int z = minZ; z < maxZ; z++) {
-                    if (!containsPosition(x + 0.5, y + 0.5, z + 0.5)) {
+                    if (!containsPosition(x + 0.5 - anchorX, y + 0.5 - anchorY, z + 0.5 - anchorZ)) {
                         continue;
                     }
                     if (!consumer.test(x, y, z, context)) {
