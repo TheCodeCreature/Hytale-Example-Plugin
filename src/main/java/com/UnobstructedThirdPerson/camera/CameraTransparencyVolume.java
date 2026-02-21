@@ -1,6 +1,8 @@
 package com.UnobstructedThirdPerson.camera;
 
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.shape.Shape;
+import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
@@ -11,6 +13,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.core.util.TargetUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -197,7 +200,7 @@ public class CameraTransparencyVolume {
                         return;
                     }
 
-                    // Get player position
+                    // Get player position as anchor
                     Vector3d playerPos = playerRef.getTransform().getPosition();
                     Vector3i origin = new Vector3i(
                             (int) Math.floor(playerPos.x),
@@ -205,12 +208,19 @@ public class CameraTransparencyVolume {
                             (int) Math.floor(playerPos.z)
                     );
                     
-                    // Get player yaw rotation (horizontal rotation)
-                    // Transform.getRotation().y returns yaw in radians
-                    double yawRadians = playerRef.getTransform().getRotation().y;
-                    
-                    // Set rotation on compositor so shapes rotate with player view
-                    compositor.setRotation(yawRadians);
+                    // Get camera look direction to calculate rotation
+                    Store<EntityStore> store = ref.getStore();
+                    Transform look = TargetUtil.getLook(ref, store);
+                    if (look != null) {
+                        Vector3d lookDir = look.getDirection();
+                        
+                        // Calculate camera yaw from look direction (horizontal angle)
+                        // atan2(x, z) gives angle in XZ plane
+                        double cameraYaw = Math.atan2(lookDir.x, lookDir.z);
+                        
+                        // Set rotation on compositor so shapes rotate with camera view
+                        compositor.setRotation(cameraYaw);
+                    }
                     
                     update(origin);
                 });
