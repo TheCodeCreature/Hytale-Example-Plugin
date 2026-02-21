@@ -40,7 +40,7 @@ public class StartCommand extends AbstractPlayerCommand {
             
             // Operation 2: Front half (closer to player) = placeholders with hitbox-based shapes
             compositor.addOperation("front_zone",
-                new Box(-radius, -radius, 0, radius, radius, radius),  // Front hemisphere (positive Z)
+                new Box(-radius, -radius, 2, radius, radius, radius),  // Front hemisphere (positive Z)
                 OperationType.INTERSECT,
                 new AutoPlaceholderFill())  // PARAMETER: auto-select placeholders based on hitbox
                 .withReference("camera_volume")
@@ -54,15 +54,15 @@ public class StartCommand extends AbstractPlayerCommand {
                 .withReference("camera_volume")
                 .build();
             
-            // Operation 4: Exclude immediate player area (1x2x1 box around player)
-            compositor.addOperation("player_exclusion",
-                new Box(-1, -1, -1, 1, 2, 1),
-                OperationType.EXCLUDE,
-                null).build();
+//            // Operation 4: Exclude immediate player area (1x2x1 box around player)
+//            compositor.addOperation("player_exclusion",
+//                new Box(-1, -1, -1, 1, 2, 1),
+//                OperationType.EXCLUDE,
+//                null).build();
             
             // Operation 5: Exclude floor
             compositor.addOperation("floor_exclusion",
-                new Box(-radius, -radius, -radius, radius, radius, 0),
+                new Box(-radius, -radius, -radius, radius, 0, radius),
                 OperationType.EXCLUDE,
                 null).build();
 

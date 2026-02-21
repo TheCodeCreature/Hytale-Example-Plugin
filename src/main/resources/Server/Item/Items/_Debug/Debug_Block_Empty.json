@@ -13,10 +13,10 @@
   },
   "BlockType": {
     "Material": "Solid",
-    "DrawType": "Cube",
+    "DrawType": "CubeWithModel",
     "Textures": [
       {
-        "All": "BlockTextures/Clay_Smooth_White.png"
+        "All": "BlockTextures/Editor_Empty.png"
       }
     ],
     "ParticleColor": "#0000f4",
@@ -24,7 +24,11 @@
     "Opacity": "Solid",
     "Tint": [
       "#7979f0"
-    ]
+    ],
+    "CustomModelTexture": [
+      {}
+    ],
+    "CustomModel": "Blocks/_Debug/Model.blockymodel"
   },
   "ClipsGeometry": false
 }

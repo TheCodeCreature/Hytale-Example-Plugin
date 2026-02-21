@@ -1,6 +1,7 @@
 package com.UnobstructedThirdPerson.camera;
 
 import com.UnobstructedThirdPerson.Commands.debug.PlaceholderBlockManager;
+import com.hypixel.hytale.protocol.BlockMaterial;
 import com.hypixel.hytale.protocol.BlockTextures;
 import com.hypixel.hytale.protocol.ModelTexture;
 import com.hypixel.hytale.protocol.UpdateType;
@@ -106,7 +107,8 @@ public class PlaceholderTransparencyUtil {
         // Preserve original drawType and enable alpha blending
         modifiedPacket.drawType = basePacket.drawType;
         modifiedPacket.requiresAlphaBlending = true;
-        
+        modifiedPacket.material = BlockMaterial.Empty;
+
         // Send the modified placeholder definition to the client
         UpdateBlockTypes update = new UpdateBlockTypes();
         update.type = UpdateType.AddOrUpdate;
