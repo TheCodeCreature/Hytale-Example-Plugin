@@ -40,7 +40,7 @@ public class StartCommand extends AbstractPlayerCommand {
             
             // Operation 2: Front half (closer to player) = placeholders with hitbox-based shapes
             compositor.addOperation("front_zone",
-                new Box(-radius, -radius, -radius, radius, radius, 0),  // Front hemisphere
+                new Box(-radius, -radius, 0, radius, radius, radius),  // Front hemisphere (positive Z)
                 OperationType.INTERSECT,
                 new AutoPlaceholderFill())  // PARAMETER: auto-select placeholders based on hitbox
                 .withReference("camera_volume")
