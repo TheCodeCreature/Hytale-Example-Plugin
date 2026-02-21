@@ -265,7 +265,8 @@ public class ShapeCompositor {
             return shape;
         }
         // Apply yaw rotation around Y axis
-        return new TransformedShape(shape, 0, 0, 0, yawRotation, 0, 0);
+        // Negate yaw to match Hytale's coordinate system (east/west flip)
+        return new TransformedShape(shape, 0, 0, 0, -yawRotation, 0, 0);
     }
     
     private void executeDefine(ShapeOperation operation, ChunkStore chunkStore,

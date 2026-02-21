@@ -49,6 +49,8 @@ public class CameraTransparencyVolume {
     private final Map<Long, Integer> activeBlockIds = new HashMap<>();
     // Last anchor used for diff check
     private Vector3i lastAnchor = null;
+    // Last rotation used for diff check
+    private double lastRotation = Double.NaN;
     // Scheduled update task
     private ScheduledFuture<?> updateTask = null;
 
@@ -228,18 +230,29 @@ public class CameraTransparencyVolume {
     // ===== Core logic =====
 
     /**
-     * Called when the camera position may have changed.
-     * Only runs the diff if the integer block anchor has changed.
+     * Called when the camera position or rotation may have changed.
+     * Only runs the diff if the integer block anchor or rotation has changed.
      * Must be called on the world thread.
      */
     public void update(@Nonnull Vector3i newAnchor) {
-        // Early exit if anchor hasn't changed
-        if (lastAnchor != null && lastAnchor.x == newAnchor.x && lastAnchor.y == newAnchor.y && lastAnchor.z == newAnchor.z) {
+        // Get current rotation from compositor
+        double currentRotation = compositor.getRotation();
+        
+        // Early exit if neither anchor nor rotation has changed
+        boolean anchorChanged = lastAnchor == null || 
+                lastAnchor.x != newAnchor.x || 
+                lastAnchor.y != newAnchor.y || 
+                lastAnchor.z != newAnchor.z;
+        boolean rotationChanged = Double.isNaN(lastRotation) || 
+                Math.abs(currentRotation - lastRotation) > 0.01; // 0.01 radian threshold (~0.57 degrees)
+        
+        if (!anchorChanged && !rotationChanged) {
             return;
         }
 
-//        LOGGER.info("[CameraTransparency] Anchor changed to: " + newAnchor.x + ", " + newAnchor.y + ", " + newAnchor.z);
+//        LOGGER.info("[CameraTransparency] Anchor or rotation changed");
         lastAnchor = newAnchor;
+        lastRotation = currentRotation;
 
         ChunkStore chunkStore = world.getChunkStore();
 
