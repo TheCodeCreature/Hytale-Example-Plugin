@@ -215,8 +215,8 @@ public class CameraTransparencyVolume {
                         Vector3d lookDir = look.getDirection();
                         
                         // Calculate camera yaw from look direction (horizontal angle)
-                        // atan2(x, z) gives angle in XZ plane
-                        double cameraYaw = Math.atan2(lookDir.x, lookDir.z);
+                        // atan2(-x, z) to match Hytale's coordinate system
+                        double cameraYaw = Math.atan2(-lookDir.x, lookDir.z);
                         
                         // Set rotation on compositor so shapes rotate with camera view
                         compositor.setRotation(cameraYaw);
