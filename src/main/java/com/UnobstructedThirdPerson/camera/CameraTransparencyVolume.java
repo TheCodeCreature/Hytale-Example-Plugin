@@ -373,14 +373,23 @@ public class CameraTransparencyVolume {
     private void applyDiff(@Nonnull Set<Long> toAdd, @Nonnull Set<Long> toRemove, @Nonnull Set<Long> toUpdate,
                            @Nonnull Map<Long, BlockSnapshot> newSnapshots,
                            @Nonnull Map<Long, Integer> newBlockIds) {
-        // Restore blocks that left the volume
+        // Restore blocks that left the volume by querying current server state
+        ChunkStore chunkStore = world.getChunkStore();
         for (Long pos : toRemove) {
             BlockSnapshot original = activeBlocks.get(pos);
             if (original != null) {
-                playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
-                    original.x(), original.y(), original.z(),
-                    original.blockId(), original.filler(), original.rotation()
-                ));
+                // Query the server for the current actual block state at this position
+                // This prevents ghost blocks if the block was broken while transparent
+                BlockSnapshot currentBlock = TransparentBlockUtils.readBlock(
+                    chunkStore, original.x(), original.y(), original.z());
+                
+                if (currentBlock != null) {
+                    // Send the current server state to the client
+                    playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
+                        currentBlock.x(), currentBlock.y(), currentBlock.z(),
+                        currentBlock.blockId(), currentBlock.filler(), currentBlock.rotation()
+                    ));
+                }
             }
         }
 
