@@ -116,101 +116,56 @@ public class TransformedShape implements Shape {
     
     @Override
     public boolean forEachBlock(double anchorX, double anchorY, double anchorZ, double epsilon, TriIntPredicate consumer) {
-        // Pre-compute rotation matrices for efficiency
-        final double cosYaw = Math.cos(yaw);
-        final double sinYaw = Math.sin(yaw);
-        final double cosPitch = Math.cos(pitch);
-        final double sinPitch = Math.sin(pitch);
-        final double cosRoll = Math.cos(roll);
-        final double sinRoll = Math.sin(roll);
+        Box worldBox = getBox(anchorX, anchorY, anchorZ);
         
-        // Apply transformations: the base shape generates local coordinates,
-        // we transform them to world coordinates
-        return baseShape.forEachBlock(0, 0, 0, epsilon, (localX, localY, localZ) -> {
-            // Apply rotation to local coordinates
-            double rotX = localX;
-            double rotY = localY;
-            double rotZ = localZ;
-            
-            // Apply rotation in order: roll, pitch, yaw
-            // Roll (around Z)
-            if (roll != 0.0) {
-                double xTemp = rotX * cosRoll + rotY * sinRoll;
-                double yTemp = -rotX * sinRoll + rotY * cosRoll;
-                rotX = xTemp;
-                rotY = yTemp;
+        int minX = (int) Math.floor(worldBox.min.x - epsilon);
+        int minY = (int) Math.floor(worldBox.min.y - epsilon);
+        int minZ = (int) Math.floor(worldBox.min.z - epsilon);
+        int maxX = (int) Math.ceil(worldBox.max.x + epsilon);
+        int maxY = (int) Math.ceil(worldBox.max.y + epsilon);
+        int maxZ = (int) Math.ceil(worldBox.max.z + epsilon);
+        
+        for (int x = minX; x < maxX; x++) {
+            for (int y = minY; y < maxY; y++) {
+                for (int z = minZ; z < maxZ; z++) {
+                    if (!containsPosition(x + 0.5, y + 0.5, z + 0.5)) {
+                        continue;
+                    }
+                    if (!consumer.test(x, y, z)) {
+                        return false;
+                    }
+                }
             }
-            
-            // Pitch (around X)
-            if (pitch != 0.0) {
-                double yTemp = rotY * cosPitch + rotZ * sinPitch;
-                double zTemp = -rotY * sinPitch + rotZ * cosPitch;
-                rotY = yTemp;
-                rotZ = zTemp;
-            }
-            
-            // Yaw (around Y)
-            if (yaw != 0.0) {
-                double xTemp = rotX * cosYaw - rotZ * sinYaw;
-                double zTemp = rotX * sinYaw + rotZ * cosYaw;
-                rotX = xTemp;
-                rotZ = zTemp;
-            }
-            
-            // Apply translation and anchor
-            int worldX = (int) Math.round(rotX) + offsetX + (int) anchorX;
-            int worldY = (int) Math.round(rotY) + offsetY + (int) anchorY;
-            int worldZ = (int) Math.round(rotZ) + offsetZ + (int) anchorZ;
-            
-            return consumer.test(worldX, worldY, worldZ);
-        });
+        }
+        
+        return true;
     }
     
     @Override
     public <T> boolean forEachBlock(double anchorX, double anchorY, double anchorZ, double epsilon, T context, TriIntObjPredicate<T> consumer) {
-        // Pre-compute rotation matrices for efficiency
-        final double cosYaw = Math.cos(yaw);
-        final double sinYaw = Math.sin(yaw);
-        final double cosPitch = Math.cos(pitch);
-        final double sinPitch = Math.sin(pitch);
-        final double cosRoll = Math.cos(roll);
-        final double sinRoll = Math.sin(roll);
+        Box worldBox = getBox(anchorX, anchorY, anchorZ);
         
-        return baseShape.forEachBlock(0, 0, 0, epsilon, context, (localX, localY, localZ, ctx) -> {
-            // Apply rotation to local coordinates
-            double rotX = localX;
-            double rotY = localY;
-            double rotZ = localZ;
-            
-            // Apply rotation in order: roll, pitch, yaw
-            if (roll != 0.0) {
-                double xTemp = rotX * cosRoll + rotY * sinRoll;
-                double yTemp = -rotX * sinRoll + rotY * cosRoll;
-                rotX = xTemp;
-                rotY = yTemp;
+        int minX = (int) Math.floor(worldBox.min.x - epsilon);
+        int minY = (int) Math.floor(worldBox.min.y - epsilon);
+        int minZ = (int) Math.floor(worldBox.min.z - epsilon);
+        int maxX = (int) Math.ceil(worldBox.max.x + epsilon);
+        int maxY = (int) Math.ceil(worldBox.max.y + epsilon);
+        int maxZ = (int) Math.ceil(worldBox.max.z + epsilon);
+        
+        for (int x = minX; x < maxX; x++) {
+            for (int y = minY; y < maxY; y++) {
+                for (int z = minZ; z < maxZ; z++) {
+                    if (!containsPosition(x + 0.5, y + 0.5, z + 0.5)) {
+                        continue;
+                    }
+                    if (!consumer.test(x, y, z, context)) {
+                        return false;
+                    }
+                }
             }
-            
-            if (pitch != 0.0) {
-                double yTemp = rotY * cosPitch + rotZ * sinPitch;
-                double zTemp = -rotY * sinPitch + rotZ * cosPitch;
-                rotY = yTemp;
-                rotZ = zTemp;
-            }
-            
-            if (yaw != 0.0) {
-                double xTemp = rotX * cosYaw - rotZ * sinYaw;
-                double zTemp = rotX * sinYaw + rotZ * cosYaw;
-                rotX = xTemp;
-                rotZ = zTemp;
-            }
-            
-            // Apply translation and anchor
-            int worldX = (int) Math.round(rotX) + offsetX + (int) anchorX;
-            int worldY = (int) Math.round(rotY) + offsetY + (int) anchorY;
-            int worldZ = (int) Math.round(rotZ) + offsetZ + (int) anchorZ;
-            
-            return consumer.test(worldX, worldY, worldZ, ctx);
-        });
+        }
+        
+        return true;
     }
     
     /**
