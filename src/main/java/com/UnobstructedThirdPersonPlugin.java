@@ -1,5 +1,6 @@
 package com;
 
+import com.UnobstructedThirdPerson.Commands.CustomCameraDemoCommand;
 import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands.StartCommand;
 import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.UnobstructedCameraCommand;
 import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
@@ -30,6 +31,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
     protected void setup(){
         this.getCommandRegistry().registerCommand(new UnobstructedCameraCommand());
         this.getCommandRegistry().registerCommand(new DebugCommand());
+        this.getCommandRegistry().registerCommand(new CustomCameraDemoCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, UnobstructedThirdPersonPlugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, UnobstructedThirdPersonPlugin::onPlayerDisconnect);
     }
