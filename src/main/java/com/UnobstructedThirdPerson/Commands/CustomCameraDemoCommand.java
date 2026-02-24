@@ -27,7 +27,7 @@ public class CustomCameraDemoCommand extends AbstractPlayerCommand {
     private final OptionalArg<Double> pitchArg;
     private final OptionalArg<Double> yawArg;
     
-    private static final double DEFAULT_PITCH_DEGREES = -90.0;
+    private static final double DEFAULT_PITCH_DEGREES = -45.0;
     private static final double DEFAULT_YAW_DEGREES = 0.0;
 
     public CustomCameraDemoCommand() {
