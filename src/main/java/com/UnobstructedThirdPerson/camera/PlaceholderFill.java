@@ -10,7 +10,7 @@ import javax.annotation.Nonnull;
  * Auto-selects placeholder blocks based on the original block's hitbox type.
  * Uses PlaceholderBlockManager to intelligently map hitbox types to appropriate placeholders.
  */
-public class AutoPlaceholderFill implements BlockFillType {
+public class PlaceholderFill implements BlockFillType {
     
     @Override
     public int getBlockId(@Nonnull BlockSnapshot original, @Nonnull ChunkStore chunkStore) {
