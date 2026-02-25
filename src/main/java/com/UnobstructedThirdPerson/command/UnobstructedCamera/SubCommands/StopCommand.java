@@ -1,10 +1,8 @@
-package com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands;
+package com.UnobstructedThirdPerson.command.UnobstructedCamera.SubCommands;
 
 import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.protocol.ClientCameraView;
-import com.hypixel.hytale.protocol.packets.camera.SetServerCamera;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
 import com.hypixel.hytale.server.core.universe.PlayerRef;

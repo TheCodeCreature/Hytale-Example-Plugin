@@ -1,5 +1,6 @@
-package com.UnobstructedThirdPerson.camera;
+package com.UnobstructedThirdPerson.shape.fill;
 
+import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 
 import javax.annotation.Nonnull;

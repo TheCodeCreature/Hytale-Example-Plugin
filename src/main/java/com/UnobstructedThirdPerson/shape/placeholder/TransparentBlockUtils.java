@@ -1,5 +1,6 @@
-package com.UnobstructedThirdPerson.camera;
+package com.UnobstructedThirdPerson.shape.placeholder;
 
+import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.hypixel.hytale.math.util.ChunkUtil;
 import com.hypixel.hytale.protocol.*;
 import com.hypixel.hytale.protocol.packets.assets.UpdateBlockTypes;

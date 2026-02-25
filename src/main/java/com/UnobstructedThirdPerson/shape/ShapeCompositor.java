@@ -1,5 +1,10 @@
-package com.UnobstructedThirdPerson.camera;
+package com.UnobstructedThirdPerson.shape;
 
+import com.UnobstructedThirdPerson.records.BlockSnapshot;
+import com.UnobstructedThirdPerson.shape.fill.BlockFillType;
+import com.UnobstructedThirdPerson.shape.operation.OperationType;
+import com.UnobstructedThirdPerson.shape.operation.ShapeOperation;
+import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
 import com.hypixel.hytale.math.block.BlockUtil;
 import com.hypixel.hytale.math.shape.Shape;
 import com.hypixel.hytale.math.vector.Vector3i;

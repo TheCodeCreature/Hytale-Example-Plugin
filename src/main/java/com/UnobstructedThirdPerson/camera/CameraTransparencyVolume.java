@@ -1,5 +1,12 @@
 package com.UnobstructedThirdPerson.camera;
 
+import com.UnobstructedThirdPerson.records.BlockSnapshot;
+import com.UnobstructedThirdPerson.shape.ComposedRegion;
+import com.UnobstructedThirdPerson.shape.ShapeCompositor;
+import com.UnobstructedThirdPerson.shape.fill.EmptyBlockFill;
+import com.UnobstructedThirdPerson.shape.operation.OperationType;
+import com.UnobstructedThirdPerson.shape.placeholder.PlaceholderTransparencyUtil;
+import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.shape.Shape;
 import com.hypixel.hytale.math.vector.Transform;
@@ -82,7 +89,7 @@ public class CameraTransparencyVolume {
      * This is the preferred method for creating new volumes.
      */
     @Nonnull
-    public static CameraTransparencyVolume getOrCreate(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull ShapeCompositor compositor) {
+    public static void StartTransparencyVolumeLoop(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull ShapeCompositor compositor) {
         UUID playerId = playerRef.getUuid();
         CameraTransparencyVolume existing = INSTANCES.get(playerId);
         if (existing != null) {
@@ -95,29 +102,6 @@ public class CameraTransparencyVolume {
         instance.startUpdateLoop();
         INSTANCES.put(playerId, instance);
         LOGGER.info("[CameraTransparency] Created volume for player: " + playerRef.getUsername());
-        return instance;
-    }
-    
-    /**
-     * Legacy method - creates a simple compositor with empty blocks for all shapes.
-     * Use getOrCreate(PlayerRef, World, ShapeCompositor) for parametric control.
-     */
-    @Deprecated
-    @Nonnull
-    public static CameraTransparencyVolume getOrCreate(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull Shape[] shape) {
-        UUID playerId = playerRef.getUuid();
-        CameraTransparencyVolume existing = INSTANCES.get(playerId);
-        if (existing != null) {
-            // Shut down stale instance (e.g. from a crash) and create fresh
-            existing.shutdown();
-            INSTANCES.remove(playerId);
-            LOGGER.info("[CameraTransparency] Replaced stale volume for player: " + playerRef.getUsername());
-        }
-        CameraTransparencyVolume instance = new CameraTransparencyVolume(playerRef, world, shape);
-        instance.startUpdateLoop();
-        INSTANCES.put(playerId, instance);
-        LOGGER.info("[CameraTransparency] Created volume for player: " + playerRef.getUsername());
-        return instance;
     }
 
     @Nullable
@@ -129,7 +113,7 @@ public class CameraTransparencyVolume {
      * Returns a snapshot of the currently transparent block positions (packed longs)
      * for use by the server raycast to skip blocks the client can see through.
      */
-    @Nonnull
+    @Nonnull @Deprecated
     public it.unimi.dsi.fastutil.longs.LongOpenHashSet getTransparentPositions() {
         return new it.unimi.dsi.fastutil.longs.LongOpenHashSet(currentPositions);
     }
@@ -143,7 +127,7 @@ public class CameraTransparencyVolume {
     }
 
     // ===== Ignored block helpers =====
-
+    @Deprecated
     private static boolean shouldIgnoreBlock(@Nonnull BlockType type) {
         // Climbable (ladders, vines, etc.)
         if (type.getMovementSettings().isClimbable()) return true;

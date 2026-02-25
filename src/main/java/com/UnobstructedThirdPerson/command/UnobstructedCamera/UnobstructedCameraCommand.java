@@ -1,7 +1,7 @@
-package com.UnobstructedThirdPerson.Commands.UnobstructedCamera;
+package com.UnobstructedThirdPerson.command.UnobstructedCamera;
 
-import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands.StartCommand;
-import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands.StopCommand;
+import com.UnobstructedThirdPerson.command.UnobstructedCamera.SubCommands.StartCommand;
+import com.UnobstructedThirdPerson.command.UnobstructedCamera.SubCommands.StopCommand;
 import com.hypixel.hytale.protocol.*;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractCommandCollection;
 

@@ -1,6 +1,5 @@
-package com.UnobstructedThirdPerson.camera;
+package com.UnobstructedThirdPerson.shape.placeholder;
 
-import com.UnobstructedThirdPerson.Commands.debug.PlaceholderBlockManager;
 import com.hypixel.hytale.protocol.BlockMaterial;
 import com.hypixel.hytale.protocol.BlockTextures;
 import com.hypixel.hytale.protocol.ModelTexture;

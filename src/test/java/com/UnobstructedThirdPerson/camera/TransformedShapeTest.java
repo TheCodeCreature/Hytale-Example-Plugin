@@ -1,5 +1,6 @@
 package com.UnobstructedThirdPerson.camera;
 
+import com.UnobstructedThirdPerson.shape.TransformedShape;
 import com.hypixel.hytale.math.shape.Box;
 import com.hypixel.hytale.math.shape.Ellipsoid;
 import com.hypixel.hytale.math.shape.Shape;

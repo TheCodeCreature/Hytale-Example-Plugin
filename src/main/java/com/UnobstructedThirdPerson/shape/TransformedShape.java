@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.camera;
+package com.UnobstructedThirdPerson.shape;
 
 import com.hypixel.hytale.function.predicate.TriIntObjPredicate;
 import com.hypixel.hytale.function.predicate.TriIntPredicate;

@@ -1,6 +1,7 @@
-package com.UnobstructedThirdPerson.camera;
+package com.UnobstructedThirdPerson.shape.fill;
 
-import com.UnobstructedThirdPerson.Commands.debug.PlaceholderBlockManager;
+import com.UnobstructedThirdPerson.records.BlockSnapshot;
+import com.UnobstructedThirdPerson.shape.placeholder.PlaceholderBlockManager;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 

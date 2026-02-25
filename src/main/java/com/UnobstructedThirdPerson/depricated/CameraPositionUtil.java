@@ -1,5 +1,6 @@
-package com.UnobstructedThirdPerson.camera;
+package com.UnobstructedThirdPerson.depricated;
 
+import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
@@ -13,7 +14,6 @@ import com.hypixel.hytale.server.core.util.TargetUtil;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.UUID;
-import java.util.logging.Logger;
 
 final class CameraPositionUtil {
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();

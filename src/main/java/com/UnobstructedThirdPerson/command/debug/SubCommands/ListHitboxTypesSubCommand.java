@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.Commands.debug.SubCommands;
+package com.UnobstructedThirdPerson.command.debug.SubCommands;
 
 import com.hypixel.hytale.assetstore.map.IndexedLookupTableAssetMap;
 import com.hypixel.hytale.component.Ref;

@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.Commands.debug;
+package com.UnobstructedThirdPerson.shape.placeholder;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;

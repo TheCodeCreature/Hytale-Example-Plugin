@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.camera;
+package com.UnobstructedThirdPerson.shape.operation;
 
 /**
  * Defines geometry operations for the parametric shape compositor.

@@ -1,7 +1,7 @@
-package com.UnobstructedThirdPerson.Commands.debug;
+package com.UnobstructedThirdPerson.command.debug;
 
-import com.UnobstructedThirdPerson.Commands.debug.SubCommands.ListHitboxTypesSubCommand;
-import com.UnobstructedThirdPerson.Commands.debug.SubCommands.PreviewBlockSubCommand;
+import com.UnobstructedThirdPerson.command.debug.SubCommands.ListHitboxTypesSubCommand;
+import com.UnobstructedThirdPerson.command.debug.SubCommands.PreviewBlockSubCommand;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractCommandCollection;
 
 /**

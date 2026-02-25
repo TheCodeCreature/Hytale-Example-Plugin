@@ -1,5 +1,8 @@
-package com.UnobstructedThirdPerson.camera;
+package com.UnobstructedThirdPerson.shape;
 
+import com.UnobstructedThirdPerson.records.BlockSnapshot;
+import com.UnobstructedThirdPerson.shape.fill.BlockFillType;
+import com.UnobstructedThirdPerson.shape.operation.ShapeOperation;
 import com.hypixel.hytale.math.vector.Vector3i;
 
 import javax.annotation.Nonnull;

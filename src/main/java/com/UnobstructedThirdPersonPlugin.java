@@ -1,15 +1,12 @@
 package com;
 
-import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.SubCommands.StartCommand;
-import com.UnobstructedThirdPerson.Commands.UnobstructedCamera.UnobstructedCameraCommand;
+import com.UnobstructedThirdPerson.command.UnobstructedCamera.UnobstructedCameraCommand;
 import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
-import com.UnobstructedThirdPerson.Commands.debug.DebugCommand;
-import com.UnobstructedThirdPerson.Commands.debug.SubCommands.PreviewBlockSubCommand;
+import com.UnobstructedThirdPerson.command.debug.DebugCommand;
+import com.UnobstructedThirdPerson.shape.ShapeCompositorPresets;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.math.shape.Ellipsoid;
-import com.hypixel.hytale.math.shape.Shape;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
@@ -36,14 +33,8 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
     private static void onPlayerReady(PlayerReadyEvent event) {
         Ref<EntityStore> ref = event.getPlayerRef();
-        if (ref == null || !ref.isValid()) {
-            return;
-        }
 
         Store<EntityStore> store = ref.getStore();
-        if (store == null) {
-            return;
-        }
 
         PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
         if (playerRef == null) {
@@ -52,10 +43,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
         EntityStore entityStore = store.getExternalData();
         World world = entityStore.getWorld();
-
-        float radius = 6;
-        // Create camera transparency volume for this player
-        CameraTransparencyVolume.getOrCreate(playerRef, world, new Shape[]{new Ellipsoid(radius)});
+        CameraTransparencyVolume.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresets().Test());
     }
 
     private static void onPlayerDisconnect(PlayerDisconnectEvent event) {

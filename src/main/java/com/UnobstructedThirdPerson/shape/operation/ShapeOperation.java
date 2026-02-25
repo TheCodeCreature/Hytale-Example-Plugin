@@ -1,5 +1,6 @@
-package com.UnobstructedThirdPerson.camera;
+package com.UnobstructedThirdPerson.shape.operation;
 
+import com.UnobstructedThirdPerson.shape.fill.BlockFillType;
 import com.hypixel.hytale.math.shape.Shape;
 
 import javax.annotation.Nonnull;
@@ -83,15 +84,15 @@ public class ShapeOperation {
     }
     
     // Parametric editing methods (package-private - called by compositor)
-    void setFillType(@Nullable BlockFillType fillType) {
+    public void setFillType(@Nullable BlockFillType fillType) {
         this.fillType = fillType;
     }
     
-    void setEnabled(boolean enabled) {
+    public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
     
-    void setPriority(int priority) {
+    public void setPriority(int priority) {
         this.priority = priority;
     }
     
