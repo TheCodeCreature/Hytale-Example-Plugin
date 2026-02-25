@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "Camera"
-version = "2.1.0"
+version = "0.1.0"
 val javaVersion = 25
 
 repositories {
