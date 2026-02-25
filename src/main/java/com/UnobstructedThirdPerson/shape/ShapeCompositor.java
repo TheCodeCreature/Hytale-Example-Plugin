@@ -25,7 +25,8 @@ public class ShapeCompositor {
     private static final Logger LOGGER = Logger.getLogger("ShapeCompositor");
     
     private Vector3i anchor;
-    private double yawRotation = 0.0; // Player's yaw rotation in radians
+    private double yawRotation = 0.0; // Player's yaw rotation in radians (side-to-side)
+    private double pitchRotation = 0.0; // Player's pitch rotation in radians (up-down)
     private final Map<String, ShapeOperation> operations;
     private final List<String> operationOrder;
     
@@ -49,8 +50,8 @@ public class ShapeCompositor {
     }
     
     /**
-     * Set the rotation to apply to all shapes (typically player's yaw).
-     * This allows shapes to rotate with the player's view direction.
+     * Set the yaw rotation to apply to all shapes (typically player's yaw).
+     * This allows shapes to rotate horizontally with the player's view direction.
      * 
      * @param yawRadians Yaw rotation in radians (0 = facing +Z, π/2 = facing +X)
      */
@@ -59,10 +60,29 @@ public class ShapeCompositor {
     }
     
     /**
-     * Get the current rotation in radians.
+     * Set both yaw and pitch rotations to apply to all shapes.
+     * This allows shapes to rotate with the player's full view direction.
+     * 
+     * @param yawRadians Yaw rotation in radians (side-to-side)
+     * @param pitchRadians Pitch rotation in radians (up-down)
      */
-    public double getRotation() {
+    public void setRotation(double yawRadians, double pitchRadians) {
+        this.yawRotation = yawRadians;
+        this.pitchRotation = pitchRadians;
+    }
+    
+    /**
+     * Get the current yaw rotation in radians.
+     */
+    public double getYawRotation() {
         return yawRotation;
+    }
+    
+    /**
+     * Get the current pitch rotation in radians.
+     */
+    public double getPitchRotation() {
+        return pitchRotation;
     }
     
     /**
@@ -266,11 +286,11 @@ public class ShapeCompositor {
      * Returns the original shape if no rotation is needed.
      */
     private Shape applyRotation(Shape shape) {
-        if (shape == null || yawRotation == 0.0) {
+        if (shape == null || (yawRotation == 0.0 && pitchRotation == 0.0)) {
             return shape;
         }
-        // Apply yaw rotation around Y axis
-        return new TransformedShape(shape, 0, 0, 0, yawRotation, 0, 0);
+        // Apply yaw (side-to-side) and pitch (up-down) rotations
+        return new TransformedShape(shape, 0, 0, 0, yawRotation, pitchRotation, 0);
     }
     
     private void executeDefine(ShapeOperation operation, ChunkStore chunkStore,

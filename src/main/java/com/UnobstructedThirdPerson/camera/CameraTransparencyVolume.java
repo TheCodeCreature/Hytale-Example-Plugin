@@ -59,8 +59,10 @@ public class CameraTransparencyVolume {
     private final Map<Long, Integer> activeBlockIds = new HashMap<>();
     // Last anchor used for diff check
     private Vector3i lastAnchor = null;
-    // Last rotation used for diff check
-    private double lastRotation = Double.NaN;
+    // Last yaw rotation used for diff check
+    private double lastYaw = Double.NaN;
+    // Last pitch rotation used for diff check
+    private double lastPitch = Double.NaN;
     // Scheduled update task
     private ScheduledFuture<?> updateTask = null;
 
@@ -202,8 +204,12 @@ public class CameraTransparencyVolume {
                         // atan2(-x, z) to match Hytale's coordinate system
                         double cameraYaw = Math.atan2(-lookDir.x, lookDir.z);
                         
+                        // Calculate camera pitch from look direction (vertical angle)
+                        // asin(-y) for pitch (looking up is positive pitch)
+                        double cameraPitch = Math.asin(-lookDir.y);
+                        
                         // Set rotation on compositor so shapes rotate with camera view
-                        compositor.setRotation(cameraYaw);
+                        compositor.setRotation(cameraYaw, cameraPitch);
                     }
                     
                     update(origin);
@@ -229,24 +235,28 @@ public class CameraTransparencyVolume {
      * Must be called on the world thread.
      */
     public void update(@Nonnull Vector3i newAnchor) {
-        // Get current rotation from compositor
-        double currentRotation = compositor.getRotation();
+        // Get current rotations from compositor
+        double currentYaw = compositor.getYawRotation();
+        double currentPitch = compositor.getPitchRotation();
         
         // Early exit if neither anchor nor rotation has changed
         boolean anchorChanged = lastAnchor == null || 
                 lastAnchor.x != newAnchor.x || 
                 lastAnchor.y != newAnchor.y || 
                 lastAnchor.z != newAnchor.z;
-        boolean rotationChanged = Double.isNaN(lastRotation) || 
-                Math.abs(currentRotation - lastRotation) > 0.01; // 0.01 radian threshold (~0.57 degrees)
+        boolean yawChanged = Double.isNaN(lastYaw) || 
+                Math.abs(currentYaw - lastYaw) > 0.01; // 0.01 radian threshold (~0.57 degrees)
+        boolean pitchChanged = Double.isNaN(lastPitch) || 
+                Math.abs(currentPitch - lastPitch) > 0.01;
         
-        if (!anchorChanged && !rotationChanged) {
+        if (!anchorChanged && !yawChanged && !pitchChanged) {
             return;
         }
 
 //        LOGGER.info("[CameraTransparency] Anchor or rotation changed");
         lastAnchor = newAnchor;
-        lastRotation = currentRotation;
+        lastYaw = currentYaw;
+        lastPitch = currentPitch;
 
         ChunkStore chunkStore = world.getChunkStore();
 

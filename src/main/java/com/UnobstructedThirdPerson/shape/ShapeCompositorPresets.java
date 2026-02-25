@@ -8,18 +8,15 @@ import com.hypixel.hytale.math.shape.Cylinder;
 import com.hypixel.hytale.math.shape.Ellipsoid;
 import com.hypixel.hytale.math.vector.Vector3i;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 public class ShapeCompositorPresets extends ShapeCompositor{
     private int _radius = 8;
 
-    public ShapeCompositorPresets(@Nullable Vector3i anchor, @Nullable int radius){
+    public ShapeCompositorPresets(Vector3i anchor, int radius){
         super(anchor);
         _radius = radius;
     }
 
-    public ShapeCompositorPresets(@Nullable int radius){
+    public ShapeCompositorPresets(int radius){
         Vector3i anchor = new Vector3i(0, 0, 0);
         super(anchor);
         _radius = radius;
