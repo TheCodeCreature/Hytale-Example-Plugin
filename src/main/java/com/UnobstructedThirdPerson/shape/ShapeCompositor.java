@@ -112,6 +112,7 @@ public class ShapeCompositor {
         private final OperationType type;
         private final BlockFillType fillType;
         private String referenceId;
+        private TransformFlags transformFlags;
         
         private OperationBuilder(String id, Shape shape, OperationType type, BlockFillType fillType) {
             this.id = id;
@@ -127,6 +128,12 @@ public class ShapeCompositor {
         }
         
         @Nonnull
+        public OperationBuilder withTransformFlags(@Nonnull TransformFlags transformFlags) {
+            this.transformFlags = transformFlags;
+            return this;
+        }
+        
+        @Nonnull
         public ShapeOperation build() {
             ShapeOperation.Builder builder = ShapeOperation.builder(id, type)
                     .shape(shape)
@@ -134,6 +141,10 @@ public class ShapeCompositor {
             
             if (referenceId != null) {
                 builder.withReference(referenceId);
+            }
+            
+            if (transformFlags != null) {
+                builder.withTransformFlags(transformFlags);
             }
             
             ShapeOperation operation = builder.build();
@@ -282,15 +293,26 @@ public class ShapeCompositor {
     }
     
     /**
-     * Apply the current rotation to a shape if rotation is set.
-     * Returns the original shape if no rotation is needed.
+     * Apply transformations (anchor offset and rotation) to a shape based on transform flags.
+     * Returns the original shape if no transformations are needed.
      */
-    private Shape applyRotation(Shape shape) {
-        if (shape == null || (yawRotation == 0.0 && pitchRotation == 0.0)) {
+    private Shape applyTransformations(Shape shape, TransformFlags flags) {
+        if (shape == null) {
             return shape;
         }
-        // Apply yaw (side-to-side) and pitch (up-down) rotations
-        return new TransformedShape(shape, 0, 0, 0, yawRotation, pitchRotation, 0);
+        
+        // Determine which rotations to apply
+        double effectiveYaw = flags.shouldApplyYaw() ? yawRotation : 0.0;
+        double effectivePitch = flags.shouldApplyPitch() ? pitchRotation : 0.0;
+        double effectiveRoll = flags.shouldApplyRoll() ? 0.0 : 0.0; // Roll not yet supported by compositor
+        
+        // If no transformations needed, return original shape
+        if (effectiveYaw == 0.0 && effectivePitch == 0.0 && effectiveRoll == 0.0) {
+            return shape;
+        }
+        
+        // Apply transformations
+        return new TransformedShape(shape, 0, 0, 0, effectiveYaw, effectivePitch, effectiveRoll);
     }
     
     private void executeDefine(ShapeOperation operation, ChunkStore chunkStore,
@@ -305,8 +327,8 @@ public class ShapeCompositor {
             return;
         }
         
-        // Apply rotation to the shape
-        Shape shape = applyRotation(baseShape);
+        // Apply transformations to the shape based on its transform flags
+        Shape shape = applyTransformations(baseShape, operation.getTransformFlags());
         
         BlockFillType fillType = operation.getFillType();
         
@@ -348,8 +370,8 @@ public class ShapeCompositor {
             return;
         }
         
-        // Apply rotation to the shape
-        Shape shape = applyRotation(baseShape);
+        // Apply transformations to the shape based on its transform flags
+        Shape shape = applyTransformations(baseShape, operation.getTransformFlags());
         
         // Get reference region
         Set<Long> referencePositions = referenceId != null ? 
@@ -397,13 +419,16 @@ public class ShapeCompositor {
                                 Map<Long, String> blockOwners,
                                 Set<Long> operationPositions,
                                 Map<String, Set<Long>> operationRegions) {
-        Shape shape = operation.getShape();
+        Shape baseShape = operation.getShape();
         String referenceId = operation.getReferenceId();
         
-        if (shape == null) {
+        if (baseShape == null) {
             LOGGER.warning("SUBTRACT operation '" + operation.getId() + "' has no shape");
             return;
         }
+        
+        // Apply transformations to the shape based on its transform flags
+        Shape shape = applyTransformations(baseShape, operation.getTransformFlags());
         
         // Get reference region
         Set<Long> referencePositions = referenceId != null ?
@@ -472,8 +497,8 @@ public class ShapeCompositor {
             return;
         }
         
-        // Apply rotation to the shape
-        Shape shape = applyRotation(baseShape);
+        // Apply transformations to the shape based on its transform flags
+        Shape shape = applyTransformations(baseShape, operation.getTransformFlags());
         
         shape.forEachBlock(anchor.x, anchor.y, anchor.z, (x, y, z) -> {
             long pos = BlockUtil.packUnchecked(x, y, z);

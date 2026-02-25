@@ -128,4 +128,41 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 
         return this;
     }
+
+    /**
+     * Example demonstrating TransformFlags feature.
+     * Creates a camera volume with a floor exclusion that stays level (ignores pitch).
+     * This prevents the floor from tilting when looking up/down.
+     */
+    public ShapeCompositor WithLevelFloor(){
+        var x = _radius/2;
+        var y = _radius/2;
+        var z = _radius-2;
+        var shape = new TransformedShape(
+                new Ellipsoid(x,y,z),
+                0, y/2, z);
+
+        // Operation 1: Define camera volume with placeholder fill
+        this.addOperation("camera_volume",
+                        shape,
+                        OperationType.DEFINE,
+                        new PlaceholderFill())
+                .build();
+
+        // Operation 2: Floor exclusion that stays level (ignores pitch rotation)
+        // This keeps the floor horizontal even when looking up or down
+        TransformFlags levelFloor = TransformFlags.builder()
+                .ignorePitch()
+                .ignoreYaw()
+                .build();
+
+        this.addOperation("floor_exclusion",
+                new Box(-_radius, -_radius, -_radius, _radius, 0, _radius),
+                OperationType.EXCLUDE,
+                null)
+                .withTransformFlags(levelFloor)
+                .build();
+
+        return this;
+    }
 }

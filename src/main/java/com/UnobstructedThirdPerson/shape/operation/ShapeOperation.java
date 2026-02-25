@@ -1,5 +1,6 @@
 package com.UnobstructedThirdPerson.shape.operation;
 
+import com.UnobstructedThirdPerson.shape.TransformFlags;
 import com.UnobstructedThirdPerson.shape.fill.BlockFillType;
 import com.hypixel.hytale.math.shape.Shape;
 
@@ -22,6 +23,7 @@ public class ShapeOperation {
     private final String referenceId;
     private final List<String> intersectWith;
     private final List<String> subtractFrom;
+    private final TransformFlags transformFlags;
     
     // Mutable parametric properties
     private BlockFillType fillType;
@@ -36,6 +38,7 @@ public class ShapeOperation {
         this.referenceId = builder.referenceId;
         this.intersectWith = new ArrayList<>(builder.intersectWith);
         this.subtractFrom = new ArrayList<>(builder.subtractFrom);
+        this.transformFlags = builder.transformFlags != null ? builder.transformFlags : TransformFlags.ALL;
         this.priority = builder.priority != null ? builder.priority : type.getDefaultPriority();
         this.enabled = builder.enabled;
     }
@@ -83,6 +86,11 @@ public class ShapeOperation {
         return enabled;
     }
     
+    @Nonnull
+    public TransformFlags getTransformFlags() {
+        return transformFlags;
+    }
+    
     // Parametric editing methods (package-private - called by compositor)
     public void setFillType(@Nullable BlockFillType fillType) {
         this.fillType = fillType;
@@ -112,6 +120,7 @@ public class ShapeOperation {
         private String referenceId;
         private final List<String> intersectWith = new ArrayList<>();
         private final List<String> subtractFrom = new ArrayList<>();
+        private TransformFlags transformFlags;
         private Integer priority;
         private boolean enabled = true;
         
@@ -159,6 +168,12 @@ public class ShapeOperation {
         @Nonnull
         public Builder enabled(boolean enabled) {
             this.enabled = enabled;
+            return this;
+        }
+        
+        @Nonnull
+        public Builder withTransformFlags(@Nonnull TransformFlags transformFlags) {
+            this.transformFlags = transformFlags;
             return this;
         }
         

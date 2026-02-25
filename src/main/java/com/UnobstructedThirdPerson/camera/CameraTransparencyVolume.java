@@ -90,7 +90,6 @@ public class CameraTransparencyVolume {
      * Get or create a CameraTransparencyVolume using the parametric ShapeCompositor API.
      * This is the preferred method for creating new volumes.
      */
-    @Nonnull
     public static void StartTransparencyVolumeLoop(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull ShapeCompositor compositor) {
         UUID playerId = playerRef.getUuid();
         CameraTransparencyVolume existing = INSTANCES.get(playerId);
@@ -206,7 +205,7 @@ public class CameraTransparencyVolume {
                         
                         // Calculate camera pitch from look direction (vertical angle)
                         // asin(-y) for pitch (looking up is positive pitch)
-                        double cameraPitch = Math.asin(-lookDir.y);
+                        double cameraPitch = Math.asin(lookDir.y);
                         
                         // Set rotation on compositor so shapes rotate with camera view
                         compositor.setRotation(cameraYaw, cameraPitch);
