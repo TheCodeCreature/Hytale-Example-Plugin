@@ -41,11 +41,8 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
     
     private static final Logger LOGGER = Logger.getLogger("PlayerCollisionValidation");
     
-    private static final Query<EntityStore> QUERY = Query.and(
-        PlayerInput.getComponentType(),
-        PlayerRef.getComponentType(),
-        TransformComponent.getComponentType()
-    );
+    // Lazy-initialized query to avoid null component types at class load time
+    private Query<EntityStore> query;
     
     // Run BEFORE PlayerSystems.ProcessPlayerInput to intercept movement
     private static final Set<Dependency<EntityStore>> DEPENDENCIES = Set.of(
@@ -59,7 +56,14 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
     @Nonnull
     @Override
     public Query<EntityStore> getQuery() {
-        return QUERY;
+        if (query == null) {
+            query = Query.and(
+                PlayerInput.getComponentType(),
+                PlayerRef.getComponentType(),
+                TransformComponent.getComponentType()
+            );
+        }
+        return query;
     }
     
     @Nonnull
