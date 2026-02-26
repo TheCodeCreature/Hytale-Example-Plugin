@@ -7,13 +7,11 @@ import com.UnobstructedThirdPerson.command.PreviewCommand;
 import com.UnobstructedThirdPerson.movement.PlayerCollisionValidationSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
 import com.UnobstructedThirdPerson.shape.ShapeCompositorPresets;
-import com.hypixel.hytale.common.plugin.PluginManifest;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
-import com.hypixel.hytale.server.core.modules.entity.EntityModule;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
@@ -22,11 +20,6 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
 public class UnobstructedThirdPersonPlugin extends JavaPlugin {
-    
-    // Declare dependency on EntityModule to ensure component types are available during setup
-    public static final PluginManifest MANIFEST = PluginManifest.corePlugin(UnobstructedThirdPersonPlugin.class)
-        .depends(EntityModule.class)
-        .build();
     
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
