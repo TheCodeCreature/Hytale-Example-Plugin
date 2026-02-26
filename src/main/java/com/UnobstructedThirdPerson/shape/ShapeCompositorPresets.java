@@ -135,33 +135,48 @@ public class ShapeCompositorPresets extends ShapeCompositor{
      * This prevents the floor from tilting when looking up/down.
      */
     public ShapeCompositor WithLevelFloor(){
-        var x = _radius/2;
-        var y = _radius/2;
-        var z = _radius-2;
-        var shape = new TransformedShape(
-                new Ellipsoid(x,y,z),
-                0, y/2, z);
-
-        // Operation 1: Define camera volume with placeholder fill
-        this.addOperation("camera_volume",
-                        shape,
-                        OperationType.DEFINE,
-                        new PlaceholderFill())
-                .build();
-
-        // Operation 2: Floor exclusion that stays level (ignores pitch rotation)
-        // This keeps the floor horizontal even when looking up or down
-        TransformFlags levelFloor = TransformFlags.builder()
+        TransformFlags noMove = TransformFlags.builder()
                 .ignorePitch()
                 .ignoreYaw()
                 .build();
 
-        this.addOperation("floor_exclusion",
-                new Box(-_radius, -_radius, -_radius, _radius, 0, _radius),
-                OperationType.EXCLUDE,
-                null)
-                .withTransformFlags(levelFloor)
+        // Operation 1: Define camera volume with placeholder fill
+        var x = _radius/2;
+        var y = _radius/2;
+        var z = _radius-2;
+//        var shape = new TransformedShape(
+//                new Ellipsoid(x,y,z),
+//                0, y/2, z);
+//        this.addOperation("camera_front",
+//                        shape,
+//                        OperationType.DEFINE,
+//                        new PlaceholderFill())
+//                .build();
+
+        this.addOperation("player_space",
+                        new Ellipsoid(3),
+                        OperationType.DEFINE,
+                        new PlaceholderFill())
                 .build();
+
+        // Operation 2: Define camera volume with empty fill
+        var shape2 = new TransformedShape(
+                new Ellipsoid(x,y,z),
+                0, y/2, -z+1);
+        this.addOperation("camera_back",
+                        shape2,
+                        OperationType.DEFINE,
+                        new EmptyBlockFill())
+                .build();
+
+//        // Operation 2: Floor exclusion that stays level (ignores pitch rotation)
+//        // This keeps the floor horizontal even when looking up or down
+//        this.addOperation("floor_exclusion",
+//                new Box(-1, -1, -1,1,1,1),
+//                OperationType.EXCLUDE,
+//                null)
+//                .withTransformFlags(noMove)
+//                .build();
 
         return this;
     }

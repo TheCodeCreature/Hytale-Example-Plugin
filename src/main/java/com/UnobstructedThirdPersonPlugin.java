@@ -43,7 +43,10 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
         EntityStore entityStore = store.getExternalData();
         World world = entityStore.getWorld();
-        CameraTransparencyVolume.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresets().Test());
+        CameraTransparencyVolume.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresets()
+                        .WithLevelFloor()
+//                      .Test()
+        );
     }
 
     private static void onPlayerDisconnect(PlayerDisconnectEvent event) {
