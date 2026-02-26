@@ -103,7 +103,25 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         ChunkStore chunkStore = world.getChunkStore();
         Vector3d currentPos = transform.getPosition();
         
-        // Check each movement update for collisions with real blocks
+        // Check if player is currently inside or falling through a transparent solid block
+        Vector3d correctedPos = findSupportingBlock(currentPos, volume, chunkStore);
+        if (correctedPos != null) {
+            // Player has fallen through a transparent block - place them on top of it
+            Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
+            Teleport teleport = Teleport.createExact(
+                correctedPos,
+                transform.getRotation(),
+                transform.getRotation()
+            ).withoutVelocityReset();
+            
+            commandBuffer.addComponent(ref, Teleport.getComponentType(), teleport);
+            
+            LOGGER.fine("[CollisionValidation] Corrected player " + playerRef.getUsername() + 
+                " position from " + currentPos + " to " + correctedPos);
+            return; // Skip movement validation this tick since we corrected position
+        }
+        
+        // Validate lateral movement through transparent walls
         for (int i = 0; i < queue.size(); i++) {
             PlayerInput.InputUpdate update = queue.get(i);
             
@@ -119,25 +137,57 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
                 );
             }
             
-            if (targetPos != null && wouldCollideWithRealBlock(targetPos, volume, chunkStore)) {
-                // Cancel this movement by teleporting player back to current position
-                Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
-                Teleport teleport = Teleport.createExact(
-                    currentPos,
-                    transform.getRotation(),
-                    transform.getRotation()
-                ).withoutVelocityReset();
+            if (targetPos != null) {
+                // Only block lateral (horizontal) movement through walls
+                boolean isLateralMovement = Math.abs(targetPos.x - currentPos.x) > 0.01 || 
+                                           Math.abs(targetPos.z - currentPos.z) > 0.01;
                 
-                commandBuffer.addComponent(ref, Teleport.getComponentType(), teleport);
-                
-                // Remove the invalid movement from queue
-                queue.remove(i);
-                i--;
-                
-                LOGGER.fine("[CollisionValidation] Prevented player " + playerRef.getUsername() + 
-                    " from walking through transparent wall at " + targetPos);
+                if (isLateralMovement && wouldCollideWithRealBlock(targetPos, volume, chunkStore)) {
+                    // Cancel lateral movement through transparent walls
+                    queue.remove(i);
+                    i--;
+                    
+                    LOGGER.fine("[CollisionValidation] Blocked lateral movement for " + playerRef.getUsername() + 
+                        " through transparent wall at " + targetPos);
+                }
             }
         }
+    }
+    
+    /**
+     * Find a supporting block beneath the player if they're falling through a transparent solid block.
+     * Returns a corrected position on top of the block, or null if no correction needed.
+     */
+    private Vector3d findSupportingBlock(Vector3d currentPos, CameraTransparencyVolume volume, ChunkStore chunkStore) {
+        Map<Long, BlockSnapshot> activeBlocks = volume.getActiveBlocks();
+        
+        // Check blocks directly beneath the player (within their hitbox)
+        int playerX = (int) Math.floor(currentPos.x);
+        int playerZ = (int) Math.floor(currentPos.z);
+        int playerY = (int) Math.floor(currentPos.y);
+        
+        // Check a few blocks below to find the first solid transparent block
+        for (int checkY = playerY; checkY >= playerY - 3; checkY--) {
+            long packedPos = BlockUtil.packUnchecked(playerX, checkY, playerZ);
+            
+            // Check if this block is transparent client-side but solid server-side
+            BlockSnapshot snapshot = activeBlocks.get(packedPos);
+            if (snapshot != null) {
+                BlockType blockType = BlockType.getAssetMap().getAsset(snapshot.blockId());
+                
+                if (blockType != null && isSolidBlock(blockType)) {
+                    // Found a solid block - player should be standing on top of it
+                    double supportY = checkY + 1.0; // Top of the block
+                    
+                    // Only correct if player is actually falling through (below the top surface)
+                    if (currentPos.y < supportY + 0.1) {
+                        return new Vector3d(currentPos.x, supportY, currentPos.z);
+                    }
+                }
+            }
+        }
+        
+        return null; // No correction needed
     }
     
     /**
