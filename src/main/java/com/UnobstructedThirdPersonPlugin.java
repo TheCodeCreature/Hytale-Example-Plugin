@@ -3,6 +3,7 @@ package com;
 import com.UnobstructedThirdPerson.command.UnobstructedCamera.UnobstructedCameraCommand;
 import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
 import com.UnobstructedThirdPerson.command.debug.DebugCommand;
+import com.UnobstructedThirdPerson.movement.PlayerCollisionValidationSystem;
 import com.UnobstructedThirdPerson.shape.ShapeCompositorPresets;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -29,6 +30,9 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         this.getCommandRegistry().registerCommand(new DebugCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, UnobstructedThirdPersonPlugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, UnobstructedThirdPersonPlugin::onPlayerDisconnect);
+        
+        // Register server-side collision validation system
+        this.getEntityStoreRegistry().registerSystem(new PlayerCollisionValidationSystem());
     }
 
     private static void onPlayerReady(PlayerReadyEvent event) {

@@ -119,6 +119,15 @@ public class CameraTransparencyVolume {
         return new it.unimi.dsi.fastutil.longs.LongOpenHashSet(currentPositions);
     }
 
+    /**
+     * Returns an unmodifiable view of the active blocks map for server-side collision validation.
+     * This allows systems to check the real server-side block state at transparent positions.
+     */
+    @Nonnull
+    public Map<Long, BlockSnapshot> getActiveBlocks() {
+        return Collections.unmodifiableMap(activeBlocks);
+    }
+
     public static void remove(@Nonnull UUID playerId) {
         CameraTransparencyVolume instance = INSTANCES.remove(playerId);
         if (instance != null) {
