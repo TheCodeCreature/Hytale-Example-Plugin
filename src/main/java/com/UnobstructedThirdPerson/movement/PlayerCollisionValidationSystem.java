@@ -4,6 +4,7 @@ import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.dependency.Dependency;
@@ -16,6 +17,7 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.player.PlayerInput;
 import com.hypixel.hytale.server.core.modules.entity.player.PlayerSystems;
+import com.hypixel.hytale.server.core.modules.entity.teleport.Teleport;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
@@ -121,8 +123,16 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         // Gravity/physics may move the player even when there are no movement updates.
         // Inject an absolute movement correction so floor lock still applies.
         if (walkOnAirEnabled && floorY != null && currentPos.y < floorY - FLOOR_EPSILON) {
+            Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
+            Teleport teleport = Teleport.createExact(
+                new Vector3d(currentPos.x, floorY, currentPos.z),
+                transform.getRotation(),
+                transform.getRotation()
+            ).withoutVelocityReset();
+            commandBuffer.addComponent(ref, Teleport.getComponentType(), teleport);
+
             queue.add(0, new PlayerInput.AbsoluteMovement(currentPos.x, floorY, currentPos.z));
-            LOGGER.info("[CollisionValidation] Walk-on-air correction for " + playerRef.getUsername() +
+            LOGGER.warning("[CollisionValidation] Walk-on-air correction for " + playerRef.getUsername() +
                     " (" + playerId + ") currentY=" + currentPos.y + " floorY=" + floorY);
         }
 
