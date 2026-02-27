@@ -10,6 +10,7 @@ import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.component.dependency.Order;
 import com.hypixel.hytale.component.dependency.SystemDependency;
 import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.player.PlayerInput;
 import com.hypixel.hytale.server.core.modules.entity.player.PlayerProcessMovementSystem;
@@ -81,6 +82,7 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
                 PlayerInput.getComponentType(),
                 PlayerRef.getComponentType(),
                 TransformComponent.getComponentType(),
+                MovementStatesComponent.getComponentType(),
                 Velocity.getComponentType()
             );
         }
@@ -104,9 +106,10 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         PlayerInput playerInput = archetypeChunk.getComponent(index, PlayerInput.getComponentType());
         TransformComponent transform = archetypeChunk.getComponent(index, TransformComponent.getComponentType());
         PlayerRef playerRef = archetypeChunk.getComponent(index, PlayerRef.getComponentType());
+        MovementStatesComponent movementStatesComponent = archetypeChunk.getComponent(index, MovementStatesComponent.getComponentType());
         Velocity velocity = archetypeChunk.getComponent(index, Velocity.getComponentType());
         
-        if (playerInput == null || transform == null || playerRef == null || velocity == null) {
+        if (playerInput == null || transform == null || playerRef == null || movementStatesComponent == null || velocity == null) {
             return;
         }
         
@@ -123,6 +126,9 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         Vector3d currentPos = transform.getPosition();
         Vector3d playerRefPos = playerRef.getTransform().getPosition();
         List<PlayerInput.InputUpdate> queue = playerInput.getMovementUpdateQueue();
+
+        // Disable gravity path while walk-on-air is enabled.
+        movementStatesComponent.getMovementStates().flying = true;
 
         Vector3d simulatedPos = new Vector3d(currentPos.x, currentPos.y, currentPos.z);
         double minPreClampTargetY = Double.POSITIVE_INFINITY;
@@ -167,11 +173,11 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
             positionCorrected = true;
         }
 
-        // Override gravity/falling at floor boundary by suppressing downward velocity.
-        if (currentPos.y <= floorY + FLOOR_EPSILON && velocity.getY() < 0.0) {
+        // Disable gravity by forcing vertical velocity to zero each tick.
+        if (velocity.getY() != 0.0 || velocity.getClientVelocity().getY() != 0.0) {
             velocity.setY(0.0);
             Vector3d clientVel = velocity.getClientVelocity();
-            velocity.setClient(clientVel.getX(), Math.max(0.0, clientVel.getY()), clientVel.getZ());
+            velocity.setClient(clientVel.getX(), 0.0, clientVel.getZ());
             velocitySuppressed = true;
         }
 
