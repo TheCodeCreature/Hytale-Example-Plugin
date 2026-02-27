@@ -120,7 +120,8 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         boolean positionCorrected = false;
         boolean velocitySuppressed = false;
 
-        Vector3d currentPos = playerRef.getTransform().getPosition();
+        Vector3d currentPos = transform.getPosition();
+        Vector3d playerRefPos = playerRef.getTransform().getPosition();
         List<PlayerInput.InputUpdate> queue = playerInput.getMovementUpdateQueue();
 
         Vector3d simulatedPos = new Vector3d(currentPos.x, currentPos.y, currentPos.z);
@@ -174,7 +175,7 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
             velocitySuppressed = true;
         }
 
-        logWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, queue.size(),
+        logWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, playerRefPos.y, floorY, queue.size(),
                 minPreClampTargetY, clampedToFloorCount, positionCorrected, velocitySuppressed, velocity.getY());
     }
 
@@ -182,6 +183,7 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         @Nonnull PlayerRef playerRef,
         @Nonnull UUID playerId,
         double currentY,
+        double playerRefY,
         @Nullable Double floorY,
         int queueSize,
         double minPreClampTargetY,
@@ -203,6 +205,7 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         LAST_DIAGNOSTIC_LOG_MS.put(playerId, now);
         LOGGER.info("[CollisionValidation] Walk-on-air state for " + playerRef.getUsername() +
             " (" + playerId + ") currentY=" + currentY +
+            " playerRefY=" + playerRefY +
             " floorY=" + floorY +
             " queueSize=" + queueSize +
             " minPreClampTargetY=" + minPreClampTargetY +
