@@ -169,14 +169,14 @@ public class ShapeCompositorPresets extends ShapeCompositor{
                         new EmptyBlockFill())
                 .build();
 
-//        // Operation 2: Floor exclusion that stays level (ignores pitch rotation)
-//        // This keeps the floor horizontal even when looking up or down
-//        this.addOperation("floor_exclusion",
-//                new Box(-1, -1, -1,1,1,1),
-//                OperationType.EXCLUDE,
-//                null)
-//                .withTransformFlags(noMove)
-//                .build();
+        // Operation 2: Floor exclusion that stays level (ignores pitch rotation)
+        // This keeps the floor horizontal even when looking up or down
+        this.addOperation("floor_exclusion",
+                new Box(-1, -1, -1,1,1,1),
+                OperationType.EXCLUDE,
+                null)
+                .withTransformFlags(noMove)
+                .build();
 
         return this;
     }
