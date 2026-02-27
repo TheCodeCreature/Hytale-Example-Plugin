@@ -118,7 +118,7 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         boolean walkOnAirEnabled = floorY != null;
         boolean correctionInjected = false;
 
-        Vector3d currentPos = transform.getPosition();
+        Vector3d currentPos = playerRef.getTransform().getPosition();
         List<PlayerInput.InputUpdate> queue = playerInput.getMovementUpdateQueue();
 
         // Gravity/physics may move the player even when there are no movement updates.
@@ -134,19 +134,14 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
 
             queue.add(0, new PlayerInput.AbsoluteMovement(currentPos.x, floorY, currentPos.z));
             correctionInjected = true;
+            LOGGER.fine("[CollisionValidation] ChecK:" + 0);
             LOGGER.warning("[CollisionValidation] Walk-on-air correction for " + playerRef.getUsername() +
                     " (" + playerId + ") currentY=" + currentPos.y + " floorY=" + floorY);
         }
 
         if (queue.isEmpty()) {
-            maybeLogWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, 0, false,
+            maybeLogWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, 0,
                     Double.NaN, 0, correctionInjected);
-            return;
-        }
-
-        // Get the transparency volume for this player
-        CameraTransparencyVolume volume = CameraTransparencyVolume.get(playerId);
-        if (volume == null && !walkOnAirEnabled) {
             return;
         }
 
@@ -181,6 +176,7 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
                         rel.setY(floorY - simulatedPos.y);
                     }
                     clampedToFloorCount++;
+                    LOGGER.fine("[CollisionValidation] ChecK:" + 1);
                     LOGGER.fine("[CollisionValidation] Walk-on-air clamped movement for " + playerRef.getUsername() +
                             " from targetY=" + targetPos.y + " to floorY=" + floorY);
                     targetPos = new Vector3d(targetPos.x, floorY, targetPos.z);
@@ -190,24 +186,13 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
                 boolean isLateralMovement = Math.abs(targetPos.x - simulatedPos.x) > 0.01 ||
                                            Math.abs(targetPos.z - simulatedPos.z) > 0.01;
 
-                if (volume != null && isLateralMovement && wouldCollideWithRealBlock(targetPos, volume)) {
-                    // Cancel lateral movement through transparent walls
-                    queue.remove(i);
-                    i--;
-
-                    LOGGER.fine("[CollisionValidation] Blocked lateral movement for " + playerRef.getUsername() + 
-                        " through transparent wall at " + targetPos);
-
-                    continue;
-                }
-
                 simulatedPos = targetPos;
             } else if (!wasRelative) {
                 // Non-movement updates don't change simulated position
             }
         }
 
-        maybeLogWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, queue.size(), volume != null,
+        maybeLogWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, queue.size(),
                 minPreClampTargetY, clampedToFloorCount, correctionInjected);
     }
 
@@ -217,7 +202,6 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         double currentY,
         @Nullable Double floorY,
         int queueSize,
-        boolean hasTransparencyVolume,
         double minPreClampTargetY,
         int clampedToFloorCount,
         boolean correctionInjected
@@ -233,11 +217,11 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         }
 
         LAST_DIAGNOSTIC_LOG_MS.put(playerId, now);
+        LOGGER.fine("[CollisionValidation] ChecK:" + 2);
         LOGGER.info("[CollisionValidation] Walk-on-air state for " + playerRef.getUsername() +
             " (" + playerId + ") currentY=" + currentY +
             " floorY=" + floorY +
             " queueSize=" + queueSize +
-            " hasVolume=" + hasTransparencyVolume +
             " minPreClampTargetY=" + minPreClampTargetY +
             " clampedToFloorCount=" + clampedToFloorCount +
             " correctionInjected=" + correctionInjected);
