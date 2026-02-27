@@ -116,6 +116,7 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         UUID playerId = playerRef.getUuid();
         Double floorY = WALK_ON_AIR_FLOORS.get(playerId);
         boolean walkOnAirEnabled = floorY != null;
+        boolean correctionInjected = false;
 
         Vector3d currentPos = transform.getPosition();
         List<PlayerInput.InputUpdate> queue = playerInput.getMovementUpdateQueue();
@@ -132,11 +133,14 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
             commandBuffer.addComponent(ref, Teleport.getComponentType(), teleport);
 
             queue.add(0, new PlayerInput.AbsoluteMovement(currentPos.x, floorY, currentPos.z));
+            correctionInjected = true;
             LOGGER.warning("[CollisionValidation] Walk-on-air correction for " + playerRef.getUsername() +
                     " (" + playerId + ") currentY=" + currentPos.y + " floorY=" + floorY);
         }
 
         if (queue.isEmpty()) {
+            maybeLogWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, 0, false,
+                    Double.NaN, 0, correctionInjected);
             return;
         }
 
@@ -146,9 +150,9 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
             return;
         }
 
-        maybeLogWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, queue.size(), volume != null);
-
         Vector3d simulatedPos = currentPos;
+        double minPreClampTargetY = Double.POSITIVE_INFINITY;
+        int clampedToFloorCount = 0;
 
         // Validate movement updates in queue order
         for (int i = 0; i < queue.size(); i++) {
@@ -168,12 +172,15 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
             }
 
             if (targetPos != null) {
+                minPreClampTargetY = Math.min(minPreClampTargetY, targetPos.y);
+
                 if (walkOnAirEnabled && floorY != null && targetPos.y < floorY) {
                     if (update instanceof PlayerInput.AbsoluteMovement abs) {
                         abs.setY(floorY);
                     } else if (update instanceof PlayerInput.RelativeMovement rel) {
                         rel.setY(floorY - simulatedPos.y);
                     }
+                    clampedToFloorCount++;
                     LOGGER.fine("[CollisionValidation] Walk-on-air clamped movement for " + playerRef.getUsername() +
                             " from targetY=" + targetPos.y + " to floorY=" + floorY);
                     targetPos = new Vector3d(targetPos.x, floorY, targetPos.z);
@@ -199,6 +206,9 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
                 // Non-movement updates don't change simulated position
             }
         }
+
+        maybeLogWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, queue.size(), volume != null,
+                minPreClampTargetY, clampedToFloorCount, correctionInjected);
     }
 
     private void maybeLogWalkOnAirDiagnostic(
@@ -207,7 +217,10 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         double currentY,
         @Nullable Double floorY,
         int queueSize,
-        boolean hasTransparencyVolume
+        boolean hasTransparencyVolume,
+        double minPreClampTargetY,
+        int clampedToFloorCount,
+        boolean correctionInjected
     ) {
         if (floorY == null) {
             return;
@@ -224,7 +237,10 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
             " (" + playerId + ") currentY=" + currentY +
             " floorY=" + floorY +
             " queueSize=" + queueSize +
-            " hasVolume=" + hasTransparencyVolume);
+            " hasVolume=" + hasTransparencyVolume +
+            " minPreClampTargetY=" + minPreClampTargetY +
+            " clampedToFloorCount=" + clampedToFloorCount +
+            " correctionInjected=" + correctionInjected);
     }
 
     /**
