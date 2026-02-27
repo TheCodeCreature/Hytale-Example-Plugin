@@ -12,8 +12,9 @@ import com.hypixel.hytale.component.dependency.SystemDependency;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.player.PlayerInput;
+import com.hypixel.hytale.server.core.modules.entity.player.PlayerProcessMovementSystem;
 import com.hypixel.hytale.server.core.modules.entity.player.PlayerSystems;
-import com.hypixel.hytale.server.core.modules.entity.teleport.Teleport;
+import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
@@ -27,12 +28,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
- * Validates player movement against real server-side blocks, preventing players
- * from walking through walls even when blocks are made transparent client-side.
- * 
- * This system runs BEFORE PlayerSystems.ProcessPlayerInput to intercept movement
- * updates and validate them against the actual server-side block state (not the
- * transparent client-side representation).
+ * Non-teleport walk-on-air floor controller.
+ *
+ * - Clamps incoming movement updates so target Y never drops below floorY
+ * - Directly clamps transform Y to floorY if physics moved player below floor
+ * - Cancels downward velocity at/under floor so gravity cannot keep pulling down
  */
 public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityStore> {
     
@@ -43,7 +43,8 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
     
     // Run BEFORE PlayerSystems.ProcessPlayerInput to intercept movement
     private static final Set<Dependency<EntityStore>> DEPENDENCIES = Set.of(
-        new SystemDependency<>(Order.BEFORE, PlayerSystems.ProcessPlayerInput.class)
+        new SystemDependency<>(Order.BEFORE, PlayerSystems.ProcessPlayerInput.class),
+        new SystemDependency<>(Order.BEFORE, PlayerProcessMovementSystem.class)
     );
     
     // Player hitbox dimensions (approximate)
@@ -79,7 +80,8 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
             query = Query.and(
                 PlayerInput.getComponentType(),
                 PlayerRef.getComponentType(),
-                TransformComponent.getComponentType()
+                TransformComponent.getComponentType(),
+                Velocity.getComponentType()
             );
         }
         return query;
@@ -102,26 +104,78 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         PlayerInput playerInput = archetypeChunk.getComponent(index, PlayerInput.getComponentType());
         TransformComponent transform = archetypeChunk.getComponent(index, TransformComponent.getComponentType());
         PlayerRef playerRef = archetypeChunk.getComponent(index, PlayerRef.getComponentType());
+        Velocity velocity = archetypeChunk.getComponent(index, Velocity.getComponentType());
         
-        if (playerInput == null || transform == null || playerRef == null) {
+        if (playerInput == null || transform == null || playerRef == null || velocity == null) {
             return;
         }
         
         UUID playerId = playerRef.getUuid();
         Double floorY = WALK_ON_AIR_FLOORS.get(playerId);
         boolean walkOnAirEnabled = floorY != null;
-        boolean correctionInjected = false;
+        if (!walkOnAirEnabled || floorY == null) {
+            return;
+        }
+
+        boolean positionCorrected = false;
+        boolean velocitySuppressed = false;
 
         Vector3d currentPos = playerRef.getTransform().getPosition();
         List<PlayerInput.InputUpdate> queue = playerInput.getMovementUpdateQueue();
 
-        Vector3d simulatedPos = currentPos;
+        Vector3d simulatedPos = new Vector3d(currentPos.x, currentPos.y, currentPos.z);
         double minPreClampTargetY = Double.POSITIVE_INFINITY;
         int clampedToFloorCount = 0;
 
-        if(walkOnAirEnabled)
+        for (int i = 0; i < queue.size(); i++) {
+            PlayerInput.InputUpdate update = queue.get(i);
+
+            Vector3d targetPos = null;
+            if (update instanceof PlayerInput.AbsoluteMovement abs) {
+                targetPos = new Vector3d(abs.getX(), abs.getY(), abs.getZ());
+            } else if (update instanceof PlayerInput.RelativeMovement rel) {
+                targetPos = new Vector3d(
+                    simulatedPos.x + rel.getX(),
+                    simulatedPos.y + rel.getY(),
+                    simulatedPos.z + rel.getZ()
+                );
+            }
+
+            if (targetPos == null) {
+                continue;
+            }
+
+            minPreClampTargetY = Math.min(minPreClampTargetY, targetPos.y);
+
+            if (targetPos.y < floorY) {
+                if (update instanceof PlayerInput.AbsoluteMovement abs) {
+                    abs.setY(floorY);
+                } else if (update instanceof PlayerInput.RelativeMovement rel) {
+                    rel.setY(floorY - simulatedPos.y);
+                }
+                clampedToFloorCount++;
+                targetPos = new Vector3d(targetPos.x, floorY, targetPos.z);
+            }
+
+            simulatedPos = targetPos;
+        }
+
+        // Direct transform correction without teleportation.
+        if (currentPos.y < floorY - FLOOR_EPSILON) {
+            currentPos.setY(floorY);
+            positionCorrected = true;
+        }
+
+        // Override gravity/falling at floor boundary by suppressing downward velocity.
+        if (currentPos.y <= floorY + FLOOR_EPSILON && velocity.getY() < 0.0) {
+            velocity.setY(0.0);
+            Vector3d clientVel = velocity.getClientVelocity();
+            velocity.setClient(clientVel.getX(), Math.max(0.0, clientVel.getY()), clientVel.getZ());
+            velocitySuppressed = true;
+        }
+
         logWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, queue.size(),
-                minPreClampTargetY, clampedToFloorCount, correctionInjected);
+                minPreClampTargetY, clampedToFloorCount, positionCorrected, velocitySuppressed, velocity.getY());
     }
 
     private void logWalkOnAirDiagnostic(
@@ -132,7 +186,9 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         int queueSize,
         double minPreClampTargetY,
         int clampedToFloorCount,
-        boolean correctionInjected
+        boolean positionCorrected,
+        boolean velocitySuppressed,
+        double velocityY
     ) {
         if (floorY == null) {
             return;
@@ -145,13 +201,14 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         }
 
         LAST_DIAGNOSTIC_LOG_MS.put(playerId, now);
-        LOGGER.fine("[CollisionValidation] ChecK:" + 2);
         LOGGER.info("[CollisionValidation] Walk-on-air state for " + playerRef.getUsername() +
             " (" + playerId + ") currentY=" + currentY +
             " floorY=" + floorY +
             " queueSize=" + queueSize +
             " minPreClampTargetY=" + minPreClampTargetY +
             " clampedToFloorCount=" + clampedToFloorCount +
-            " correctionInjected=" + correctionInjected);
+            " positionCorrected=" + positionCorrected +
+            " velocitySuppressed=" + velocitySuppressed +
+            " velocityY=" + velocityY);
     }
 }
