@@ -192,6 +192,20 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
             }
         }
 
+        if (walkOnAirEnabled && floorY != null && clampedToFloorCount > 0) {
+            Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
+            Teleport floorLockTeleport = Teleport.createExact(
+                new Vector3d(simulatedPos.x, floorY, simulatedPos.z),
+                transform.getRotation(),
+                transform.getRotation()
+            ).withoutVelocityReset();
+            commandBuffer.addComponent(ref, Teleport.getComponentType(), floorLockTeleport);
+            LOGGER.warning("[CollisionValidation] Walk-on-air post-clamp correction for " + playerRef.getUsername() +
+                    " (" + playerId + ") clampedToFloorCount=" + clampedToFloorCount +
+                    " minPreClampTargetY=" + minPreClampTargetY + " floorY=" + floorY);
+            correctionInjected = true;
+        }
+
         maybeLogWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, queue.size(),
                 minPreClampTargetY, clampedToFloorCount, correctionInjected);
     }
