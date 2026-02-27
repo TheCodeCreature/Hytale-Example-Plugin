@@ -4,6 +4,7 @@ import com.UnobstructedThirdPerson.command.UnobstructedCamera.UnobstructedCamera
 import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
 import com.UnobstructedThirdPerson.command.debug.DebugCommand;
 import com.UnobstructedThirdPerson.command.PreviewCommand;
+import com.UnobstructedThirdPerson.command.WalkOnAirCommand;
 import com.UnobstructedThirdPerson.movement.PlayerCollisionValidationSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
 import com.UnobstructedThirdPerson.shape.ShapeCompositorPresets;
@@ -32,6 +33,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         this.getCommandRegistry().registerCommand(new UnobstructedCameraCommand());
         this.getCommandRegistry().registerCommand(new DebugCommand());
         this.getCommandRegistry().registerCommand(new PreviewCommand());
+        this.getCommandRegistry().registerCommand(new WalkOnAirCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, UnobstructedThirdPersonPlugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, UnobstructedThirdPersonPlugin::onPlayerDisconnect);
         
@@ -62,5 +64,6 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         PlayerRef playerRef = event.getPlayerRef();
         CameraTransparencyVolume.remove(playerRef.getUuid());
         PreviewBlockManager.remove(playerRef.getUuid());
+        PlayerCollisionValidationSystem.disableWalkOnAir(playerRef.getUuid());
     }
 }
