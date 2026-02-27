@@ -1,7 +1,5 @@
 package com.UnobstructedThirdPerson.movement;
 
-import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
-import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
@@ -51,8 +49,6 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
     );
     
     // Player hitbox dimensions (approximate)
-    private static final double PLAYER_WIDTH = 0.6;
-    private static final double PLAYER_HEIGHT = 1.8;
     private static final double FLOOR_EPSILON = 0.01;
     private static final long DIAGNOSTIC_LOG_INTERVAL_MS = 1000;
 
@@ -182,10 +178,6 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
                     targetPos = new Vector3d(targetPos.x, floorY, targetPos.z);
                 }
 
-                // Only block lateral (horizontal) movement through walls
-                boolean isLateralMovement = Math.abs(targetPos.x - simulatedPos.x) > 0.01 ||
-                                           Math.abs(targetPos.z - simulatedPos.z) > 0.01;
-
                 simulatedPos = targetPos;
             } else if (!wasRelative) {
                 // Non-movement updates don't change simulated position
@@ -225,68 +217,5 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
             " minPreClampTargetY=" + minPreClampTargetY +
             " clampedToFloorCount=" + clampedToFloorCount +
             " correctionInjected=" + correctionInjected);
-    }
-
-    /**
-     * Check if the target position would collide with a real server-side block
-     * (not the transparent client-side version).
-     */
-    private boolean wouldCollideWithRealBlock(Vector3d targetPos, CameraTransparencyVolume volume) {
-        Map<Long, BlockSnapshot> activeBlocks = volume.getActiveBlocks();
-        
-        // Check blocks in the player's hitbox at the target position
-        int minX = (int) Math.floor(targetPos.x - PLAYER_WIDTH / 2);
-        int maxX = (int) Math.ceil(targetPos.x + PLAYER_WIDTH / 2);
-        int minY = (int) Math.floor(targetPos.y);
-        int maxY = (int) Math.ceil(targetPos.y + PLAYER_HEIGHT);
-        int minZ = (int) Math.floor(targetPos.z - PLAYER_WIDTH / 2);
-        int maxZ = (int) Math.ceil(targetPos.z + PLAYER_WIDTH / 2);
-        
-        for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
-                for (int z = minZ; z <= maxZ; z++) {
-                    long packedPos = BlockUtil.packUnchecked(x, y, z);
-                    
-                    // Check if this position is transparent client-side
-                    BlockSnapshot snapshot = activeBlocks.get(packedPos);
-                    if (snapshot != null) {
-                        // This block is transparent client-side, check if it's solid server-side
-                        BlockType blockType = BlockType.getAssetMap().getAsset(snapshot.blockId());
-                        
-                        if (blockType != null && isSolidBlock(blockType)) {
-                            return true; // Would collide with real block
-                        }
-                    }
-                }
-            }
-        }
-        
-        return false;
-    }
-    
-    /**
-     * Check if a block type is solid (blocks player movement).
-     * A block is considered solid if it has collision and is not climbable/passable.
-     */
-    private boolean isSolidBlock(BlockType blockType) {
-        // Air blocks are never solid
-        if (blockType.getId() == null || blockType.getId().isEmpty() || blockType.getId().equals("Air")) {
-            return false;
-        }
-        
-        // Climbable blocks (ladders, vines) don't block movement
-        if (blockType.getMovementSettings() != null && blockType.getMovementSettings().isClimbable()) {
-            return false;
-        }
-        
-        // Check if block has a hitbox type (collision)
-        // Blocks without a hitbox type typically have no collision
-        String hitboxType = blockType.getHitboxType();
-        if (hitboxType == null || hitboxType.isEmpty() || hitboxType.equals("None")) {
-            return false;
-        }
-        
-        // Default: blocks with hitboxes are solid
-        return true;
     }
 }
