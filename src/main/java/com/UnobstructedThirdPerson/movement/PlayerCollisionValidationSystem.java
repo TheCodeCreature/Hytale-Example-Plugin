@@ -51,6 +51,7 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
     // Player hitbox dimensions (approximate)
     private static final double PLAYER_WIDTH = 0.6;
     private static final double PLAYER_HEIGHT = 1.8;
+    private static final double FLOOR_EPSILON = 0.01;
 
     // Per-player walk-on-air floor lock height (Y coordinate)
     private static final Map<UUID, Double> WALK_ON_AIR_FLOORS = new ConcurrentHashMap<>();
@@ -107,14 +108,24 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
             return;
         }
         
-        List<PlayerInput.InputUpdate> queue = playerInput.getMovementUpdateQueue();
-        if (queue.isEmpty()) {
-            return;
-        }
-
         UUID playerId = playerRef.getUuid();
         Double floorY = WALK_ON_AIR_FLOORS.get(playerId);
         boolean walkOnAirEnabled = floorY != null;
+
+        Vector3d currentPos = transform.getPosition();
+        List<PlayerInput.InputUpdate> queue = playerInput.getMovementUpdateQueue();
+
+        // Gravity/physics may move the player even when there are no movement updates.
+        // Inject an absolute movement correction so floor lock still applies.
+        if (walkOnAirEnabled && floorY != null && currentPos.y < floorY - FLOOR_EPSILON) {
+            queue.add(0, new PlayerInput.AbsoluteMovement(currentPos.x, floorY, currentPos.z));
+            LOGGER.info("[CollisionValidation] Walk-on-air correction for " + playerRef.getUsername() +
+                    " (" + playerId + ") currentY=" + currentPos.y + " floorY=" + floorY);
+        }
+
+        if (queue.isEmpty()) {
+            return;
+        }
 
         // Get the transparency volume for this player
         CameraTransparencyVolume volume = CameraTransparencyVolume.get(playerId);
@@ -122,7 +133,6 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
             return;
         }
 
-        Vector3d currentPos = transform.getPosition();
         Vector3d simulatedPos = currentPos;
 
         // Validate movement updates in queue order
@@ -149,6 +159,8 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
                     } else if (update instanceof PlayerInput.RelativeMovement rel) {
                         rel.setY(floorY - simulatedPos.y);
                     }
+                    LOGGER.fine("[CollisionValidation] Walk-on-air clamped movement for " + playerRef.getUsername() +
+                            " from targetY=" + targetPos.y + " to floorY=" + floorY);
                     targetPos = new Vector3d(targetPos.x, floorY, targetPos.z);
                 }
 

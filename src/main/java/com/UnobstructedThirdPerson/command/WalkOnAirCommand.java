@@ -18,8 +18,11 @@ import javax.annotation.Nullable;
 
 import java.util.Locale;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 public class WalkOnAirCommand extends AbstractPlayerCommand {
+
+    private static final Logger LOGGER = Logger.getLogger("WalkOnAirCommand");
 
     private final OptionalArg<String> modeArg;
     private final OptionalArg<Integer> heightArg;
@@ -39,6 +42,7 @@ public class WalkOnAirCommand extends AbstractPlayerCommand {
 
         Vector3d position = getPlayerPosition(store, ref);
         double defaultFloor = position != null ? Math.floor(position.y) : 0.0;
+        double currentY = position != null ? position.y : Double.NaN;
 
         String mode = modeArg.provided(context)
             ? modeArg.get(context).toLowerCase(Locale.ROOT)
@@ -51,6 +55,7 @@ public class WalkOnAirCommand extends AbstractPlayerCommand {
             case "enable":
                 PlayerCollisionValidationSystem.enableWalkOnAir(playerId, targetFloor);
                 playerRef.sendMessage(Message.raw("Walk-on-air enabled at floor Y=" + formatFloor(targetFloor)));
+                LOGGER.info("[WalkOnAir] Enabled for " + playerRef.getUsername() + " (" + playerId + ") floorY=" + targetFloor + " currentY=" + currentY);
                 return;
             case "off":
             case "disable":
@@ -60,6 +65,7 @@ public class WalkOnAirCommand extends AbstractPlayerCommand {
                 }
                 PlayerCollisionValidationSystem.disableWalkOnAir(playerId);
                 playerRef.sendMessage(Message.raw("Walk-on-air disabled."));
+                LOGGER.info("[WalkOnAir] Disabled for " + playerRef.getUsername() + " (" + playerId + ") currentY=" + currentY);
                 return;
             case "set":
                 if (!hasHeight) {
@@ -68,6 +74,7 @@ public class WalkOnAirCommand extends AbstractPlayerCommand {
                 }
                 PlayerCollisionValidationSystem.enableWalkOnAir(playerId, targetFloor);
                 playerRef.sendMessage(Message.raw("Walk-on-air floor set to Y=" + formatFloor(targetFloor)));
+                LOGGER.info("[WalkOnAir] Floor set for " + playerRef.getUsername() + " (" + playerId + ") floorY=" + targetFloor + " currentY=" + currentY);
                 return;
             case "status":
                 if (!enabled) {
@@ -76,18 +83,22 @@ public class WalkOnAirCommand extends AbstractPlayerCommand {
                 }
                 Double activeFloor = PlayerCollisionValidationSystem.getWalkOnAirFloor(playerId);
                 playerRef.sendMessage(Message.raw("Walk-on-air is enabled at Y=" + formatFloor(activeFloor != null ? activeFloor : defaultFloor)));
+                LOGGER.info("[WalkOnAir] Status for " + playerRef.getUsername() + " (" + playerId + ") enabled=true floorY=" + activeFloor + " currentY=" + currentY);
                 return;
             case "toggle":
                 if (enabled) {
                     PlayerCollisionValidationSystem.disableWalkOnAir(playerId);
                     playerRef.sendMessage(Message.raw("Walk-on-air disabled."));
+                    LOGGER.info("[WalkOnAir] Toggled OFF for " + playerRef.getUsername() + " (" + playerId + ") currentY=" + currentY);
                 } else {
                     PlayerCollisionValidationSystem.enableWalkOnAir(playerId, targetFloor);
                     playerRef.sendMessage(Message.raw("Walk-on-air enabled at floor Y=" + formatFloor(targetFloor)));
+                    LOGGER.info("[WalkOnAir] Toggled ON for " + playerRef.getUsername() + " (" + playerId + ") floorY=" + targetFloor + " currentY=" + currentY);
                 }
                 return;
             default:
                 playerRef.sendMessage(Message.raw("Unknown mode: " + mode + ". Use on, off, toggle, set, or status."));
+                LOGGER.info("[WalkOnAir] Unknown mode from " + playerRef.getUsername() + " (" + playerId + "): " + mode);
         }
     }
 
