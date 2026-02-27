@@ -9,9 +9,7 @@ import com.hypixel.hytale.component.dependency.Dependency;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.component.dependency.Order;
 import com.hypixel.hytale.component.dependency.SystemDependency;
-import com.hypixel.hytale.math.block.BlockUtil;
 import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.player.PlayerInput;
 import com.hypixel.hytale.server.core.modules.entity.player.PlayerSystems;
@@ -117,92 +115,16 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         Vector3d currentPos = playerRef.getTransform().getPosition();
         List<PlayerInput.InputUpdate> queue = playerInput.getMovementUpdateQueue();
 
-        // Gravity/physics may move the player even when there are no movement updates.
-        // Inject an absolute movement correction so floor lock still applies.
-        if (walkOnAirEnabled && floorY != null && currentPos.y < floorY - FLOOR_EPSILON) {
-            Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
-            Teleport teleport = Teleport.createExact(
-                new Vector3d(currentPos.x, floorY, currentPos.z),
-                transform.getRotation(),
-                transform.getRotation()
-            ).withoutVelocityReset();
-            commandBuffer.addComponent(ref, Teleport.getComponentType(), teleport);
-
-            queue.add(0, new PlayerInput.AbsoluteMovement(currentPos.x, floorY, currentPos.z));
-            correctionInjected = true;
-            LOGGER.fine("[CollisionValidation] ChecK:" + 0);
-            LOGGER.warning("[CollisionValidation] Walk-on-air correction for " + playerRef.getUsername() +
-                    " (" + playerId + ") currentY=" + currentPos.y + " floorY=" + floorY);
-        }
-
-        if (queue.isEmpty()) {
-            maybeLogWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, 0,
-                    Double.NaN, 0, correctionInjected);
-            return;
-        }
-
         Vector3d simulatedPos = currentPos;
         double minPreClampTargetY = Double.POSITIVE_INFINITY;
         int clampedToFloorCount = 0;
 
-        // Validate movement updates in queue order
-        for (int i = 0; i < queue.size(); i++) {
-            PlayerInput.InputUpdate update = queue.get(i);
-            boolean wasRelative = update instanceof PlayerInput.RelativeMovement;
-
-            Vector3d targetPos = null;
-
-            if (update instanceof PlayerInput.AbsoluteMovement abs) {
-                targetPos = new Vector3d(abs.getX(), abs.getY(), abs.getZ());
-            } else if (update instanceof PlayerInput.RelativeMovement rel) {
-                targetPos = new Vector3d(
-                    simulatedPos.x + rel.getX(),
-                    simulatedPos.y + rel.getY(),
-                    simulatedPos.z + rel.getZ()
-                );
-            }
-
-            if (targetPos != null) {
-                minPreClampTargetY = Math.min(minPreClampTargetY, targetPos.y);
-
-                if (walkOnAirEnabled && floorY != null && targetPos.y < floorY) {
-                    if (update instanceof PlayerInput.AbsoluteMovement abs) {
-                        abs.setY(floorY);
-                    } else if (update instanceof PlayerInput.RelativeMovement rel) {
-                        rel.setY(floorY - simulatedPos.y);
-                    }
-                    clampedToFloorCount++;
-                    LOGGER.fine("[CollisionValidation] ChecK:" + 1);
-                    LOGGER.fine("[CollisionValidation] Walk-on-air clamped movement for " + playerRef.getUsername() +
-                            " from targetY=" + targetPos.y + " to floorY=" + floorY);
-                    targetPos = new Vector3d(targetPos.x, floorY, targetPos.z);
-                }
-
-                simulatedPos = targetPos;
-            } else if (!wasRelative) {
-                // Non-movement updates don't change simulated position
-            }
-        }
-
-        if (walkOnAirEnabled && floorY != null && clampedToFloorCount > 0) {
-            Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
-            Teleport floorLockTeleport = Teleport.createExact(
-                new Vector3d(simulatedPos.x, floorY, simulatedPos.z),
-                transform.getRotation(),
-                transform.getRotation()
-            ).withoutVelocityReset();
-            commandBuffer.addComponent(ref, Teleport.getComponentType(), floorLockTeleport);
-            LOGGER.warning("[CollisionValidation] Walk-on-air post-clamp correction for " + playerRef.getUsername() +
-                    " (" + playerId + ") clampedToFloorCount=" + clampedToFloorCount +
-                    " minPreClampTargetY=" + minPreClampTargetY + " floorY=" + floorY);
-            correctionInjected = true;
-        }
-
-        maybeLogWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, queue.size(),
+        if(walkOnAirEnabled)
+        logWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, queue.size(),
                 minPreClampTargetY, clampedToFloorCount, correctionInjected);
     }
 
-    private void maybeLogWalkOnAirDiagnostic(
+    private void logWalkOnAirDiagnostic(
         @Nonnull PlayerRef playerRef,
         @Nonnull UUID playerId,
         double currentY,
