@@ -52,9 +52,11 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
     private static final double PLAYER_WIDTH = 0.6;
     private static final double PLAYER_HEIGHT = 1.8;
     private static final double FLOOR_EPSILON = 0.01;
+    private static final long DIAGNOSTIC_LOG_INTERVAL_MS = 1000;
 
     // Per-player walk-on-air floor lock height (Y coordinate)
     private static final Map<UUID, Double> WALK_ON_AIR_FLOORS = new ConcurrentHashMap<>();
+    private static final Map<UUID, Long> LAST_DIAGNOSTIC_LOG_MS = new ConcurrentHashMap<>();
 
     public static void enableWalkOnAir(@Nonnull UUID playerId, double floorY) {
         WALK_ON_AIR_FLOORS.put(playerId, floorY);
@@ -62,6 +64,7 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
 
     public static void disableWalkOnAir(@Nonnull UUID playerId) {
         WALK_ON_AIR_FLOORS.remove(playerId);
+        LAST_DIAGNOSTIC_LOG_MS.remove(playerId);
     }
 
     public static boolean isWalkOnAirEnabled(@Nonnull UUID playerId) {
@@ -133,6 +136,8 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
             return;
         }
 
+        maybeLogWalkOnAirDiagnostic(playerRef, playerId, currentPos.y, floorY, queue.size(), volume != null);
+
         Vector3d simulatedPos = currentPos;
 
         // Validate movement updates in queue order
@@ -184,6 +189,32 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
                 // Non-movement updates don't change simulated position
             }
         }
+    }
+
+    private void maybeLogWalkOnAirDiagnostic(
+        @Nonnull PlayerRef playerRef,
+        @Nonnull UUID playerId,
+        double currentY,
+        @Nullable Double floorY,
+        int queueSize,
+        boolean hasTransparencyVolume
+    ) {
+        if (floorY == null) {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        Long previous = LAST_DIAGNOSTIC_LOG_MS.get(playerId);
+        if (previous != null && (now - previous) < DIAGNOSTIC_LOG_INTERVAL_MS) {
+            return;
+        }
+
+        LAST_DIAGNOSTIC_LOG_MS.put(playerId, now);
+        LOGGER.info("[CollisionValidation] Walk-on-air state for " + playerRef.getUsername() +
+            " (" + playerId + ") currentY=" + currentY +
+            " floorY=" + floorY +
+            " queueSize=" + queueSize +
+            " hasVolume=" + hasTransparencyVolume);
     }
 
     /**
