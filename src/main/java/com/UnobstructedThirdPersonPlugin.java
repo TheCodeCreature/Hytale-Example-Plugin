@@ -4,10 +4,9 @@ import com.UnobstructedThirdPerson.command.UnobstructedCamera.UnobstructedCamera
 import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
 import com.UnobstructedThirdPerson.command.debug.DebugCommand;
 import com.UnobstructedThirdPerson.command.PreviewCommand;
-import com.UnobstructedThirdPerson.command.WalkOnAirCommand;
-import com.UnobstructedThirdPerson.movement.PlayerCollisionValidationSystem;
+import com.UnobstructedThirdPerson.command.NewMovementCommand;
+import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
-import com.UnobstructedThirdPerson.shape.ShapeCompositorPresets;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
@@ -33,13 +32,13 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         this.getCommandRegistry().registerCommand(new UnobstructedCameraCommand());
         this.getCommandRegistry().registerCommand(new DebugCommand());
         this.getCommandRegistry().registerCommand(new PreviewCommand());
-        this.getCommandRegistry().registerCommand(new WalkOnAirCommand());
+        this.getCommandRegistry().registerCommand(new NewMovementCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, UnobstructedThirdPersonPlugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, UnobstructedThirdPersonPlugin::onPlayerDisconnect);
         
         // Register server-side collision validation system
         // Now works because we declared dependency on EntityModule in MANIFEST
-        this.getEntityStoreRegistry().registerSystem(new PlayerCollisionValidationSystem());
+        this.getEntityStoreRegistry().registerSystem(new NewMovementSystem());
     }
 
     private static void onPlayerReady(PlayerReadyEvent event) {
@@ -64,6 +63,6 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         PlayerRef playerRef = event.getPlayerRef();
         CameraTransparencyVolume.remove(playerRef.getUuid());
         PreviewBlockManager.remove(playerRef.getUuid());
-        PlayerCollisionValidationSystem.disableWalkOnAir(playerRef.getUuid());
+        NewMovementSystem.disableMoonGravity(playerRef.getUuid());
     }
 }

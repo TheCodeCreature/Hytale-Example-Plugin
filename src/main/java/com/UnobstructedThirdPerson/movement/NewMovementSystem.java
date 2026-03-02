@@ -6,7 +6,6 @@ import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
-import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.protocol.MovementSettings;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
@@ -20,14 +19,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityStore> {
+public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
 
     private static final double DEFAULT_MOON_GRAVITY_FACTOR = 0.165;
     private static final double MIN_GRAVITY_FACTOR = 0.05;
     private static final double MAX_GRAVITY_FACTOR = 1.0;
     private static final double EPSILON = 0.0001;
 
-    private static final ConcurrentHashMap<UUID, Double> WALK_ON_AIR_FLOORS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<UUID, Double> MOON_GRAVITY_FACTORS = new ConcurrentHashMap<>();
     private static final Set<UUID> MOON_PROFILE_APPLIED = ConcurrentHashMap.newKeySet();
 
@@ -41,7 +39,7 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
     @Nonnull
     private final Query<EntityStore> query;
 
-    public PlayerCollisionValidationSystem() {
+    public NewMovementSystem() {
         this.playerRefComponentType = PlayerRef.getComponentType();
         this.movementManagerComponentType = MovementManager.getComponentType();
         this.transformComponentType = TransformComponent.getComponentType();
@@ -84,23 +82,7 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
 
         UUID playerId = playerRef.getUuid();
 
-        applyWalkOnAir(playerId, transform, velocity);
         applyMoonGravity(playerId, movementManager, playerRef);
-    }
-
-    private static void applyWalkOnAir(@Nonnull UUID playerId, @Nonnull TransformComponent transform, @Nonnull Velocity velocity) {
-        Double floorY = WALK_ON_AIR_FLOORS.get(playerId);
-        if (floorY == null) {
-            return;
-        }
-
-        Vector3d position = transform.getPosition();
-        if (position.getY() < floorY) {
-            position.setY(floorY);
-            if (velocity.getY() < 0.0) {
-                velocity.setY(0.0);
-            }
-        }
     }
 
     private static void applyMoonGravity(@Nonnull UUID playerId, @Nonnull MovementManager movementManager, @Nonnull PlayerRef playerRef) {
@@ -119,7 +101,7 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
             return;
         }
 
-        float scale = (float) clamp(gravityFactor, MIN_GRAVITY_FACTOR, MAX_GRAVITY_FACTOR);
+        float scale = (float) clamp(gravityFactor);
         float jumpBoost = (float) (1.0 / Math.sqrt(scale));
 
         float targetJumpForce = defaults.jumpForce * jumpBoost;
@@ -129,18 +111,19 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         float targetMinRoll = defaults.minFallSpeedToEngageRoll * scale;
         float targetMaxRoll = defaults.maxFallSpeedToEngageRoll * scale;
 
-        if (!approximately(active.jumpForce, targetJumpForce)
-            || !approximately(active.swimJumpForce, targetSwimJumpForce)
-            || !approximately(active.variableJumpFallForce, targetFallForce)
-            || !approximately(active.fallJumpForce, targetFallJumpForce)
-            || !approximately(active.minFallSpeedToEngageRoll, targetMinRoll)
-            || !approximately(active.maxFallSpeedToEngageRoll, targetMaxRoll)) {
+        if (approximately(active.jumpForce, targetJumpForce)
+            || approximately(active.swimJumpForce, targetSwimJumpForce)
+            || approximately(active.variableJumpFallForce, targetFallForce)
+            || approximately(active.fallJumpForce, targetFallJumpForce)
+            || approximately(active.minFallSpeedToEngageRoll, targetMinRoll)
+            || approximately(active.maxFallSpeedToEngageRoll, targetMaxRoll)) {
             active.jumpForce = targetJumpForce;
             active.swimJumpForce = targetSwimJumpForce;
             active.variableJumpFallForce = targetFallForce;
             active.fallJumpForce = targetFallJumpForce;
             active.minFallSpeedToEngageRoll = targetMinRoll;
             active.maxFallSpeedToEngageRoll = targetMaxRoll;
+            active.variableJumpFallForce = 1;
             movementManager.update(playerRef.getPacketHandler());
         }
 
@@ -152,7 +135,7 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
     }
 
     public static void enableMoonGravity(@Nonnull UUID playerId, double gravityFactor) {
-        MOON_GRAVITY_FACTORS.put(playerId, clamp(gravityFactor, MIN_GRAVITY_FACTOR, MAX_GRAVITY_FACTOR));
+        MOON_GRAVITY_FACTORS.put(playerId, clamp(gravityFactor));
     }
 
     public static void disableMoonGravity(@Nonnull UUID playerId) {
@@ -168,29 +151,11 @@ public class PlayerCollisionValidationSystem extends EntityTickingSystem<EntityS
         return MOON_GRAVITY_FACTORS.get(playerId);
     }
 
-    public static void enableWalkOnAir(@Nonnull UUID playerId, double floorY) {
-        WALK_ON_AIR_FLOORS.put(playerId, floorY);
-    }
-
-    public static void disableWalkOnAir(@Nonnull UUID playerId) {
-        WALK_ON_AIR_FLOORS.remove(playerId);
-        disableMoonGravity(playerId);
-    }
-
-    public static boolean isWalkOnAirEnabled(@Nonnull UUID playerId) {
-        return WALK_ON_AIR_FLOORS.containsKey(playerId);
-    }
-
-    @Nullable
-    public static Double getWalkOnAirFloor(@Nonnull UUID playerId) {
-        return WALK_ON_AIR_FLOORS.get(playerId);
-    }
-
     private static boolean approximately(float a, float b) {
-        return Math.abs(a - b) <= EPSILON;
+        return !(Math.abs(a - b) <= EPSILON);
     }
 
-    private static double clamp(double value, double min, double max) {
-        return Math.max(min, Math.min(max, value));
+    private static double clamp(double value) {
+        return Math.max(NewMovementSystem.MIN_GRAVITY_FACTOR, Math.min(NewMovementSystem.MAX_GRAVITY_FACTOR, value));
     }
 }
