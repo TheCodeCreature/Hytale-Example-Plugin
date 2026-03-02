@@ -8,8 +8,6 @@ import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.protocol.MovementSettings;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
-import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
-import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
@@ -33,22 +31,14 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
     private final ComponentType<EntityStore, PlayerRef> playerRefComponentType;
     private final ComponentType<EntityStore, MovementManager> movementManagerComponentType;
     @Nonnull
-    private final ComponentType<EntityStore, TransformComponent> transformComponentType;
-    @Nonnull
-    private final ComponentType<EntityStore, Velocity> velocityComponentType;
-    @Nonnull
     private final Query<EntityStore> query;
 
     public NewMovementSystem() {
         this.playerRefComponentType = PlayerRef.getComponentType();
         this.movementManagerComponentType = MovementManager.getComponentType();
-        this.transformComponentType = TransformComponent.getComponentType();
-        this.velocityComponentType = Velocity.getComponentType();
         this.query = Query.and(
             this.playerRefComponentType,
-            this.movementManagerComponentType,
-            this.transformComponentType,
-            this.velocityComponentType
+            this.movementManagerComponentType
         );
     }
 
@@ -73,10 +63,8 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
     ) {
         PlayerRef playerRef = archetypeChunk.getComponent(index, this.playerRefComponentType);
         MovementManager movementManager = archetypeChunk.getComponent(index, this.movementManagerComponentType);
-        TransformComponent transform = archetypeChunk.getComponent(index, this.transformComponentType);
-        Velocity velocity = archetypeChunk.getComponent(index, this.velocityComponentType);
 
-        if (playerRef == null || movementManager == null || transform == null || velocity == null) {
+        if (playerRef == null || movementManager == null) {
             return;
         }
 
@@ -102,28 +90,39 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
         }
 
         float scale = (float) clamp(gravityFactor);
-        float jumpBoost = (float) (1.0 / Math.sqrt(scale));
+        float jumpBoost = 1.0F + ((1.0F - scale) * 0.35F);
 
+        // Vertical launch impulse from a grounded jump. Higher => faster takeoff and taller jump.
         float targetJumpForce = defaults.jumpForce * jumpBoost;
+        // Vertical launch impulse when swimming. Keep aligned with jump-force feel in water.
         float targetSwimJumpForce = defaults.swimJumpForce * jumpBoost;
-        float targetFallForce = defaults.variableJumpFallForce * scale;
+        // Additional gravity-like downward force while airborne. Lower => slower fall.
+        float targetFallForce = defaults.variableJumpFallForce * scale * 0.7F;
+        // Extra jump force used in fall-related jump transitions. Higher => snappier rebound behavior.
         float targetFallJumpForce = defaults.fallJumpForce * jumpBoost;
+        // Minimum vertical speed before roll logic engages. Scale with gravity profile.
         float targetMinRoll = defaults.minFallSpeedToEngageRoll * scale;
+        // Maximum vertical speed for roll engagement window. Scale with gravity profile.
         float targetMaxRoll = defaults.maxFallSpeedToEngageRoll * scale;
 
-        if (approximately(active.jumpForce, targetJumpForce)
-            || approximately(active.swimJumpForce, targetSwimJumpForce)
-            || approximately(active.variableJumpFallForce, targetFallForce)
-            || approximately(active.fallJumpForce, targetFallJumpForce)
-            || approximately(active.minFallSpeedToEngageRoll, targetMinRoll)
-            || approximately(active.maxFallSpeedToEngageRoll, targetMaxRoll)) {
+        if (!isWithinEpsilon(active.jumpForce, targetJumpForce)
+            || !isWithinEpsilon(active.swimJumpForce, targetSwimJumpForce)
+            || !isWithinEpsilon(active.variableJumpFallForce, targetFallForce)
+            || !isWithinEpsilon(active.fallJumpForce, targetFallJumpForce)
+            || !isWithinEpsilon(active.minFallSpeedToEngageRoll, targetMinRoll)
+            || !isWithinEpsilon(active.maxFallSpeedToEngageRoll, targetMaxRoll)) {
+            // Controls vertical takeoff speed on normal jump.
             active.jumpForce = targetJumpForce;
+            // Controls vertical takeoff speed on swim jump.
             active.swimJumpForce = targetSwimJumpForce;
+            // Controls airborne downward pull (primary falling-speed dial).
             active.variableJumpFallForce = targetFallForce;
+            // Controls extra jump force used during fall-transition jump logic.
             active.fallJumpForce = targetFallJumpForce;
+            // Controls when rolling starts based on fall speed.
             active.minFallSpeedToEngageRoll = targetMinRoll;
+            // Controls upper roll-engagement speed threshold.
             active.maxFallSpeedToEngageRoll = targetMaxRoll;
-            active.variableJumpFallForce = 1;
             movementManager.update(playerRef.getPacketHandler());
         }
 
@@ -151,8 +150,8 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
         return MOON_GRAVITY_FACTORS.get(playerId);
     }
 
-    private static boolean approximately(float a, float b) {
-        return !(Math.abs(a - b) <= EPSILON);
+    private static boolean isWithinEpsilon(float a, float b) {
+        return Math.abs(a - b) <= EPSILON;
     }
 
     private static double clamp(double value) {
