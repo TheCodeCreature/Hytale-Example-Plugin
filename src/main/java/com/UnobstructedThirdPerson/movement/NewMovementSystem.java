@@ -89,67 +89,70 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        float scale = (float) clamp(gravityFactor);
+        float signedScale = (float) clamp(gravityFactor);
+        float gravityScale = Math.max(0.05F, Math.abs(signedScale));
+        float moonStrength = 1.0F - Math.min(gravityScale, 1.0F);
 
-        // Vertical launch impulse from a grounded jump. Higher => faster takeoff and taller jump.
-        float targetJumpForce = defaults.jumpForce * scale;
-        // Vertical launch impulse when swimming. Keep aligned with jump-force feel in water.
-        float targetSwimJumpForce = defaults.swimJumpForce * scale;
-        // Additional gravity-like downward force while airborne. Lower => slower fall.
-        float targetFallForce = defaults.variableJumpFallForce * scale;
-        // Extra jump force used in fall-related jump transitions. Higher => snappier rebound behavior.
-        float targetFallJumpForce = defaults.fallJumpForce * scale;
-        // Minimum vertical speed before roll logic engages. Scale with gravity profile.
-        float targetMinRoll = defaults.minFallSpeedToEngageRoll * scale;
-        // Maximum vertical speed for roll engagement window. Scale with gravity profile.
-        float targetMaxRoll = defaults.maxFallSpeedToEngageRoll * scale;
+        float targetMass = defaults.mass * gravityScale;
+        float targetDragCoefficient = defaults.dragCoefficient * (1.0F + moonStrength * 5.0F);
+        boolean targetInvertedGravity = signedScale < 0.0F ? !defaults.invertedGravity : defaults.invertedGravity;
 
-        float airDragMin = defaults.airDragMin * scale;
-        float airDragMax = defaults.airDragMax * scale;
-        float airDragMinSpeed = defaults.airDragMinSpeed * scale;
-        float airDragMaxSpeed = defaults.airDragMaxSpeed * scale;
-        float airFrictionMin = defaults.airFrictionMin * scale;
-        float airFrictionMax = defaults.airFrictionMax * scale;
-        float airFrictionMinSpeed = defaults.airFrictionMinSpeed * scale;
-        float airFrictionMaxSpeed = defaults.airFrictionMaxSpeed * scale;
+        float targetJumpForce = defaults.jumpForce * (1.0F + moonStrength * 0.25F);
+        float targetSwimJumpForce = defaults.swimJumpForce * (1.0F + moonStrength * 0.2F);
+        float targetFallForce = defaults.variableJumpFallForce * gravityScale;
+        float targetFallJumpForce = defaults.fallJumpForce * (0.85F + moonStrength * 0.15F);
+        float targetMinRoll = defaults.minFallSpeedToEngageRoll * gravityScale;
+        float targetMaxRoll = defaults.maxFallSpeedToEngageRoll * gravityScale;
 
-        float mass = defaults.mass * scale;
-//        float comboAirSpeedMultiplier = defaults.comboAirSpeedMultiplier * scale;
+        // Keep air motion glidey: less friction and less damping while airborne.
+        float targetAirDragMin = lerp(defaults.airDragMin, 0.995F, moonStrength);
+        float targetAirDragMax = lerp(defaults.airDragMax, 0.999F, moonStrength);
+        float targetAirFrictionMin = lerp(defaults.airFrictionMin, defaults.airFrictionMin * 0.25F, moonStrength);
+        float targetAirFrictionMax = lerp(defaults.airFrictionMax, defaults.airFrictionMax * 0.25F, moonStrength);
+        float targetAirSpeedMultiplier = defaults.airSpeedMultiplier * (1.0F + moonStrength * 0.2F);
 
-        active.mass = mass;
-        movementManager.update(playerRef.getPacketHandler());
+        boolean changed = false;
+        changed |= assignIfChanged(active.mass, targetMass, value -> active.mass = value);
+        changed |= assignIfChanged(active.dragCoefficient, targetDragCoefficient, value -> active.dragCoefficient = value);
+        changed |= assignIfChanged(active.jumpForce, targetJumpForce, value -> active.jumpForce = value);
+        changed |= assignIfChanged(active.swimJumpForce, targetSwimJumpForce, value -> active.swimJumpForce = value);
+        changed |= assignIfChanged(active.variableJumpFallForce, targetFallForce, value -> active.variableJumpFallForce = value);
+        changed |= assignIfChanged(active.fallJumpForce, targetFallJumpForce, value -> active.fallJumpForce = value);
+        changed |= assignIfChanged(active.minFallSpeedToEngageRoll, targetMinRoll, value -> active.minFallSpeedToEngageRoll = value);
+        changed |= assignIfChanged(active.maxFallSpeedToEngageRoll, targetMaxRoll, value -> active.maxFallSpeedToEngageRoll = value);
+        changed |= assignIfChanged(active.airDragMin, targetAirDragMin, value -> active.airDragMin = value);
+        changed |= assignIfChanged(active.airDragMax, targetAirDragMax, value -> active.airDragMax = value);
+        changed |= assignIfChanged(active.airFrictionMin, targetAirFrictionMin, value -> active.airFrictionMin = value);
+        changed |= assignIfChanged(active.airFrictionMax, targetAirFrictionMax, value -> active.airFrictionMax = value);
+        changed |= assignIfChanged(active.airSpeedMultiplier, targetAirSpeedMultiplier, value -> active.airSpeedMultiplier = value);
 
-        if (!isWithinEpsilon(active.jumpForce, targetJumpForce)
-            || !isWithinEpsilon(active.swimJumpForce, targetSwimJumpForce)
-            || !isWithinEpsilon(active.variableJumpFallForce, targetFallForce)
-            || !isWithinEpsilon(active.fallJumpForce, targetFallJumpForce)
-            || !isWithinEpsilon(active.minFallSpeedToEngageRoll, targetMinRoll)
-            || !isWithinEpsilon(active.maxFallSpeedToEngageRoll, targetMaxRoll)) {
-            // Controls vertical takeoff speed on normal jump.
-//            active.jumpForce = targetJumpForce;
-//            // Controls vertical takeoff speed on swim jump.
-//            active.swimJumpForce = targetSwimJumpForce;
-//            // Controls airborne downward pull (primary falling-speed dial).
-//            active.variableJumpFallForce = targetFallForce;
-//            // Controls extra jump force used during fall-transition jump logic.
-//            active.fallJumpForce = targetFallJumpForce;
-//            // Controls when rolling starts based on fall speed.
-//            active.minFallSpeedToEngageRoll = targetMinRoll;
-//            // Controls upper roll-engagement speed threshold.
-//            active.maxFallSpeedToEngageRoll = targetMaxRoll;
+        if (active.invertedGravity != targetInvertedGravity) {
+            active.invertedGravity = targetInvertedGravity;
+            changed = true;
+        }
 
-//            active.airDragMin = airDragMin;
-//            active.airDragMax = airDragMax;
-//            active.airDragMinSpeed = airDragMinSpeed;
-//            active.airDragMaxSpeed = airDragMaxSpeed;
-//            active.airFrictionMin = airFrictionMin;
-//            active.airFrictionMax = airFrictionMax;
-//            active.airFrictionMinSpeed = airFrictionMinSpeed;
-//            active.airFrictionMaxSpeed = airFrictionMaxSpeed;
-//            movementManager.update(playerRef.getPacketHandler());
+        if (changed || !MOON_PROFILE_APPLIED.contains(playerId)) {
+            movementManager.update(playerRef.getPacketHandler());
         }
 
         MOON_PROFILE_APPLIED.add(playerId);
+    }
+
+    private static boolean assignIfChanged(float currentValue, float targetValue, @Nonnull FloatSetter setter) {
+        if (isWithinEpsilon(currentValue, targetValue)) {
+            return false;
+        }
+        setter.set(targetValue);
+        return true;
+    }
+
+    private static float lerp(float from, float to, float t) {
+        return from + (to - from) * t;
+    }
+
+    @FunctionalInterface
+    private interface FloatSetter {
+        void set(float value);
     }
 
     public static void enableMoonGravity(@Nonnull UUID playerId) {
