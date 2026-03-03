@@ -6,6 +6,8 @@ import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
+import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.protocol.ChangeVelocityType;
 import com.hypixel.hytale.protocol.MovementSettings;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
@@ -167,12 +169,20 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
     }
 
     private static void clampVerticalFallVelocity(@Nonnull Velocity velocity, boolean invertedGravity) {
+        double currentY = velocity.getY();
+        double cappedY = currentY;
+
         if (invertedGravity) {
-            if (velocity.getY() > MAX_FALL_SPEED) {
-                velocity.setY(MAX_FALL_SPEED);
+            if (currentY > MAX_FALL_SPEED) {
+                cappedY = MAX_FALL_SPEED;
             }
-        } else if (velocity.getY() < -MAX_FALL_SPEED) {
-            velocity.setY(-MAX_FALL_SPEED);
+        } else if (currentY < -MAX_FALL_SPEED) {
+            cappedY = -MAX_FALL_SPEED;
+        }
+
+        if (cappedY != currentY) {
+            velocity.setY(cappedY);
+            velocity.addInstruction(new Vector3d(velocity.getX(), cappedY, velocity.getZ()), null, ChangeVelocityType.Set);
         }
     }
 
