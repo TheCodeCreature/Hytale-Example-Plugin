@@ -8,6 +8,7 @@ import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.protocol.MovementSettings;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
+import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
@@ -23,22 +24,32 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
     private static final double MIN_GRAVITY_FACTOR = -10.0;
     private static final double MAX_GRAVITY_FACTOR = 10.0;
     private static final double EPSILON = 0.0001;
+    private static final double FALL_SPEED_EPSILON = 0.1;
+    private static final float BASE_FLIP_INTERVAL_SECONDS = 0.35F;
+    private static final float MIN_FLIP_INTERVAL_SECONDS = 0.06F;
+    private static final float FLIP_SPEED_SCALAR = 4.0F;
 
     private static final ConcurrentHashMap<UUID, Double> MOON_GRAVITY_FACTORS = new ConcurrentHashMap<>();
     private static final Set<UUID> MOON_PROFILE_APPLIED = ConcurrentHashMap.newKeySet();
+    private static final ConcurrentHashMap<UUID, Float> GRAVITY_FLIP_ELAPSED = new ConcurrentHashMap<>();
+    private static final Set<UUID> GRAVITY_FLIP_PHASE = ConcurrentHashMap.newKeySet();
 
     @Nonnull
     private final ComponentType<EntityStore, PlayerRef> playerRefComponentType;
     private final ComponentType<EntityStore, MovementManager> movementManagerComponentType;
+    @Nonnull
+    private final ComponentType<EntityStore, Velocity> velocityComponentType;
     @Nonnull
     private final Query<EntityStore> query;
 
     public NewMovementSystem() {
         this.playerRefComponentType = PlayerRef.getComponentType();
         this.movementManagerComponentType = MovementManager.getComponentType();
+        this.velocityComponentType = Velocity.getComponentType();
         this.query = Query.and(
             this.playerRefComponentType,
-            this.movementManagerComponentType
+            this.movementManagerComponentType,
+            this.velocityComponentType
         );
     }
 
@@ -63,23 +74,32 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
     ) {
         PlayerRef playerRef = archetypeChunk.getComponent(index, this.playerRefComponentType);
         MovementManager movementManager = archetypeChunk.getComponent(index, this.movementManagerComponentType);
+        Velocity velocity = archetypeChunk.getComponent(index, this.velocityComponentType);
 
-        if (playerRef == null || movementManager == null) {
+        if (playerRef == null || movementManager == null || velocity == null) {
             return;
         }
 
         UUID playerId = playerRef.getUuid();
 
-        applyMoonGravity(playerId, movementManager, playerRef);
+        applyMoonGravity(playerId, movementManager, playerRef, velocity, dt);
     }
 
-    private static void applyMoonGravity(@Nonnull UUID playerId, @Nonnull MovementManager movementManager, @Nonnull PlayerRef playerRef) {
+    private static void applyMoonGravity(
+        @Nonnull UUID playerId,
+        @Nonnull MovementManager movementManager,
+        @Nonnull PlayerRef playerRef,
+        @Nonnull Velocity velocity,
+        float dt
+    ) {
         Double gravityFactor = MOON_GRAVITY_FACTORS.get(playerId);
         if (gravityFactor == null) {
             if (MOON_PROFILE_APPLIED.remove(playerId)) {
                 movementManager.applyDefaultSettings();
                 movementManager.update(playerRef.getPacketHandler());
             }
+            GRAVITY_FLIP_ELAPSED.remove(playerId);
+            GRAVITY_FLIP_PHASE.remove(playerId);
             return;
         }
 
@@ -89,47 +109,51 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        float signedScale = (float) clamp(gravityFactor);
-        float gravityScale = Math.max(0.05F, Math.abs(signedScale));
-        float moonStrength = 1.0F - Math.min(gravityScale, 1.0F);
+        float scale = (float) clamp(gravityFactor);
 
-        float targetMass = defaults.mass * gravityScale;
-        float targetDragCoefficient = defaults.dragCoefficient * (1.0F + moonStrength * 5.0F);
-        boolean targetInvertedGravity = signedScale < 0.0F ? !defaults.invertedGravity : defaults.invertedGravity;
+        // Vertical launch impulse from a grounded jump. Higher => faster takeoff and taller jump.
+        float targetJumpForce = defaults.jumpForce * scale;
+        // Vertical launch impulse when swimming. Keep aligned with jump-force feel in water.
+        float targetSwimJumpForce = defaults.swimJumpForce * scale;
+        // Additional gravity-like downward force while airborne. Lower => slower fall.
+        float targetFallForce = defaults.variableJumpFallForce * scale;
+        // Extra jump force used in fall-related jump transitions. Higher => snappier rebound behavior.
+        float targetFallJumpForce = defaults.fallJumpForce * scale;
+        // Minimum vertical speed before roll logic engages. Scale with gravity profile.
+        float targetMinRoll = defaults.minFallSpeedToEngageRoll * scale;
+        // Maximum vertical speed for roll engagement window. Scale with gravity profile.
+        float targetMaxRoll = defaults.maxFallSpeedToEngageRoll * scale;
 
-        float targetJumpForce = defaults.jumpForce * (1.0F + moonStrength * 0.25F);
-        float targetSwimJumpForce = defaults.swimJumpForce * (1.0F + moonStrength * 0.2F);
-        float targetFallForce = defaults.variableJumpFallForce * gravityScale;
-        float targetFallJumpForce = defaults.fallJumpForce * (0.85F + moonStrength * 0.15F);
-        float targetMinRoll = defaults.minFallSpeedToEngageRoll * gravityScale;
-        float targetMaxRoll = defaults.maxFallSpeedToEngageRoll * gravityScale;
+        float airDragMin = defaults.airDragMin * scale;
+        float airDragMax = defaults.airDragMax * scale;
+        float airDragMinSpeed = defaults.airDragMinSpeed * scale;
+        float airDragMaxSpeed = defaults.airDragMaxSpeed * scale;
+        float airFrictionMin = defaults.airFrictionMin * scale;
+        float airFrictionMax = defaults.airFrictionMax * scale;
+        float airFrictionMinSpeed = defaults.airFrictionMinSpeed * scale;
+        float airFrictionMaxSpeed = defaults.airFrictionMaxSpeed * scale;
 
-        // Keep air motion glidey: less friction and less damping while airborne.
-        float targetAirDragMin = lerp(defaults.airDragMin, 0.995F, moonStrength);
-        float targetAirDragMax = lerp(defaults.airDragMax, 0.999F, moonStrength);
-        float targetAirFrictionMin = lerp(defaults.airFrictionMin, defaults.airFrictionMin * 0.25F, moonStrength);
-        float targetAirFrictionMax = lerp(defaults.airFrictionMax, defaults.airFrictionMax * 0.25F, moonStrength);
-        float targetAirSpeedMultiplier = defaults.airSpeedMultiplier * (1.0F + moonStrength * 0.2F);
+        float mass = defaults.mass * scale;
+//        float comboAirSpeedMultiplier = defaults.comboAirSpeedMultiplier * scale;
 
         boolean changed = false;
-        changed |= assignIfChanged(active.mass, targetMass, value -> active.mass = value);
-        changed |= assignIfChanged(active.dragCoefficient, targetDragCoefficient, value -> active.dragCoefficient = value);
+        changed |= assignIfChanged(active.mass, mass, value -> active.mass = value);
         changed |= assignIfChanged(active.jumpForce, targetJumpForce, value -> active.jumpForce = value);
         changed |= assignIfChanged(active.swimJumpForce, targetSwimJumpForce, value -> active.swimJumpForce = value);
         changed |= assignIfChanged(active.variableJumpFallForce, targetFallForce, value -> active.variableJumpFallForce = value);
         changed |= assignIfChanged(active.fallJumpForce, targetFallJumpForce, value -> active.fallJumpForce = value);
         changed |= assignIfChanged(active.minFallSpeedToEngageRoll, targetMinRoll, value -> active.minFallSpeedToEngageRoll = value);
         changed |= assignIfChanged(active.maxFallSpeedToEngageRoll, targetMaxRoll, value -> active.maxFallSpeedToEngageRoll = value);
-        changed |= assignIfChanged(active.airDragMin, targetAirDragMin, value -> active.airDragMin = value);
-        changed |= assignIfChanged(active.airDragMax, targetAirDragMax, value -> active.airDragMax = value);
-        changed |= assignIfChanged(active.airFrictionMin, targetAirFrictionMin, value -> active.airFrictionMin = value);
-        changed |= assignIfChanged(active.airFrictionMax, targetAirFrictionMax, value -> active.airFrictionMax = value);
-        changed |= assignIfChanged(active.airSpeedMultiplier, targetAirSpeedMultiplier, value -> active.airSpeedMultiplier = value);
+        changed |= assignIfChanged(active.airDragMin, airDragMin, value -> active.airDragMin = value);
+        changed |= assignIfChanged(active.airDragMax, airDragMax, value -> active.airDragMax = value);
+        changed |= assignIfChanged(active.airDragMinSpeed, airDragMinSpeed, value -> active.airDragMinSpeed = value);
+        changed |= assignIfChanged(active.airDragMaxSpeed, airDragMaxSpeed, value -> active.airDragMaxSpeed = value);
+        changed |= assignIfChanged(active.airFrictionMin, airFrictionMin, value -> active.airFrictionMin = value);
+        changed |= assignIfChanged(active.airFrictionMax, airFrictionMax, value -> active.airFrictionMax = value);
+        changed |= assignIfChanged(active.airFrictionMinSpeed, airFrictionMinSpeed, value -> active.airFrictionMinSpeed = value);
+        changed |= assignIfChanged(active.airFrictionMaxSpeed, airFrictionMaxSpeed, value -> active.airFrictionMaxSpeed = value);
 
-        if (active.invertedGravity != targetInvertedGravity) {
-            active.invertedGravity = targetInvertedGravity;
-            changed = true;
-        }
+        changed |= applyInvertedGravityOscillation(playerId, defaults, active, velocity, dt);
 
         if (changed || !MOON_PROFILE_APPLIED.contains(playerId)) {
             movementManager.update(playerRef.getPacketHandler());
@@ -138,16 +162,54 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
         MOON_PROFILE_APPLIED.add(playerId);
     }
 
+    private static boolean applyInvertedGravityOscillation(
+        @Nonnull UUID playerId,
+        @Nonnull MovementSettings defaults,
+        @Nonnull MovementSettings active,
+        @Nonnull Velocity velocity,
+        float dt
+    ) {
+        int naturalFallDirection = defaults.invertedGravity ? 1 : -1;
+        double verticalSpeed = velocity.getY();
+        boolean isFallingNaturally = verticalSpeed * naturalFallDirection < -FALL_SPEED_EPSILON;
+
+        boolean phaseFlipped = false;
+        if (isFallingNaturally) {
+            float speed = (float) Math.abs(verticalSpeed);
+            float interval = computeFlipInterval(speed);
+            float elapsed = GRAVITY_FLIP_ELAPSED.getOrDefault(playerId, 0.0F) + Math.max(0.0F, dt);
+            if (elapsed >= interval) {
+                if (!GRAVITY_FLIP_PHASE.add(playerId)) {
+                    GRAVITY_FLIP_PHASE.remove(playerId);
+                }
+                elapsed = 0.0F;
+                phaseFlipped = true;
+            }
+            GRAVITY_FLIP_ELAPSED.put(playerId, elapsed);
+        } else {
+            GRAVITY_FLIP_ELAPSED.remove(playerId);
+            GRAVITY_FLIP_PHASE.remove(playerId);
+        }
+
+        boolean targetInverted = defaults.invertedGravity ^ GRAVITY_FLIP_PHASE.contains(playerId);
+        if (active.invertedGravity != targetInverted) {
+            active.invertedGravity = targetInverted;
+            return true;
+        }
+        return phaseFlipped;
+    }
+
+    private static float computeFlipInterval(float speed) {
+        double divisor = 1.0 + Math.log1p(Math.max(0.0, speed * FLIP_SPEED_SCALAR));
+        return (float) Math.max(MIN_FLIP_INTERVAL_SECONDS, BASE_FLIP_INTERVAL_SECONDS / divisor);
+    }
+
     private static boolean assignIfChanged(float currentValue, float targetValue, @Nonnull FloatSetter setter) {
         if (isWithinEpsilon(currentValue, targetValue)) {
             return false;
         }
         setter.set(targetValue);
         return true;
-    }
-
-    private static float lerp(float from, float to, float t) {
-        return from + (to - from) * t;
     }
 
     @FunctionalInterface
