@@ -8,6 +8,7 @@ import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.protocol.MovementSettings;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
+import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
@@ -23,22 +24,28 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
     private static final double MIN_GRAVITY_FACTOR = -10.0;
     private static final double MAX_GRAVITY_FACTOR = 10.0;
     private static final double EPSILON = 0.0001;
+    private static final double MAX_FALL_SPEED = 1.0;
 
     private static final ConcurrentHashMap<UUID, Double> MOON_GRAVITY_FACTORS = new ConcurrentHashMap<>();
     private static final Set<UUID> MOON_PROFILE_APPLIED = ConcurrentHashMap.newKeySet();
 
     @Nonnull
     private final ComponentType<EntityStore, PlayerRef> playerRefComponentType;
+    @Nonnull
     private final ComponentType<EntityStore, MovementManager> movementManagerComponentType;
+    @Nonnull
+    private final ComponentType<EntityStore, Velocity> velocityComponentType;
     @Nonnull
     private final Query<EntityStore> query;
 
     public NewMovementSystem() {
         this.playerRefComponentType = PlayerRef.getComponentType();
         this.movementManagerComponentType = MovementManager.getComponentType();
+        this.velocityComponentType = Velocity.getComponentType();
         this.query = Query.and(
             this.playerRefComponentType,
-            this.movementManagerComponentType
+            this.movementManagerComponentType,
+            this.velocityComponentType
         );
     }
 
@@ -63,17 +70,23 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
     ) {
         PlayerRef playerRef = archetypeChunk.getComponent(index, this.playerRefComponentType);
         MovementManager movementManager = archetypeChunk.getComponent(index, this.movementManagerComponentType);
+        Velocity velocity = archetypeChunk.getComponent(index, this.velocityComponentType);
 
-        if (playerRef == null || movementManager == null) {
+        if (playerRef == null || movementManager == null || velocity == null) {
             return;
         }
 
         UUID playerId = playerRef.getUuid();
 
-        applyMoonGravity(playerId, movementManager, playerRef);
+        applyMoonGravity(playerId, movementManager, playerRef, velocity);
     }
 
-    private static void applyMoonGravity(@Nonnull UUID playerId, @Nonnull MovementManager movementManager, @Nonnull PlayerRef playerRef) {
+    private static void applyMoonGravity(
+        @Nonnull UUID playerId,
+        @Nonnull MovementManager movementManager,
+        @Nonnull PlayerRef playerRef,
+        @Nonnull Velocity velocity
+    ) {
         Double gravityFactor = MOON_GRAVITY_FACTORS.get(playerId);
         if (gravityFactor == null) {
             if (MOON_PROFILE_APPLIED.remove(playerId)) {
@@ -117,6 +130,7 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
 //        float comboAirSpeedMultiplier = defaults.comboAirSpeedMultiplier * scale;
 
         active.mass = mass;
+        clampVerticalFallVelocity(velocity, active.invertedGravity);
         movementManager.update(playerRef.getPacketHandler());
 
         if (!isWithinEpsilon(active.jumpForce, targetJumpForce)
@@ -150,6 +164,16 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
         }
 
         MOON_PROFILE_APPLIED.add(playerId);
+    }
+
+    private static void clampVerticalFallVelocity(@Nonnull Velocity velocity, boolean invertedGravity) {
+        if (invertedGravity) {
+            if (velocity.getY() > MAX_FALL_SPEED) {
+                velocity.setY(MAX_FALL_SPEED);
+            }
+        } else if (velocity.getY() < -MAX_FALL_SPEED) {
+            velocity.setY(-MAX_FALL_SPEED);
+        }
     }
 
     public static void enableMoonGravity(@Nonnull UUID playerId) {
