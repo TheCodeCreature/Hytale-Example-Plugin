@@ -19,9 +19,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
 
-    private static final double DEFAULT_MOON_GRAVITY_FACTOR = 0.165;
-    private static final double MIN_GRAVITY_FACTOR = 0.05;
-    private static final double MAX_GRAVITY_FACTOR = 1.0;
+    public static final double DEFAULT_MOON_GRAVITY_FACTOR = 0.165;
+    private static final double MIN_GRAVITY_FACTOR = -10.0;
+    private static final double MAX_GRAVITY_FACTOR = 10.0;
     private static final double EPSILON = 0.0001;
 
     private static final ConcurrentHashMap<UUID, Double> MOON_GRAVITY_FACTORS = new ConcurrentHashMap<>();
@@ -90,20 +90,34 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
         }
 
         float scale = (float) clamp(gravityFactor);
-        float jumpBoost = 1.0F + ((1.0F - scale) * 0.35F);
 
         // Vertical launch impulse from a grounded jump. Higher => faster takeoff and taller jump.
-        float targetJumpForce = defaults.jumpForce * jumpBoost;
+        float targetJumpForce = defaults.jumpForce * scale;
         // Vertical launch impulse when swimming. Keep aligned with jump-force feel in water.
-        float targetSwimJumpForce = defaults.swimJumpForce * jumpBoost;
+        float targetSwimJumpForce = defaults.swimJumpForce * scale;
         // Additional gravity-like downward force while airborne. Lower => slower fall.
-        float targetFallForce = defaults.variableJumpFallForce * scale * 0.7F;
+        float targetFallForce = defaults.variableJumpFallForce * scale;
         // Extra jump force used in fall-related jump transitions. Higher => snappier rebound behavior.
-        float targetFallJumpForce = defaults.fallJumpForce * jumpBoost;
+        float targetFallJumpForce = defaults.fallJumpForce * scale;
         // Minimum vertical speed before roll logic engages. Scale with gravity profile.
         float targetMinRoll = defaults.minFallSpeedToEngageRoll * scale;
         // Maximum vertical speed for roll engagement window. Scale with gravity profile.
         float targetMaxRoll = defaults.maxFallSpeedToEngageRoll * scale;
+
+        float airDragMin = defaults.airDragMin * scale;
+        float airDragMax = defaults.airDragMax * scale;
+        float airDragMinSpeed = defaults.airDragMinSpeed * scale;
+        float airDragMaxSpeed = defaults.airDragMaxSpeed * scale;
+        float airFrictionMin = defaults.airFrictionMin * scale;
+        float airFrictionMax = defaults.airFrictionMax * scale;
+        float airFrictionMinSpeed = defaults.airFrictionMinSpeed * scale;
+        float airFrictionMaxSpeed = defaults.airFrictionMaxSpeed * scale;
+
+        float mass = defaults.mass * scale;
+//        float comboAirSpeedMultiplier = defaults.comboAirSpeedMultiplier * scale;
+
+        active.mass = mass;
+        movementManager.update(playerRef.getPacketHandler());
 
         if (!isWithinEpsilon(active.jumpForce, targetJumpForce)
             || !isWithinEpsilon(active.swimJumpForce, targetSwimJumpForce)
@@ -112,18 +126,27 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
             || !isWithinEpsilon(active.minFallSpeedToEngageRoll, targetMinRoll)
             || !isWithinEpsilon(active.maxFallSpeedToEngageRoll, targetMaxRoll)) {
             // Controls vertical takeoff speed on normal jump.
-            active.jumpForce = targetJumpForce;
-            // Controls vertical takeoff speed on swim jump.
-            active.swimJumpForce = targetSwimJumpForce;
-            // Controls airborne downward pull (primary falling-speed dial).
-            active.variableJumpFallForce = targetFallForce;
-            // Controls extra jump force used during fall-transition jump logic.
-            active.fallJumpForce = targetFallJumpForce;
-            // Controls when rolling starts based on fall speed.
-            active.minFallSpeedToEngageRoll = targetMinRoll;
-            // Controls upper roll-engagement speed threshold.
-            active.maxFallSpeedToEngageRoll = targetMaxRoll;
-            movementManager.update(playerRef.getPacketHandler());
+//            active.jumpForce = targetJumpForce;
+//            // Controls vertical takeoff speed on swim jump.
+//            active.swimJumpForce = targetSwimJumpForce;
+//            // Controls airborne downward pull (primary falling-speed dial).
+//            active.variableJumpFallForce = targetFallForce;
+//            // Controls extra jump force used during fall-transition jump logic.
+//            active.fallJumpForce = targetFallJumpForce;
+//            // Controls when rolling starts based on fall speed.
+//            active.minFallSpeedToEngageRoll = targetMinRoll;
+//            // Controls upper roll-engagement speed threshold.
+//            active.maxFallSpeedToEngageRoll = targetMaxRoll;
+
+//            active.airDragMin = airDragMin;
+//            active.airDragMax = airDragMax;
+//            active.airDragMinSpeed = airDragMinSpeed;
+//            active.airDragMaxSpeed = airDragMaxSpeed;
+//            active.airFrictionMin = airFrictionMin;
+//            active.airFrictionMax = airFrictionMax;
+//            active.airFrictionMinSpeed = airFrictionMinSpeed;
+//            active.airFrictionMaxSpeed = airFrictionMaxSpeed;
+//            movementManager.update(playerRef.getPacketHandler());
         }
 
         MOON_PROFILE_APPLIED.add(playerId);

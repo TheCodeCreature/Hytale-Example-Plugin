@@ -37,7 +37,7 @@ public class NewMovementCommand extends AbstractPlayerCommand {
         UUID playerId = playerRef.getUuid();
         boolean enabled = NewMovementSystem.isMoonGravityEnabled(playerId);
 
-        double defaultFactor = 0.165;
+        double defaultFactor = NewMovementSystem.DEFAULT_MOON_GRAVITY_FACTOR;
 
         String mode = modeArg.provided(context)
             ? modeArg.get(context).toLowerCase(Locale.ROOT)
@@ -78,6 +78,7 @@ public class NewMovementCommand extends AbstractPlayerCommand {
                     playerRef.sendMessage(Message.raw("Moon Gravity disabled."));
                 } else {
                     NewMovementSystem.enableMoonGravity(playerId, gravityFactor);
+                    playerRef.sendMessage(Message.raw("Moon Gravity enabled."));
                 }
                 return;
             default:
