@@ -135,6 +135,66 @@ public class ShapeCompositorPresets extends ShapeCompositor{
         return this;
     }
 
+    public ShapeCompositor WithConeShape(){int idTracker = 0;
+        double halfRadius = _radius/2d;
+
+        // Square-bottom pyramid shape (base centered around anchor).
+        this.addOperation(idTracker++ + "",
+                        new TransformedShape(
+                                new SquarePyramid(halfRadius, halfRadius + 1),
+                                0, 1, -((int)halfRadius),
+                                Math.toRadians(135),0,0),
+                        OperationType.DEFINE,
+                        new EmptyBlockFill())
+                .build();
+
+        //Long Ellipsoid
+        int zOffset = 2*_radius;
+//        this.addOperation(idTracker++ + "",
+//                        new TransformedShape(
+//                                        new Ellipsoid(_radius, halfRadius*1.5, zOffset+2),
+//                                -1, 2, -(zOffset)),
+//                                //Math.toRadians(135),0,0),
+//                        OperationType.DEFINE,
+//                        new EmptyBlockFill())
+//                .build();
+
+        //Cut base of top shape
+        this.addOperation(idTracker++ + "",
+                        new Box(-_radius, -_radius, -_radius,_radius,0,_radius),
+                        OperationType.EXCLUDE,
+                        null)
+                .build();
+
+        //Cut back of top shape
+        this.addOperation(idTracker++ + "",
+                        new Box(-_radius, -_radius, -(_radius+zOffset),_radius,_radius,-zOffset),
+                        OperationType.EXCLUDE,
+                        null)
+                .build();
+
+        //Cut front of top shape
+        this.addOperation(idTracker++ + "",
+                        new Box(-_radius, -_radius, 1, _radius, _radius, _radius),
+                        OperationType.EXCLUDE,
+                        null)
+                .build();
+
+        // Operation Final: Floor exclusion that stays level (ignores pitch rotation)
+        // This keeps the floor horizontal even when looking up or down
+        var ignorePitch = TransformFlags.builder()
+                .ignorePitch()
+                .build();
+        this.addOperation(idTracker + "",
+                new Box(-_radius, -_radius, -2,_radius,1,_radius),
+                OperationType.EXCLUDE,
+                null)
+                .withTransformFlags(ignorePitch)
+                .build();
+
+        return this;
+    }
+
     /**
      * Example demonstrating TransformFlags feature.
      * Creates a camera volume with a floor exclusion that stays level (ignores pitch).

@@ -57,7 +57,8 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         CameraTransparencyVolume.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresets()
 //                      .Test()
 //                      .HalfHalf()
-                      .WithLevelFloor()
+                    //   .WithLevelFloor()
+                      .WithConeShape()
         );
     }
 
