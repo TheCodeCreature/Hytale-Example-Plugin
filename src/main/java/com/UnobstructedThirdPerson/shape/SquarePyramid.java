@@ -11,56 +11,56 @@ import com.hypixel.hytale.math.shape.Shape;
  */
 public class SquarePyramid implements Shape {
 
-    private double halfBase;
-    private double height;
+    private double baseX;
+    private final double oddX;
     private double baseY;
+    private final double oddY;
+    private double height;
 
-    public SquarePyramid(double halfBase, double height) {
-        this(halfBase, height, 0.0);
-    }
-
-    public SquarePyramid(double halfBase, double height, double baseY) {
-        if (halfBase <= 0.0) {
-            throw new IllegalArgumentException("halfBase must be > 0. Given: " + halfBase);
+    public SquarePyramid(double baseX, double baseY, double height) {
+        if (baseX <= 0.0) {
+            throw new IllegalArgumentException("baseX must be > 0. Given: " + baseX);
         }
         if (height <= 0.0) {
             throw new IllegalArgumentException("height must be > 0. Given: " + height);
         }
 
-        this.halfBase = halfBase;
+        this.baseX = baseX/2;
+        this.oddX = baseX % 2 == 0? 0 : 1;
+        this.baseY = baseY/2;
+        this.oddY = baseY % 2 == 0? 0 : 1;
         this.height = height;
-        this.baseY = baseY;
     }
 
     @Override
     public Box getBox(double x, double y, double z) {
         return new Box(
-                x - halfBase,
+                x - (baseX + oddX),
+                y - (baseY + oddY),
+                z - 0,
+                x + baseX,
                 y + baseY,
-                z - halfBase,
-                x + halfBase,
-                y + baseY + height,
-                z + halfBase
+                z + height
         );
     }
 
     @Override
     public boolean containsPosition(double x, double y, double z) {
         double localY = y - baseY;
-        if (localY < 0.0 || localY > height) {
-            return false;
-        }
+//        if (localY < 0.0 || localY > height) {
+//            return false;
+//        }
 
         double widthScale = 1.0 - (localY / height);
-        double currentHalfWidth = halfBase * widthScale;
+        double currentHalfWidth = baseX * widthScale;
         return Math.abs(x) <= currentHalfWidth && Math.abs(z) <= currentHalfWidth;
     }
 
     @Override
     public void expand(double amount) {
-        halfBase = Math.max(0.001, halfBase + amount);
+        baseX = (int)Math.max(0.001, baseX + amount);
         height = Math.max(0.001, height + amount);
-        baseY -= amount;
+        baseY -= (int)Math.max(0.001, baseY + amount);
     }
 
     @Override

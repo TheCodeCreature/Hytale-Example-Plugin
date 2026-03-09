@@ -11,7 +11,7 @@ import com.hypixel.hytale.math.vector.Vector3i;
 import javax.xml.namespace.QName;
 
 public class ShapeCompositorPresets extends ShapeCompositor{
-    private int _radius = 8;
+    private int _radius = 9;
     private final TransformFlags _noMove = TransformFlags.builder()
             .ignorePitch()
             .ignoreYaw()
@@ -135,14 +135,15 @@ public class ShapeCompositorPresets extends ShapeCompositor{
         return this;
     }
 
-    public ShapeCompositor WithConeShape(){int idTracker = 0;
+    public ShapeCompositor WithConeShape(){
+        int idTracker = 0;
         double halfRadius = _radius/2d;
 
         // Square-bottom pyramid shape (base centered around anchor).
         this.addOperation(idTracker++ + "",
                         new TransformedShape(
-                                new SquarePyramid(halfRadius, _radius),
-                                0, 1, ((int)halfRadius)),
+                                new SquarePyramid(_radius, _radius, _radius),
+                                0, 0, ((int)halfRadius)),
 //                                Math.toRadians(135),0,0),
                         OperationType.DEFINE,
                         new EmptyBlockFill())
@@ -161,18 +162,18 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 //                .build();
 
         //Cut base of top shape
-        this.addOperation(idTracker++ + "",
-                        new Box(-_radius, -_radius, -_radius,_radius,0,_radius),
-                        OperationType.EXCLUDE,
-                        null)
-                .build();
+//        this.addOperation(idTracker++ + "",
+//                        new Box(-_radius, -_radius, -_radius,_radius,0,_radius),
+//                        OperationType.EXCLUDE,
+//                        null)
+//                .build();
 
         //Cut back of top shape
-        this.addOperation(idTracker++ + "",
-                        new Box(-_radius, -_radius, -(_radius+zOffset),_radius,_radius,-zOffset),
-                        OperationType.EXCLUDE,
-                        null)
-                .build();
+//        this.addOperation(idTracker++ + "",
+//                        new Box(-_radius, -_radius, -(_radius+zOffset),_radius,_radius,-zOffset),
+//                        OperationType.EXCLUDE,
+//                        null)
+//                .build();
 
         //Cut front of top shape
 //        this.addOperation(idTracker++ + "",
