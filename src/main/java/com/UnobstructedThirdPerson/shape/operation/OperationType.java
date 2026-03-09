@@ -11,6 +11,18 @@ public enum OperationType {
      * Creates a new set of block positions.
      */
     DEFINE(10),
+
+    /**
+     * Fill a shape region with a specific fill type.
+     * Requires a non-null fill type.
+     */
+    FILL(20),
+
+    /**
+     * Cut a shape region (set blocks to air).
+     * Ignores fill type and always uses air.
+     */
+    CUT(20),
     
     /**
      * Boolean AND with referenced operation.

@@ -2,6 +2,7 @@ package com.UnobstructedThirdPerson.shape;
 
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.UnobstructedThirdPerson.shape.fill.BlockFillType;
+import com.UnobstructedThirdPerson.shape.fill.EmptyBlockFill;
 import com.UnobstructedThirdPerson.shape.operation.OperationType;
 import com.UnobstructedThirdPerson.shape.operation.ShapeOperation;
 import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
@@ -23,6 +24,7 @@ import java.util.logging.Logger;
 public class ShapeCompositor {
     
     private static final Logger LOGGER = Logger.getLogger("ShapeCompositor");
+    private static final BlockFillType CUT_FILL = new EmptyBlockFill();
     private static final double PITCH_PIVOT_EYE_HEIGHT = 1.8;
     
     private Vector3i anchor;
@@ -136,6 +138,8 @@ public class ShapeCompositor {
         
         @Nonnull
         public ShapeOperation build() {
+            validateOperationInputs();
+
             ShapeOperation.Builder builder = ShapeOperation.builder(id, type)
                     .shape(shape)
                     .fillType(fillType);
@@ -153,6 +157,64 @@ public class ShapeCompositor {
             operationOrder.add(id);
             
             return operation;
+        }
+
+        private void validateOperationInputs() {
+            switch (type) {
+                case DEFINE:
+                    if (shape == null) {
+                        throw new IllegalArgumentException("DEFINE operation '" + id + "' requires a shape");
+                    }
+                    break;
+
+                case FILL:
+                    if (shape == null) {
+                        throw new IllegalArgumentException("FILL operation '" + id + "' requires a shape");
+                    }
+                    if (fillType == null) {
+                        throw new IllegalArgumentException("FILL operation '" + id + "' requires a non-null fill type");
+                    }
+                    break;
+
+                case CUT:
+                    if (shape == null) {
+                        throw new IllegalArgumentException("CUT operation '" + id + "' requires a shape");
+                    }
+                    break;
+
+                case INTERSECT:
+                    if (shape == null) {
+                        throw new IllegalArgumentException("INTERSECT operation '" + id + "' requires a shape");
+                    }
+                    if (referenceId == null) {
+                        throw new IllegalArgumentException("INTERSECT operation '" + id + "' requires a reference");
+                    }
+                    break;
+
+                case SUBTRACT:
+                    if (shape == null) {
+                        throw new IllegalArgumentException("SUBTRACT operation '" + id + "' requires a shape");
+                    }
+                    if (referenceId == null) {
+                        throw new IllegalArgumentException("SUBTRACT operation '" + id + "' requires a reference");
+                    }
+                    break;
+
+                case FILL_REMAINING:
+                    if (referenceId == null) {
+                        throw new IllegalArgumentException("FILL_REMAINING operation '" + id + "' requires a reference");
+                    }
+                    if (fillType == null) {
+                        throw new IllegalArgumentException("FILL_REMAINING operation '" + id + "' requires a non-null fill type");
+                    }
+                    break;
+
+                case EXCLUDE:
+                    if (shape == null) {
+                        throw new IllegalArgumentException("EXCLUDE operation '" + id + "' requires a shape");
+                    }
+                    break;
+            }
         }
     }
     
@@ -253,6 +315,16 @@ public class ShapeCompositor {
                     executeDefine(operation, chunkStore, originalBlocks, blockFills, 
                             blockOwners, operationPositions, excludedPositions);
                     break;
+
+                case FILL:
+                    executeFill(operation, chunkStore, originalBlocks, blockFills,
+                            blockOwners, operationPositions, excludedPositions);
+                    break;
+
+                case CUT:
+                    executeCut(operation, chunkStore, originalBlocks, blockFills,
+                            blockOwners, operationPositions, excludedPositions);
+                    break;
                     
                 case INTERSECT:
                     executeIntersect(operation, chunkStore, originalBlocks, blockFills,
@@ -276,6 +348,11 @@ public class ShapeCompositor {
             
             operationRegions.put(operation.getId(), operationPositions);
         }
+
+        // Only blocks with assigned fills should be emitted as active region blocks.
+        // Geometry-only operations (e.g., DEFINE with null fill) still remain in operationRegions
+        // for downstream references, but are not sent as block replacements.
+        originalBlocks.keySet().retainAll(blockFills.keySet());
         
         // Compute final block IDs from fill types
         for (Map.Entry<Long, BlockFillType> entry : blockFills.entrySet()) {
@@ -360,15 +437,74 @@ public class ShapeCompositor {
             
             BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
             if (snapshot != null && snapshot.blockId() != 0) {
-                originalBlocks.put(pos, snapshot);
                 operationPositions.add(pos);
                 
                 if (fillType != null) {
+                    originalBlocks.put(pos, snapshot);
                     blockFills.put(pos, fillType);
                     blockOwners.put(pos, operation.getId());
                 }
             }
             
+            return true;
+        });
+    }
+
+    private void executeFill(ShapeOperation operation, ChunkStore chunkStore,
+                             Map<Long, BlockSnapshot> originalBlocks,
+                             Map<Long, BlockFillType> blockFills,
+                             Map<Long, String> blockOwners,
+                             Set<Long> operationPositions,
+                             Set<Long> excludedPositions) {
+        BlockFillType fillType = operation.getFillType();
+        if (fillType == null) {
+            LOGGER.warning("FILL operation '" + operation.getId() + "' has no fill type");
+            return;
+        }
+
+        executeFilledShape(operation, fillType, chunkStore, originalBlocks, blockFills,
+                blockOwners, operationPositions, excludedPositions);
+    }
+
+    private void executeCut(ShapeOperation operation, ChunkStore chunkStore,
+                            Map<Long, BlockSnapshot> originalBlocks,
+                            Map<Long, BlockFillType> blockFills,
+                            Map<Long, String> blockOwners,
+                            Set<Long> operationPositions,
+                            Set<Long> excludedPositions) {
+        executeFilledShape(operation, CUT_FILL, chunkStore, originalBlocks, blockFills,
+                blockOwners, operationPositions, excludedPositions);
+    }
+
+    private void executeFilledShape(ShapeOperation operation, BlockFillType fillType, ChunkStore chunkStore,
+                                    Map<Long, BlockSnapshot> originalBlocks,
+                                    Map<Long, BlockFillType> blockFills,
+                                    Map<Long, String> blockOwners,
+                                    Set<Long> operationPositions,
+                                    Set<Long> excludedPositions) {
+        Shape baseShape = operation.getShape();
+        if (baseShape == null) {
+            LOGGER.warning("Operation '" + operation.getId() + "' has no shape");
+            return;
+        }
+
+        Shape shape = applyTransformations(baseShape, operation.getTransformFlags());
+
+        shape.forEachBlock(anchor.x, anchor.y, anchor.z, (x, y, z) -> {
+            long pos = BlockUtil.packUnchecked(x, y, z);
+
+            if (excludedPositions.contains(pos)) {
+                return true;
+            }
+
+            BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
+            if (snapshot != null && snapshot.blockId() != 0) {
+                originalBlocks.put(pos, snapshot);
+                operationPositions.add(pos);
+                blockFills.put(pos, fillType);
+                blockOwners.put(pos, operation.getId());
+            }
+
             return true;
         });
     }
@@ -412,20 +548,20 @@ public class ShapeCompositor {
             }
             
             BlockSnapshot snapshot = originalBlocks.get(pos);
-            if (snapshot == null) {
+            if (snapshot == null || snapshot.blockId() == 0) {
                 snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
-                if (snapshot != null && snapshot.blockId() != 0) {
-                    originalBlocks.put(pos, snapshot);
-                }
+            }
+
+            if (snapshot == null || snapshot.blockId() == 0) {
+                return true;
             }
             
-            if (snapshot != null) {
-                operationPositions.add(pos);
-                
-                if (fillType != null) {
-                    blockFills.put(pos, fillType);
-                    blockOwners.put(pos, operation.getId());
-                }
+            operationPositions.add(pos);
+            
+            if (fillType != null) {
+                originalBlocks.put(pos, snapshot);
+                blockFills.put(pos, fillType);
+                blockOwners.put(pos, operation.getId());
             }
             
             return true;
@@ -499,6 +635,19 @@ public class ShapeCompositor {
         // Fill all unassigned blocks in reference region
         for (Long pos : referencePositions) {
             if (!blockOwners.containsKey(pos)) {
+                BlockSnapshot snapshot = originalBlocks.get(pos);
+                if (snapshot == null || snapshot.blockId() == 0) {
+                    int x = BlockUtil.unpackX(pos);
+                    int y = BlockUtil.unpackY(pos);
+                    int z = BlockUtil.unpackZ(pos);
+                    snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
+                }
+
+                if (snapshot == null || snapshot.blockId() == 0) {
+                    continue;
+                }
+
+                originalBlocks.put(pos, snapshot);
                 blockFills.put(pos, fillType);
                 blockOwners.put(pos, operation.getId());
                 operationPositions.add(pos);
