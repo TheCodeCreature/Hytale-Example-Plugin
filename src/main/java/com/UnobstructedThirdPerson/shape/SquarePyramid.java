@@ -30,8 +30,8 @@ public class SquarePyramid implements Shape {
 
         this.halfBaseX = baseWidthX / 2.0;
         this.halfBaseY = baseWidthY / 2.0;
-        this.centerOffsetX = isOddIntegerWidth(baseWidthX) ? 0.5 : 0.0;
-        this.centerOffsetY = isOddIntegerWidth(baseWidthY) ? 0.5 : 0.0;
+        this.centerOffsetX = isOddIntegerWidth(baseWidthX) ? 0.0 : 0.5;
+        this.centerOffsetY = isOddIntegerWidth(baseWidthY) ? 0.0 : 0.5;
         this.height = height;
     }
 
@@ -79,14 +79,14 @@ public class SquarePyramid implements Shape {
         int minX = (int) Math.floor(worldBox.min.x - epsilon);
         int minY = (int) Math.floor(worldBox.min.y - epsilon);
         int minZ = (int) Math.floor(worldBox.min.z - epsilon);
-        int maxX = (int) Math.ceil(worldBox.max.x + epsilon);
-        int maxY = (int) Math.ceil(worldBox.max.y + epsilon);
-        int maxZ = (int) Math.ceil(worldBox.max.z + epsilon);
+        int maxX = (int) Math.floor(worldBox.max.x + epsilon);
+        int maxY = (int) Math.floor(worldBox.max.y + epsilon);
+        int maxZ = (int) Math.floor(worldBox.max.z + epsilon);
 
-        for (int x = minX; x < maxX; x++) {
-            for (int y = minY; y < maxY; y++) {
-                for (int z = minZ; z < maxZ; z++) {
-                    if (!containsPosition(x + 0.5 - anchorX, y + 0.5 - anchorY, z + 0.5 - anchorZ)) {
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    if (!containsPosition(x - anchorX, y - anchorY, z - anchorZ)) {
                         continue;
                     }
                     if (!consumer.test(x, y, z)) {
@@ -106,14 +106,14 @@ public class SquarePyramid implements Shape {
         int minX = (int) Math.floor(worldBox.min.x - epsilon);
         int minY = (int) Math.floor(worldBox.min.y - epsilon);
         int minZ = (int) Math.floor(worldBox.min.z - epsilon);
-        int maxX = (int) Math.ceil(worldBox.max.x + epsilon);
-        int maxY = (int) Math.ceil(worldBox.max.y + epsilon);
-        int maxZ = (int) Math.ceil(worldBox.max.z + epsilon);
+        int maxX = (int) Math.floor(worldBox.max.x + epsilon);
+        int maxY = (int) Math.floor(worldBox.max.y + epsilon);
+        int maxZ = (int) Math.floor(worldBox.max.z + epsilon);
 
-        for (int x = minX; x < maxX; x++) {
-            for (int y = minY; y < maxY; y++) {
-                for (int z = minZ; z < maxZ; z++) {
-                    if (!containsPosition(x + 0.5 - anchorX, y + 0.5 - anchorY, z + 0.5 - anchorZ)) {
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    if (!containsPosition(x - anchorX, y - anchorY, z - anchorZ)) {
                         continue;
                     }
                     if (!consumer.test(x, y, z, context)) {
