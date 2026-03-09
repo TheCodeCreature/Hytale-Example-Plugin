@@ -19,14 +19,14 @@ import java.util.logging.Logger;
 
 public class NewMovementCommand extends AbstractPlayerCommand {
 
-    private static final Logger LOGGER = Logger.getLogger("WalkOnAirCommand");
+    private static final Logger LOGGER = Logger.getLogger("NewMovementCommand");
 
     private final OptionalArg<String> modeArg;
     private final OptionalArg<Float> gravityArg;
 
     public NewMovementCommand() {
-        super("WalkOnAir", "Prevent falling below a configured Y floor while still allowing jumping");
-        this.addAliases("woa", "airwalk", "walkair");
+        super("NewMovementCommand", "Prevent falling below a configured Y floor while still allowing jumping");
+        this.addAliases("NewMove", "NewSystem");
         this.modeArg = withOptionalArg("Mode", "Mode: on, off, toggle, set, status", ArgTypes.STRING);
         this.gravityArg = withOptionalArg("Gravity", "Gravity Level", ArgTypes.FLOAT);
     }
@@ -73,7 +73,7 @@ public class NewMovementCommand extends AbstractPlayerCommand {
                 Double activeFactor = NewMovementSystem.getMoonGravityFactor(playerId);
                 return;
             case "toggle":
-                if (enabled) {
+                if (enabled && !hasGravityArg) {
                     NewMovementSystem.disableMoonGravity(playerId);
                     playerRef.sendMessage(Message.raw("Moon Gravity disabled."));
                 } else {

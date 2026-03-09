@@ -8,8 +8,14 @@ import com.hypixel.hytale.math.shape.Cylinder;
 import com.hypixel.hytale.math.shape.Ellipsoid;
 import com.hypixel.hytale.math.vector.Vector3i;
 
+import javax.xml.namespace.QName;
+
 public class ShapeCompositorPresets extends ShapeCompositor{
     private int _radius = 8;
+    private final TransformFlags _noMove = TransformFlags.builder()
+            .ignorePitch()
+            .ignoreYaw()
+            .build();
 
     public ShapeCompositorPresets(Vector3i anchor, int radius){
         super(anchor);
@@ -135,47 +141,69 @@ public class ShapeCompositorPresets extends ShapeCompositor{
      * This prevents the floor from tilting when looking up/down.
      */
     public ShapeCompositor WithLevelFloor(){
-        TransformFlags noMove = TransformFlags.builder()
-                .ignorePitch()
-                .ignoreYaw()
-                .build();
+        int idTracker = 0;
+        double halfRadius = _radius/2d;
 
-        // Operation 1: Define camera volume with placeholder fill
-        var x = _radius/2;
-        var y = _radius/2;
-        var z = _radius-2;
-//        var shape = new TransformedShape(
-//                new Ellipsoid(x,y,z),
-//                0, y/2, z);
-//        this.addOperation("camera_front",
-//                        shape,
-//                        OperationType.DEFINE,
-//                        new PlaceholderFill())
-//                .build();
-
-        this.addOperation("player_space",
-                        new Ellipsoid(3),
-                        OperationType.DEFINE,
-                        new PlaceholderFill())
-                .build();
-
-        // Operation 2: Define camera volume with empty fill
-        var shape2 = new TransformedShape(
-                new Ellipsoid(x,y,z),
-                0, y/2, -z+1);
-        this.addOperation("camera_back",
-                        shape2,
+        //Rotated Cube for a cone/pyramid like shape.
+        //TODO: implement cone/pyramid shape
+        //TODO: Define is now acting as a fill of empty
+        // and not technically functional with intersect as a shape refinement cutting tool
+        double halfRightAngleRad = Math.toRadians(45);
+        this.addOperation(idTracker++ + "",
+                        new TransformedShape(
+                                new TransformedShape(
+                                    new Box(-(halfRadius-1), -(halfRadius-1), -(halfRadius-1),
+                                            halfRadius, halfRadius, halfRadius),
+                                    0,0,0,
+                                    halfRightAngleRad, halfRightAngleRad, -halfRightAngleRad),
+                                0, 1, -((int)halfRadius),
+                                Math.toRadians(135),0,0),
                         OperationType.DEFINE,
                         new EmptyBlockFill())
                 .build();
 
-        // Operation 2: Floor exclusion that stays level (ignores pitch rotation)
+        //Long Ellipsoid
+        int zOffset = 2*_radius;
+//        this.addOperation(idTracker++ + "",
+//                        new TransformedShape(
+//                                        new Ellipsoid(_radius, halfRadius*1.5, zOffset+2),
+//                                -1, 2, -(zOffset)),
+//                                //Math.toRadians(135),0,0),
+//                        OperationType.DEFINE,
+//                        new EmptyBlockFill())
+//                .build();
+
+        //Cut base of top shape
+        this.addOperation(idTracker++ + "",
+                        new Box(-_radius, -_radius, -_radius,_radius,0,_radius),
+                        OperationType.EXCLUDE,
+                        null)
+                .build();
+
+        //Cut back of top shape
+        this.addOperation(idTracker++ + "",
+                        new Box(-_radius, -_radius, -(_radius+zOffset),_radius,_radius,-zOffset),
+                        OperationType.EXCLUDE,
+                        null)
+                .build();
+
+        //Cut front of top shape
+        this.addOperation(idTracker++ + "",
+                        new Box(-_radius, -_radius, 1, _radius, _radius, _radius),
+                        OperationType.EXCLUDE,
+                        null)
+                .build();
+
+        // Operation Final: Floor exclusion that stays level (ignores pitch rotation)
         // This keeps the floor horizontal even when looking up or down
-        this.addOperation("floor_exclusion",
-                new Box(-1, -1, -1,1,1,1),
+        var ignorePitch = TransformFlags.builder()
+                .ignorePitch()
+                .build();
+        this.addOperation(idTracker + "",
+                new Box(-_radius, -_radius, -2,_radius,1,_radius),
                 OperationType.EXCLUDE,
                 null)
-                .withTransformFlags(noMove)
+                .withTransformFlags(ignorePitch)
                 .build();
 
         return this;

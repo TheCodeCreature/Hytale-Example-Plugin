@@ -7,6 +7,7 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.protocol.MovementSettings;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.player.movement.MovementManager;
 import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
@@ -17,8 +18,12 @@ import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
+
+    private static final Logger LOGGER = Logger.getLogger("NewMovementSystem");
 
     public static final double DEFAULT_MOON_GRAVITY_FACTOR = 0.165;
     private static final double MIN_GRAVITY_FACTOR = -10.0;
@@ -153,9 +158,16 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
         changed |= assignIfChanged(active.airFrictionMinSpeed, airFrictionMinSpeed, value -> active.airFrictionMinSpeed = value);
         changed |= assignIfChanged(active.airFrictionMaxSpeed, airFrictionMaxSpeed, value -> active.airFrictionMaxSpeed = value);
 
-        changed |= applyInvertedGravityOscillation(playerId, defaults, active, velocity, dt);
+
+
+        changed |= assignIfChanged(active.airFrictionMaxSpeed, airFrictionMaxSpeed, value -> active.airFrictionMaxSpeed = value);
+
+
+        LOGGER.info("Velocity:" + velocity.getY());
+//        changed |= applyInvertedGravityOscillation(playerId, defaults, active, velocity, dt);
 
         if (changed || !MOON_PROFILE_APPLIED.contains(playerId)) {
+//            playerRef.sendMessage(Message.raw("Value Changed"));
             movementManager.update(playerRef.getPacketHandler());
         }
 
@@ -205,7 +217,7 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
     }
 
     private static boolean assignIfChanged(float currentValue, float targetValue, @Nonnull FloatSetter setter) {
-        if (isWithinEpsilon(currentValue, targetValue)) {
+        if (!outsideEpsilon(currentValue, targetValue)) {
             return false;
         }
         setter.set(targetValue);
@@ -238,8 +250,8 @@ public class NewMovementSystem extends EntityTickingSystem<EntityStore> {
         return MOON_GRAVITY_FACTORS.get(playerId);
     }
 
-    private static boolean isWithinEpsilon(float a, float b) {
-        return Math.abs(a - b) <= EPSILON;
+    private static boolean outsideEpsilon(float a, float b) {
+        return Math.abs(a - b) > EPSILON;
     }
 
     private static double clamp(double value) {
