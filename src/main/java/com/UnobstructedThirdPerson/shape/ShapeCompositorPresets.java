@@ -143,11 +143,11 @@ public class ShapeCompositorPresets extends ShapeCompositor{
         this.addOperation(idTracker++ + "",
                         new TransformedShape(
                                 new SquarePyramid(_radius, _radius, _radius),
-                                0, 0, ((int)halfRadius)),
+                                0, 2, -((int)halfRadius)),
 //                                Math.toRadians(135),0,0),
                         OperationType.DEFINE,
                         new EmptyBlockFill())
-                .withTransformFlags(_noMove)
+//                .withTransformFlags(_noMove)
                 .build();
 
         //Long Ellipsoid
