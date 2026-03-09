@@ -137,21 +137,33 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 
     public ShapeCompositor WithConeShape(){
         int idTracker = 0;
-        double halfRadius = _radius/2d;
+//        double halfRadius = _radius/2d;
+        double scaledRadius = _radius;
+        double xWidth = scaledRadius*2+3;
+        double yWidth = scaledRadius*2;
 
         // Square-bottom pyramid shape (base centered around anchor).
-        this.addOperation(idTracker++ + "",
+        var firstShape = idTracker++ + "";
+        this.addOperation(firstShape,
                         new TransformedShape(
-                                new SquarePyramid(_radius, _radius, _radius),
-                                0, 2, -((int)halfRadius)),
+                                new SquarePyramid(xWidth, yWidth, scaledRadius),
+                                0, 1, -((int)scaledRadius-2)),
 //                                Math.toRadians(135),0,0),
                         OperationType.DEFINE,
-                        new EmptyBlockFill())
+                        null)
 //                .withTransformFlags(_noMove)
                 .build();
 
+        // Square-bottom pyramid shape (base centered around anchor).
+        this.addOperation(idTracker++ + "",
+                        new Box(-2, -2, -2, 2, 2, 2),
+                        OperationType.INTERSECT,
+                        new PlaceholderFill())
+//                .withTransformFlags(_noMove)
+                .withReference(firstShape)
+                .build();
+
         //Long Ellipsoid
-        int zOffset = 2*_radius;
 //        this.addOperation(idTracker++ + "",
 //                        new TransformedShape(
 //                                        new Ellipsoid(_radius, halfRadius*1.5, zOffset+2),
@@ -161,21 +173,35 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 //                        new EmptyBlockFill())
 //                .build();
 
-        //Cut base of top shape
+//        //Extend box base
 //        this.addOperation(idTracker++ + "",
-//                        new Box(-_radius, -_radius, -_radius,_radius,0,_radius),
+//                        new Box(-(scaledRadius+3), -(scaledRadius+3), -(scaledRadius+3), -scaledRadius, -scaledRadius, -scaledRadius),
+//                        OperationType.DEFINE,
+//                        new EmptyBlockFill())
+//                .build();
+
+//        Cut base of shape
+        this.addOperation(idTracker++ + "",
+                            new Box(-_radius, -_radius, -_radius,_radius,0,_radius),
+                        OperationType.EXCLUDE,
+                        null)
+                .build();
+//
+////        Ignore tiny area round player minus back
+//        this.addOperation(idTracker++ + "",
+//                        new Box(-1, -1, -1,1,0,1),
 //                        OperationType.EXCLUDE,
 //                        null)
 //                .build();
 
-        //Cut back of top shape
+        //Cut back of shape
 //        this.addOperation(idTracker++ + "",
 //                        new Box(-_radius, -_radius, -(_radius+zOffset),_radius,_radius,-zOffset),
 //                        OperationType.EXCLUDE,
 //                        null)
 //                .build();
 
-        //Cut front of top shape
+        //Cut front of shape
 //        this.addOperation(idTracker++ + "",
 //                        new Box(-_radius, -_radius, 1, _radius, _radius, _radius),
 //                        OperationType.EXCLUDE,
@@ -187,12 +213,21 @@ public class ShapeCompositorPresets extends ShapeCompositor{
         var ignorePitch = TransformFlags.builder()
                 .ignorePitch()
                 .build();
+        //leave ground cutout for camera behind player
         this.addOperation(idTracker + "",
-                new Box(-_radius, -_radius, -2,_radius,1,_radius),
+                new Box(-_radius, -_radius, -1.5,_radius,1,_radius),
                 OperationType.EXCLUDE,
                 null)
                 .withTransformFlags(ignorePitch)
                 .build();
+
+        //ignore player space
+//        this.addOperation(idTracker + "",
+//                        new Box(-1, -1, 1,1,1,1),
+//                        OperationType.EXCLUDE,
+//                        null)
+//                .withTransformFlags(_noMove)
+//                .build();
 
         return this;
     }
