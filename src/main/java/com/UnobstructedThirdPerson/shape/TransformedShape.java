@@ -17,9 +17,9 @@ import javax.annotation.Nonnull;
 public class TransformedShape implements Shape {
     
     private final Shape baseShape;
-    private final int offsetX;
-    private final int offsetY;
-    private final int offsetZ;
+    private final double offsetX;
+    private final double offsetY;
+    private final double offsetZ;
     private final double yaw;   // Rotation around Y axis (radians)
     private final double pitch; // Rotation around X axis (radians)
     private final double roll;  // Rotation around Z axis (radians)
@@ -28,7 +28,22 @@ public class TransformedShape implements Shape {
      * Create a transformed shape with translation only.
      */
     public TransformedShape(@Nonnull Shape baseShape, int offsetX, int offsetY, int offsetZ) {
+        this(baseShape, (double) offsetX, (double) offsetY, (double) offsetZ, 0.0, 0.0, 0.0);
+    }
+
+    /**
+     * Create a transformed shape with translation only.
+     */
+    public TransformedShape(@Nonnull Shape baseShape, double offsetX, double offsetY, double offsetZ) {
         this(baseShape, offsetX, offsetY, offsetZ, 0.0, 0.0, 0.0);
+    }
+
+    /**
+     * Create a transformed shape with translation and rotation.
+     */
+    public TransformedShape(@Nonnull Shape baseShape, int offsetX, int offsetY, int offsetZ,
+                           double yaw, double pitch, double roll) {
+        this(baseShape, (double) offsetX, (double) offsetY, (double) offsetZ, yaw, pitch, roll);
     }
     
     /**
@@ -42,7 +57,7 @@ public class TransformedShape implements Shape {
      * @param pitch Rotation around X axis in radians (vertical tilt)
      * @param roll Rotation around Z axis in radians (barrel roll)
      */
-    public TransformedShape(@Nonnull Shape baseShape, int offsetX, int offsetY, int offsetZ,
+    public TransformedShape(@Nonnull Shape baseShape, double offsetX, double offsetY, double offsetZ,
                            double yaw, double pitch, double roll) {
         this.baseShape = baseShape;
         this.offsetX = offsetX;
@@ -55,20 +70,81 @@ public class TransformedShape implements Shape {
     
     @Override
     public Box getBox(double x, double y, double z) {
-        // Get the base shape's bounding box and apply transformations
+        // Fast path when no rotation is applied.
+        if (yaw == 0.0 && pitch == 0.0 && roll == 0.0) {
+            return baseShape.getBox(x + offsetX, y + offsetY, z + offsetZ);
+        }
+
         Box baseBox = baseShape.getBox(0, 0, 0);
-        
-        // For simplicity, we'll create a conservative bounding box that encompasses
-        // the rotated shape. This is not perfectly tight but works for our purposes.
-        double maxExtent = Math.max(Math.max(
-            Math.abs(baseBox.min.x) + Math.abs(baseBox.max.x),
-            Math.abs(baseBox.min.y) + Math.abs(baseBox.max.y)),
-            Math.abs(baseBox.min.z) + Math.abs(baseBox.max.z));
-        
-        return new Box(
-            x + offsetX - maxExtent, y + offsetY - maxExtent, z + offsetZ - maxExtent,
-            x + offsetX + maxExtent, y + offsetY + maxExtent, z + offsetZ + maxExtent
-        );
+        double[] xValues = {baseBox.min.x, baseBox.max.x};
+        double[] yValues = {baseBox.min.y, baseBox.max.y};
+        double[] zValues = {baseBox.min.z, baseBox.max.z};
+
+        double minX = Double.POSITIVE_INFINITY;
+        double minY = Double.POSITIVE_INFINITY;
+        double minZ = Double.POSITIVE_INFINITY;
+        double maxX = Double.NEGATIVE_INFINITY;
+        double maxY = Double.NEGATIVE_INFINITY;
+        double maxZ = Double.NEGATIVE_INFINITY;
+
+        for (double localX : xValues) {
+            for (double localY : yValues) {
+                for (double localZ : zValues) {
+                    double[] rotated = applyForwardRotation(localX, localY, localZ);
+                    double worldX = x + offsetX + rotated[0];
+                    double worldY = y + offsetY + rotated[1];
+                    double worldZ = z + offsetZ + rotated[2];
+
+                    minX = Math.min(minX, worldX);
+                    minY = Math.min(minY, worldY);
+                    minZ = Math.min(minZ, worldZ);
+                    maxX = Math.max(maxX, worldX);
+                    maxY = Math.max(maxY, worldY);
+                    maxZ = Math.max(maxZ, worldZ);
+                }
+            }
+        }
+
+        return new Box(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    /**
+     * Apply forward rotation to a local-space point.
+     * Order matches containsPosition inverse math: roll -> pitch -> yaw.
+     */
+    private double[] applyForwardRotation(double x, double y, double z) {
+        double rotatedX = x;
+        double rotatedY = y;
+        double rotatedZ = z;
+
+        if (roll != 0.0) {
+            double cosRoll = Math.cos(roll);
+            double sinRoll = Math.sin(roll);
+            double xTemp = rotatedX * cosRoll + rotatedY * sinRoll;
+            double yTemp = -rotatedX * sinRoll + rotatedY * cosRoll;
+            rotatedX = xTemp;
+            rotatedY = yTemp;
+        }
+
+        if (pitch != 0.0) {
+            double cosPitch = Math.cos(pitch);
+            double sinPitch = Math.sin(pitch);
+            double yTemp = rotatedY * cosPitch + rotatedZ * sinPitch;
+            double zTemp = -rotatedY * sinPitch + rotatedZ * cosPitch;
+            rotatedY = yTemp;
+            rotatedZ = zTemp;
+        }
+
+        if (yaw != 0.0) {
+            double cosYaw = Math.cos(yaw);
+            double sinYaw = Math.sin(yaw);
+            double xTemp = rotatedX * cosYaw - rotatedZ * sinYaw;
+            double zTemp = rotatedX * sinYaw + rotatedZ * cosYaw;
+            rotatedX = xTemp;
+            rotatedZ = zTemp;
+        }
+
+        return new double[] {rotatedX, rotatedY, rotatedZ};
     }
     
     @Override
@@ -173,9 +249,9 @@ public class TransformedShape implements Shape {
      */
     public static class Builder {
         private final Shape baseShape;
-        private int offsetX = 0;
-        private int offsetY = 0;
-        private int offsetZ = 0;
+        private double offsetX = 0.0;
+        private double offsetY = 0.0;
+        private double offsetZ = 0.0;
         private double yaw = 0.0;
         private double pitch = 0.0;
         private double roll = 0.0;
@@ -184,26 +260,42 @@ public class TransformedShape implements Shape {
             this.baseShape = baseShape;
         }
         
-        public Builder translate(int x, int y, int z) {
+        public Builder translate(double x, double y, double z) {
             this.offsetX = x;
             this.offsetY = y;
             this.offsetZ = z;
+            return this;
+        }
+
+        public Builder translate(int x, int y, int z) {
+            return translate((double) x, (double) y, (double) z);
+        }
+
+        public Builder translateX(double x) {
+            this.offsetX = x;
             return this;
         }
         
         public Builder translateX(int x) {
-            this.offsetX = x;
-            return this;
+            return translateX((double) x);
         }
-        
-        public Builder translateY(int y) {
+
+        public Builder translateY(double y) {
             this.offsetY = y;
             return this;
         }
         
-        public Builder translateZ(int z) {
+        public Builder translateY(int y) {
+            return translateY((double) y);
+        }
+
+        public Builder translateZ(double z) {
             this.offsetZ = z;
             return this;
+        }
+        
+        public Builder translateZ(int z) {
+            return translateZ((double) z);
         }
         
         /**
