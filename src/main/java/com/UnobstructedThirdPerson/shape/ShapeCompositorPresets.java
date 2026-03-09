@@ -141,11 +141,12 @@ public class ShapeCompositorPresets extends ShapeCompositor{
         // Square-bottom pyramid shape (base centered around anchor).
         this.addOperation(idTracker++ + "",
                         new TransformedShape(
-                                new SquarePyramid(halfRadius, halfRadius + 1),
-                                0, 1, -((int)halfRadius),
-                                Math.toRadians(135),0,0),
+                                new SquarePyramid(halfRadius, _radius),
+                                0, 1, ((int)halfRadius)),
+//                                Math.toRadians(135),0,0),
                         OperationType.DEFINE,
                         new EmptyBlockFill())
+                .withTransformFlags(_noMove)
                 .build();
 
         //Long Ellipsoid
@@ -174,11 +175,11 @@ public class ShapeCompositorPresets extends ShapeCompositor{
                 .build();
 
         //Cut front of top shape
-        this.addOperation(idTracker++ + "",
-                        new Box(-_radius, -_radius, 1, _radius, _radius, _radius),
-                        OperationType.EXCLUDE,
-                        null)
-                .build();
+//        this.addOperation(idTracker++ + "",
+//                        new Box(-_radius, -_radius, 1, _radius, _radius, _radius),
+//                        OperationType.EXCLUDE,
+//                        null)
+//                .build();
 
         // Operation Final: Floor exclusion that stays level (ignores pitch rotation)
         // This keeps the floor horizontal even when looking up or down
