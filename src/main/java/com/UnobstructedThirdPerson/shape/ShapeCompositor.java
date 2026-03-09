@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 public class ShapeCompositor {
     
     private static final Logger LOGGER = Logger.getLogger("ShapeCompositor");
+    private static final double PITCH_PIVOT_EYE_HEIGHT = 1.8;
     
     private Vector3i anchor;
     private double yawRotation = 0.0; // Player's yaw rotation in radians (side-to-side)
@@ -310,9 +311,26 @@ public class ShapeCompositor {
         if (effectiveYaw == 0.0 && effectivePitch == 0.0 && effectiveRoll == 0.0) {
             return shape;
         }
-        
-        // Apply transformations
-        return new TransformedShape(shape, 0, 0, 0, effectiveYaw, effectivePitch, effectiveRoll);
+
+        Shape transformed = shape;
+
+        // Keep rotation order equivalent to TransformedShape: roll -> pitch -> yaw.
+        if (effectiveRoll != 0.0) {
+            transformed = new TransformedShape(transformed, 0.0, 0.0, 0.0, 0.0, 0.0, effectiveRoll);
+        }
+
+        if (effectivePitch != 0.0) {
+            // Rotate pitch around eye height instead of feet-level anchor.
+            transformed = new TransformedShape(transformed, 0.0, -PITCH_PIVOT_EYE_HEIGHT, 0.0);
+            transformed = new TransformedShape(transformed, 0.0, 0.0, 0.0, 0.0, effectivePitch, 0.0);
+            transformed = new TransformedShape(transformed, 0.0, PITCH_PIVOT_EYE_HEIGHT, 0.0);
+        }
+
+        if (effectiveYaw != 0.0) {
+            transformed = new TransformedShape(transformed, 0.0, 0.0, 0.0, effectiveYaw, 0.0, 0.0);
+        }
+
+        return transformed;
     }
     
     private void executeDefine(ShapeOperation operation, ChunkStore chunkStore,
