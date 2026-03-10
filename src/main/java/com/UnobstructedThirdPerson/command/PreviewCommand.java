@@ -1,105 +1,176 @@
 package com.UnobstructedThirdPerson.command;
 
-import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
+import com.UnobstructedThirdPerson.records.BlockSnapshot;
+import com.UnobstructedThirdPerson.shape.ComposedRegion;
+import com.UnobstructedThirdPerson.shape.ShapeCompositor;
+import com.UnobstructedThirdPerson.shape.ShapeCompositorPresets;
+import com.UnobstructedThirdPerson.shape.placeholder.PlaceholderTransparencyUtil;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.protocol.packets.interface_.BlockChange;
+import com.hypixel.hytale.protocol.packets.interface_.EditorBlocksChange;
+import com.hypixel.hytale.protocol.packets.interface_.FluidChange;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.OptionalArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
-import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 public class PreviewCommand extends AbstractPlayerCommand {
-    
+
+    private static final int DEFAULT_RADIUS = 10;
+    private static final int MAX_PREVIEW_BLOCKS = 12_000;
+
     private final OptionalArg<String> modeArg;
-    
+
     public PreviewCommand() {
         super("preview", "Manage preview blocks");
-        this.modeArg = withOptionalArg("Mode", "Mode: box, line, or clear", ArgTypes.STRING);
+        this.modeArg = withOptionalArg("Mode", "Mode: shape or clear", ArgTypes.STRING);
     }
-    
+
     @Override
     protected void execute(@NonNull CommandContext context, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
-        String mode = this.modeArg.provided(context) ? this.modeArg.get(context) : "box";
-        
-        PreviewBlockManager manager = PreviewBlockManager.getOrCreate(playerRef, world);
-        
+        String mode = this.modeArg.provided(context) ? this.modeArg.get(context) : "shape";
+
         switch (mode.toLowerCase()) {
-            case "box":
-                showPreviewBox(playerRef, manager, store, ref);
-                break;
-            case "line":
-                showPreviewLine(playerRef, manager, store, ref);
+            case "shape":
+            case "editor":
+            case "editorshape":
+                sendOneShotEditorShapePreview(playerRef, world);
                 break;
             case "clear":
-                manager.clearAll();
-                playerRef.sendMessage(Message.raw("Cleared all preview blocks"));
+                clearEditorPreview(playerRef);
                 break;
             default:
-                playerRef.sendMessage(Message.raw("Unknown mode: " + mode + ". Use box, line, or clear"));
+                playerRef.sendMessage(Message.raw("Unknown mode: " + mode + ". Use shape or clear"));
         }
     }
-    
-    private void showPreviewBox(PlayerRef playerRef, PreviewBlockManager manager, Store<EntityStore> store, Ref<EntityStore> ref) {
-        Vector3d pos = getPlayerPosition(store, ref);
-        if (pos == null) {
-            playerRef.sendMessage(Message.raw("Failed to get player position"));
+
+    private void sendOneShotEditorShapePreview(
+            @NonNull PlayerRef playerRef,
+            @NonNull World world) {
+        Vector3d pos = playerRef.getTransform().getPosition();
+
+        Vector3i anchor = new Vector3i(
+                (int) Math.floor(pos.x),
+                (int) Math.floor(pos.y),
+                (int) Math.floor(pos.z)
+        );
+
+        ShapeCompositor compositor = new ShapeCompositorPresets(anchor, DEFAULT_RADIUS).Test();
+        applyLookRotation(compositor, playerRef);
+
+        ChunkStore chunkStore = world.getChunkStore();
+        ComposedRegion region = compositor.compose(chunkStore);
+
+        List<BlockChange> blockChanges = buildPreviewChanges(region, anchor, playerRef);
+        if (blockChanges.isEmpty()) {
+            playerRef.sendMessage(Message.raw("No preview blocks generated for this shape."));
             return;
         }
-        
-        Vector3i min = new Vector3i((int)pos.x - 2, (int)pos.y, (int)pos.z - 2);
-        Vector3i max = new Vector3i((int)pos.x + 2, (int)pos.y + 3, (int)pos.z + 2);
-        
-        int rockStoneId = getBlockId("Rock_Stone");
-        if (rockStoneId == -1) {
-            playerRef.sendMessage(Message.raw("Failed to find Rock_Stone block"));
-            return;
-        }
-        
-        manager.addPreviewBoxOutline(min, max, rockStoneId);
-        playerRef.sendMessage(Message.raw("Created preview box outline (" + manager.getPreviewCount() + " blocks)"));
+
+        EditorBlocksChange packet = new EditorBlocksChange();
+        packet.blocksChange = blockChanges.toArray(BlockChange[]::new);
+        packet.fluidsChange = new FluidChange[0];
+        packet.blocksCount = blockChanges.size();
+        packet.advancedPreview = true;
+        packet.selection = null;
+        playerRef.getPacketHandler().writeNoCache(packet);
+
+        playerRef.sendMessage(Message.raw("Rendered one-shot editor preview with " + blockChanges.size() + " blocks."));
     }
-    
-    private void showPreviewLine(PlayerRef playerRef, PreviewBlockManager manager, Store<EntityStore> store, Ref<EntityStore> ref) {
-        Vector3d pos = getPlayerPosition(store, ref);
-        if (pos == null) {
-            playerRef.sendMessage(Message.raw("Failed to get player position"));
-            return;
+
+    private List<BlockChange> buildPreviewChanges(
+            @NonNull ComposedRegion region,
+            @NonNull Vector3i anchor,
+            @NonNull PlayerRef playerRef) {
+        List<BlockChange> blockChanges = new ArrayList<>();
+        Set<Long> excluded = region.getExcludedPositions();
+        Map<Long, Integer> computedBlockIds = region.getComputedBlockIds();
+
+        for (Map.Entry<Long, BlockSnapshot> entry : region.getOriginalBlocks().entrySet()) {
+            if (blockChanges.size() >= MAX_PREVIEW_BLOCKS) {
+                break;
+            }
+
+            Long packedPos = entry.getKey();
+            if (excluded.contains(packedPos)) {
+                continue;
+            }
+
+            Integer replacementId = computedBlockIds.get(packedPos);
+            if (replacementId == null || replacementId == 0) {
+                continue;
+            }
+
+            BlockSnapshot snapshot = entry.getValue();
+            replacementId = resolveTransparentPlaceholderId(playerRef, snapshot, replacementId);
+
+            blockChanges.add(new BlockChange(
+                    snapshot.x() - anchor.x,
+                    snapshot.y() - anchor.y,
+                    snapshot.z() - anchor.z,
+                    replacementId,
+                    snapshot.rotation()
+            ));
         }
-        
-        Vector3i center = new Vector3i((int)pos.x, (int)pos.y, (int)pos.z);
-        
-        int editorBlockId = getBlockId("Editor_Block");
-        if (editorBlockId == -1) {
-            playerRef.sendMessage(Message.raw("Failed to find Editor_Block block"));
-            return;
-        }
-        
-        // Create a line of preview blocks
-        for (int i = 0; i < 10; i++) {
-            manager.addPreview(new Vector3i(center.x + i, center.y, center.z), editorBlockId);
-        }
-        playerRef.sendMessage(Message.raw("Created preview line (" + manager.getPreviewCount() + " blocks)"));
+
+        return blockChanges;
     }
-    
-    private Vector3d getPlayerPosition(Store<EntityStore> store, Ref<EntityStore> ref) {
-        TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
-        return transform != null ? transform.getPosition() : null;
-    }
-    
-    private int getBlockId(String blockName) {
-        BlockType blockType = BlockType.getAssetMap().getAsset(blockName);
-        if (blockType == null) {
-            return -1;
+
+    private int resolveTransparentPlaceholderId(@NonNull PlayerRef playerRef, @NonNull BlockSnapshot snapshot, int replacementId) {
+        BlockType replacementType = BlockType.getAssetMap().getAsset(replacementId);
+        if (replacementType == null || replacementType.getId() == null || !replacementType.getId().startsWith("Placeholder_")) {
+            return replacementId;
         }
-        return BlockType.getAssetMap().getIndex(blockName);
+
+        BlockType baseType = BlockType.getAssetMap().getAsset(snapshot.blockId());
+        if (baseType == null) {
+            return replacementId;
+        }
+
+        String hitboxType = baseType.getHitboxType();
+        if (hitboxType == null) {
+            return replacementId;
+        }
+
+        Integer transparentPlaceholderId = PlaceholderTransparencyUtil.prepareTransparentPlaceholder(
+                playerRef,
+                snapshot.blockId(),
+                hitboxType
+        );
+
+        return transparentPlaceholderId != null ? transparentPlaceholderId : replacementId;
+    }
+
+    private void applyLookRotation(@NonNull ShapeCompositor compositor, @NonNull PlayerRef playerRef) {
+        Vector3d lookDir = playerRef.getTransform().getDirection();
+        double cameraYaw = Math.atan2(-lookDir.x, lookDir.z);
+        double cameraPitch = Math.asin(lookDir.y);
+        compositor.setRotation(cameraYaw, cameraPitch);
+    }
+
+    private void clearEditorPreview(@NonNull PlayerRef playerRef) {
+        EditorBlocksChange clearPacket = new EditorBlocksChange();
+        clearPacket.blocksChange = new BlockChange[0];
+        clearPacket.fluidsChange = new FluidChange[0];
+        clearPacket.blocksCount = 0;
+        clearPacket.advancedPreview = true;
+        clearPacket.selection = null;
+        playerRef.getPacketHandler().writeNoCache(clearPacket);
+        playerRef.sendMessage(Message.raw("Cleared editor preview."));
     }
 }
