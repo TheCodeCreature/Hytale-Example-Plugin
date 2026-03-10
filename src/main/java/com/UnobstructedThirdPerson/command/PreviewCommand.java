@@ -3,8 +3,10 @@ package com.UnobstructedThirdPerson.command;
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.UnobstructedThirdPerson.shape.ComposedRegion;
 import com.UnobstructedThirdPerson.shape.ShapeCompositor;
-import com.UnobstructedThirdPerson.shape.ShapeCompositorPresets;
+import com.UnobstructedThirdPerson.shape.fill.PlaceholderFill;
+import com.UnobstructedThirdPerson.shape.operation.OperationType;
 import com.UnobstructedThirdPerson.shape.placeholder.PlaceholderTransparencyUtil;
+import com.hypixel.hytale.math.shape.Ellipsoid;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3d;
@@ -70,7 +72,13 @@ public class PreviewCommand extends AbstractPlayerCommand {
                 (int) Math.floor(pos.z)
         );
 
-        ShapeCompositor compositor = new ShapeCompositorPresets(anchor, DEFAULT_RADIUS).Test();
+        ShapeCompositor compositor = new ShapeCompositor(anchor);
+        compositor.addOperation(
+                "preview_ellipsoid",
+                new Ellipsoid(DEFAULT_RADIUS),
+                OperationType.DEFINE,
+                new PlaceholderFill()
+        ).build();
         applyLookRotation(compositor, playerRef);
 
         ChunkStore chunkStore = world.getChunkStore();
