@@ -1,6 +1,5 @@
 package com.UnobstructedThirdPerson.command;
 
-import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
 import com.hypixel.hytale.builtin.buildertools.BuilderToolsPlugin;
@@ -10,6 +9,9 @@ import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.packets.buildertools.BrushOrigin;
 import com.hypixel.hytale.protocol.packets.buildertools.BrushShape;
+import com.hypixel.hytale.protocol.packets.interface_.BlockChange;
+import com.hypixel.hytale.protocol.packets.interface_.EditorBlocksChange;
+import com.hypixel.hytale.protocol.packets.interface_.FluidChange;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
@@ -24,8 +26,10 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.TargetUtil;
 import org.jspecify.annotations.NonNull;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -106,20 +110,16 @@ public class PreviewCommand extends AbstractPlayerCommand {
         }
 
         String materialId = resolveKnownMaterialId(resolveTargetMaterialId(world, target));
-        int materialBlockId = resolveMaterialBlockId(materialId);
-        int previewBlockId = TransparentBlockUtils.getTransparentVariantId(materialBlockId);
-        Map<Integer, Integer> transparentVariant = new HashMap<>();
-        transparentVariant.put(materialBlockId, previewBlockId);
-        TransparentBlockUtils.ensureTransparentTypesSent(playerRef, transparentVariant);
-
-        PreviewBlockManager manager = PreviewBlockManager.getOrCreate(playerRef, world);
-        manager.clearAll();
-
-        int previewCount = addSpherePreviewBlocks(manager, target, previewBlockId);
+        int previewBlockId = resolveMaterialBlockId(materialId);
+        EditorBlocksChange previewPacket = buildSpherePreviewPacket(target, previewBlockId);
+        int previewCount = previewPacket.blocksCount;
         if (previewCount <= 0) {
             playerRef.sendMessage(Message.raw("Failed to build preview blocks at target."));
             return;
         }
+
+        clearEditorPreview(playerRef);
+        playerRef.getPacketHandler().writeNoCache(previewPacket);
 
         PENDING_PREVIEWS.put(
                 playerRef.getUuid(),
@@ -153,10 +153,7 @@ public class PreviewCommand extends AbstractPlayerCommand {
             return;
         }
 
-        PreviewBlockManager manager = PreviewBlockManager.get(playerRef.getUuid());
-        if (manager != null) {
-            manager.clearAll();
-        }
+        clearEditorPreview(playerRef);
 
         Player player = store.getComponent(ref, Player.getComponentType());
         if (player == null) {
@@ -165,7 +162,7 @@ public class PreviewCommand extends AbstractPlayerCommand {
         }
 
         int diameter = Math.max(1, DEFAULT_RADIUS * 2);
-        BlockPattern material = BlockPattern.parse(pending.materialId);
+        BlockPattern material = BlockPattern.parse(Objects.requireNonNull(pending.materialId));
         Vector3i center = pending.center;
 
         BuilderToolsPlugin.addToQueue(
@@ -195,19 +192,32 @@ public class PreviewCommand extends AbstractPlayerCommand {
     }
 
     private void rejectPreview(@NonNull PlayerRef playerRef) {
-        PENDING_PREVIEWS.remove(playerRef.getUuid());
-        PreviewBlockManager manager = PreviewBlockManager.get(playerRef.getUuid());
-        if (manager != null) {
-            manager.clearAll();
+        PendingPreview pending = PENDING_PREVIEWS.remove(playerRef.getUuid());
+        clearEditorPreview(playerRef);
+        if (pending != null) {
             playerRef.sendMessage(Message.raw("Preview rejected and cleared."));
             return;
         }
 
-        playerRef.sendMessage(Message.raw("No active preview to reject."));
+        playerRef.sendMessage(Message.raw("No pending preview. Cleared active preview visuals."));
     }
 
-    private int addSpherePreviewBlocks(
-            @NonNull PreviewBlockManager manager,
+    @NonNull
+    private EditorBlocksChange buildSpherePreviewPacket(
+            @NonNull Vector3i center,
+            int previewBlockId) {
+        List<BlockChange> changes = addSpherePreviewChanges(center, previewBlockId);
+        EditorBlocksChange packet = new EditorBlocksChange();
+        packet.selection = null;
+        packet.blocksChange = changes.toArray(BlockChange[]::new);
+        packet.fluidsChange = new FluidChange[0];
+        packet.blocksCount = changes.size();
+        packet.advancedPreview = true;
+        return packet;
+    }
+
+    @NonNull
+    private List<BlockChange> addSpherePreviewChanges(
             @NonNull Vector3i center,
             int previewBlockId) {
         int radius = DEFAULT_RADIUS;
@@ -215,7 +225,7 @@ public class PreviewCommand extends AbstractPlayerCommand {
         double halfHeight = (radius + 0.41F);
         double widthSq = halfWidth * halfWidth;
         double heightSq = halfHeight * halfHeight;
-        int count = 0;
+        List<BlockChange> changes = new ArrayList<>();
 
         for (int sx = -radius; sx <= radius; sx++) {
             for (int sz = -radius; sz <= radius; sz++) {
@@ -225,22 +235,29 @@ public class PreviewCommand extends AbstractPlayerCommand {
                         continue;
                     }
 
-                    if (count >= MAX_PREVIEW_BLOCKS) {
-                        return count;
+                    if (changes.size() >= MAX_PREVIEW_BLOCKS) {
+                        return changes;
                     }
 
-                    boolean added = manager.addPreview(
-                            new Vector3i(center.x + sx, center.y + sy, center.z + sz),
-                            previewBlockId
-                    );
-                    if (added) {
-                        count++;
-                    }
+                    int relativeX = (center.x + sx) - center.x;
+                    int relativeY = (center.y + sy) - center.y;
+                    int relativeZ = (center.z + sz) - center.z;
+                    changes.add(new BlockChange(relativeX, relativeY, relativeZ, previewBlockId, (byte) 0));
                 }
             }
         }
 
-        return count;
+        return changes;
+    }
+
+    private void clearEditorPreview(@NonNull PlayerRef playerRef) {
+        EditorBlocksChange clearPacket = new EditorBlocksChange();
+        clearPacket.selection = null;
+        clearPacket.blocksChange = new BlockChange[0];
+        clearPacket.fluidsChange = new FluidChange[0];
+        clearPacket.blocksCount = 0;
+        clearPacket.advancedPreview = true;
+        playerRef.getPacketHandler().writeNoCache(clearPacket);
     }
 
     private int resolveMaterialBlockId(@NonNull String materialId) {
