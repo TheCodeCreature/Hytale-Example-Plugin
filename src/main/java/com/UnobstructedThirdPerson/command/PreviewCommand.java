@@ -5,8 +5,6 @@ import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
 import com.hypixel.hytale.builtin.buildertools.BuilderToolsPlugin;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.function.predicate.BiIntPredicate;
-import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.packets.buildertools.BrushOrigin;
 import com.hypixel.hytale.protocol.packets.buildertools.BrushShape;
@@ -29,7 +27,7 @@ import java.util.Objects;
 public class PreviewCommand extends AbstractPlayerCommand {
 
     private static final int DEFAULT_RADIUS = 10;
-    private static final int MAX_TARGET_DISTANCE = 32;
+    private static final double MAX_TARGET_DISTANCE = 64.0;
     private static final String FALLBACK_MATERIAL_ID = "Rock_Stone";
 
     private final OptionalArg<String> modeArg;
@@ -62,22 +60,25 @@ public class PreviewCommand extends AbstractPlayerCommand {
             @NonNull Ref<EntityStore> ref,
             @NonNull PlayerRef playerRef,
             @NonNull World world) {
-        Vector3d origin = playerRef.getTransform().getPosition();
-        Vector3d direction = playerRef.getTransform().getDirection();
-        BiIntPredicate solidBlocksOnly = (blockId, fluidId) -> blockId != 0;
-        Vector3i target = TargetUtil.getTargetBlock(
-                world,
-                solidBlocksOnly,
-                origin.x,
-                origin.y,
-                origin.z,
-                direction.x,
-                direction.y,
-                direction.z,
-                MAX_TARGET_DISTANCE
-        );
+        Vector3i target = TargetUtil.getTargetBlock(ref, MAX_TARGET_DISTANCE, store);
         if (target == null) {
-            playerRef.sendMessage(Message.raw("No target block in range."));
+            com.hypixel.hytale.math.vector.Vector3d origin = playerRef.getTransform().getPosition();
+            com.hypixel.hytale.math.vector.Vector3d direction = playerRef.getTransform().getDirection();
+            int rayEndX = (int) Math.floor(origin.x + (direction.x * MAX_TARGET_DISTANCE));
+            int rayEndY = (int) Math.floor(origin.y + (direction.y * MAX_TARGET_DISTANCE));
+            int rayEndZ = (int) Math.floor(origin.z + (direction.z * MAX_TARGET_DISTANCE));
+            playerRef.sendMessage(
+                    Message.raw(
+                            "No target block in range ("
+                                    + (int) MAX_TARGET_DISTANCE
+                                    + " blocks). Ray end ~ "
+                                    + rayEndX
+                                    + ", "
+                                    + rayEndY
+                                    + ", "
+                                    + rayEndZ
+                    )
+            );
             return;
         }
 
