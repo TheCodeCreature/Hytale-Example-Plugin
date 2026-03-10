@@ -12,6 +12,7 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.shape.Shape;
 import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -41,6 +42,8 @@ public class CameraTransparencyVolume {
 
     private static final Logger LOGGER = Logger.getLogger("CameraTransparencyVolume");
     private static final long UPDATE_INTERVAL_MILLIS = 100;
+    private static final Vector3f PLACEHOLDER_DEBUG_COLOR = new Vector3f(0.137F, 0.867F, 0.882F);
+    private static final Vector3f EMPTY_DEBUG_COLOR = new Vector3f(0.95F, 0.35F, 0.15F);
 
     private static final Map<UUID, CameraTransparencyVolume> INSTANCES = new ConcurrentHashMap<>();
 
@@ -51,7 +54,6 @@ public class CameraTransparencyVolume {
     private final PlayerRef playerRef;
     private final World world;
     private final ShapeCompositor compositor;
-    private final PlaceholderDebugCubeOverlay placeholderDebugCubeOverlay;
 
     // Packed block positions currently made transparent
     private final Set<Long> currentPositions = new HashSet<>();
@@ -72,7 +74,6 @@ public class CameraTransparencyVolume {
         this.playerRef = playerRef;
         this.world = world;
         this.compositor = compositor;
-        this.placeholderDebugCubeOverlay = new PlaceholderDebugCubeOverlay(world);
     }
     
     // Legacy constructor for backward compatibility
@@ -85,7 +86,6 @@ public class CameraTransparencyVolume {
         for (int i = 0; i < shapes.length; i++) {
             compositor.addOperation("shape_" + i, shapes[i], OperationType.DEFINE, new EmptyBlockFill());
         }
-        this.placeholderDebugCubeOverlay = new PlaceholderDebugCubeOverlay(world);
     }
 
     // ===== Static instance management =====
@@ -351,13 +351,21 @@ public class CameraTransparencyVolume {
 
         // Render debug cubes for active placeholder block replacements.
         Set<Long> placeholderPositions = new HashSet<>();
+        Set<Long> emptyPositions = new HashSet<>();
         for (Map.Entry<Long, Integer> entry : newBlockIds.entrySet()) {
             Integer replacementId = entry.getValue();
-            if (replacementId != null && PlaceholderFill.isPlaceholderBlockId(replacementId)) {
+            if (replacementId == null) {
+                continue;
+            }
+
+            if (replacementId == 0) {
+                emptyPositions.add(entry.getKey());
+            } else if (PlaceholderFill.isPlaceholderBlockId(replacementId)) {
                 placeholderPositions.add(entry.getKey());
             }
         }
-        placeholderDebugCubeOverlay.update(placeholderPositions);
+        PlaceholderDebugCubeOverlay.addDebugCubes(world, placeholderPositions, PLACEHOLDER_DEBUG_COLOR);
+        PlaceholderDebugCubeOverlay.addDebugCubes(world, emptyPositions, EMPTY_DEBUG_COLOR);
 
         // Update current state
         currentPositions.clear();
@@ -455,7 +463,7 @@ public class CameraTransparencyVolume {
         
         // Restore all modified placeholder block type definitions
         PlaceholderTransparencyUtil.restoreAllPlaceholders(playerRef);
-        placeholderDebugCubeOverlay.shutdown();
+        PlaceholderDebugCubeOverlay.clearDebugCubes(world);
 
         int restored = activeBlocks.size();
         activeBlocks.clear();

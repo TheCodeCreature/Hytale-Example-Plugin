@@ -2,66 +2,45 @@ package com.UnobstructedThirdPerson.camera;
 
 import com.hypixel.hytale.math.block.BlockUtil;
 import com.hypixel.hytale.math.matrix.Matrix4d;
-import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.protocol.DebugShape;
 import com.hypixel.hytale.server.core.modules.debug.DebugUtils;
 import com.hypixel.hytale.server.core.universe.world.World;
 
 import javax.annotation.Nonnull;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Renders short-lived debug cubes for placeholder blocks.
- *
- * Removal is implicit: when a position is no longer refreshed, its cube expires quickly.
+ * Utility methods for rendering and clearing debug cubes at packed block positions.
  */
-public class PlaceholderDebugCubeOverlay {
+public final class PlaceholderDebugCubeOverlay {
 
     private static final double CUBE_SCALE = 1.0;
-    private static final float CUBE_DURATION_SECONDS = 10F;
-    private static final long REFRESH_INTERVAL_MILLIS = 150L;
+    private static final float CUBE_DURATION_SECONDS = 0.45F;
 
-    @Nonnull
-    private final World world;
-    private final Set<Long> activePlaceholderPositions = new HashSet<>();
-    private long lastRefreshMillis = 0L;
-
-    public PlaceholderDebugCubeOverlay(@Nonnull World world) {
-        this.world = world;
+    private PlaceholderDebugCubeOverlay() {
+        // Utility class
     }
 
-    public void update(@Nonnull Set<Long> placeholderPositions) {
-        long now = System.currentTimeMillis();
-        boolean changed = !activePlaceholderPositions.equals(placeholderPositions);
-        if (!changed && (now - lastRefreshMillis) < REFRESH_INTERVAL_MILLIS) {
-            return;
-        }
+    public static void addDebugCube(@Nonnull World world, long packedPos, @Nonnull Vector3f color) {
+        int x = BlockUtil.unpackX(packedPos);
+        int y = BlockUtil.unpackY(packedPos);
+        int z = BlockUtil.unpackZ(packedPos);
 
-        activePlaceholderPositions.clear();
-        activePlaceholderPositions.addAll(placeholderPositions);
-        lastRefreshMillis = now;
+        Matrix4d matrix = new Matrix4d();
+        matrix.identity();
+        matrix.translate(x + 0.5, y + 0.5, z + 0.5);
+        matrix.scale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
+        DebugUtils.add(world, DebugShape.Cube, matrix, color, CUBE_DURATION_SECONDS, false);
+    }
 
-        for (Long packedPos : activePlaceholderPositions) {
-            int x = BlockUtil.unpackX(packedPos);
-            int y = BlockUtil.unpackY(packedPos);
-            int z = BlockUtil.unpackZ(packedPos);
-
-            Vector3d center = new Vector3d(x + 0.5, y + 0.5, z + 0.5);
-            Vector3f color = new Vector3f(0.137F, 0.867F, 0.882F);
-//            DebugUtils.addCube(world, center, color, CUBE_SCALE, CUBE_DURATION_SECONDS);
-
-            Matrix4d matrix = new Matrix4d();
-            matrix.identity();
-            matrix.translate(x + 0.5, y + 0.5, z + 0.5);
-            matrix.scale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
-            DebugUtils.add(world, DebugShape.Cube, matrix, color, 0.1f, 10, false);
+    public static void addDebugCubes(@Nonnull World world, @Nonnull Set<Long> packedPositions, @Nonnull Vector3f color) {
+        for (Long packedPos : packedPositions) {
+            addDebugCube(world, packedPos, color);
         }
     }
 
-    public void shutdown() {
-        activePlaceholderPositions.clear();
-        lastRefreshMillis = 0L;
+    public static void clearDebugCubes(@Nonnull World world) {
+        DebugUtils.clear(world);
     }
 }
