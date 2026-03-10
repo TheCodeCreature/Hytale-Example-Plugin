@@ -11,7 +11,7 @@ import com.hypixel.hytale.math.vector.Vector3i;
 import javax.xml.namespace.QName;
 
 public class ShapeCompositorPresets extends ShapeCompositor{
-    private int _radius = 9;
+    private int _radius = 10;
     private final TransformFlags _noMove = TransformFlags.builder()
             .ignorePitch()
             .ignoreYaw()
@@ -137,31 +137,64 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 
     public ShapeCompositor WithConeShape(){
         int idTracker = 0;
-//        double halfRadius = _radius/2d;
-        double scaledRadius = _radius;
-        double xWidth = scaledRadius*2+3;
-        double yWidth = scaledRadius*2;
+        double height =_radius;
+        double xWidth = (_radius*2)-1;
+        double yWidth = _radius*.66;
 
         // Square-bottom pyramid shape (base centered around anchor).
         var firstShape = idTracker++ + "";
         this.addOperation(firstShape,
-                        new TransformedShape(
-                                new SquarePyramid(xWidth, yWidth, scaledRadius),
-                                0, 1, -((int)scaledRadius-2)),
-//                                Math.toRadians(135),0,0),
+//                        new TransformedShape(
+                            new TransformedShape(
+                                new SquarePyramid(xWidth, yWidth, height),
+                                1, 2, -(height-2),
+                                0, -(Math.toRadians(5)),0),
                         OperationType.DEFINE,
-                        null)
+                        new EmptyBlockFill())
 //                .withTransformFlags(_noMove)
                 .build();
+//        //Define negative space
+//        this.addOperation(idTracker++ + "",
+//                        new TransformedShape(
+//                                new SquarePyramid(xWidth, yWidth, scaledRadius),
+//                                0, 1, -(scaledRadius-1.5)),
+////                                Math.toRadians(135),0,0),
+//                        OperationType.FILL,
+//                        new EmptyBlockFill())
+////                .withTransformFlags(_noMove)
+//                .withReference(firstShape)
+//                .build();
 
-        // Square-bottom pyramid shape (base centered around anchor).
-        this.addOperation(idTracker++ + "",
-                        new Box(-2, -2, -2, 2, 2, 2),
-                        OperationType.INTERSECT,
-                        new PlaceholderFill())
-//                .withTransformFlags(_noMove)
-                .withReference(firstShape)
-                .build();
+//        this.addOperation(idTracker++ + "",
+//                        null,
+//                        OperationType.FILL_REMAINING,
+//                        new PlaceholderFill())
+////                .withTransformFlags(_noMove)
+//                .withReference(firstShape)
+//                .build();
+//
+//        //Define negative space
+//        this.addOperation(idTracker++ + "",
+//                        new TransformedShape(
+//                                new SquarePyramid(xWidth, yWidth*1.2, scaledRadius),
+//                                0, 1, -(scaledRadius-1)),
+////                                Math.toRadians(135),0,0),
+//                        OperationType.CUT,
+//                        null)
+////                .withTransformFlags(_noMove)
+//                .withReference(firstShape)
+//                .build();
+//
+//        // Placeholder test
+//        this.addOperation(idTracker++ + "",
+//                        new TransformedShape(
+//                            new Box(-3, -3, 0, 3, 3, 3),
+//                            0,1,0.5),
+//                        OperationType.INTERSECT,
+//                        new PlaceholderFill())
+////                .withTransformFlags(_noMove)
+//                .withReference(firstShape)
+//                .build();
 
         //Long Ellipsoid
 //        this.addOperation(idTracker++ + "",
@@ -180,12 +213,12 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 //                        new EmptyBlockFill())
 //                .build();
 
-//        Cut base of shape
-        this.addOperation(idTracker++ + "",
-                            new Box(-_radius, -_radius, -_radius,_radius,0,_radius),
-                        OperationType.EXCLUDE,
-                        null)
-                .build();
+////        Cut base of shape
+//        this.addOperation(idTracker++ + "",
+//                            new Box(-_radius, -_radius, -_radius,_radius,0,_radius),
+//                        OperationType.EXCLUDE,
+//                        null)
+//                .build();
 //
 ////        Ignore tiny area round player minus back
 //        this.addOperation(idTracker++ + "",
@@ -214,12 +247,12 @@ public class ShapeCompositorPresets extends ShapeCompositor{
                 .ignorePitch()
                 .build();
         //leave ground cutout for camera behind player
-        this.addOperation(idTracker + "",
-                new Box(-_radius, -_radius, -1.5,_radius,1,_radius),
-                OperationType.EXCLUDE,
-                null)
-                .withTransformFlags(ignorePitch)
-                .build();
+//        this.addOperation(idTracker + "",
+//                new Box(-_radius, -_radius, -0.5,_radius,0,_radius),
+//                OperationType.EXCLUDE,
+//                null)
+//                .withTransformFlags(ignorePitch)
+//                .build();
 
         //ignore player space
 //        this.addOperation(idTracker + "",
