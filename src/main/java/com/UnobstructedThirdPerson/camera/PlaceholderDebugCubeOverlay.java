@@ -16,7 +16,7 @@ import java.util.Set;
 public final class PlaceholderDebugCubeOverlay {
 
     private static final double CUBE_SCALE = 1.0;
-    private static final float CUBE_DURATION_SECONDS = 0.45F;
+    private static final float CUBE_DURATION_SECONDS = 1000F;
 
     private PlaceholderDebugCubeOverlay() {
         // Utility class

@@ -349,23 +349,7 @@ public class CameraTransparencyVolume {
         // Apply changes immediately
         applyDiff(toAdd, toRemove, toUpdate, newSnapshots, newBlockIds);
 
-        // Render debug cubes for active placeholder block replacements.
-        Set<Long> placeholderPositions = new HashSet<>();
-        Set<Long> emptyPositions = new HashSet<>();
-        for (Map.Entry<Long, Integer> entry : newBlockIds.entrySet()) {
-            Integer replacementId = entry.getValue();
-            if (replacementId == null) {
-                continue;
-            }
-
-            if (replacementId == 0) {
-                emptyPositions.add(entry.getKey());
-            } else if (PlaceholderFill.isPlaceholderBlockId(replacementId)) {
-                placeholderPositions.add(entry.getKey());
-            }
-        }
-        PlaceholderDebugCubeOverlay.addDebugCubes(world, placeholderPositions, PLACEHOLDER_DEBUG_COLOR);
-        PlaceholderDebugCubeOverlay.addDebugCubes(world, emptyPositions, EMPTY_DEBUG_COLOR);
+        renderDebugCubesForBlockIds(newBlockIds);
 
         // Update current state
         currentPositions.clear();
@@ -394,28 +378,85 @@ public class CameraTransparencyVolume {
         }
     }
 
+    /**
+     * Restores a subset of currently active temporary positions and removes them
+     * from this volume's tracked state.
+     */
+    public void cleanupPositions(@Nonnull Collection<Long> positionsToCleanup) {
+        if (positionsToCleanup.isEmpty()) {
+            return;
+        }
+
+        restorePositions(positionsToCleanup);
+        for (Long pos : positionsToCleanup) {
+            activeBlocks.remove(pos);
+            activeBlockIds.remove(pos);
+            currentPositions.remove(pos);
+        }
+
+        // Debug shapes do not support per-shape deletion; clear and redraw remaining tracked overlays.
+        PlaceholderDebugCubeOverlay.clearDebugCubes(world);
+        renderDebugCubesForBlockIds(activeBlockIds);
+    }
+
+    private void renderDebugCubesForBlockIds(@Nonnull Map<Long, Integer> blockIds) {
+        Set<Long> placeholderPositions = new HashSet<>();
+        Set<Long> emptyPositions = new HashSet<>();
+        for (Map.Entry<Long, Integer> entry : blockIds.entrySet()) {
+            Integer replacementId = entry.getValue();
+            if (replacementId == null) {
+                continue;
+            }
+
+            if (replacementId == 0) {
+                emptyPositions.add(entry.getKey());
+            } else if (PlaceholderFill.isPlaceholderBlockId(replacementId)) {
+                placeholderPositions.add(entry.getKey());
+            }
+        }
+
+        PlaceholderDebugCubeOverlay.addDebugCubes(world, placeholderPositions, PLACEHOLDER_DEBUG_COLOR);
+        PlaceholderDebugCubeOverlay.addDebugCubes(world, emptyPositions, EMPTY_DEBUG_COLOR);
+    }
+
+    private int restorePositions(@Nonnull Collection<Long> positionsToRestore) {
+        int restored = 0;
+
+        // Restore blocks by querying current server state at each position.
+        // This avoids ghost blocks if the underlying block changed while transparent.
+        ChunkStore chunkStore = world.getChunkStore();
+        for (Long pos : positionsToRestore) {
+            BlockSnapshot original = activeBlocks.get(pos);
+            if (original == null) {
+                continue;
+            }
+
+            BlockSnapshot currentBlock = TransparentBlockUtils.readBlock(
+                    chunkStore,
+                    original.x(),
+                    original.y(),
+                    original.z());
+
+            BlockSnapshot restoreSnapshot = currentBlock != null ? currentBlock : original;
+            playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
+                    restoreSnapshot.x(),
+                    restoreSnapshot.y(),
+                    restoreSnapshot.z(),
+                    restoreSnapshot.blockId(),
+                    restoreSnapshot.filler(),
+                    restoreSnapshot.rotation()
+            ));
+            restored++;
+        }
+
+        return restored;
+    }
+
     private void applyDiff(@Nonnull Set<Long> toAdd, @Nonnull Set<Long> toRemove, @Nonnull Set<Long> toUpdate,
                            @Nonnull Map<Long, BlockSnapshot> newSnapshots,
                            @Nonnull Map<Long, Integer> newBlockIds) {
-        // Restore blocks that left the volume by querying current server state
-        ChunkStore chunkStore = world.getChunkStore();
-        for (Long pos : toRemove) {
-            BlockSnapshot original = activeBlocks.get(pos);
-            if (original != null) {
-                // Query the server for the current actual block state at this position
-                // This prevents ghost blocks if the block was broken while transparent
-                BlockSnapshot currentBlock = TransparentBlockUtils.readBlock(
-                    chunkStore, original.x(), original.y(), original.z());
-                
-                if (currentBlock != null) {
-                    // Send the current server state to the client
-                    playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
-                        currentBlock.x(), currentBlock.y(), currentBlock.z(),
-                        currentBlock.blockId(), currentBlock.filler(), currentBlock.rotation()
-                    ));
-                }
-            }
-        }
+        // Restore blocks that left the volume.
+        restorePositions(toRemove);
 
         // Replace blocks entering volume with computed block IDs from compositor
         for (Long pos : toAdd) {
@@ -453,19 +494,14 @@ public class CameraTransparencyVolume {
     public void shutdown() {
         stopUpdateLoop();
 
-        // Restore all active blocks
-        for (BlockSnapshot original : activeBlocks.values()) {
-            playerRef.getPacketHandler().writeNoCache(new ServerSetBlock(
-                original.x(), original.y(), original.z(),
-                original.blockId(), original.filler(), original.rotation()
-            ));
-        }
+        // Restore all active blocks through list-based cleanup.
+        Set<Long> positionsToCleanup = new HashSet<>(activeBlocks.keySet());
+        cleanupPositions(positionsToCleanup);
         
         // Restore all modified placeholder block type definitions
         PlaceholderTransparencyUtil.restoreAllPlaceholders(playerRef);
-        PlaceholderDebugCubeOverlay.clearDebugCubes(world);
 
-        int restored = activeBlocks.size();
+        int restored = positionsToCleanup.size();
         activeBlocks.clear();
         activeBlockIds.clear();
         currentPositions.clear();
