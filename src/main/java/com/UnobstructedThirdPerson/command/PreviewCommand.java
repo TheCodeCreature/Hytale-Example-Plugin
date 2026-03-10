@@ -1,184 +1,146 @@
 package com.UnobstructedThirdPerson.command;
 
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
-import com.UnobstructedThirdPerson.shape.ComposedRegion;
-import com.UnobstructedThirdPerson.shape.ShapeCompositor;
-import com.UnobstructedThirdPerson.shape.fill.PlaceholderFill;
-import com.UnobstructedThirdPerson.shape.operation.OperationType;
-import com.UnobstructedThirdPerson.shape.placeholder.PlaceholderTransparencyUtil;
-import com.hypixel.hytale.math.shape.Ellipsoid;
+import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
+import com.hypixel.hytale.builtin.buildertools.BuilderToolsPlugin;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.function.predicate.BiIntPredicate;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3i;
-import com.hypixel.hytale.protocol.packets.interface_.BlockChange;
-import com.hypixel.hytale.protocol.packets.interface_.EditorBlocksChange;
-import com.hypixel.hytale.protocol.packets.interface_.FluidChange;
+import com.hypixel.hytale.protocol.packets.buildertools.BrushOrigin;
+import com.hypixel.hytale.protocol.packets.buildertools.BrushShape;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.OptionalArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.prefab.selection.mask.BlockPattern;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.core.util.TargetUtil;
 import org.jspecify.annotations.NonNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
 
 public class PreviewCommand extends AbstractPlayerCommand {
 
     private static final int DEFAULT_RADIUS = 10;
-    private static final int MAX_PREVIEW_BLOCKS = 12_000;
+    private static final int MAX_TARGET_DISTANCE = 32;
+    private static final String FALLBACK_MATERIAL_ID = "Rock_Stone";
 
     private final OptionalArg<String> modeArg;
 
     public PreviewCommand() {
         super("preview", "Manage preview blocks");
-        this.modeArg = withOptionalArg("Mode", "Mode: shape or clear", ArgTypes.STRING);
+        this.modeArg = withOptionalArg("Mode", "Mode: sphere or clear", ArgTypes.STRING);
     }
 
     @Override
     protected void execute(@NonNull CommandContext context, @NonNull Store<EntityStore> store, @NonNull Ref<EntityStore> ref, @NonNull PlayerRef playerRef, @NonNull World world) {
-        String mode = this.modeArg.provided(context) ? this.modeArg.get(context) : "shape";
+        String mode = this.modeArg.provided(context) ? this.modeArg.get(context) : "sphere";
 
         switch (mode.toLowerCase()) {
+            case "sphere":
             case "shape":
-            case "editor":
-            case "editorshape":
-                sendOneShotEditorShapePreview(playerRef, world);
+            case "builder":
+                createSphereAtTargetUsingBuilderTools(store, ref, playerRef, world);
                 break;
             case "clear":
-                clearEditorPreview(playerRef);
+                playerRef.sendMessage(Message.raw("This command now uses creative builder tools (world edit). Use /undo to revert."));
                 break;
             default:
-                playerRef.sendMessage(Message.raw("Unknown mode: " + mode + ". Use shape or clear"));
+                playerRef.sendMessage(Message.raw("Unknown mode: " + mode + ". Use sphere or clear"));
         }
     }
 
-    private void sendOneShotEditorShapePreview(
+    private void createSphereAtTargetUsingBuilderTools(
+            @NonNull Store<EntityStore> store,
+            @NonNull Ref<EntityStore> ref,
             @NonNull PlayerRef playerRef,
             @NonNull World world) {
-        Vector3d pos = playerRef.getTransform().getPosition();
-
-        Vector3i anchor = new Vector3i(
-                (int) Math.floor(pos.x),
-                (int) Math.floor(pos.y),
-                (int) Math.floor(pos.z)
+        Vector3d origin = playerRef.getTransform().getPosition();
+        Vector3d direction = playerRef.getTransform().getDirection();
+        BiIntPredicate solidBlocksOnly = (blockId, fluidId) -> blockId != 0;
+        Vector3i target = TargetUtil.getTargetBlock(
+                world,
+                solidBlocksOnly,
+                origin.x,
+                origin.y,
+                origin.z,
+                direction.x,
+                direction.y,
+                direction.z,
+                MAX_TARGET_DISTANCE
         );
-
-        ShapeCompositor compositor = new ShapeCompositor(anchor);
-        compositor.addOperation(
-                "preview_ellipsoid",
-                new Ellipsoid(DEFAULT_RADIUS),
-                OperationType.DEFINE,
-                new PlaceholderFill()
-        ).build();
-        applyLookRotation(compositor, playerRef);
-
-        ChunkStore chunkStore = world.getChunkStore();
-        ComposedRegion region = compositor.compose(chunkStore);
-
-        List<BlockChange> blockChanges = buildPreviewChanges(region, anchor, playerRef);
-        if (blockChanges.isEmpty()) {
-            playerRef.sendMessage(Message.raw("No preview blocks generated for this shape."));
+        if (target == null) {
+            playerRef.sendMessage(Message.raw("No target block in range."));
             return;
         }
 
-        EditorBlocksChange packet = new EditorBlocksChange();
-        packet.blocksChange = blockChanges.toArray(BlockChange[]::new);
-        packet.fluidsChange = new FluidChange[0];
-        packet.blocksCount = blockChanges.size();
-        packet.advancedPreview = true;
-        packet.selection = null;
-        playerRef.getPacketHandler().writeNoCache(packet);
-
-        playerRef.sendMessage(Message.raw("Rendered one-shot editor preview with " + blockChanges.size() + " blocks."));
-    }
-
-    private List<BlockChange> buildPreviewChanges(
-            @NonNull ComposedRegion region,
-            @NonNull Vector3i anchor,
-            @NonNull PlayerRef playerRef) {
-        List<BlockChange> blockChanges = new ArrayList<>();
-        Set<Long> excluded = region.getExcludedPositions();
-        Map<Long, Integer> computedBlockIds = region.getComputedBlockIds();
-
-        for (Map.Entry<Long, BlockSnapshot> entry : region.getOriginalBlocks().entrySet()) {
-            if (blockChanges.size() >= MAX_PREVIEW_BLOCKS) {
-                break;
-            }
-
-            Long packedPos = entry.getKey();
-            if (excluded.contains(packedPos)) {
-                continue;
-            }
-
-            Integer replacementId = computedBlockIds.get(packedPos);
-            if (replacementId == null || replacementId == 0) {
-                continue;
-            }
-
-            BlockSnapshot snapshot = entry.getValue();
-            replacementId = resolveTransparentPlaceholderId(playerRef, snapshot, replacementId);
-
-            blockChanges.add(new BlockChange(
-                    snapshot.x() - anchor.x,
-                    snapshot.y() - anchor.y,
-                    snapshot.z() - anchor.z,
-                    replacementId,
-                    snapshot.rotation()
-            ));
+        Player player = store.getComponent(ref, Player.getComponentType());
+        if (player == null) {
+            playerRef.sendMessage(Message.raw("Failed to resolve player state for builder tools."));
+            return;
         }
 
-        return blockChanges;
-    }
+        String materialId = resolveTargetMaterialId(world, target);
+        BlockPattern material = BlockPattern.parse(Objects.requireNonNull(materialId));
+        int diameter = Math.max(1, DEFAULT_RADIUS * 2);
 
-    private int resolveTransparentPlaceholderId(@NonNull PlayerRef playerRef, @NonNull BlockSnapshot snapshot, int replacementId) {
-        BlockType replacementType = BlockType.getAssetMap().getAsset(replacementId);
-        if (replacementType == null || replacementType.getId() == null || !replacementType.getId().startsWith("Placeholder_")) {
-            return replacementId;
-        }
-
-        BlockType baseType = BlockType.getAssetMap().getAsset(snapshot.blockId());
-        if (baseType == null) {
-            return replacementId;
-        }
-
-        String hitboxType = baseType.getHitboxType();
-        if (hitboxType == null) {
-            return replacementId;
-        }
-
-        Integer transparentPlaceholderId = PlaceholderTransparencyUtil.prepareTransparentPlaceholder(
+        BuilderToolsPlugin.addToQueue(
+                player,
                 playerRef,
-                snapshot.blockId(),
-                hitboxType
+                (r, state, componentAccessor) -> state.editLine(
+                        target.x,
+                        target.y,
+                        target.z,
+                        target.x,
+                        target.y,
+                        target.z,
+                        material,
+                        diameter,
+                        diameter,
+                        0,
+                        BrushShape.Sphere,
+                        BrushOrigin.Center,
+                        1,
+                        100,
+                        state.getGlobalMask(),
+                        componentAccessor
+                )
         );
 
-        return transparentPlaceholderId != null ? transparentPlaceholderId : replacementId;
+        playerRef.sendMessage(
+                Message.raw(
+                        "Queued builder-tools sphere at "
+                                + target.x
+                                + ", "
+                                + target.y
+                                + ", "
+                                + target.z
+                                + " using "
+                                + materialId
+                                + "."
+                )
+        );
     }
 
-    private void applyLookRotation(@NonNull ShapeCompositor compositor, @NonNull PlayerRef playerRef) {
-        Vector3d lookDir = playerRef.getTransform().getDirection();
-        double cameraYaw = Math.atan2(-lookDir.x, lookDir.z);
-        double cameraPitch = Math.asin(lookDir.y);
-        compositor.setRotation(cameraYaw, cameraPitch);
-    }
+    @NonNull
+    private String resolveTargetMaterialId(@NonNull World world, @NonNull Vector3i target) {
+        BlockSnapshot snapshot = TransparentBlockUtils.readBlock(world.getChunkStore(), target.x, target.y, target.z);
+        if (snapshot == null || snapshot.blockId() == 0) {
+            return FALLBACK_MATERIAL_ID;
+        }
 
-    private void clearEditorPreview(@NonNull PlayerRef playerRef) {
-        EditorBlocksChange clearPacket = new EditorBlocksChange();
-        clearPacket.blocksChange = new BlockChange[0];
-        clearPacket.fluidsChange = new FluidChange[0];
-        clearPacket.blocksCount = 0;
-        clearPacket.advancedPreview = true;
-        clearPacket.selection = null;
-        playerRef.getPacketHandler().writeNoCache(clearPacket);
-        playerRef.sendMessage(Message.raw("Cleared editor preview."));
+        BlockType type = BlockType.getAssetMap().getAsset(snapshot.blockId());
+        if (type == null || type.getId() == null || type.getId().isEmpty()) {
+            return FALLBACK_MATERIAL_ID;
+        }
+
+        return type.getId();
     }
 }
