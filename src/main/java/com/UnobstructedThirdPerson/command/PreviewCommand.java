@@ -235,14 +235,18 @@ public class PreviewCommand extends AbstractPlayerCommand {
                         continue;
                     }
 
+                    int worldX = center.x + sx;
+                    int worldY = center.y + sy;
+                    int worldZ = center.z + sz;
+                    if (worldY < 0 || worldY >= 320) {
+                        continue;
+                    }
+
                     if (changes.size() >= MAX_PREVIEW_BLOCKS) {
                         return changes;
                     }
 
-                    int relativeX = (center.x + sx) - center.x;
-                    int relativeY = (center.y + sy) - center.y;
-                    int relativeZ = (center.z + sz) - center.z;
-                    changes.add(new BlockChange(relativeX, relativeY, relativeZ, previewBlockId, (byte) 0));
+                    changes.add(new BlockChange(worldX, worldY, worldZ, previewBlockId, (byte) 0));
                 }
             }
         }
@@ -264,6 +268,12 @@ public class PreviewCommand extends AbstractPlayerCommand {
         int blockId = BlockType.getAssetMap().getIndex(materialId);
         if (blockId == Integer.MIN_VALUE) {
             blockId = BlockType.getAssetMap().getIndex(FALLBACK_MATERIAL_ID);
+        }
+        if (blockId == Integer.MIN_VALUE) {
+            BlockType fallbackType = TransparentBlockUtils.findAnyBlockType();
+            if (fallbackType != null && fallbackType.getId() != null) {
+                blockId = BlockType.getAssetMap().getIndex(fallbackType.getId());
+            }
         }
         return blockId;
     }
