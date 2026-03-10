@@ -1,8 +1,10 @@
 package com.UnobstructedThirdPerson.camera;
 
 import com.hypixel.hytale.math.block.BlockUtil;
+import com.hypixel.hytale.math.matrix.Matrix4d;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
+import com.hypixel.hytale.protocol.DebugShape;
 import com.hypixel.hytale.server.core.modules.debug.DebugUtils;
 import com.hypixel.hytale.server.core.universe.world.World;
 
@@ -18,7 +20,7 @@ import java.util.Set;
 public class PlaceholderDebugCubeOverlay {
 
     private static final double CUBE_SCALE = 1.0;
-    private static final float CUBE_DURATION_SECONDS = 0.45F;
+    private static final float CUBE_DURATION_SECONDS = 10F;
     private static final long REFRESH_INTERVAL_MILLIS = 150L;
 
     @Nonnull
@@ -48,7 +50,13 @@ public class PlaceholderDebugCubeOverlay {
 
             Vector3d center = new Vector3d(x + 0.5, y + 0.5, z + 0.5);
             Vector3f color = new Vector3f(0.137F, 0.867F, 0.882F);
-            DebugUtils.addCube(world, center, color, CUBE_SCALE, CUBE_DURATION_SECONDS);
+//            DebugUtils.addCube(world, center, color, CUBE_SCALE, CUBE_DURATION_SECONDS);
+
+            Matrix4d matrix = new Matrix4d();
+            matrix.identity();
+            matrix.translate(x + 0.5, y + 0.5, z + 0.5);
+            matrix.scale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
+            DebugUtils.add(world, DebugShape.Cube, matrix, color, 0.1f, 10, false);
         }
     }
 

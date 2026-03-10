@@ -147,10 +147,10 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 //                        new TransformedShape(
                             new TransformedShape(
                                 new SquarePyramid(xWidth, yWidth, height),
-                                1, 2, -(height-2),
+                                1, 2, 0,//-(height-2),
                                 0, -(Math.toRadians(5)),0),
                         OperationType.DEFINE,
-                        new EmptyBlockFill())
+                        new PlaceholderFill())
 //                .withTransformFlags(_noMove)
                 .build();
 //        //Define negative space
