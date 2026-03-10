@@ -6,12 +6,15 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Auto-selects placeholder blocks based on the original block's hitbox type.
  * Uses PlaceholderBlockManager to intelligently map hitbox types to appropriate placeholders.
  */
 public class PlaceholderFill implements BlockFillType {
+
+    public static final String PLACEHOLDER_PREFIX = "Placeholder_";
     
     @Override
     public int getBlockId(@Nonnull BlockSnapshot original, @Nonnull ChunkStore chunkStore) {
@@ -29,6 +32,17 @@ public class PlaceholderFill implements BlockFillType {
         }
         
         return placeholderNumericId;
+    }
+
+    public static boolean isPlaceholderBlockId(int blockId) {
+        BlockType replacementType = BlockType.getAssetMap().getAsset(blockId);
+        return isPlaceholderBlockType(replacementType);
+    }
+
+    public static boolean isPlaceholderBlockType(@Nullable BlockType blockType) {
+        return blockType != null
+                && blockType.getId() != null
+                && blockType.getId().startsWith(PLACEHOLDER_PREFIX);
     }
     
     @Override

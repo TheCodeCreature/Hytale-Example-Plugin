@@ -4,6 +4,7 @@ import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.UnobstructedThirdPerson.shape.ComposedRegion;
 import com.UnobstructedThirdPerson.shape.ShapeCompositor;
 import com.UnobstructedThirdPerson.shape.fill.EmptyBlockFill;
+import com.UnobstructedThirdPerson.shape.fill.PlaceholderFill;
 import com.UnobstructedThirdPerson.shape.operation.OperationType;
 import com.UnobstructedThirdPerson.shape.placeholder.PlaceholderTransparencyUtil;
 import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
@@ -50,6 +51,7 @@ public class CameraTransparencyVolume {
     private final PlayerRef playerRef;
     private final World world;
     private final ShapeCompositor compositor;
+    private final PlaceholderDebugCubeOverlay placeholderDebugCubeOverlay;
 
     // Packed block positions currently made transparent
     private final Set<Long> currentPositions = new HashSet<>();
@@ -70,6 +72,7 @@ public class CameraTransparencyVolume {
         this.playerRef = playerRef;
         this.world = world;
         this.compositor = compositor;
+        this.placeholderDebugCubeOverlay = new PlaceholderDebugCubeOverlay(world);
     }
     
     // Legacy constructor for backward compatibility
@@ -82,6 +85,7 @@ public class CameraTransparencyVolume {
         for (int i = 0; i < shapes.length; i++) {
             compositor.addOperation("shape_" + i, shapes[i], OperationType.DEFINE, new EmptyBlockFill());
         }
+        this.placeholderDebugCubeOverlay = new PlaceholderDebugCubeOverlay(world);
     }
 
     // ===== Static instance management =====
@@ -298,7 +302,7 @@ public class CameraTransparencyVolume {
             if (blockId != null) {
                 // Check if this is a placeholder block that needs transparency preparation
                 BlockType replacementType = BlockType.getAssetMap().getAsset(blockId);
-                if (replacementType != null && replacementType.getId().startsWith("Placeholder_") && baseType != null) {
+                if (PlaceholderFill.isPlaceholderBlockType(replacementType) && baseType != null) {
                     // Prepare transparent placeholder using the utility
                     String hitboxType = baseType.getHitboxType();
                     if (hitboxType != null) {
@@ -344,6 +348,16 @@ public class CameraTransparencyVolume {
 
         // Apply changes immediately
         applyDiff(toAdd, toRemove, toUpdate, newSnapshots, newBlockIds);
+
+        // Render debug cubes for active placeholder block replacements.
+        Set<Long> placeholderPositions = new HashSet<>();
+        for (Map.Entry<Long, Integer> entry : newBlockIds.entrySet()) {
+            Integer replacementId = entry.getValue();
+            if (replacementId != null && PlaceholderFill.isPlaceholderBlockId(replacementId)) {
+                placeholderPositions.add(entry.getKey());
+            }
+        }
+        placeholderDebugCubeOverlay.update(placeholderPositions);
 
         // Update current state
         currentPositions.clear();
@@ -441,6 +455,7 @@ public class CameraTransparencyVolume {
         
         // Restore all modified placeholder block type definitions
         PlaceholderTransparencyUtil.restoreAllPlaceholders(playerRef);
+        placeholderDebugCubeOverlay.shutdown();
 
         int restored = activeBlocks.size();
         activeBlocks.clear();

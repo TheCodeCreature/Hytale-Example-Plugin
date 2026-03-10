@@ -20,7 +20,7 @@ import javax.annotation.Nonnull;
  */
 public class DebugCubeShapeSubCommand extends AbstractPlayerCommand {
 
-    private static final double CUBE_SCALE = 2.0;
+    private static final double CUBE_SCALE = 1.0;
     private static final float DISPLAY_SECONDS = 30.0F;
 
     public DebugCubeShapeSubCommand() {
