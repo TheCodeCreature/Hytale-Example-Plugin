@@ -1,6 +1,7 @@
 package com.UnobstructedThirdPerson.command.debug;
 
 import com.UnobstructedThirdPerson.command.debug.SubCommands.DebugCubeShapeSubCommand;
+import com.UnobstructedThirdPerson.command.debug.SubCommands.DebugTexturedCubeSubCommand;
 import com.UnobstructedThirdPerson.command.debug.SubCommands.ListHitboxTypesSubCommand;
 import com.UnobstructedThirdPerson.command.debug.SubCommands.PreviewBlockSubCommand;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractCommandCollection;
@@ -17,5 +18,6 @@ public class DebugCommand extends AbstractCommandCollection {
         this.addSubCommand(new ListHitboxTypesSubCommand());
         this.addSubCommand(new PreviewBlockSubCommand());
         this.addSubCommand(new DebugCubeShapeSubCommand());
+        this.addSubCommand(new DebugTexturedCubeSubCommand());
     }
 }
