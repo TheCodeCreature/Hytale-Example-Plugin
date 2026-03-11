@@ -375,6 +375,8 @@ public class CameraTransparencyVolume {
                 activeBlockIds.put(pos, blockId);
             }
         }
+
+        renderDebugCubesForBlockIds(activeBlockIds);
     }
 
     /**
@@ -413,9 +415,14 @@ public class CameraTransparencyVolume {
             }
         }
 
-//        DebugCube.clearDebugCubes(world);
+        // Keep cache aligned to current active IDs so periodic rerender uses current positions/colors only.
+        DebugCube.clearCachedDebugCubes(world);
         DebugCube.addDebugCubes(world, placeholderPositions, PLACEHOLDER_DEBUG_COLOR);
         DebugCube.addDebugCubes(world, emptyPositions, EMPTY_DEBUG_COLOR);
+    }
+
+    private void renderCachedDebugCubes() {
+        DebugCube.renderCachedDebugCubes(world);
     }
 
     private int restorePositions(@Nonnull Collection<Long> positionsToRestore) {
