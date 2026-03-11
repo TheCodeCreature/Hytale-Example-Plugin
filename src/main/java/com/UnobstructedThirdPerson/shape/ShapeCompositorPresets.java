@@ -8,21 +8,24 @@ import com.hypixel.hytale.math.shape.Ellipsoid;
 import com.hypixel.hytale.math.vector.Vector3i;
 
 public class ShapeCompositorPresets extends ShapeCompositor{
-    private int _radius = 10;
+    private int _scale = 7;
     private final TransformFlags _noMove = TransformFlags.builder()
             .ignorePitch()
             .ignoreYaw()
             .build();
+    private final TransformFlags _ignorePitch = TransformFlags.builder()
+            .ignorePitch()
+            .build();
 
     public ShapeCompositorPresets(Vector3i anchor, int radius){
         super(anchor);
-        _radius = radius;
+        _scale = radius;
     }
 
     public ShapeCompositorPresets(int radius){
         Vector3i anchor = new Vector3i(0, 0, 0);
         super(anchor);
-        _radius = radius;
+        _scale = radius;
     }
 
     public ShapeCompositorPresets(){
@@ -31,9 +34,9 @@ public class ShapeCompositorPresets extends ShapeCompositor{
     }
 
     public ShapeCompositor Test(){
-        var x = _radius/2;
-        var y = _radius/2;
-        var z = _radius-2;
+        var x = _scale /2;
+        var y = _scale /2;
+        var z = _scale -2;
         var shape = new TransformedShape(
                 new Ellipsoid(x,y,z),
                 0, y/2, z);
@@ -55,7 +58,7 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 
         // Operation 5: Exclude floor
         this.addOperation("floor_exclusion",
-                new Box(-_radius, -_radius, -_radius, _radius, 0, _radius),
+                new Box(-_scale, -_scale, -_scale, _scale, 0, _scale),
                 OperationType.EXCLUDE,
                 null).build();
 
@@ -63,7 +66,7 @@ public class ShapeCompositorPresets extends ShapeCompositor{
     }
 
     public ShapeCompositor Original(){
-        var shape = new TransformedShape(new Ellipsoid(_radius), 0,0,-_radius/2);
+        var shape = new TransformedShape(new Ellipsoid(_scale), 0,0,-_scale /2);
 
         // Operation 1: Define outer ellipsoid boundary (geometry only)
         this.addOperation("camera_volume",
@@ -82,7 +85,7 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 
         // Operation 5: Exclude floor
         this.addOperation("floor_exclusion",
-                new Box(-_radius, -_radius, -_radius, _radius, 0, _radius),
+                new Box(-_scale, -_scale, -_scale, _scale, 0, _scale),
                 OperationType.EXCLUDE,
                 null).build();
 
@@ -92,14 +95,14 @@ public class ShapeCompositorPresets extends ShapeCompositor{
     public ShapeCompositor HalfHalf(){
         int idTracker = 0;
 //        var shape = new TransformedShape(
-//                new Ellipsoid(_radius),
+//                new Ellipsoid(_scale),
 //                0,
-//                _radius+1,
+//                _scale+1,
 //                0);
         // Operation 1: Define outer ellipsoid boundary (geometry only)
         var camera_volume = idTracker++ + "";
         this.addOperation(camera_volume,
-                new Ellipsoid(_radius),
+                new Ellipsoid(_scale),
                 OperationType.DEFINE,
                 new EmptyBlockFill()).build();  // No fill - just defines the region
 
@@ -113,7 +116,7 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 
         // Operation 2: Front half (closer to player) = placeholders with hitbox-based shapes
         this.addOperation("transparent_zone",
-                        new Box(-_radius, _radius, -_radius, _radius, _radius, 0),
+                        new Box(-_scale, _scale, -_scale, _scale, _scale, 0),
                         OperationType.INTERSECT,
                         new PlaceholderFill())  // PARAMETER: auto-select placeholders based on hitbox
                 .withReference(camera_volume)
@@ -127,7 +130,7 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 
         // Operation 5: Exclude floor
         this.addOperation("floor_exclusion",
-                new Box(-_radius, -_radius, -_radius, _radius, 0, _radius),
+                new Box(-_scale, -_scale, -_scale, _scale, 0, _scale),
                 OperationType.EXCLUDE,
                 null)
                 .withTransformFlags(_noMove)
@@ -138,22 +141,23 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 
     public ShapeCompositor WithPyramidShape(){
         int idTracker = 0;
-        double height =_radius * 0.66;
-        double xWidth = (_radius*2)-1;
-        double yWidth = _radius;
+        double height = _scale*1.5;
+        double xWidth = (_scale *2)-1;
+        double yWidth = _scale;
 
         // Square-bottom pyramid shape (base centered around anchor).
         var firstShape = idTracker++ + "";
         this.addOperation(firstShape,
-//                        new TransformedShape(
                             new TransformedShape(
                                 new SquarePyramid(xWidth, yWidth, height),
-                                1, yWidth/2-2, -(height-3),
-                                0, -(Math.toRadians(25)),0),
+                                0, 2, -(height-4)),
+//                                0, -(Math.toRadians(5)),0),
                         OperationType.DEFINE,
                         new EmptyBlockFill())
 //                .withTransformFlags(_noMove)
                 .build();
+        
+        
 //        //Define negative space
 //        this.addOperation(idTracker++ + "",
 //                        new TransformedShape(
@@ -200,7 +204,7 @@ public class ShapeCompositorPresets extends ShapeCompositor{
         //Long Ellipsoid
 //        this.addOperation(idTracker++ + "",
 //                        new TransformedShape(
-//                                        new Ellipsoid(_radius, halfRadius*1.5, zOffset+2),
+//                                        new Ellipsoid(_scale, halfRadius*1.5, zOffset+2),
 //                                -1, 2, -(zOffset)),
 //                                //Math.toRadians(135),0,0),
 //                        OperationType.DEFINE,
@@ -216,44 +220,52 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 
 ////        Cut base of shape
 //        this.addOperation(idTracker++ + "",
-//                            new Box(-_radius, -_radius, -_radius,_radius,0,_radius),
+//                            new Box(-_scale, -_scale, -_scale,_scale,0,_scale),
 //                        OperationType.EXCLUDE,
 //                        null)
 //                .build();
 //
-////        Ignore tiny area round player minus back
+////        Ignore tiny area around player minus back
 //        this.addOperation(idTracker++ + "",
-//                        new Box(-1, -1, -1,1,0,1),
+//                        new Box(-1, -1, -1,1,1,1),
 //                        OperationType.EXCLUDE,
 //                        null)
+//                .withTransformFlags(_noMove)
 //                .build();
 
         //Cut back of shape
 //        this.addOperation(idTracker++ + "",
-//                        new Box(-_radius, -_radius, -(_radius+zOffset),_radius,_radius,-zOffset),
+//                        new Box(-_scale, -_scale, -(_scale+zOffset),_scale,_scale,-zOffset),
 //                        OperationType.EXCLUDE,
 //                        null)
 //                .build();
 
+
         //Cut front of shape
-//        this.addOperation(idTracker++ + "",
-//                        new Box(-_radius, -_radius, 1, _radius, _radius, _radius),
-//                        OperationType.EXCLUDE,
-//                        null)
-//                .build();
+        this.addOperation(idTracker++ + "",
+                        new Box(-2.5, -2, 0.5, 2.5, 3, 3),
+                        OperationType.DEFINE,
+                        new PlaceholderFill())
+                .withTransformFlags(_ignorePitch)
+                .build();
+
+        //Cut front of palyer view
+        this.addOperation(idTracker++ + "",
+                        new Box(-5, -5, 0.5, 5, 1, _scale),
+                        OperationType.EXCLUDE,
+                        null)
+                .withTransformFlags(_ignorePitch)
+                .build();
 
         // Operation Final: Floor exclusion that stays level (ignores pitch rotation)
         // This keeps the floor horizontal even when looking up or down
-        var ignorePitch = TransformFlags.builder()
-                .ignorePitch()
+        // leave ground cutout for camera behind player
+        this.addOperation(idTracker + "",
+                new Box(-_scale, -_scale, -0.5,_scale,-1,_scale),
+                OperationType.EXCLUDE,
+                null)
+                .withTransformFlags(_ignorePitch)
                 .build();
-        //leave ground cutout for camera behind player
-//        this.addOperation(idTracker + "",
-//                new Box(-_radius, -_radius, -0.5,_radius,0,_radius),
-//                OperationType.EXCLUDE,
-//                null)
-//                .withTransformFlags(ignorePitch)
-//                .build();
 
         //ignore player space
 //        this.addOperation(idTracker + "",
@@ -273,7 +285,7 @@ public class ShapeCompositorPresets extends ShapeCompositor{
      */
     public ShapeCompositor WithLevelFloor(){
         int idTracker = 0;
-        double halfRadius = _radius/2d;
+        double halfRadius = _scale /2d;
 
         //Rotated Cube for a cone/pyramid like shape.
         //TODO: implement cone/pyramid shape
@@ -294,10 +306,10 @@ public class ShapeCompositorPresets extends ShapeCompositor{
                 .build();
 
         //Long Ellipsoid
-        int zOffset = 2*_radius;
+        int zOffset = 2* _scale;
 //        this.addOperation(idTracker++ + "",
 //                        new TransformedShape(
-//                                        new Ellipsoid(_radius, halfRadius*1.5, zOffset+2),
+//                                        new Ellipsoid(_scale, halfRadius*1.5, zOffset+2),
 //                                -1, 2, -(zOffset)),
 //                                //Math.toRadians(135),0,0),
 //                        OperationType.DEFINE,
@@ -306,21 +318,21 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 
         //Cut base of top shape
         this.addOperation(idTracker++ + "",
-                        new Box(-_radius, -_radius, -_radius,_radius,0,_radius),
+                        new Box(-_scale, -_scale, -_scale, _scale,0, _scale),
                         OperationType.EXCLUDE,
                         null)
                 .build();
 
         //Cut back of top shape
         this.addOperation(idTracker++ + "",
-                        new Box(-_radius, -_radius, -(_radius+zOffset),_radius,_radius,-zOffset),
+                        new Box(-_scale, -_scale, -(_scale +zOffset), _scale, _scale,-zOffset),
                         OperationType.EXCLUDE,
                         null)
                 .build();
 
         //Cut front of top shape
         this.addOperation(idTracker++ + "",
-                        new Box(-_radius, -_radius, 1, _radius, _radius, _radius),
+                        new Box(-_scale, -_scale, 1, _scale, _scale, _scale),
                         OperationType.EXCLUDE,
                         null)
                 .build();
@@ -331,7 +343,7 @@ public class ShapeCompositorPresets extends ShapeCompositor{
                 .ignorePitch()
                 .build();
         this.addOperation(idTracker + "",
-                new Box(-_radius, -_radius, -2,_radius,1,_radius),
+                new Box(-_scale, -_scale, -2, _scale,1, _scale),
                 OperationType.EXCLUDE,
                 null)
                 .withTransformFlags(ignorePitch)

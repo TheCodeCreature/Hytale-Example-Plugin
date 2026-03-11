@@ -1,9 +1,6 @@
 package com.UnobstructedThirdPerson.shape.placeholder;
 
-import com.hypixel.hytale.protocol.BlockMaterial;
-import com.hypixel.hytale.protocol.BlockTextures;
-import com.hypixel.hytale.protocol.ModelTexture;
-import com.hypixel.hytale.protocol.UpdateType;
+import com.hypixel.hytale.protocol.*;
 import com.hypixel.hytale.protocol.packets.assets.UpdateBlockTypes;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
@@ -100,11 +97,12 @@ public class PlaceholderTransparencyUtil {
         );
         modifiedPacket.cubeTextures = new BlockTextures[] { emptyTextures };
         
-        ModelTexture emptyModelTexture = new ModelTexture(EDITOR_EMPTY_TEXTURE, 1.0f);
-        modifiedPacket.modelTexture = new ModelTexture[] { emptyModelTexture };
+//        ModelTexture emptyModelTexture = new ModelTexture(EDITOR_EMPTY_TEXTURE, 1.0f);
+//        modifiedPacket.modelTexture = new ModelTexture[] { emptyModelTexture };
         
         // Preserve original drawType and enable alpha blending
-        modifiedPacket.drawType = basePacket.drawType;
+//        modifiedPacket.drawType = basePacket.drawType;
+        modifiedPacket.drawType = DrawType.Cube;
         modifiedPacket.requiresAlphaBlending = true;
         modifiedPacket.material = BlockMaterial.Empty;
 

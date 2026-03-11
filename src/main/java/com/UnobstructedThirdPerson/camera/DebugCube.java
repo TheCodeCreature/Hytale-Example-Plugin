@@ -19,8 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class DebugCube {
 
-    private static final double CUBE_SCALE = 0.75;
-    private static final float CUBE_DURATION_SECONDS = 100F;
+    private static final double CUBE_SCALE = 0.95;
+    private static final float CUBE_DURATION_SECONDS = 0.2F;
     private static final float CUBE_OPACITY = 0.05F;
     private static final Map<World, Map<Long, Vector3f>> CACHED_DEBUG_CUBES_BY_WORLD =
             Collections.synchronizedMap(new WeakHashMap<>());
