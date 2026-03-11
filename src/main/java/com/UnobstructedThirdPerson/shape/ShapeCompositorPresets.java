@@ -4,11 +4,8 @@ import com.UnobstructedThirdPerson.shape.fill.EmptyBlockFill;
 import com.UnobstructedThirdPerson.shape.fill.PlaceholderFill;
 import com.UnobstructedThirdPerson.shape.operation.OperationType;
 import com.hypixel.hytale.math.shape.Box;
-import com.hypixel.hytale.math.shape.Cylinder;
 import com.hypixel.hytale.math.shape.Ellipsoid;
 import com.hypixel.hytale.math.vector.Vector3i;
-
-import javax.xml.namespace.QName;
 
 public class ShapeCompositorPresets extends ShapeCompositor{
     private int _radius = 10;
@@ -93,53 +90,57 @@ public class ShapeCompositorPresets extends ShapeCompositor{
     }
 
     public ShapeCompositor HalfHalf(){
-        var shape = new TransformedShape(
-                new Ellipsoid(_radius),
-                0,
-                _radius+1,
-                0);
+        int idTracker = 0;
+//        var shape = new TransformedShape(
+//                new Ellipsoid(_radius),
+//                0,
+//                _radius+1,
+//                0);
         // Operation 1: Define outer ellipsoid boundary (geometry only)
-        this.addOperation("camera_volume",
+        var camera_volume = idTracker++ + "";
+        this.addOperation(camera_volume,
                 new Ellipsoid(_radius),
                 OperationType.DEFINE,
-                null).build();  // No fill - just defines the region
+                new EmptyBlockFill()).build();  // No fill - just defines the region
 
-        // Operation 3: Back half = empty blocks (fill remaining in ellipsoid)
-        this.addOperation("empty_zone",
-                        shape,  // No new geometry
-                        OperationType.INTERSECT,
-                        new EmptyBlockFill())  // PARAMETER: use air blocks
-                .withReference("camera_volume")
-                .build();
+//        // Operation 3: Back half = empty blocks (fill remaining in ellipsoid)
+//        this.addOperation("empty_zone",
+//                        shape,  // No new geometry
+//                        OperationType.INTERSECT,
+//                        new EmptyBlockFill())  // PARAMETER: use air blocks
+//                .withReference(camera_volume)
+//                .build();
 
         // Operation 2: Front half (closer to player) = placeholders with hitbox-based shapes
         this.addOperation("transparent_zone",
-                        null,
-                        OperationType.FILL_REMAINING,
+                        new Box(-_radius, _radius, -_radius, _radius, _radius, 0),
+                        OperationType.INTERSECT,
                         new PlaceholderFill())  // PARAMETER: auto-select placeholders based on hitbox
-                .withReference("camera_volume")
+                .withReference(camera_volume)
                 .build();
 
         // Operation 4: Exclude immediate player area (1x2x1 box around player)
-        this.addOperation("player_exclusion",
-                new Cylinder(2, 5, 5),
-                OperationType.EXCLUDE,
-                null).build();
+//        this.addOperation("player_exclusion",
+//                new Cylinder(2, 5, 5),
+//                OperationType.EXCLUDE,
+//                null).build();
 
         // Operation 5: Exclude floor
         this.addOperation("floor_exclusion",
                 new Box(-_radius, -_radius, -_radius, _radius, 0, _radius),
                 OperationType.EXCLUDE,
-                null).build();
+                null)
+                .withTransformFlags(_noMove)
+                .build();
 
         return this;
     }
 
-    public ShapeCompositor WithConeShape(){
+    public ShapeCompositor WithPyramidShape(){
         int idTracker = 0;
-        double height =_radius;
+        double height =_radius * 0.66;
         double xWidth = (_radius*2)-1;
-        double yWidth = _radius*.66;
+        double yWidth = _radius;
 
         // Square-bottom pyramid shape (base centered around anchor).
         var firstShape = idTracker++ + "";
@@ -147,10 +148,10 @@ public class ShapeCompositorPresets extends ShapeCompositor{
 //                        new TransformedShape(
                             new TransformedShape(
                                 new SquarePyramid(xWidth, yWidth, height),
-                                1, 2, 0,//-(height-2),
-                                0, -(Math.toRadians(5)),0),
+                                1, yWidth/2-2, -(height-3),
+                                0, -(Math.toRadians(25)),0),
                         OperationType.DEFINE,
-                        new PlaceholderFill())
+                        new EmptyBlockFill())
 //                .withTransformFlags(_noMove)
                 .build();
 //        //Define negative space

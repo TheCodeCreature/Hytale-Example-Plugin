@@ -43,7 +43,7 @@ public class CameraTransparencyVolume {
     private static final Logger LOGGER = Logger.getLogger("CameraTransparencyVolume");
     private static final long UPDATE_INTERVAL_MILLIS = 100;
     private static final Vector3f PLACEHOLDER_DEBUG_COLOR = new Vector3f(0.137F, 0.867F, 0.882F);
-    private static final Vector3f EMPTY_DEBUG_COLOR = new Vector3f(0.95F, 0.35F, 0.15F);
+    private static final Vector3f EMPTY_DEBUG_COLOR = new Vector3f(0.1F, 0.1F, 0.1F);
 
     private static final Map<UUID, CameraTransparencyVolume> INSTANCES = new ConcurrentHashMap<>();
 
@@ -262,6 +262,7 @@ public class CameraTransparencyVolume {
                 Math.abs(currentPitch - lastPitch) > 0.01;
         
         if (!anchorChanged && !yawChanged && !pitchChanged) {
+            renderCachedDebugCubes();
             return;
         }
 
@@ -349,8 +350,6 @@ public class CameraTransparencyVolume {
         // Apply changes immediately
         applyDiff(toAdd, toRemove, toUpdate, newSnapshots, newBlockIds);
 
-        renderDebugCubesForBlockIds(newBlockIds);
-
         // Update current state
         currentPositions.clear();
         currentPositions.addAll(newPositions);
@@ -395,7 +394,6 @@ public class CameraTransparencyVolume {
         }
 
         // Debug shapes do not support per-shape deletion; clear and redraw remaining tracked overlays.
-        PlaceholderDebugCubeOverlay.clearDebugCubes(world);
         renderDebugCubesForBlockIds(activeBlockIds);
     }
 
@@ -415,8 +413,9 @@ public class CameraTransparencyVolume {
             }
         }
 
-        PlaceholderDebugCubeOverlay.addDebugCubes(world, placeholderPositions, PLACEHOLDER_DEBUG_COLOR);
-        PlaceholderDebugCubeOverlay.addDebugCubes(world, emptyPositions, EMPTY_DEBUG_COLOR);
+//        DebugCube.clearDebugCubes(world);
+        DebugCube.addDebugCubes(world, placeholderPositions, PLACEHOLDER_DEBUG_COLOR);
+        DebugCube.addDebugCubes(world, emptyPositions, EMPTY_DEBUG_COLOR);
     }
 
     private int restorePositions(@Nonnull Collection<Long> positionsToRestore) {

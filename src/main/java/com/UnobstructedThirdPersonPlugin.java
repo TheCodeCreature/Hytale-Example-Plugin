@@ -4,7 +4,6 @@ import com.UnobstructedThirdPerson.command.UnobstructedCamera.UnobstructedCamera
 import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
 import com.UnobstructedThirdPerson.command.debug.DebugCommand;
 import com.UnobstructedThirdPerson.command.PreviewCommand;
-import com.UnobstructedThirdPerson.command.NewMovementCommand;
 import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
 import com.UnobstructedThirdPerson.shape.ShapeCompositorPresets;
@@ -57,8 +56,8 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         CameraTransparencyVolume.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresets()
 //                      .Test()
 //                      .HalfHalf()
-                    //   .WithLevelFloor()
-                      .WithConeShape()
+//                       .WithLevelFloor()
+                      .WithPyramidShape()
         );
     }
 
