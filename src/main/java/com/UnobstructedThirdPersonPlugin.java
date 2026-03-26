@@ -2,11 +2,13 @@ package com;
 
 import com.UnobstructedThirdPerson.command.UnobstructedCamera.UnobstructedCameraCommand;
 import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
+import com.UnobstructedThirdPerson.camera.v2.CameraTransparencyVolumeV2;
 import com.UnobstructedThirdPerson.command.debug.DebugCommand;
 import com.UnobstructedThirdPerson.command.PreviewCommand;
 import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
 import com.UnobstructedThirdPerson.shape.ShapeCompositorPresets;
+import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
@@ -53,17 +55,15 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
         EntityStore entityStore = store.getExternalData();
         World world = entityStore.getWorld();
-        CameraTransparencyVolume.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresets()
-//                      .Test()
-//                      .HalfHalf()
-//                       .WithLevelFloor()
-                      .WithPyramidShape()
+        CameraTransparencyVolumeV2.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresetsV2()
+                      .LayeredConePreset()
         );
     }
 
     private static void onPlayerDisconnect(PlayerDisconnectEvent event) {
         PlayerRef playerRef = event.getPlayerRef();
         CameraTransparencyVolume.remove(playerRef.getUuid());
+        CameraTransparencyVolumeV2.remove(playerRef.getUuid());
         PreviewBlockManager.remove(playerRef.getUuid());
         NewMovementSystem.disableMoonGravity(playerRef.getUuid());
     }
