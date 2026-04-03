@@ -11,7 +11,7 @@ public class EmptyBlockFillV2 implements BlockFillTypeV2 {
     private final DebugStyle debugStyle;
     
     public EmptyBlockFillV2() {
-        this(DebugStyle.EMPTY_STYLE);
+        this(DebugStyle.NONE);
     }
     
     public EmptyBlockFillV2(@Nonnull DebugStyle debugStyle) {
