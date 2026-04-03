@@ -1,7 +1,7 @@
-package com.UnobstructedThirdPerson.shape.operation;
+package com.UnobstructedThirdPerson.shape.v1.operation;
 
 import com.UnobstructedThirdPerson.shape.TransformFlags;
-import com.UnobstructedThirdPerson.shape.fill.BlockFillType;
+import com.UnobstructedThirdPerson.shape.v1.fill.BlockFillType;
 import com.hypixel.hytale.math.shape.Shape;
 
 import javax.annotation.Nonnull;

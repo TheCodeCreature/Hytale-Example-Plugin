@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.shape.placeholder;
+package com.UnobstructedThirdPerson.shape.v1.placeholder;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;

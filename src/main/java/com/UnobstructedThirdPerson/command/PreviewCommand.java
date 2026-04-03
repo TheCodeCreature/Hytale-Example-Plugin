@@ -1,7 +1,7 @@
 package com.UnobstructedThirdPerson.command;
 
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
-import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
+import com.UnobstructedThirdPerson.shape.v1.placeholder.TransparentBlockUtils;
 import com.hypixel.hytale.builtin.buildertools.BuilderToolsPlugin;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;

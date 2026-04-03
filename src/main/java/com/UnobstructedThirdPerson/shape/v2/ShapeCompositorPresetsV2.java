@@ -8,6 +8,7 @@ import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
 import com.hypixel.hytale.math.shape.Box;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
+import org.jetbrains.annotations.Debug;
 
 import javax.annotation.Nonnull;
 
@@ -41,72 +42,66 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
         double baseHeight = _scale * 1.5;
         double baseRadius = _scale;
         
+        double middleRadius = baseRadius * 0.6;
+        double middleHeight = baseHeight * 0.6;
+
         double innerRadius = baseRadius * 0.3;
         double innerHeight = baseHeight * 0.3;
         
-        double middleRadius = baseRadius * 0.6;
-        double middleHeight = baseHeight * 0.6;
-        
-        double outerRadius = baseRadius;
-        double outerHeight = baseHeight;
-        
-        Vector3f darkGrey = DebugStyle.DARK_GREY;
-        Vector3f lightGrey = DebugStyle.LIGHT_GREY;
-        
-        DebugStyle noDebug = DebugStyle.NONE;
-        DebugStyle middleDebug = DebugStyle.enabled(darkGrey, 0.05f);
-        DebugStyle outerDebug = DebugStyle.enabled(lightGrey, 0.15f);
+        DebugStyle noDebug = DebugStyle.enabled(DebugStyle.EMPTY_BLACK, 0.15f);
+        DebugStyle middleDebug = DebugStyle.enabled(DebugStyle.DARK_GREY, 0.5f);
+        DebugStyle outerDebug = DebugStyle.enabled(DebugStyle.DARK_GREY, 0.15f);
         
         CircularCone innerCone = new CircularCone(innerRadius, innerHeight);
         CircularCone middleCone = new CircularCone(middleRadius, middleHeight);
-        CircularCone outerCone = new CircularCone(outerRadius, outerHeight);
+        CircularCone outerCone = new CircularCone(baseRadius, baseHeight);
         
         String outerConeId = idTracker++ + "";
         this.addOperation(outerConeId,
                         outerCone,
                         OperationTypeV2.DEFINE,
                         new EmptyBlockFillV2())
-                .withDebugStyle(outerDebug)
+                .withDebugStyle(null)
                 .build();
         
-        String middleConeId = idTracker++ + "";
-        this.addOperation(middleConeId,
-                        middleCone,
-                        OperationTypeV2.SUBTRACT,
-                        null)
-                .withReference(outerConeId)
-                .build();
+//        String middleConeId = idTracker++ + "";
+//        this.addOperation(middleConeId,
+//                        middleCone,
+//                        OperationTypeV2.SUBTRACT,
+//                        null)
+//                .withReference(outerConeId)
+//                .build();
         
-        String middleShellId = idTracker++ + "";
-        this.addOperation(middleShellId,
-                        middleCone,
-                        OperationTypeV2.DEFINE,
-                        new EmptyBlockFillV2())
-                .withDebugStyle(middleDebug)
-                .build();
+//        String middleShellId = idTracker++ + "";
+//        this.addOperation(middleShellId,
+//                        middleCone,
+//                        OperationTypeV2.DEFINE,
+//                        new EmptyBlockFillV2())
+//                .withDebugStyle(middleDebug)
+//                .build();
+//
+//        String innerConeId = idTracker++ + "";
+//        this.addOperation(innerConeId,
+//                        innerCone,
+//                        OperationTypeV2.SUBTRACT,
+//                        null)
+//                .withReference(middleShellId)
+//                .build();
         
-        String innerConeId = idTracker++ + "";
-        this.addOperation(innerConeId,
-                        innerCone,
-                        OperationTypeV2.SUBTRACT,
-                        null)
-                .withReference(middleShellId)
-                .build();
+//        String innerShellId = idTracker++ + "";
+//        this.addOperation(innerShellId,
+//                        innerCone,
+//                        OperationTypeV2.DEFINE,
+//                        new EmptyBlockFillV2())
+//                .withDebugStyle(noDebug)
+//                .build();
         
-        String innerShellId = idTracker++ + "";
-        this.addOperation(innerShellId,
-                        innerCone,
-                        OperationTypeV2.DEFINE,
-                        new EmptyBlockFillV2())
-                .withDebugStyle(noDebug)
-                .build();
-        
-        this.addOperation(idTracker++ + "",
-                        new Box(-_scale, -_scale, -0.5, _scale, -1, _scale),
-                        OperationTypeV2.EXCLUDE,
-                        null)
-                .withTransformFlags(_ignorePitch)
-                .build();
+//        this.addOperation(idTracker++ + "",
+//                        new Box(-_scale, -_scale, -0.5, _scale, -1, _scale),
+//                        OperationTypeV2.EXCLUDE,
+//                        null)
+//                .withTransformFlags(_ignorePitch)
+//                .build();
         
         return this;
     }

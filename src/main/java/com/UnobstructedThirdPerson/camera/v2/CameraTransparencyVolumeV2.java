@@ -2,12 +2,12 @@ package com.UnobstructedThirdPerson.camera.v2;
 
 import com.UnobstructedThirdPerson.camera.DebugCube;
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
-import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
+import com.UnobstructedThirdPerson.shape.v1.placeholder.TransparentBlockUtils;
 import com.UnobstructedThirdPerson.shape.v2.ComposedRegionV2;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorV2;
 import com.UnobstructedThirdPerson.shape.v2.fill.PlaceholderFillV2;
 import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
-import com.UnobstructedThirdPerson.shape.placeholder.PlaceholderTransparencyUtil;
+import com.UnobstructedThirdPerson.shape.v1.placeholder.PlaceholderTransparencyUtil;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Transform;

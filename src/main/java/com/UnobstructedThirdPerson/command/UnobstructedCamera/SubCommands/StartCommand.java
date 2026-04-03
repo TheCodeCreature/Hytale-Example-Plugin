@@ -1,7 +1,7 @@
 package com.UnobstructedThirdPerson.command.UnobstructedCamera.SubCommands;
 
 import com.UnobstructedThirdPerson.camera.*;
-import com.UnobstructedThirdPerson.shape.ShapeCompositorPresets;
+import com.UnobstructedThirdPerson.shape.v1.ShapeCompositorPresets;
 import com.hypixel.hytale.codec.validation.Validators;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;

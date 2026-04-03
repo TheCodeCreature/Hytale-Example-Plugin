@@ -1,7 +1,7 @@
 package com.UnobstructedThirdPerson.preview;
 
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
-import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
+import com.UnobstructedThirdPerson.shape.v1.placeholder.TransparentBlockUtils;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;

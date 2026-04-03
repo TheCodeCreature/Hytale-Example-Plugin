@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.shape.placeholder;
+package com.UnobstructedThirdPerson.shape.v1.placeholder;
 
 import com.hypixel.hytale.protocol.*;
 import com.hypixel.hytale.protocol.packets.assets.UpdateBlockTypes;

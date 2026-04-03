@@ -1,8 +1,8 @@
 package com.UnobstructedThirdPerson.command.debug.SubCommands;
 
-import com.UnobstructedThirdPerson.shape.placeholder.PlaceholderBlockManager;
+import com.UnobstructedThirdPerson.shape.v1.placeholder.PlaceholderBlockManager;
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
-import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
+import com.UnobstructedThirdPerson.shape.v1.placeholder.TransparentBlockUtils;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3i;

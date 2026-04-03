@@ -38,7 +38,7 @@ public final class DebugCube {
         matrix.identity();
         matrix.translate(x + 0.5, y + 0.5, z + 0.5);
         matrix.scale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
-        DebugUtils.add(world, DebugShape.Cube, matrix, color, CUBE_OPACITY, CUBE_DURATION_SECONDS, false);
+        DebugUtils.add(world, DebugShape.Cube, matrix, color, CUBE_OPACITY, CUBE_DURATION_SECONDS, 0);
     }
 
     @Nonnull

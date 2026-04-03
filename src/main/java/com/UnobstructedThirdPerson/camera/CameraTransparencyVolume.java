@@ -1,13 +1,13 @@
 package com.UnobstructedThirdPerson.camera;
 
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
-import com.UnobstructedThirdPerson.shape.ComposedRegion;
-import com.UnobstructedThirdPerson.shape.ShapeCompositor;
-import com.UnobstructedThirdPerson.shape.fill.EmptyBlockFill;
-import com.UnobstructedThirdPerson.shape.fill.PlaceholderFill;
-import com.UnobstructedThirdPerson.shape.operation.OperationType;
-import com.UnobstructedThirdPerson.shape.placeholder.PlaceholderTransparencyUtil;
-import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
+import com.UnobstructedThirdPerson.shape.v1.ComposedRegion;
+import com.UnobstructedThirdPerson.shape.v1.ShapeCompositor;
+import com.UnobstructedThirdPerson.shape.v1.fill.EmptyBlockFill;
+import com.UnobstructedThirdPerson.shape.v1.fill.PlaceholderFill;
+import com.UnobstructedThirdPerson.shape.v1.operation.OperationType;
+import com.UnobstructedThirdPerson.shape.v1.placeholder.PlaceholderTransparencyUtil;
+import com.UnobstructedThirdPerson.shape.v1.placeholder.TransparentBlockUtils;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.shape.Shape;
 import com.hypixel.hytale.math.vector.Transform;

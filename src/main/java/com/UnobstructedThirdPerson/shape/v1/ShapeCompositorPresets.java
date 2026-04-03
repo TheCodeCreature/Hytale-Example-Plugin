@@ -1,8 +1,11 @@
-package com.UnobstructedThirdPerson.shape;
+package com.UnobstructedThirdPerson.shape.v1;
 
-import com.UnobstructedThirdPerson.shape.fill.EmptyBlockFill;
-import com.UnobstructedThirdPerson.shape.fill.PlaceholderFill;
-import com.UnobstructedThirdPerson.shape.operation.OperationType;
+import com.UnobstructedThirdPerson.shape.SquarePyramid;
+import com.UnobstructedThirdPerson.shape.TransformFlags;
+import com.UnobstructedThirdPerson.shape.TransformedShape;
+import com.UnobstructedThirdPerson.shape.v1.fill.EmptyBlockFill;
+import com.UnobstructedThirdPerson.shape.v1.fill.PlaceholderFill;
+import com.UnobstructedThirdPerson.shape.v1.operation.OperationType;
 import com.hypixel.hytale.math.shape.Box;
 import com.hypixel.hytale.math.shape.Ellipsoid;
 import com.hypixel.hytale.math.vector.Vector3i;

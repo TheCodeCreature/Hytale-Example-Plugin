@@ -1,11 +1,13 @@
-package com.UnobstructedThirdPerson.shape;
+package com.UnobstructedThirdPerson.shape.v1;
 
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
-import com.UnobstructedThirdPerson.shape.fill.BlockFillType;
-import com.UnobstructedThirdPerson.shape.fill.EmptyBlockFill;
-import com.UnobstructedThirdPerson.shape.operation.OperationType;
-import com.UnobstructedThirdPerson.shape.operation.ShapeOperation;
-import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
+import com.UnobstructedThirdPerson.shape.TransformFlags;
+import com.UnobstructedThirdPerson.shape.TransformedShape;
+import com.UnobstructedThirdPerson.shape.v1.fill.BlockFillType;
+import com.UnobstructedThirdPerson.shape.v1.fill.EmptyBlockFill;
+import com.UnobstructedThirdPerson.shape.v1.operation.OperationType;
+import com.UnobstructedThirdPerson.shape.v1.operation.ShapeOperation;
+import com.UnobstructedThirdPerson.shape.v1.placeholder.TransparentBlockUtils;
 import com.hypixel.hytale.math.block.BlockUtil;
 import com.hypixel.hytale.math.shape.Shape;
 import com.hypixel.hytale.math.vector.Vector3i;

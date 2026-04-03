@@ -3,7 +3,7 @@ package com.UnobstructedThirdPerson.shape.v2;
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.UnobstructedThirdPerson.shape.TransformFlags;
 import com.UnobstructedThirdPerson.shape.TransformedShape;
-import com.UnobstructedThirdPerson.shape.placeholder.TransparentBlockUtils;
+import com.UnobstructedThirdPerson.shape.v1.placeholder.TransparentBlockUtils;
 import com.UnobstructedThirdPerson.shape.v2.fill.BlockFillTypeV2;
 import com.UnobstructedThirdPerson.shape.v2.fill.EmptyBlockFillV2;
 import com.UnobstructedThirdPerson.shape.v2.operation.OperationTypeV2;

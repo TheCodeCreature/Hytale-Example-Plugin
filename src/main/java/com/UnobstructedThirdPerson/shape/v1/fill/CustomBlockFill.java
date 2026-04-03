@@ -1,4 +1,4 @@
-package com.UnobstructedThirdPerson.shape.fill;
+package com.UnobstructedThirdPerson.shape.v1.fill;
 
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
