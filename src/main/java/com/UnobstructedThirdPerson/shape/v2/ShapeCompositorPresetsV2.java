@@ -117,7 +117,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 
         String IgnorePlayerSpaceId = idTracker++ + "";
         Shape IgnoredPlayerSpaceBox = new TransformedShape(
-                new Box(-_scale, -_scale, -0, _scale, 5, _scale),
+                new Box(-_scale, -_scale, -0, _scale, 2, _scale),
                 0, 0, 0);
 
 //        this.addOperation(IgnorePlayerSpaceId,
@@ -135,9 +135,9 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 //                        OperationTypeV2.EXCLUDE,
                        OperationTypeV2.SUBTRACT,
                         // OperationTypeV2.DEFINE,
-                        new EmptyBlockFillV2())
-//                        null)
-                .withDebugStyle(DebugStyle.CYAN_STYLE)
+//                        new EmptyBlockFillV2())
+                        null)
+//                .withDebugStyle(DebugStyle.CYAN_STYLE)
                 .withTransformFlags(_ignorePitch)
                 .withReference(outerConeId)
                 .build();
@@ -147,8 +147,8 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 
         String SideViewBoxId = idTracker++ + "";
         Shape sideViewBox = new TransformedShape(
-                new Box(-20, -2,-20,10,2,10),
-                0, 0, -0);
+                new Box(-3, 1,-2,1,2,0),
+                0, 0, 0.5);
 
         this.addOperation(SideViewBoxId,
                         sideViewBox,
