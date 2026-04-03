@@ -552,9 +552,12 @@ public class ShapeCompositorV2 {
         });
         
         for (Long pos : toRemove) {
-            blockFills.remove(pos);
-            blockOwners.remove(pos);
-            debugStyles.remove(pos);
+            String owner = blockOwners.get(pos);
+            if (owner == null || owner.equals(referenceId)) {
+                blockFills.remove(pos);
+                blockOwners.remove(pos);
+                debugStyles.remove(pos);
+            }
         }
         
         operationPositions.addAll(toRemove);

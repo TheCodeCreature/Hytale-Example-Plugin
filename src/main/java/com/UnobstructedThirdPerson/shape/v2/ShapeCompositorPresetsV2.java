@@ -133,8 +133,8 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
         this.addOperation(IgnorePlayerSpaceId,
                         IgnoredPlayerSpaceBox,
 //                        OperationTypeV2.EXCLUDE,
-//                        OperationTypeV2.SUBTRACT,
-                        OperationTypeV2.DEFINE,
+                       OperationTypeV2.SUBTRACT,
+                        // OperationTypeV2.DEFINE,
                         new EmptyBlockFillV2())
 //                        null)
                 .withDebugStyle(DebugStyle.CYAN_STYLE)
