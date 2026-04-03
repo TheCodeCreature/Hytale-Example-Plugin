@@ -15,18 +15,26 @@ public class DebugStyle {
     @Nonnull
     public static final Vector3f LIGHT_GREY = new Vector3f(0.5F, 0.5F, 0.5F);
     @Nonnull
-    public static final Vector3f PLACEHOLDER_CYAN = new Vector3f(0.137F, 0.867F, 0.882F);
+    public static final Vector3f CYAN = new Vector3f(0.137F, 0.867F, 0.882F);
+    @Nonnull
+    public static final Vector3f YELLOW = new Vector3f(0.898F, 0.867F, 0.12F);
+    @Nonnull
+    public static final Vector3f MAGENTA = new Vector3f(0.898F, 0.15f, 0.888F);
     @Nonnull
     public static final Vector3f EMPTY_BLACK = new Vector3f(0.1F, 0.1F, 0.1F);
     
     @Nonnull
-    public static final DebugStyle DEFAULT_GREY = new DebugStyle(true, DARK_GREY, 0.05f);
+    public static final DebugStyle DEFAULT_GREY = new DebugStyle(true, DARK_GREY, 0.15f);
     @Nonnull
     public static final DebugStyle LIGHT_GREY_STYLE = new DebugStyle(true, LIGHT_GREY, 0.15f);
     @Nonnull
-    public static final DebugStyle PLACEHOLDER_STYLE = new DebugStyle(true, PLACEHOLDER_CYAN, 0.05f);
+    public static final DebugStyle CYAN_STYLE = new DebugStyle(true, CYAN, 0.15f);
     @Nonnull
-    public static final DebugStyle EMPTY_STYLE = new DebugStyle(true, EMPTY_BLACK, 0.05f);
+    public static final DebugStyle YELLOW_STYLE = new DebugStyle(true, YELLOW, 0.15f);
+    @Nonnull
+    public static final DebugStyle MAGENTA_STYLE = new DebugStyle(true, MAGENTA, 0.5f);
+    @Nonnull
+    public static final DebugStyle EMPTY_STYLE = new DebugStyle(true, EMPTY_BLACK, 0.15f);
     
     private final boolean enabled;
     private final Vector3f color;

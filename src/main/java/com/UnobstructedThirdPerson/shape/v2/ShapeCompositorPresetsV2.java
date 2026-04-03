@@ -1,14 +1,15 @@
 package com.UnobstructedThirdPerson.shape.v2;
 
 import com.UnobstructedThirdPerson.shape.CircularCone;
+import com.UnobstructedThirdPerson.shape.SquarePyramid;
 import com.UnobstructedThirdPerson.shape.TransformFlags;
+import com.UnobstructedThirdPerson.shape.TransformedShape;
 import com.UnobstructedThirdPerson.shape.v2.fill.EmptyBlockFillV2;
 import com.UnobstructedThirdPerson.shape.v2.operation.OperationTypeV2;
 import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
 import com.hypixel.hytale.math.shape.Box;
-import com.hypixel.hytale.math.vector.Vector3f;
+import com.hypixel.hytale.math.shape.Shape;
 import com.hypixel.hytale.math.vector.Vector3i;
-import org.jetbrains.annotations.Debug;
 
 import javax.annotation.Nonnull;
 
@@ -39,36 +40,42 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 
     public ShapeCompositorV2 LayeredConePreset() {
         int idTracker = 0;
-        double baseHeight = _scale * 1.5;
         double baseRadius = _scale;
-        
+        double baseHeight = _scale;
+        double baseHeightOffset = baseHeight - 2;
+
         double middleRadius = baseRadius * 0.6;
         double middleHeight = baseHeight * 0.6;
 
         double innerRadius = baseRadius * 0.3;
-        double innerHeight = baseHeight * 0.3;
+        double innerHeight = baseHeight;
         
-        DebugStyle noDebug = DebugStyle.enabled(DebugStyle.EMPTY_BLACK, 0.15f);
-        DebugStyle middleDebug = DebugStyle.enabled(DebugStyle.DARK_GREY, 0.5f);
-        DebugStyle outerDebug = DebugStyle.enabled(DebugStyle.DARK_GREY, 0.15f);
-        
-        CircularCone innerCone = new CircularCone(innerRadius, innerHeight);
-        CircularCone middleCone = new CircularCone(middleRadius, middleHeight);
-        CircularCone outerCone = new CircularCone(baseRadius, baseHeight);
-        
-        String outerConeId = idTracker++ + "";
+//        DebugStyle middleDebug = DebugStyle.enabled(DebugStyle.DARK_GREY, 0.5f);
+//        DebugStyle outerDebug = DebugStyle.enabled(DebugStyle.PLACEHOLDER_CYAN, 0.15f);
+
+
+        Shape outerCone = new TransformedShape(
+                new CircularCone(baseRadius, baseHeight),
+                0.5, 3.5, -(baseHeightOffset)
+                ,0,-Math.toRadians(15),0);
+        Shape middleCone = new TransformedShape(
+                new CircularCone(baseRadius, baseHeight),
+                0.5, 3, -(baseHeightOffset));
+        Shape innerCone = new CircularCone(innerRadius, innerHeight);
+
+        String outerConeId = "OuterCone";
         this.addOperation(outerConeId,
                         outerCone,
                         OperationTypeV2.DEFINE,
                         new EmptyBlockFillV2())
-                .withDebugStyle(null)
+//                .withDebugStyle(DebugStyle.LIGHT_GREY_STYLE)
                 .build();
         
 //        String middleConeId = idTracker++ + "";
 //        this.addOperation(middleConeId,
 //                        middleCone,
-//                        OperationTypeV2.SUBTRACT,
-//                        null)
+//                        OperationTypeV2.CUT,
+//                        new EmptyBlockFillV2())
 //                .withReference(outerConeId)
 //                .build();
         
@@ -77,9 +84,9 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 //                        middleCone,
 //                        OperationTypeV2.DEFINE,
 //                        new EmptyBlockFillV2())
-//                .withDebugStyle(middleDebug)
+////                .withDebugStyle(DebugStyle.CYAN_STYLE)
 //                .build();
-//
+
 //        String innerConeId = idTracker++ + "";
 //        this.addOperation(innerConeId,
 //                        innerCone,
@@ -93,15 +100,63 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 //                        innerCone,
 //                        OperationTypeV2.DEFINE,
 //                        new EmptyBlockFillV2())
-//                .withDebugStyle(noDebug)
 //                .build();
-        
-//        this.addOperation(idTracker++ + "",
-//                        new Box(-_scale, -_scale, -0.5, _scale, -1, _scale),
-//                        OperationTypeV2.EXCLUDE,
-//                        null)
+
+//        String FrontViewBoxId = idTracker++ + "";
+//        Shape FrontViewBox = new TransformedShape(
+//                new Box(-1, 0,0,2,1,2),
+//                0, 0, 0);
+//
+//        this.addOperation(FrontViewBoxId,
+//                        FrontViewBox,
+//                        OperationTypeV2.DEFINE,
+//                        new EmptyBlockFillV2())
+//                .withDebugStyle(DebugStyle.CYAN_STYLE)
 //                .withTransformFlags(_ignorePitch)
 //                .build();
+
+        String IgnorePlayerSpaceId = idTracker++ + "";
+        Shape IgnoredPlayerSpaceBox = new TransformedShape(
+                new Box(-_scale, -_scale, -0, _scale, 5, _scale),
+                0, 0, 0);
+
+//        this.addOperation(IgnorePlayerSpaceId,
+//                        IgnoredPlayerSpaceBox,
+////                        OperationTypeV2.EXCLUDE,
+////                        null)
+//                        OperationTypeV2.DEFINE,
+//                        new EmptyBlockFillV2())
+//                .withDebugStyle(DebugStyle.CYAN_STYLE)
+//                .withTransformFlags(_ignorePitch)
+//                .build();
+
+        this.addOperation(IgnorePlayerSpaceId,
+                        IgnoredPlayerSpaceBox,
+//                        OperationTypeV2.EXCLUDE,
+//                        OperationTypeV2.SUBTRACT,
+                        OperationTypeV2.DEFINE,
+                        new EmptyBlockFillV2())
+//                        null)
+                .withDebugStyle(DebugStyle.CYAN_STYLE)
+                .withTransformFlags(_ignorePitch)
+                .withReference(outerConeId)
+                .build();
+
+
+
+
+        String SideViewBoxId = idTracker++ + "";
+        Shape sideViewBox = new TransformedShape(
+                new Box(-20, -2,-20,10,2,10),
+                0, 0, -0);
+
+        this.addOperation(SideViewBoxId,
+                        sideViewBox,
+                        OperationTypeV2.DEFINE,
+                        new EmptyBlockFillV2())
+                .withDebugStyle(DebugStyle.MAGENTA_STYLE)
+                .withTransformFlags(_ignorePitch)
+                .build();
         
         return this;
     }

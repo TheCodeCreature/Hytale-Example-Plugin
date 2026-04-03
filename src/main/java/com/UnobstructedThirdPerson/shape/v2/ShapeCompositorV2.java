@@ -23,7 +23,7 @@ public class ShapeCompositorV2 {
     
     private static final Logger LOGGER = Logger.getLogger("ShapeCompositorV2");
     private static final BlockFillTypeV2 CUT_FILL = new EmptyBlockFillV2();
-    private static final double PITCH_PIVOT_EYE_HEIGHT = 1.8;
+    private static final double PITCH_PIVOT_EYE_HEIGHT = 0;
     
     private Vector3i anchor;
     private double yawRotation = 0.0;
