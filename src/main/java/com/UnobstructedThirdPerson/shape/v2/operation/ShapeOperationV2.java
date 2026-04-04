@@ -7,9 +7,6 @@ import com.hypixel.hytale.math.shape.Shape;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class ShapeOperationV2 {
     
@@ -17,8 +14,6 @@ public class ShapeOperationV2 {
     private final Shape shape;
     private final OperationTypeV2 type;
     private final String referenceId;
-    private final List<String> intersectWith;
-    private final List<String> subtractFrom;
     private final TransformFlags transformFlags;
     private final DebugStyle debugStyleOverride;
     
@@ -32,8 +27,6 @@ public class ShapeOperationV2 {
         this.type = builder.type;
         this.fillType = builder.fillType;
         this.referenceId = builder.referenceId;
-        this.intersectWith = new ArrayList<>(builder.intersectWith);
-        this.subtractFrom = new ArrayList<>(builder.subtractFrom);
         this.transformFlags = builder.transformFlags != null ? builder.transformFlags : TransformFlags.ALL;
         this.debugStyleOverride = builder.debugStyleOverride;
         this.priority = builder.priority != null ? builder.priority : type.getDefaultPriority();
@@ -63,16 +56,6 @@ public class ShapeOperationV2 {
     @Nullable
     public String getReferenceId() {
         return referenceId;
-    }
-    
-    @Nonnull
-    public List<String> getIntersectWith() {
-        return Collections.unmodifiableList(intersectWith);
-    }
-    
-    @Nonnull
-    public List<String> getSubtractFrom() {
-        return Collections.unmodifiableList(subtractFrom);
     }
     
     public int getPriority() {
@@ -116,8 +99,6 @@ public class ShapeOperationV2 {
         private Shape shape;
         private BlockFillTypeV2 fillType;
         private String referenceId;
-        private final List<String> intersectWith = new ArrayList<>();
-        private final List<String> subtractFrom = new ArrayList<>();
         private TransformFlags transformFlags;
         private DebugStyle debugStyleOverride;
         private Integer priority;
@@ -143,18 +124,6 @@ public class ShapeOperationV2 {
         @Nonnull
         public Builder withReference(@Nullable String referenceId) {
             this.referenceId = referenceId;
-            return this;
-        }
-        
-        @Nonnull
-        public Builder intersectWith(@Nonnull String operationId) {
-            this.intersectWith.add(operationId);
-            return this;
-        }
-        
-        @Nonnull
-        public Builder subtract(@Nonnull String operationId) {
-            this.subtractFrom.add(operationId);
             return this;
         }
         

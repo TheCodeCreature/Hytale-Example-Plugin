@@ -7,36 +7,33 @@ import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
 import com.hypixel.hytale.math.vector.Vector3i;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 
 public class ComposedRegionV2 {
     
     private final Vector3i anchor;
-    private final Map<Long, BlockSnapshot> originalBlocks;
-    private final Map<Long, BlockFillTypeV2> blockFills;
+    private final Map<Long, VoxelEntry> voxelMap;
     private final Map<Long, Integer> computedBlockIds;
-    private final Map<Long, DebugStyle> debugStyles;
-    private final Set<Long> excludedPositions;
     private final Map<String, Set<Long>> operationRegions;
     private final List<ShapeOperationV2> timeline;
     
     public ComposedRegionV2(
             @Nonnull Vector3i anchor,
-            @Nonnull Map<Long, BlockSnapshot> originalBlocks,
-            @Nonnull Map<Long, BlockFillTypeV2> blockFills,
+            @Nonnull Map<Long, VoxelEntry> voxelMap,
             @Nonnull Map<Long, Integer> computedBlockIds,
-            @Nonnull Map<Long, DebugStyle> debugStyles,
-            @Nonnull Set<Long> excludedPositions,
             @Nonnull Map<String, Set<Long>> operationRegions,
             @Nonnull List<ShapeOperationV2> timeline) {
         this.anchor = anchor;
-        this.originalBlocks = new HashMap<>(originalBlocks);
-        this.blockFills = new HashMap<>(blockFills);
         this.computedBlockIds = new HashMap<>(computedBlockIds);
-        this.debugStyles = new HashMap<>(debugStyles);
-        this.excludedPositions = new HashSet<>(excludedPositions);
         this.operationRegions = new HashMap<>(operationRegions);
         this.timeline = new ArrayList<>(timeline);
+        
+        // Defensive copy of voxel entries
+        this.voxelMap = new HashMap<>();
+        for (Map.Entry<Long, VoxelEntry> entry : voxelMap.entrySet()) {
+            this.voxelMap.put(entry.getKey(), entry.getValue().copy());
+        }
     }
     
     @Nonnull
@@ -45,13 +42,32 @@ public class ComposedRegionV2 {
     }
     
     @Nonnull
+    public Map<Long, VoxelEntry> getVoxelMap() {
+        return Collections.unmodifiableMap(voxelMap);
+    }
+    
+    @Nonnull
     public Map<Long, BlockSnapshot> getOriginalBlocks() {
-        return Collections.unmodifiableMap(originalBlocks);
+        Map<Long, BlockSnapshot> result = new HashMap<>();
+        for (Map.Entry<Long, VoxelEntry> entry : voxelMap.entrySet()) {
+            VoxelEntry voxel = entry.getValue();
+            if (voxel.getOriginal() != null && voxel.hasFill()) {
+                result.put(entry.getKey(), voxel.getOriginal());
+            }
+        }
+        return Collections.unmodifiableMap(result);
     }
     
     @Nonnull
     public Map<Long, BlockFillTypeV2> getBlockFills() {
-        return Collections.unmodifiableMap(blockFills);
+        Map<Long, BlockFillTypeV2> result = new HashMap<>();
+        for (Map.Entry<Long, VoxelEntry> entry : voxelMap.entrySet()) {
+            VoxelEntry voxel = entry.getValue();
+            if (voxel.hasFill()) {
+                result.put(entry.getKey(), voxel.getFill());
+            }
+        }
+        return Collections.unmodifiableMap(result);
     }
     
     @Nonnull
@@ -61,12 +77,31 @@ public class ComposedRegionV2 {
     
     @Nonnull
     public Map<Long, DebugStyle> getDebugStyles() {
-        return Collections.unmodifiableMap(debugStyles);
+        Map<Long, DebugStyle> result = new HashMap<>();
+        for (Map.Entry<Long, VoxelEntry> entry : voxelMap.entrySet()) {
+            VoxelEntry voxel = entry.getValue();
+            if (voxel.getDebugStyle() != null && voxel.getDebugStyle().isEnabled()) {
+                result.put(entry.getKey(), voxel.getDebugStyle());
+            }
+        }
+        return Collections.unmodifiableMap(result);
     }
     
     @Nonnull
     public Set<Long> getExcludedPositions() {
-        return Collections.unmodifiableSet(excludedPositions);
+        Set<Long> result = new HashSet<>();
+        for (Map.Entry<Long, VoxelEntry> entry : voxelMap.entrySet()) {
+            if (entry.getValue().isExcluded()) {
+                result.add(entry.getKey());
+            }
+        }
+        return Collections.unmodifiableSet(result);
+    }
+    
+    @Nullable
+    public String getOwner(long pos) {
+        VoxelEntry entry = voxelMap.get(pos);
+        return entry != null ? entry.getOwnerId() : null;
     }
     
     @Nonnull
@@ -87,11 +122,23 @@ public class ComposedRegionV2 {
     }
     
     public int getTotalBlockCount() {
-        return originalBlocks.size();
+        int count = 0;
+        for (VoxelEntry voxel : voxelMap.values()) {
+            if (voxel.getOriginal() != null && voxel.hasFill()) {
+                count++;
+            }
+        }
+        return count;
     }
     
     public int getExcludedBlockCount() {
-        return excludedPositions.size();
+        int count = 0;
+        for (VoxelEntry voxel : voxelMap.values()) {
+            if (voxel.isExcluded()) {
+                count++;
+            }
+        }
+        return count;
     }
     
     public int getFilledBlockCount() {

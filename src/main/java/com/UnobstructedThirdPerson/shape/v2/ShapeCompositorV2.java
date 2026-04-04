@@ -139,60 +139,15 @@ public class ShapeCompositorV2 {
         }
 
         private void validateOperationInputs() {
-            switch (type) {
-                case DEFINE:
-                    if (shape == null) {
-                        throw new IllegalArgumentException("DEFINE operation '" + id + "' requires a shape");
-                    }
-                    break;
-
-                case FILL:
-                    if (shape == null) {
-                        throw new IllegalArgumentException("FILL operation '" + id + "' requires a shape");
-                    }
-                    if (fillType == null) {
-                        throw new IllegalArgumentException("FILL operation '" + id + "' requires a non-null fill type");
-                    }
-                    break;
-
-                case CUT:
-                    if (shape == null) {
-                        throw new IllegalArgumentException("CUT operation '" + id + "' requires a shape");
-                    }
-                    break;
-
-                case INTERSECT:
-                    if (shape == null) {
-                        throw new IllegalArgumentException("INTERSECT operation '" + id + "' requires a shape");
-                    }
-                    if (referenceId == null) {
-                        throw new IllegalArgumentException("INTERSECT operation '" + id + "' requires a reference");
-                    }
-                    break;
-
-                case SUBTRACT:
-                    if (shape == null) {
-                        throw new IllegalArgumentException("SUBTRACT operation '" + id + "' requires a shape");
-                    }
-                    if (referenceId == null) {
-                        throw new IllegalArgumentException("SUBTRACT operation '" + id + "' requires a reference");
-                    }
-                    break;
-
-                case FILL_REMAINING:
-                    if (referenceId == null) {
-                        throw new IllegalArgumentException("FILL_REMAINING operation '" + id + "' requires a reference");
-                    }
-                    if (fillType == null) {
-                        throw new IllegalArgumentException("FILL_REMAINING operation '" + id + "' requires a non-null fill type");
-                    }
-                    break;
-
-                case EXCLUDE:
-                    if (shape == null) {
-                        throw new IllegalArgumentException("EXCLUDE operation '" + id + "' requires a shape");
-                    }
-                    break;
+            OperationTypeV2 t = type;
+            if (t.isRequireShape() && shape == null) {
+                throw new IllegalArgumentException(t + " operation '" + id + "' requires a shape");
+            }
+            if (t.isRequireReference() && referenceId == null) {
+                throw new IllegalArgumentException(t + " operation '" + id + "' requires a reference");
+            }
+            if (t.isRequireFill() && fillType == null) {
+                throw new IllegalArgumentException(t + " operation '" + id + "' requires a non-null fill type");
             }
         }
     }
@@ -241,77 +196,167 @@ public class ShapeCompositorV2 {
     
     @Nonnull
     public ComposedRegionV2 compose(@Nonnull ChunkStore chunkStore) {
-        Map<Long, BlockSnapshot> originalBlocks = new HashMap<>();
-        Map<Long, BlockFillTypeV2> blockFills = new HashMap<>();
-        Map<Long, Integer> computedBlockIds = new HashMap<>();
-        Map<Long, DebugStyle> debugStyles = new HashMap<>();
-        Set<Long> excludedPositions = new HashSet<>();
+        Map<Long, VoxelEntry> voxelMap = new HashMap<>();
         Map<String, Set<Long>> operationRegions = new HashMap<>();
         
         List<ShapeOperationV2> timeline = getTimeline();
-        Map<Long, String> blockOwners = new HashMap<>();
         
         for (ShapeOperationV2 operation : timeline) {
             if (!operation.isEnabled()) {
                 continue;
             }
             
-            Set<Long> operationPositions = new HashSet<>();
-            
-            switch (operation.getType()) {
-                case DEFINE:
-                    executeDefine(operation, chunkStore, originalBlocks, blockFills, 
-                            blockOwners, operationPositions, excludedPositions, debugStyles);
-                    break;
-
-                case FILL:
-                    executeFill(operation, chunkStore, originalBlocks, blockFills,
-                            blockOwners, operationPositions, excludedPositions, debugStyles);
-                    break;
-
-                case CUT:
-                    executeCut(operation, chunkStore, originalBlocks, blockFills,
-                            blockOwners, operationPositions, excludedPositions, debugStyles);
-                    break;
-                    
-                case INTERSECT:
-                    executeIntersect(operation, chunkStore, originalBlocks, blockFills,
-                            blockOwners, operationPositions, operationRegions, excludedPositions, debugStyles);
-                    break;
-                    
-                case SUBTRACT:
-                    executeSubtract(operation, blockFills, blockOwners, operationPositions,
-                            operationRegions, debugStyles);
-                    break;
-                    
-                case FILL_REMAINING:
-                    executeFillRemaining(operation, chunkStore, originalBlocks, blockFills,
-                            blockOwners, operationPositions, operationRegions, debugStyles);
-                    break;
-                    
-                case EXCLUDE:
-                    executeExclude(operation, chunkStore, excludedPositions, operationPositions);
-                    break;
-            }
-            
+            Set<Long> operationPositions = executeOperation(operation, chunkStore, voxelMap, operationRegions);
             operationRegions.put(operation.getId(), operationPositions);
         }
 
-        originalBlocks.keySet().retainAll(blockFills.keySet());
-        
-        for (Map.Entry<Long, BlockFillTypeV2> entry : blockFills.entrySet()) {
-            Long pos = entry.getKey();
-            BlockFillTypeV2 fillType = entry.getValue();
-            BlockSnapshot original = originalBlocks.get(pos);
-            
-            if (original != null && fillType != null) {
-                int blockId = fillType.getBlockId(original, chunkStore);
-                computedBlockIds.put(pos, blockId);
+        Map<Long, Integer> computedBlockIds = new HashMap<>();
+        for (Map.Entry<Long, VoxelEntry> entry : voxelMap.entrySet()) {
+            VoxelEntry voxel = entry.getValue();
+            if (voxel.hasFill() && voxel.getOriginal() != null && !voxel.isExcluded()) {
+                int blockId = voxel.getFill().getBlockId(voxel.getOriginal(), chunkStore);
+                computedBlockIds.put(entry.getKey(), blockId);
             }
         }
         
-        return new ComposedRegionV2(anchor, originalBlocks, blockFills, computedBlockIds,
-                debugStyles, excludedPositions, operationRegions, timeline);
+        return new ComposedRegionV2(anchor, voxelMap, computedBlockIds, operationRegions, timeline);
+    }
+    
+    @Nonnull
+    private Set<Long> executeOperation(@Nonnull ShapeOperationV2 operation,
+                                       @Nonnull ChunkStore chunkStore,
+                                       @Nonnull Map<Long, VoxelEntry> voxelMap,
+                                       @Nonnull Map<String, Set<Long>> operationRegions) {
+        OperationTypeV2 type = operation.getType();
+        Set<Long> operationPositions = new HashSet<>();
+        
+        // Resolve fill: CUT always uses CUT_FILL, others use operation's fill
+        BlockFillTypeV2 fillType = (type == OperationTypeV2.CUT) ? CUT_FILL : operation.getFillType();
+        DebugStyle debugStyle = resolveDebugStyle(operation, fillType);
+        
+        // Resolve reference positions
+        String referenceId = operation.getReferenceId();
+        Set<Long> referencePositions = (referenceId != null)
+                ? operationRegions.getOrDefault(referenceId, Collections.emptySet())
+                : Collections.emptySet();
+        
+        // Source positions and apply filters + actions
+        if (type.getPositionSource() == OperationTypeV2.PositionSource.SHAPE) {
+            Shape baseShape = operation.getShape();
+            if (baseShape == null) {
+                LOGGER.warning(type + " operation '" + operation.getId() + "' has no shape");
+                return operationPositions;
+            }
+            
+            Shape shape = applyTransformations(baseShape, operation.getTransformFlags());
+            
+            shape.forEachBlock(anchor.x, anchor.y, anchor.z, (x, y, z) -> {
+                long pos = BlockUtil.packUnchecked(x, y, z);
+                
+                if (!passesFilters(pos, x, y, z, type, voxelMap, referencePositions, chunkStore)) {
+                    return true;
+                }
+                
+                applyAction(pos, x, y, z, type, operation, voxelMap, referenceId,
+                        fillType, debugStyle, chunkStore, operationPositions);
+                return true;
+            });
+        } else {
+            // REFERENCE source: iterate the reference region
+            for (Long pos : referencePositions) {
+                int x = BlockUtil.unpackX(pos);
+                int y = BlockUtil.unpackY(pos);
+                int z = BlockUtil.unpackZ(pos);
+                
+                if (!passesFilters(pos, x, y, z, type, voxelMap, referencePositions, chunkStore)) {
+                    continue;
+                }
+                
+                applyAction(pos, x, y, z, type, operation, voxelMap, referenceId,
+                        fillType, debugStyle, chunkStore, operationPositions);
+            }
+        }
+        
+        return operationPositions;
+    }
+    
+    private boolean passesFilters(long pos, int x, int y, int z,
+                                  @Nonnull OperationTypeV2 type,
+                                  @Nonnull Map<Long, VoxelEntry> voxelMap,
+                                  @Nonnull Set<Long> referencePositions,
+                                  @Nonnull ChunkStore chunkStore) {
+        VoxelEntry existing = voxelMap.get(pos);
+        
+        if (type.isSkipExcluded() && existing != null && existing.isExcluded()) {
+            return false;
+        }
+        
+        if (type.isRequireInReference() && !referencePositions.contains(pos)) {
+            return false;
+        }
+        
+        if (type.isRequireUnowned() && existing != null && existing.getOwnerId() != null) {
+            return false;
+        }
+        
+        if (type.isRequireNonAir()) {
+            BlockSnapshot snapshot = (existing != null) ? existing.getOriginal() : null;
+            if (snapshot == null || snapshot.blockId() == 0) {
+                snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
+            }
+            if (snapshot == null || snapshot.blockId() == 0) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    private void applyAction(long pos, int x, int y, int z,
+                             @Nonnull OperationTypeV2 type,
+                             @Nonnull ShapeOperationV2 operation,
+                             @Nonnull Map<Long, VoxelEntry> voxelMap,
+                             @Nullable String referenceId,
+                             @Nullable BlockFillTypeV2 fillType,
+                             @Nonnull DebugStyle debugStyle,
+                             @Nonnull ChunkStore chunkStore,
+                             @Nonnull Set<Long> operationPositions) {
+        switch (type.getAction()) {
+            case WRITE: {
+                VoxelEntry entry = voxelMap.computeIfAbsent(pos, k -> new VoxelEntry());
+                operationPositions.add(pos);
+                
+                // Ensure we have an original snapshot
+                if (entry.getOriginal() == null) {
+                    BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
+                    if (snapshot != null) {
+                        entry.setOriginal(snapshot);
+                    }
+                }
+                
+                if (fillType != null) {
+                    entry.write(null, fillType, operation.getId(), debugStyle);
+                }
+                break;
+            }
+            case REMOVE: {
+                VoxelEntry entry = voxelMap.get(pos);
+                operationPositions.add(pos);
+                if (entry != null) {
+                    String owner = entry.getOwnerId();
+                    if (owner == null || owner.equals(referenceId)) {
+                        entry.clearFill();
+                    }
+                }
+                break;
+            }
+            case MARK_EXCLUDED: {
+                VoxelEntry entry = voxelMap.computeIfAbsent(pos, k -> new VoxelEntry());
+                entry.setExcluded(true);
+                operationPositions.add(pos);
+                break;
+            }
+        }
     }
     
     private Shape applyTransformations(Shape shape, TransformFlags flags) {
@@ -357,277 +402,6 @@ public class ShapeCompositorV2 {
         }
         
         return DebugStyle.NONE;
-    }
-    
-    private void executeDefine(ShapeOperationV2 operation, ChunkStore chunkStore,
-                               Map<Long, BlockSnapshot> originalBlocks,
-                               Map<Long, BlockFillTypeV2> blockFills,
-                               Map<Long, String> blockOwners,
-                               Set<Long> operationPositions,
-                               Set<Long> excludedPositions,
-                               Map<Long, DebugStyle> debugStyles) {
-        Shape baseShape = operation.getShape();
-        if (baseShape == null) {
-            LOGGER.warning("DEFINE operation '" + operation.getId() + "' has no shape");
-            return;
-        }
-        
-        Shape shape = applyTransformations(baseShape, operation.getTransformFlags());
-        BlockFillTypeV2 fillType = operation.getFillType();
-        DebugStyle debugStyle = resolveDebugStyle(operation, fillType);
-        
-        shape.forEachBlock(anchor.x, anchor.y, anchor.z, (x, y, z) -> {
-            long pos = BlockUtil.packUnchecked(x, y, z);
-            
-            if (excludedPositions.contains(pos)) {
-                return true;
-            }
-            
-            BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
-            if (snapshot != null && snapshot.blockId() != 0) {
-                operationPositions.add(pos);
-                
-                if (fillType != null) {
-                    originalBlocks.put(pos, snapshot);
-                    blockFills.put(pos, fillType);
-                    blockOwners.put(pos, operation.getId());
-                    debugStyles.put(pos, debugStyle);
-                }
-            }
-            
-            return true;
-        });
-    }
-
-    private void executeFill(ShapeOperationV2 operation, ChunkStore chunkStore,
-                             Map<Long, BlockSnapshot> originalBlocks,
-                             Map<Long, BlockFillTypeV2> blockFills,
-                             Map<Long, String> blockOwners,
-                             Set<Long> operationPositions,
-                             Set<Long> excludedPositions,
-                             Map<Long, DebugStyle> debugStyles) {
-        BlockFillTypeV2 fillType = operation.getFillType();
-        if (fillType == null) {
-            LOGGER.warning("FILL operation '" + operation.getId() + "' has no fill type");
-            return;
-        }
-
-        executeFilledShape(operation, fillType, chunkStore, originalBlocks, blockFills,
-                blockOwners, operationPositions, excludedPositions, debugStyles);
-    }
-
-    private void executeCut(ShapeOperationV2 operation, ChunkStore chunkStore,
-                            Map<Long, BlockSnapshot> originalBlocks,
-                            Map<Long, BlockFillTypeV2> blockFills,
-                            Map<Long, String> blockOwners,
-                            Set<Long> operationPositions,
-                            Set<Long> excludedPositions,
-                            Map<Long, DebugStyle> debugStyles) {
-        executeFilledShape(operation, CUT_FILL, chunkStore, originalBlocks, blockFills,
-                blockOwners, operationPositions, excludedPositions, debugStyles);
-    }
-
-    private void executeFilledShape(ShapeOperationV2 operation, BlockFillTypeV2 fillType, ChunkStore chunkStore,
-                                    Map<Long, BlockSnapshot> originalBlocks,
-                                    Map<Long, BlockFillTypeV2> blockFills,
-                                    Map<Long, String> blockOwners,
-                                    Set<Long> operationPositions,
-                                    Set<Long> excludedPositions,
-                                    Map<Long, DebugStyle> debugStyles) {
-        Shape baseShape = operation.getShape();
-        if (baseShape == null) {
-            LOGGER.warning("Operation '" + operation.getId() + "' has no shape");
-            return;
-        }
-
-        Shape shape = applyTransformations(baseShape, operation.getTransformFlags());
-        DebugStyle debugStyle = resolveDebugStyle(operation, fillType);
-
-        shape.forEachBlock(anchor.x, anchor.y, anchor.z, (x, y, z) -> {
-            long pos = BlockUtil.packUnchecked(x, y, z);
-
-            if (excludedPositions.contains(pos)) {
-                return true;
-            }
-
-            BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
-            if (snapshot != null && snapshot.blockId() != 0) {
-                originalBlocks.put(pos, snapshot);
-                operationPositions.add(pos);
-                blockFills.put(pos, fillType);
-                blockOwners.put(pos, operation.getId());
-                debugStyles.put(pos, debugStyle);
-            }
-
-            return true;
-        });
-    }
-    
-    private void executeIntersect(ShapeOperationV2 operation, ChunkStore chunkStore,
-                                  Map<Long, BlockSnapshot> originalBlocks,
-                                  Map<Long, BlockFillTypeV2> blockFills,
-                                  Map<Long, String> blockOwners,
-                                  Set<Long> operationPositions,
-                                  Map<String, Set<Long>> operationRegions,
-                                  Set<Long> excludedPositions,
-                                  Map<Long, DebugStyle> debugStyles) {
-        Shape baseShape = operation.getShape();
-        String referenceId = operation.getReferenceId();
-        
-        if (baseShape == null) {
-            LOGGER.warning("INTERSECT operation '" + operation.getId() + "' has no shape");
-            return;
-        }
-        
-        Shape shape = applyTransformations(baseShape, operation.getTransformFlags());
-        Set<Long> referencePositions = referenceId != null ? 
-                operationRegions.getOrDefault(referenceId, Collections.emptySet()) :
-                Collections.emptySet();
-        
-        BlockFillTypeV2 fillType = operation.getFillType();
-        DebugStyle debugStyle = resolveDebugStyle(operation, fillType);
-        
-        shape.forEachBlock(anchor.x, anchor.y, anchor.z, (x, y, z) -> {
-            long pos = BlockUtil.packUnchecked(x, y, z);
-            
-            if (excludedPositions.contains(pos)) {
-                return true;
-            }
-            
-            if (!referencePositions.contains(pos)) {
-                return true;
-            }
-            
-            BlockSnapshot snapshot = originalBlocks.get(pos);
-            if (snapshot == null || snapshot.blockId() == 0) {
-                snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
-            }
-
-            if (snapshot == null || snapshot.blockId() == 0) {
-                return true;
-            }
-            
-            operationPositions.add(pos);
-            
-            if (fillType != null) {
-                originalBlocks.put(pos, snapshot);
-                blockFills.put(pos, fillType);
-                blockOwners.put(pos, operation.getId());
-                debugStyles.put(pos, debugStyle);
-            }
-            
-            return true;
-        });
-    }
-    
-    private void executeSubtract(ShapeOperationV2 operation,
-                                Map<Long, BlockFillTypeV2> blockFills,
-                                Map<Long, String> blockOwners,
-                                Set<Long> operationPositions,
-                                Map<String, Set<Long>> operationRegions,
-                                Map<Long, DebugStyle> debugStyles) {
-        Shape baseShape = operation.getShape();
-        String referenceId = operation.getReferenceId();
-        
-        if (baseShape == null) {
-            LOGGER.warning("SUBTRACT operation '" + operation.getId() + "' has no shape");
-            return;
-        }
-        
-        Shape shape = applyTransformations(baseShape, operation.getTransformFlags());
-        Set<Long> referencePositions = referenceId != null ?
-                operationRegions.getOrDefault(referenceId, Collections.emptySet()) :
-                Collections.emptySet();
-        
-        Set<Long> toRemove = new HashSet<>();
-        
-        shape.forEachBlock(anchor.x, anchor.y, anchor.z, (x, y, z) -> {
-            long pos = BlockUtil.packUnchecked(x, y, z);
-            
-            if (referencePositions.contains(pos)) {
-                toRemove.add(pos);
-            }
-            
-            return true;
-        });
-        
-        for (Long pos : toRemove) {
-            String owner = blockOwners.get(pos);
-            if (owner == null || owner.equals(referenceId)) {
-                blockFills.remove(pos);
-                blockOwners.remove(pos);
-                debugStyles.remove(pos);
-            }
-        }
-        
-        operationPositions.addAll(toRemove);
-    }
-    
-    private void executeFillRemaining(ShapeOperationV2 operation, ChunkStore chunkStore,
-                                     Map<Long, BlockSnapshot> originalBlocks,
-                                     Map<Long, BlockFillTypeV2> blockFills,
-                                     Map<Long, String> blockOwners,
-                                     Set<Long> operationPositions,
-                                     Map<String, Set<Long>> operationRegions,
-                                     Map<Long, DebugStyle> debugStyles) {
-        String referenceId = operation.getReferenceId();
-        
-        if (referenceId == null) {
-            LOGGER.warning("FILL_REMAINING operation '" + operation.getId() + "' has no reference");
-            return;
-        }
-        
-        Set<Long> referencePositions = operationRegions.getOrDefault(referenceId, Collections.emptySet());
-        BlockFillTypeV2 fillType = operation.getFillType();
-        
-        if (fillType == null) {
-            LOGGER.warning("FILL_REMAINING operation '" + operation.getId() + "' has no fill type");
-            return;
-        }
-        
-        DebugStyle debugStyle = resolveDebugStyle(operation, fillType);
-        
-        for (Long pos : referencePositions) {
-            if (!blockOwners.containsKey(pos)) {
-                BlockSnapshot snapshot = originalBlocks.get(pos);
-                if (snapshot == null || snapshot.blockId() == 0) {
-                    int x = BlockUtil.unpackX(pos);
-                    int y = BlockUtil.unpackY(pos);
-                    int z = BlockUtil.unpackZ(pos);
-                    snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
-                }
-
-                if (snapshot == null || snapshot.blockId() == 0) {
-                    continue;
-                }
-
-                originalBlocks.put(pos, snapshot);
-                blockFills.put(pos, fillType);
-                blockOwners.put(pos, operation.getId());
-                debugStyles.put(pos, debugStyle);
-                operationPositions.add(pos);
-            }
-        }
-    }
-    
-    private void executeExclude(ShapeOperationV2 operation, ChunkStore chunkStore,
-                               Set<Long> excludedPositions, Set<Long> operationPositions) {
-        Shape baseShape = operation.getShape();
-        
-        if (baseShape == null) {
-            LOGGER.warning("EXCLUDE operation '" + operation.getId() + "' has no shape");
-            return;
-        }
-        
-        Shape shape = applyTransformations(baseShape, operation.getTransformFlags());
-        
-        shape.forEachBlock(anchor.x, anchor.y, anchor.z, (x, y, z) -> {
-            long pos = BlockUtil.packUnchecked(x, y, z);
-            excludedPositions.add(pos);
-            operationPositions.add(pos);
-            
-            return true;
-        });
     }
     
     @Override
