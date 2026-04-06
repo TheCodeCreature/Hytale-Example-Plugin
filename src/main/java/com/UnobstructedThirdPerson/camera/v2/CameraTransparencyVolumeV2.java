@@ -5,6 +5,7 @@ import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.UnobstructedThirdPerson.shape.v1.placeholder.TransparentBlockUtils;
 import com.UnobstructedThirdPerson.shape.v2.ComposedRegionV2;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorV2;
+import com.UnobstructedThirdPerson.shape.v2.VoxelEntry;
 import com.UnobstructedThirdPerson.shape.v2.fill.PlaceholderFillV2;
 import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
 import com.UnobstructedThirdPerson.shape.v1.placeholder.PlaceholderTransparencyUtil;
@@ -12,6 +13,7 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
 import com.hypixel.hytale.server.core.HytaleServer;
@@ -43,7 +45,7 @@ public class CameraTransparencyVolumeV2 {
     private final Set<Long> currentPositions = new HashSet<>();
     private final Map<Long, BlockSnapshot> activeBlocks = new HashMap<>();
     private final Map<Long, Integer> activeBlockIds = new HashMap<>();
-    private final Map<Long, DebugStyle> activeDebugStyles = new HashMap<>();
+    private Map<Long, DebugStyle> lastRenderedDebugStyles = new HashMap<>();
     private Vector3i lastAnchor = null;
     private double lastYaw = Double.NaN;
     private double lastPitch = Double.NaN;
@@ -152,7 +154,6 @@ public class CameraTransparencyVolumeV2 {
         Map<Long, BlockSnapshot> newSnapshots = new HashMap<>();
         Set<Long> newPositions = new HashSet<>();
         Map<Long, Integer> newBlockIds = new HashMap<>();
-        Map<Long, DebugStyle> newDebugStyles = new HashMap<>();
         
         for (Map.Entry<Long, BlockSnapshot> entry : region.getOriginalBlocks().entrySet()) {
             Long pos = entry.getKey();
@@ -188,11 +189,6 @@ public class CameraTransparencyVolumeV2 {
                     newBlockIds.put(pos, blockId);
                 }
             }
-            
-            DebugStyle debugStyle = region.getDebugStyles().get(pos);
-            if (debugStyle != null && debugStyle.isEnabled()) {
-                newDebugStyles.put(pos, debugStyle);
-            }
         }
 
         Set<Long> toAdd = new HashSet<>(newPositions);
@@ -220,7 +216,6 @@ public class CameraTransparencyVolumeV2 {
         for (Long pos : toRemove) {
             activeBlocks.remove(pos);
             activeBlockIds.remove(pos);
-            activeDebugStyles.remove(pos);
         }
         for (Long pos : toAdd) {
             BlockSnapshot snapshot = newSnapshots.get(pos);
@@ -230,10 +225,6 @@ public class CameraTransparencyVolumeV2 {
                 if (blockId != null) {
                     activeBlockIds.put(pos, blockId);
                 }
-                DebugStyle debugStyle = newDebugStyles.get(pos);
-                if (debugStyle != null) {
-                    activeDebugStyles.put(pos, debugStyle);
-                }
             }
         }
         for (Long pos : toUpdate) {
@@ -241,15 +232,10 @@ public class CameraTransparencyVolumeV2 {
             if (blockId != null) {
                 activeBlockIds.put(pos, blockId);
             }
-            DebugStyle debugStyle = newDebugStyles.get(pos);
-            if (debugStyle != null) {
-                activeDebugStyles.put(pos, debugStyle);
-            } else {
-                activeDebugStyles.remove(pos);
-            }
         }
 
-        renderDebugCubesFromStyles();
+        // Debug styles are rebuilt fresh from the region each frame
+        renderDebugCubesFromRegion(region);
     }
 
     public void cleanupPositions(@Nonnull Collection<Long> positionsToCleanup) {
@@ -261,35 +247,47 @@ public class CameraTransparencyVolumeV2 {
         for (Long pos : positionsToCleanup) {
             activeBlocks.remove(pos);
             activeBlockIds.remove(pos);
-            activeDebugStyles.remove(pos);
             currentPositions.remove(pos);
         }
-
-        renderDebugCubesFromStyles();
     }
 
-    private void renderDebugCubesFromStyles() {
-        Map<String, Set<Long>> colorGroups = new HashMap<>();
+    private void renderDebugCubesFromRegion(@Nonnull ComposedRegionV2 region) {
+        Map<Long, DebugStyle> newDebugStyles = new HashMap<>();
         
-        for (Map.Entry<Long, DebugStyle> entry : activeDebugStyles.entrySet()) {
-            DebugStyle style = entry.getValue();
-            if (!style.isEnabled() || style.getColor() == null) {
+        // Collect debug styles from ALL voxels in the region (not just those with fills)
+        for (Map.Entry<Long, VoxelEntry> entry : region.getVoxelMap().entrySet()) {
+            VoxelEntry voxel = entry.getValue();
+            if (voxel.isExcluded()) {
                 continue;
             }
-            
-            String colorKey = style.getColor().x + "," + style.getColor().y + "," + style.getColor().z;
-            colorGroups.computeIfAbsent(colorKey, k -> new HashSet<>()).add(entry.getKey());
-        }
-
-        DebugCube.clearDebugCubes(world);
-        for (Map.Entry<String, Set<Long>> colorGroup : colorGroups.entrySet()) {
-            if (!colorGroup.getValue().isEmpty()) {
-                DebugStyle firstStyle = activeDebugStyles.get(colorGroup.getValue().iterator().next());
-                if (firstStyle != null && firstStyle.getColor() != null) {
-                    DebugCube.addDebugCubes(world, colorGroup.getValue(), firstStyle.getColor());
-                }
+            DebugStyle style = voxel.getDebugStyle();
+            if (style.isEnabled() && style.getColor() != null) {
+                newDebugStyles.put(entry.getKey(), style);
             }
         }
+        
+        // Clear all existing debug cubes and render fresh
+        DebugCube.clearDebugCubes(world);
+        
+        // Group by color and render
+        Map<String, Set<Long>> colorGroups = new HashMap<>();
+        Map<String, Vector3f> colorLookup = new HashMap<>();
+        
+        for (Map.Entry<Long, DebugStyle> entry : newDebugStyles.entrySet()) {
+            Vector3f color = entry.getValue().getColor();
+            String colorKey = color.x + "," + color.y + "," + color.z;
+            colorGroups.computeIfAbsent(colorKey, k -> new HashSet<>()).add(entry.getKey());
+            colorLookup.putIfAbsent(colorKey, color);
+        }
+        
+        for (Map.Entry<String, Set<Long>> colorGroup : colorGroups.entrySet()) {
+            Vector3f color = colorLookup.get(colorGroup.getKey());
+            if (color != null && !colorGroup.getValue().isEmpty()) {
+                DebugCube.addDebugCubes(world, colorGroup.getValue(), color);
+            }
+        }
+        
+        lastRenderedDebugStyles = newDebugStyles;
     }
 
     private void renderCachedDebugCubes() {
@@ -370,7 +368,7 @@ public class CameraTransparencyVolumeV2 {
         int restored = positionsToCleanup.size();
         activeBlocks.clear();
         activeBlockIds.clear();
-        activeDebugStyles.clear();
+        lastRenderedDebugStyles.clear();
         currentPositions.clear();
         lastAnchor = null;
         LOGGER.info("[CameraTransparencyV2] Shutdown - restored " + restored + " blocks");
