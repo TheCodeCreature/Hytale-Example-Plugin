@@ -41,6 +41,7 @@ public class CameraTransparencyVolumeV2 {
     private final PlayerRef playerRef;
     private final World world;
     private final ShapeCompositorV2 compositor;
+    private final Vector3d compositorOffset;
 
     private final Set<Long> currentPositions = new HashSet<>();
     private final Map<Long, BlockSnapshot> activeBlocks = new HashMap<>();
@@ -55,6 +56,7 @@ public class CameraTransparencyVolumeV2 {
         this.playerRef = playerRef;
         this.world = world;
         this.compositor = compositor;
+        this.compositorOffset = compositor.getOffset();
     }
 
     public static void StartTransparencyVolumeLoop(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull ShapeCompositorV2 compositor) {
@@ -109,7 +111,7 @@ public class CameraTransparencyVolumeV2 {
             } catch (Exception e) {
                 LOGGER.warning("[CameraTransparencyV2] Error in update loop: " + e.getMessage());
             }
-        }, 200, UPDATE_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+        }, UPDATE_INTERVAL_MILLIS, UPDATE_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
     }
 
     private void stopUpdateLoop() {
@@ -142,10 +144,14 @@ public class CameraTransparencyVolumeV2 {
         lastPitch = currentPitch;
 
         ChunkStore chunkStore = world.getChunkStore();
+        double cosYaw = Math.cos(currentYaw);
+        double sinYaw = Math.sin(currentYaw);
+        double rotatedX = compositorOffset.x * cosYaw - compositorOffset.z * sinYaw;
+        double rotatedZ = compositorOffset.x * sinYaw + compositorOffset.z * cosYaw;
         compositor.setAnchor(new Vector3d(
-                newAnchor.x + compositor.getAnchor().x,
-                newAnchor.y + compositor.getAnchor().y,
-                newAnchor.z + compositor.getAnchor().z
+                newAnchor.x + rotatedX,
+                newAnchor.y + compositorOffset.y,
+                newAnchor.z + rotatedZ
         ));
         
         ComposedRegionV2 region = compositor.compose(chunkStore);

@@ -25,27 +25,38 @@ public class ShapeCompositorV2 {
     
     private static final Logger LOGGER = Logger.getLogger("ShapeCompositorV2");
     private static final BlockFillTypeV2 CUT_FILL = new EmptyBlockFillV2();
-    private static final double PITCH_PIVOT_EYE_HEIGHT = 0;
+    private static final double PITCH_PIVOT_EYE_HEIGHT = 2;
     
-    private Vector3d anchor;
+    private Vector3d anchor = new Vector3d(0, 0, 0);
+    private Vector3d offset;
     private double yawRotation = 0.0;
     private double pitchRotation = 0.0;
     private final Map<String, ShapeOperationV2> operations;
     private final List<String> operationOrder;
     
-    public ShapeCompositorV2(@Nonnull Vector3d anchor) {
-        this.anchor = anchor;
+    public ShapeCompositorV2(@Nonnull Vector3d offset) {
+        this.offset = offset;
         this.operations = new LinkedHashMap<>();
         this.operationOrder = new ArrayList<>();
     }
     
     public void setAnchor(@Nonnull Vector3d newAnchor) {
+        newAnchor.y += PITCH_PIVOT_EYE_HEIGHT;
         this.anchor = newAnchor;
     }
     
     @Nonnull
     public Vector3d getAnchor() {
         return anchor;
+    }
+    
+    public void setOffset(@Nonnull Vector3d offset) {
+        this.offset = offset;
+    }
+    
+    @Nonnull
+    public Vector3d getOffset() {
+        return offset;
     }
     
     public void setRotation(double yawRadians) {
@@ -207,6 +218,24 @@ public class ShapeCompositorV2 {
         Map<Long, VoxelEntry> voxelMap = new HashMap<>();
         Map<String, Set<Long>> operationRegions = new HashMap<>();
         
+        // Compute effective anchor: anchor (orbit point) + shapeOffset
+        // Y pivots by pitch (swings vertically with look direction)
+        // X and Z are flat extensions (no further rotation)
+        double cosPitch = Math.cos(pitchRotation);
+        double sinPitch = Math.sin(pitchRotation);
+        double cosYaw = Math.cos(yawRotation);
+        double sinYaw = Math.sin(yawRotation);
+        
+        // Pivot Y by pitch: projects into world Y and forward (yaw-relative Z)
+        double pivotY = offset.y * cosPitch;
+        double pivotForward = offset.y * sinPitch;
+        
+        Vector3d effectiveAnchor = new Vector3d(
+                anchor.x + offset.x + pivotForward * (-sinYaw),
+                anchor.y + pivotY,
+                anchor.z + offset.z + pivotForward * cosYaw
+        );
+        
         List<ShapeOperationV2> timeline = getTimeline();
         
         for (ShapeOperationV2 operation : timeline) {
@@ -214,7 +243,7 @@ public class ShapeCompositorV2 {
                 continue;
             }
             
-            Set<Long> operationPositions = executeOperation(operation, chunkStore, voxelMap, operationRegions);
+            Set<Long> operationPositions = executeOperation(operation, chunkStore, voxelMap, operationRegions, effectiveAnchor);
             operationRegions.put(operation.getId(), operationPositions);
         }
 
@@ -227,14 +256,15 @@ public class ShapeCompositorV2 {
             }
         }
         
-        return new ComposedRegionV2(anchor, voxelMap, computedBlockIds, operationRegions, timeline);
+        return new ComposedRegionV2(effectiveAnchor, voxelMap, computedBlockIds, operationRegions, timeline);
     }
     
     @Nonnull
     private Set<Long> executeOperation(@Nonnull ShapeOperationV2 operation,
                                        @Nonnull ChunkStore chunkStore,
                                        @Nonnull Map<Long, VoxelEntry> voxelMap,
-                                       @Nonnull Map<String, Set<Long>> operationRegions) {
+                                       @Nonnull Map<String, Set<Long>> operationRegions,
+                                       @Nonnull Vector3d effectiveAnchor) {
         OperationTypeV2 type = operation.getType();
         Set<Long> operationPositions = new HashSet<>();
         
@@ -258,7 +288,7 @@ public class ShapeCompositorV2 {
             
             Shape shape = applyTransformations(baseShape, operation.getTransformFlags());
             
-            shape.forEachBlock(anchor.x, anchor.y, anchor.z, (x, y, z) -> {
+            shape.forEachBlock(effectiveAnchor.x, effectiveAnchor.y, effectiveAnchor.z, (x, y, z) -> {
                 long pos = BlockUtil.packUnchecked(x, y, z);
                 
                 if (!passesFilters(pos, x, y, z, type, voxelMap, referencePositions, chunkStore)) {
