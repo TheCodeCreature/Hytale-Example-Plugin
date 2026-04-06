@@ -41,6 +41,7 @@ public class CameraTransparencyVolumeV2 {
     private final PlayerRef playerRef;
     private final World world;
     private final ShapeCompositorV2 compositor;
+    private final Vector3d compositorAnchorOffset;
 
     private final Set<Long> currentPositions = new HashSet<>();
     private final Map<Long, BlockSnapshot> activeBlocks = new HashMap<>();
@@ -55,6 +56,7 @@ public class CameraTransparencyVolumeV2 {
         this.playerRef = playerRef;
         this.world = world;
         this.compositor = compositor;
+        this.compositorAnchorOffset = compositor.getAnchor();
     }
 
     public static void StartTransparencyVolumeLoop(@Nonnull PlayerRef playerRef, @Nonnull World world, @Nonnull ShapeCompositorV2 compositor) {
@@ -143,9 +145,9 @@ public class CameraTransparencyVolumeV2 {
 
         ChunkStore chunkStore = world.getChunkStore();
         compositor.setAnchor(new Vector3d(
-                newAnchor.x + compositor.getAnchor().x,
-                newAnchor.y + compositor.getAnchor().y,
-                newAnchor.z + compositor.getAnchor().z
+                newAnchor.x + compositorAnchorOffset.x,
+                newAnchor.y + compositorAnchorOffset.y,
+                newAnchor.z + compositorAnchorOffset.z
         ));
         
         ComposedRegionV2 region = compositor.compose(chunkStore);
