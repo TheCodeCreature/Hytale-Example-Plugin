@@ -21,9 +21,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class DebugCube {
 
-    private static final double CUBE_SCALE = 0.95;
-    private static final float CUBE_DURATION_SECONDS = 0.2F;
-    private static final float DEFAULT_OPACITY = 0.05F;
+//    private static final double CUBE_SCALE = 1.01;
+    private static final double CUBE_SCALE = 0.99;
+    private static final float CUBE_DURATION_SECONDS = 0.5F;
+    private static final float DEFAULT_OPACITY = 0.15F;
     private static final Map<World, Map<Long, CachedCube>> CACHED_DEBUG_CUBES_BY_WORLD =
             Collections.synchronizedMap(new WeakHashMap<>());
 
@@ -42,7 +43,7 @@ public final class DebugCube {
         matrix.identity();
         matrix.translate(x + 0.5, y + 0.5, z + 0.5);
         matrix.scale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
-        DebugUtils.add(world, DebugShape.Cube, matrix, color, opacity, CUBE_DURATION_SECONDS, 0);
+        DebugUtils.add(world, DebugShape.Cube, matrix, color, opacity, CUBE_DURATION_SECONDS, DebugUtils.FLAG_NO_WIREFRAME);
     }
 
     @Nonnull

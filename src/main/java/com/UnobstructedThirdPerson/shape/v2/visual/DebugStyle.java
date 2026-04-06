@@ -1,40 +1,24 @@
 package com.UnobstructedThirdPerson.shape.v2.visual;
 
 import com.hypixel.hytale.math.vector.Vector3f;
+import com.hypixel.hytale.server.core.modules.debug.DebugUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class DebugStyle {
-    
     @Nonnull
     public static final DebugStyle NONE = new DebugStyle(false, null, 0.0f);
-    
     @Nonnull
-    public static final Vector3f DARK_GREY = new Vector3f(0.2F, 0.2F, 0.2F);
+    public static final DebugStyle COLOR_BLACK_STYLE = new DebugStyle(true, DebugUtils.COLOR_BLACK, 0.15f);
     @Nonnull
-    public static final Vector3f LIGHT_GREY = new Vector3f(0.5F, 0.5F, 0.5F);
+    public static final DebugStyle COLOR_WHITE_STYLE = new DebugStyle(true, DebugUtils.COLOR_WHITE, 0.15f);
     @Nonnull
-    public static final Vector3f CYAN = new Vector3f(0.137F, 0.867F, 0.882F);
+    public static final DebugStyle COLOR_GRAY_STYLE = new DebugStyle(true, DebugUtils.COLOR_GRAY, 0.15f);
     @Nonnull
-    public static final Vector3f YELLOW = new Vector3f(0.898F, 0.867F, 0.12F);
+    public static final DebugStyle COLOR_RED_STYLE = new DebugStyle(true, DebugUtils.COLOR_RED, 0.15f);
     @Nonnull
-    public static final Vector3f MAGENTA = new Vector3f(0.898F, 0.15f, 0.888F);
-    @Nonnull
-    public static final Vector3f EMPTY_BLACK = new Vector3f(0.1F, 0.1F, 0.1F);
-    
-    @Nonnull
-    public static final DebugStyle DARK_GREY_STYLE = new DebugStyle(true, DARK_GREY, 0.15f);
-    @Nonnull
-    public static final DebugStyle LIGHT_GREY_STYLE = new DebugStyle(true, LIGHT_GREY, 0.15f);
-    @Nonnull
-    public static final DebugStyle CYAN_STYLE = new DebugStyle(true, CYAN, 0.15f);
-    @Nonnull
-    public static final DebugStyle YELLOW_STYLE = new DebugStyle(true, YELLOW, 0.15f);
-    @Nonnull
-    public static final DebugStyle MAGENTA_STYLE = new DebugStyle(true, MAGENTA, 0.5f);
-    @Nonnull
-    public static final DebugStyle BLAK_STYLE = new DebugStyle(true, EMPTY_BLACK, 0.15f);
+    public static final DebugStyle COLOR_LIME_STYLE = new DebugStyle(true, DebugUtils.COLOR_LIME, 0.15f);
     
     private final boolean enabled;
     private final Vector3f color;
@@ -44,6 +28,12 @@ public class DebugStyle {
         this.enabled = enabled;
         this.color = color;
         this.opacity = Math.max(0.0f, Math.min(1.0f, opacity));
+    }
+
+    public DebugStyle(@Nullable Vector3f color) {
+        this.enabled = true;
+        this.color = color;
+        this.opacity = 0.05f;
     }
     
     public boolean isEnabled() {
@@ -81,8 +71,8 @@ public class DebugStyle {
     
     public static class Builder {
         private boolean enabled = true;
-        private Vector3f color = DARK_GREY;
-        private float opacity = 0.05f;
+        private Vector3f color = DebugUtils.COLOR_GRAY;
+        private float opacity = 0.01f;
         
         @Nonnull
         public Builder enabled(boolean enabled) {

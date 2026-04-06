@@ -11,6 +11,8 @@ import com.UnobstructedThirdPerson.shape.v2.operation.ShapeOperationV2;
 import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
 import com.hypixel.hytale.math.block.BlockUtil;
 import com.hypixel.hytale.math.shape.Shape;
+import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 
@@ -25,24 +27,24 @@ public class ShapeCompositorV2 {
     private static final BlockFillTypeV2 CUT_FILL = new EmptyBlockFillV2();
     private static final double PITCH_PIVOT_EYE_HEIGHT = 0;
     
-    private Vector3i anchor;
+    private Vector3d anchor;
     private double yawRotation = 0.0;
     private double pitchRotation = 0.0;
     private final Map<String, ShapeOperationV2> operations;
     private final List<String> operationOrder;
     
-    public ShapeCompositorV2(@Nonnull Vector3i anchor) {
+    public ShapeCompositorV2(@Nonnull Vector3d anchor) {
         this.anchor = anchor;
         this.operations = new LinkedHashMap<>();
         this.operationOrder = new ArrayList<>();
     }
     
-    public void setAnchor(@Nonnull Vector3i newAnchor) {
+    public void setAnchor(@Nonnull Vector3d newAnchor) {
         this.anchor = newAnchor;
     }
     
     @Nonnull
-    public Vector3i getAnchor() {
+    public Vector3d getAnchor() {
         return anchor;
     }
     
@@ -108,6 +110,12 @@ public class ShapeCompositorV2 {
         @Nonnull
         public OperationBuilder withDebugStyle(@Nonnull DebugStyle debugStyle) {
             this.debugStyle = debugStyle;
+            return this;
+        }
+
+        @Nonnull
+        public OperationBuilder withDebugColor(@Nonnull Vector3f color) {
+            this.debugStyle = new DebugStyle(color);
             return this;
         }
         

@@ -7,8 +7,12 @@ import com.UnobstructedThirdPerson.shape.v2.fill.EmptyBlockFillV2;
 import com.UnobstructedThirdPerson.shape.v2.operation.OperationTypeV2;
 import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
 import com.hypixel.hytale.math.shape.Box;
+import com.hypixel.hytale.math.shape.Ellipsoid;
 import com.hypixel.hytale.math.shape.Shape;
+import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.server.core.modules.debug.DebugUtils;
 
 import javax.annotation.Nonnull;
 
@@ -23,18 +27,18 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
             .ignorePitch()
             .build();
 
-    public ShapeCompositorPresetsV2(@Nonnull Vector3i anchor, int radius) {
+    public ShapeCompositorPresetsV2(@Nonnull Vector3d anchor, int radius) {
         super(anchor);
         _scale = radius;
     }
 
     public ShapeCompositorPresetsV2(int radius) {
-        super(new Vector3i(0, 0, 0));
+        super(new Vector3d(0, 0.5, 0));
         _scale = radius;
     }
 
     public ShapeCompositorPresetsV2() {
-        super(new Vector3i(0, 1, 0));
+        super(new Vector3d(-5, 0.5, 0));
     }
 
     public ShapeCompositorV2 LayeredConePreset() {
@@ -43,122 +47,103 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
         double baseHeight = _scale;
         double baseHeightOffset = baseHeight - 2;
 
-        double middleRadius = baseRadius * 0.6;
-        double middleHeight = baseHeight * 0.6;
+//        double middleRadius = baseRadius * 0.6;
+//        double middleHeight = baseHeight;
 
-        double innerRadius = baseRadius * 0.3;
+        double innerRadius = baseRadius * 0.5;
         double innerHeight = baseHeight;
+
+        double xOffset = 0;
+        double yOffset = 3;
+
+        double pitchDegrees = 15;
         
-//        DebugStyle middleDebug = DebugStyle.enabled(DebugStyle.DARK_GREY, 0.5f);
-//        DebugStyle outerDebug = DebugStyle.enabled(DebugStyle.PLACEHOLDER_CYAN, 0.15f);
-
-
         Shape outerCone = new TransformedShape(
                 new CircularCone(baseRadius, baseHeight),
-                0.5, 2.5, -(baseHeightOffset)
-                ,0,-Math.toRadians(15),0);
-        Shape middleCone = new TransformedShape(
-                new CircularCone(baseRadius, baseHeight),
-                0.5, 3, -(baseHeightOffset));
+                xOffset, yOffset, -(baseHeightOffset)
+                ,0,-Math.toRadians(pitchDegrees),0);
+//        Shape outerSphere = new TransformedShape(
+//                new Ellipsoid(baseRadius),
+//                xOffset, yOffset, -(baseHeightOffset)
+//                ,0,-Math.toRadians(pitchDegrees),0);
+//        Shape middleCone = new TransformedShape(
+//                new CircularCone(middleRadius, middleHeight),
+//                xOffset, yOffset, -(baseHeightOffset+1)
+//                ,0,-Math.toRadians(pitchDegrees),0);
         Shape innerCone = new TransformedShape(
                 new CircularCone(innerRadius, innerHeight),
-                0.5, 1.5, -(baseHeightOffset)
-                ,0,-Math.toRadians(0),0);
-//        new CircularCone(innerRadius, innerHeight);
+                xOffset, yOffset-1, -(baseHeightOffset)
+                ,0,-Math.toRadians(pitchDegrees),0);
 
         String outerConeId = idTracker++ + "";
         this.addOperation(outerConeId,
                         outerCone,
                         OperationTypeV2.DEFINE,
                         new EmptyBlockFillV2())
-                .withDebugStyle(DebugStyle.BLAK_STYLE)
+                .withDebugColor(DebugUtils.COLOR_BLACK)
                 .build();
-        
-//        String middleConeId = idTracker++ + "";
-//        this.addOperation(middleConeId,
-//                        middleCone,
-//                        OperationTypeV2.CUT,
-//                        new EmptyBlockFillV2())
-//                .withReference(outerConeId)
-//                .build();
         
 //        String middleShellId = idTracker++ + "";
 //        this.addOperation(middleShellId,
 //                        middleCone,
 //                        OperationTypeV2.DEFINE,
 //                        new EmptyBlockFillV2())
-////                .withDebugStyle(DebugStyle.CYAN_STYLE)
-//                .build();
-
-//        String innerConeId = idTracker++ + "";
-//        this.addOperation(innerConeId,
-//                        innerCone,
-//                        OperationTypeV2.SUBTRACT,
-//                        null)
+//                .withDebugColor(DebugUtils.COLOR_GRAY)
 //                .withReference(outerConeId)
 //                .build();
 
-//        String FrontViewBoxId = idTracker++ + "";
-//        Shape FrontViewBox = new TransformedShape(
-//                new Box(-1, 0,0,2,1,2),
-//                0, 0, 0);
-//
-//        this.addOperation(FrontViewBoxId,
-//                        FrontViewBox,
-//                        OperationTypeV2.DEFINE,
-//                        new EmptyBlockFillV2())
-//                .withDebugStyle(DebugStyle.CYAN_STYLE)
-//                .withTransformFlags(_ignorePitch)
-//                .build();
-
+        String innerConeId = idTracker++ + "";
+        this.addOperation(innerConeId,
+                        innerCone,
+                        OperationTypeV2.DEFINE,
+                        new EmptyBlockFillV2())
+//                .withDebugColor(DebugUtils.COLOR_WHITE)
+                .build();
 
         String SideViewBoxId = idTracker++ + "";
         Shape sideViewBox = new TransformedShape(
-                new Box(-3, 1,-2,1,1,0),
-                0, 0, 0.5);
-
+                new Box(-3, 1,-1,1,1,0),
+                0, 0, 0);
         this.addOperation(SideViewBoxId,
                         sideViewBox,
                         OperationTypeV2.DEFINE,
                         new EmptyBlockFillV2())
-                .withDebugStyle(DebugStyle.MAGENTA_STYLE)
+                .withDebugColor(DebugUtils.COLOR_PURPLE)
                 .withTransformFlags(_ignorePitch)
-                .build();
-
-        String innerShellId = idTracker++ + "";
-        this.addOperation(innerShellId,
-                        innerCone,
-                        OperationTypeV2.DEFINE,
-                        new EmptyBlockFillV2())
-//                .withDebugStyle(DebugStyle.CYAN_STYLE)
                 .build();
 
         String IgnorePlayerSpaceId = idTracker++ + "";
         Shape IgnoredPlayerSpaceBox = new TransformedShape(
-                new Box(-_scale, -_scale, -0, _scale, 1, _scale),
+                new Box(-_scale, -_scale, 1, _scale, 1, _scale),
+                0, 0, 0,
+                -Math.toRadians(15),0,0);
+        this.addOperation(IgnorePlayerSpaceId,
+                        IgnoredPlayerSpaceBox,
+                       OperationTypeV2.EXCLUDE,
+                        null)
+                .withTransformFlags(_ignorePitch)
+//                .withReference(outerConeId)
+                .build();
+
+        String IgnorePlayerFeetId = idTracker++ + "";
+        Shape IgnoredPlayerFeetBox = new TransformedShape(
+                new Box(-1, -1, -0, 1, 0, 1),
                 0, 0, 0);
+        this.addOperation(IgnorePlayerFeetId,
+                        IgnoredPlayerFeetBox,
+                        OperationTypeV2.EXCLUDE,
+                        null)
+                .withTransformFlags(_ignorePitch)
+//                .withReference(outerConeId)
+                .build();
 
 //        this.addOperation(IgnorePlayerSpaceId,
 //                        IgnoredPlayerSpaceBox,
-////                        OperationTypeV2.EXCLUDE,
-////                        null)
-//                        OperationTypeV2.DEFINE,
-//                        new EmptyBlockFillV2())
-//                .withDebugStyle(DebugStyle.CYAN_STYLE)
+//                        OperationTypeV2.SUBTRACT,
+//                        null)
 //                .withTransformFlags(_ignorePitch)
+//                .withReference(Inner)
 //                .build();
-
-        this.addOperation(IgnorePlayerSpaceId,
-                        IgnoredPlayerSpaceBox,
-//                        OperationTypeV2.EXCLUDE,
-                       OperationTypeV2.SUBTRACT,
-                        // OperationTypeV2.DEFINE,
-//                        new EmptyBlockFillV2())
-                        null)
-//                .withDebugStyle(DebugStyle.CYAN_STYLE)
-                .withTransformFlags(_ignorePitch)
-                .withReference(outerConeId)
-                .build();
         
         return this;
     }
@@ -174,7 +159,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                         cone,
                         OperationTypeV2.DEFINE,
                         new EmptyBlockFillV2())
-                .withDebugStyle(DebugStyle.DARK_GREY_STYLE)
+                .withDebugColor(DebugUtils.COLOR_GRAY)
                 .build();
         
         this.addOperation(idTracker++ + "",

@@ -4,6 +4,8 @@ import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.UnobstructedThirdPerson.shape.v2.fill.BlockFillTypeV2;
 import com.UnobstructedThirdPerson.shape.v2.operation.ShapeOperationV2;
 import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
+import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
 
 import javax.annotation.Nonnull;
@@ -12,14 +14,14 @@ import java.util.*;
 
 public class ComposedRegionV2 {
     
-    private final Vector3i anchor;
+    private final Vector3d anchor;
     private final Map<Long, VoxelEntry> voxelMap;
     private final Map<Long, Integer> computedBlockIds;
     private final Map<String, Set<Long>> operationRegions;
     private final List<ShapeOperationV2> timeline;
     
     public ComposedRegionV2(
-            @Nonnull Vector3i anchor,
+            @Nonnull Vector3d anchor,
             @Nonnull Map<Long, VoxelEntry> voxelMap,
             @Nonnull Map<Long, Integer> computedBlockIds,
             @Nonnull Map<String, Set<Long>> operationRegions,
@@ -37,7 +39,7 @@ public class ComposedRegionV2 {
     }
     
     @Nonnull
-    public Vector3i getAnchor() {
+    public Vector3d getAnchor() {
         return anchor;
     }
     

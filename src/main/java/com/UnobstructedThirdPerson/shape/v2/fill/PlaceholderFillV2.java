@@ -15,7 +15,7 @@ public class PlaceholderFillV2 implements BlockFillTypeV2 {
     private final DebugStyle debugStyle;
     
     public PlaceholderFillV2() {
-        this(DebugStyle.CYAN_STYLE);
+        this(DebugStyle.COLOR_LIME_STYLE);
     }
     
     public PlaceholderFillV2(@Nonnull DebugStyle debugStyle) {

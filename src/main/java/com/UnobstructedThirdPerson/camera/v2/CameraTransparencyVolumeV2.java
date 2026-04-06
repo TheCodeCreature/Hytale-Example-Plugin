@@ -13,6 +13,7 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
 import com.hypixel.hytale.server.core.HytaleServer;
@@ -45,7 +46,7 @@ public class CameraTransparencyVolumeV2 {
     private final Map<Long, BlockSnapshot> activeBlocks = new HashMap<>();
     private final Map<Long, Integer> activeBlockIds = new HashMap<>();
     private Map<Long, DebugStyle> lastRenderedDebugStyles = new HashMap<>();
-    private Vector3i lastAnchor = null;
+    private Vector3d lastAnchor = null;
     private double lastYaw = Double.NaN;
     private double lastPitch = Double.NaN;
     private ScheduledFuture<?> updateTask = null;
@@ -92,13 +93,8 @@ public class CameraTransparencyVolumeV2 {
                         return;
                     }
 
-                    Vector3d playerPos = playerRef.getTransform().getPosition();
-                    Vector3i origin = new Vector3i(
-                            (int) Math.floor(playerPos.x),
-                            (int) Math.floor(playerPos.y),
-                            (int) Math.floor(playerPos.z)
-                    );
-                    
+                    Vector3d origin = playerRef.getTransform().getPosition();
+
                     Store<EntityStore> store = ref.getStore();
                     Transform look = TargetUtil.getLook(ref, store);
                     if (look != null) {
@@ -123,7 +119,7 @@ public class CameraTransparencyVolumeV2 {
         }
     }
 
-    public void update(@Nonnull Vector3i newAnchor) {
+    public void update(@Nonnull Vector3d newAnchor) {
         double currentYaw = compositor.getYawRotation();
         double currentPitch = compositor.getPitchRotation();
         
