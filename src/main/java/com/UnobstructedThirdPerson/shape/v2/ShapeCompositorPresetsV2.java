@@ -63,12 +63,12 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 0.5, 3, -(baseHeightOffset));
         Shape innerCone = new CircularCone(innerRadius, innerHeight);
 
-        String outerConeId = "OuterCone";
+        String outerConeId = idTracker++ + "";
         this.addOperation(outerConeId,
                         outerCone,
                         OperationTypeV2.DEFINE,
                         new EmptyBlockFillV2())
-//                .withDebugStyle(DebugStyle.LIGHT_GREY_STYLE)
+                .withDebugStyle(DebugStyle.LIGHT_GREY_STYLE)
                 .build();
         
 //        String middleConeId = idTracker++ + "";
@@ -92,7 +92,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 //                        innerCone,
 //                        OperationTypeV2.SUBTRACT,
 //                        null)
-//                .withReference(middleShellId)
+//                .withReference(outerConeId)
 //                .build();
         
 //        String innerShellId = idTracker++ + "";

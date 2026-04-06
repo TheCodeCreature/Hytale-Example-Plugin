@@ -26,13 +26,13 @@ public class DebugStyle {
     @Nonnull
     public static final DebugStyle DEFAULT_GREY = new DebugStyle(true, DARK_GREY, 0.15f);
     @Nonnull
-    public static final DebugStyle LIGHT_GREY_STYLE = new DebugStyle(true, LIGHT_GREY, 0.15f);
+    public static final DebugStyle LIGHT_GREY_STYLE = new DebugStyle(true, LIGHT_GREY, 0.015f);
     @Nonnull
     public static final DebugStyle CYAN_STYLE = new DebugStyle(true, CYAN, 0.15f);
     @Nonnull
     public static final DebugStyle YELLOW_STYLE = new DebugStyle(true, YELLOW, 0.15f);
     @Nonnull
-    public static final DebugStyle MAGENTA_STYLE = new DebugStyle(true, MAGENTA, 0.5f);
+    public static final DebugStyle MAGENTA_STYLE = new DebugStyle(true, MAGENTA, 0.015f);
     @Nonnull
     public static final DebugStyle EMPTY_STYLE = new DebugStyle(true, EMPTY_BLACK, 0.15f);
     
