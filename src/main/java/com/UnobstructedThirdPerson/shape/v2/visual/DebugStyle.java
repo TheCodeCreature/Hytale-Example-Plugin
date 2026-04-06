@@ -24,17 +24,17 @@ public class DebugStyle {
     public static final Vector3f EMPTY_BLACK = new Vector3f(0.1F, 0.1F, 0.1F);
     
     @Nonnull
-    public static final DebugStyle DEFAULT_GREY = new DebugStyle(true, DARK_GREY, 0.15f);
+    public static final DebugStyle DARK_GREY_STYLE = new DebugStyle(true, DARK_GREY, 0.15f);
     @Nonnull
-    public static final DebugStyle LIGHT_GREY_STYLE = new DebugStyle(true, LIGHT_GREY, 0.015f);
+    public static final DebugStyle LIGHT_GREY_STYLE = new DebugStyle(true, LIGHT_GREY, 0.15f);
     @Nonnull
     public static final DebugStyle CYAN_STYLE = new DebugStyle(true, CYAN, 0.15f);
     @Nonnull
     public static final DebugStyle YELLOW_STYLE = new DebugStyle(true, YELLOW, 0.15f);
     @Nonnull
-    public static final DebugStyle MAGENTA_STYLE = new DebugStyle(true, MAGENTA, 0.015f);
+    public static final DebugStyle MAGENTA_STYLE = new DebugStyle(true, MAGENTA, 0.5f);
     @Nonnull
-    public static final DebugStyle EMPTY_STYLE = new DebugStyle(true, EMPTY_BLACK, 0.15f);
+    public static final DebugStyle BLAK_STYLE = new DebugStyle(true, EMPTY_BLACK, 0.15f);
     
     private final boolean enabled;
     private final Vector3f color;

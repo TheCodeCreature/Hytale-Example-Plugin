@@ -1,7 +1,6 @@
 package com.UnobstructedThirdPerson.shape.v2;
 
 import com.UnobstructedThirdPerson.shape.CircularCone;
-import com.UnobstructedThirdPerson.shape.SquarePyramid;
 import com.UnobstructedThirdPerson.shape.TransformFlags;
 import com.UnobstructedThirdPerson.shape.TransformedShape;
 import com.UnobstructedThirdPerson.shape.v2.fill.EmptyBlockFillV2;
@@ -14,7 +13,7 @@ import com.hypixel.hytale.math.vector.Vector3i;
 import javax.annotation.Nonnull;
 
 public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
-    
+
     private int _scale = 7;
     private final TransformFlags _noMove = TransformFlags.builder()
             .ignorePitch()
@@ -35,7 +34,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
     }
 
     public ShapeCompositorPresetsV2() {
-        super(new Vector3i(0, 0, 0));
+        super(new Vector3i(0, 1, 0));
     }
 
     public ShapeCompositorV2 LayeredConePreset() {
@@ -56,19 +55,23 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 
         Shape outerCone = new TransformedShape(
                 new CircularCone(baseRadius, baseHeight),
-                0.5, 3.5, -(baseHeightOffset)
+                0.5, 2.5, -(baseHeightOffset)
                 ,0,-Math.toRadians(15),0);
         Shape middleCone = new TransformedShape(
                 new CircularCone(baseRadius, baseHeight),
                 0.5, 3, -(baseHeightOffset));
-        Shape innerCone = new CircularCone(innerRadius, innerHeight);
+        Shape innerCone = new TransformedShape(
+                new CircularCone(innerRadius, innerHeight),
+                0.5, 1.5, -(baseHeightOffset)
+                ,0,-Math.toRadians(0),0);
+//        new CircularCone(innerRadius, innerHeight);
 
         String outerConeId = idTracker++ + "";
         this.addOperation(outerConeId,
                         outerCone,
                         OperationTypeV2.DEFINE,
                         new EmptyBlockFillV2())
-                .withDebugStyle(DebugStyle.LIGHT_GREY_STYLE)
+                .withDebugStyle(DebugStyle.BLAK_STYLE)
                 .build();
         
 //        String middleConeId = idTracker++ + "";
@@ -94,13 +97,6 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 //                        null)
 //                .withReference(outerConeId)
 //                .build();
-        
-//        String innerShellId = idTracker++ + "";
-//        this.addOperation(innerShellId,
-//                        innerCone,
-//                        OperationTypeV2.DEFINE,
-//                        new EmptyBlockFillV2())
-//                .build();
 
 //        String FrontViewBoxId = idTracker++ + "";
 //        Shape FrontViewBox = new TransformedShape(
@@ -115,9 +111,31 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 //                .withTransformFlags(_ignorePitch)
 //                .build();
 
+
+        String SideViewBoxId = idTracker++ + "";
+        Shape sideViewBox = new TransformedShape(
+                new Box(-3, 1,-2,1,1,0),
+                0, 0, 0.5);
+
+        this.addOperation(SideViewBoxId,
+                        sideViewBox,
+                        OperationTypeV2.DEFINE,
+                        new EmptyBlockFillV2())
+                .withDebugStyle(DebugStyle.MAGENTA_STYLE)
+                .withTransformFlags(_ignorePitch)
+                .build();
+
+        String innerShellId = idTracker++ + "";
+        this.addOperation(innerShellId,
+                        innerCone,
+                        OperationTypeV2.DEFINE,
+                        new EmptyBlockFillV2())
+//                .withDebugStyle(DebugStyle.CYAN_STYLE)
+                .build();
+
         String IgnorePlayerSpaceId = idTracker++ + "";
         Shape IgnoredPlayerSpaceBox = new TransformedShape(
-                new Box(-_scale, -_scale, -0, _scale, 2, _scale),
+                new Box(-_scale, -_scale, -0, _scale, 1, _scale),
                 0, 0, 0);
 
 //        this.addOperation(IgnorePlayerSpaceId,
@@ -141,22 +159,6 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 .withTransformFlags(_ignorePitch)
                 .withReference(outerConeId)
                 .build();
-
-
-
-
-        String SideViewBoxId = idTracker++ + "";
-        Shape sideViewBox = new TransformedShape(
-                new Box(-3, 1,-2,1,2,0),
-                0, 0, 0.5);
-
-        this.addOperation(SideViewBoxId,
-                        sideViewBox,
-                        OperationTypeV2.DEFINE,
-                        new EmptyBlockFillV2())
-                .withDebugStyle(DebugStyle.MAGENTA_STYLE)
-                .withTransformFlags(_ignorePitch)
-                .build();
         
         return this;
     }
@@ -172,7 +174,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                         cone,
                         OperationTypeV2.DEFINE,
                         new EmptyBlockFillV2())
-                .withDebugStyle(DebugStyle.DEFAULT_GREY)
+                .withDebugStyle(DebugStyle.DARK_GREY_STYLE)
                 .build();
         
         this.addOperation(idTracker++ + "",

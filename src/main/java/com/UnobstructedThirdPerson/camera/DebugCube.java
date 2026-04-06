@@ -40,8 +40,7 @@ public final class DebugCube {
         matrix.identity();
         matrix.translate(x + 0.5, y + 0.5, z + 0.5);
         matrix.scale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
-        Vector3f modulatedColor = new Vector3f(color.x * opacity, color.y * opacity, color.z * opacity);
-        DebugUtils.add(world, DebugShape.Cube, matrix, modulatedColor, CUBE_DURATION_SECONDS, false);
+        DebugUtils.add(world, DebugShape.Cube, matrix, color, opacity, CUBE_DURATION_SECONDS, 0);
     }
 
     @Nonnull
