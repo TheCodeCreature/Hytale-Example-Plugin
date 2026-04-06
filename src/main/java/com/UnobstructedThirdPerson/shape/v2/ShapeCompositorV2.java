@@ -26,7 +26,7 @@ public class ShapeCompositorV2 {
     
     private static final Logger LOGGER = Logger.getLogger("ShapeCompositorV2");
     private static final BlockFillTypeV2 CUT_FILL = new EmptyBlockFillV2();
-    private static final double PITCH_PIVOT_EYE_HEIGHT = 0;
+    private static final double PITCH_PIVOT_EYE_HEIGHT = 7;
     
     private Vector3d anchor = new Vector3d(0, 0, 0);
     private Vector3d offset;
