@@ -7,6 +7,8 @@ import com.hypixel.hytale.protocol.DebugShape;
 import com.hypixel.hytale.server.core.modules.debug.DebugUtils;
 import com.hypixel.hytale.server.core.universe.world.World;
 
+import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
+
 import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.Map;
@@ -67,6 +69,9 @@ public final class DebugCube {
         }
     }
 
+    /**
+     * Re-renders all cached debug cubes, refreshing their lifetime on the client.
+     */
     public static void renderCachedDebugCubes(@Nonnull World world) {
         Map<Long, CachedCube> worldCache;
         synchronized (CACHED_DEBUG_CUBES_BY_WORLD) {
@@ -79,6 +84,53 @@ public final class DebugCube {
         for (Map.Entry<Long, CachedCube> entry : worldCache.entrySet()) {
             CachedCube cached = entry.getValue();
             renderDebugCube(world, entry.getKey(), cached.color(), cached.opacity());
+        }
+    }
+
+    /**
+     * Differentially updates the debug cube cache for the given world.
+     * <p>
+     * New positions are added to the cache and rendered immediately.
+     * Stale positions are removed from the cache and expire naturally on the client
+     * (within {@link #CUBE_DURATION_SECONDS}), avoiding the flicker caused by
+     * clearing all debug shapes and re-adding them.
+     * Retained positions are re-rendered to refresh their client-side lifetime.
+     *
+     * @param world       the world to update
+     * @param debugStyles map of packed positions to their debug styles (only enabled styles with non-null color are used)
+     */
+    public static void updateDebugCubes(@Nonnull World world, @Nonnull Map<Long, DebugStyle> debugStyles) {
+        Map<Long, CachedCube> worldCache = getOrCreateWorldCache(world);
+
+        // Remove stale entries (no longer in the new set) — they expire naturally on the client
+        worldCache.keySet().retainAll(debugStyles.keySet());
+
+        // Add/update entries and render all active cubes
+        for (Map.Entry<Long, DebugStyle> entry : debugStyles.entrySet()) {
+            DebugStyle style = entry.getValue();
+            Vector3f color = style.getColor();
+            if (color == null) {
+                continue;
+            }
+            CachedCube cached = new CachedCube(new Vector3f(color.x, color.y, color.z), style.getOpacity());
+            worldCache.put(entry.getKey(), cached);
+            renderDebugCube(world, entry.getKey(), cached.color(), cached.opacity());
+        }
+    }
+
+    /**
+     * Removes specific positions from the cache. They will expire naturally on the client.
+     */
+    public static void removeCachedPositions(@Nonnull World world, @Nonnull Set<Long> positions) {
+        Map<Long, CachedCube> worldCache;
+        synchronized (CACHED_DEBUG_CUBES_BY_WORLD) {
+            worldCache = CACHED_DEBUG_CUBES_BY_WORLD.get(world);
+        }
+        if (worldCache == null) {
+            return;
+        }
+        for (Long pos : positions) {
+            worldCache.remove(pos);
         }
     }
 

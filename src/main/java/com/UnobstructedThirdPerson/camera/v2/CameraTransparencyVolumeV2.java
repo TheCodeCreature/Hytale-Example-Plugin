@@ -13,7 +13,6 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.protocol.packets.world.ServerSetBlock;
 import com.hypixel.hytale.server.core.HytaleServer;
@@ -266,31 +265,8 @@ public class CameraTransparencyVolumeV2 {
             }
         }
         
-        // Clear all existing debug cubes and render fresh
-        DebugCube.clearDebugCubes(world);
-        
-        // Group by color+opacity and render
-        Map<String, Set<Long>> styleGroups = new HashMap<>();
-        Map<String, Vector3f> colorLookup = new HashMap<>();
-        Map<String, Float> opacityLookup = new HashMap<>();
-        
-        for (Map.Entry<Long, DebugStyle> entry : newDebugStyles.entrySet()) {
-            DebugStyle style = entry.getValue();
-            Vector3f color = style.getColor();
-            float opacity = style.getOpacity();
-            String groupKey = color.x + "," + color.y + "," + color.z + "," + opacity;
-            styleGroups.computeIfAbsent(groupKey, k -> new HashSet<>()).add(entry.getKey());
-            colorLookup.putIfAbsent(groupKey, color);
-            opacityLookup.putIfAbsent(groupKey, opacity);
-        }
-        
-        for (Map.Entry<String, Set<Long>> group : styleGroups.entrySet()) {
-            Vector3f color = colorLookup.get(group.getKey());
-            Float opacity = opacityLookup.get(group.getKey());
-            if (color != null && opacity != null && !group.getValue().isEmpty()) {
-                DebugCube.addDebugCubes(world, group.getValue(), color, opacity);
-            }
-        }
+        // Differentially update: stale cubes expire naturally, active cubes get refreshed
+        DebugCube.updateDebugCubes(world, newDebugStyles);
         
         lastRenderedDebugStyles = newDebugStyles;
     }
