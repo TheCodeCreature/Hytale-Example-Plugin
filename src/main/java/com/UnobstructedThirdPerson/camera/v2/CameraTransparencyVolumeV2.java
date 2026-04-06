@@ -269,15 +269,21 @@ public class CameraTransparencyVolumeV2 {
         // Clear all existing debug cubes and render fresh
         DebugCube.clearDebugCubes(world);
         
-        // Group by color and render
+        // Group by effective color (base color * opacity) and render
         Map<String, Set<Long>> colorGroups = new HashMap<>();
         Map<String, Vector3f> colorLookup = new HashMap<>();
         
         for (Map.Entry<Long, DebugStyle> entry : newDebugStyles.entrySet()) {
-            Vector3f color = entry.getValue().getColor();
-            String colorKey = color.x + "," + color.y + "," + color.z;
+            DebugStyle style = entry.getValue();
+            float opacity = style.getOpacity();
+            if (opacity <= 0.0f) {
+                continue;
+            }
+            Vector3f base = style.getColor();
+            Vector3f effective = new Vector3f(base.x * opacity, base.y * opacity, base.z * opacity);
+            String colorKey = effective.x + "," + effective.y + "," + effective.z;
             colorGroups.computeIfAbsent(colorKey, k -> new HashSet<>()).add(entry.getKey());
-            colorLookup.putIfAbsent(colorKey, color);
+            colorLookup.putIfAbsent(colorKey, effective);
         }
         
         for (Map.Entry<String, Set<Long>> colorGroup : colorGroups.entrySet()) {
