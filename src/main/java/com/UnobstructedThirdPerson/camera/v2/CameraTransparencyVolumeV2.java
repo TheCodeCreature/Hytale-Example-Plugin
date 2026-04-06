@@ -281,7 +281,7 @@ public class CameraTransparencyVolumeV2 {
             colorGroups.computeIfAbsent(colorKey, k -> new HashSet<>()).add(entry.getKey());
         }
 
-        DebugCube.clearCachedDebugCubes(world);
+        DebugCube.clearDebugCubes(world);
         for (Map.Entry<String, Set<Long>> colorGroup : colorGroups.entrySet()) {
             if (!colorGroup.getValue().isEmpty()) {
                 DebugStyle firstStyle = activeDebugStyles.get(colorGroup.getValue().iterator().next());
