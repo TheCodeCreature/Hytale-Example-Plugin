@@ -257,10 +257,14 @@ public class ShapeCompositorV2 {
         double pivotY = offset.y * cosPitch;
         double pivotForward = offset.y * sinPitch;
 
+        // X and Z are flat extensions relative to the player's facing direction
+        double extX = offset.x * cosYaw - offset.z * sinYaw;
+        double extZ = offset.x * sinYaw + offset.z * cosYaw;
+
         return new Vector3d(
-                anchor.x + offset.x + pivotForward * (-sinYaw),
+                anchor.x + extX + pivotForward * (-sinYaw),
                 anchor.y + pivotY,
-                anchor.z + offset.z + pivotForward * cosYaw
+                anchor.z + extZ + pivotForward * cosYaw
         );
     }
 
