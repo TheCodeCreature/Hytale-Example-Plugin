@@ -38,7 +38,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
     }
 
     public ShapeCompositorPresetsV2() {
-        super(new Vector3d(-5, 1, 0));
+        super(new Vector3d(0, 0, 0));
     }
 
     public ShapeCompositorV2 LayeredConePreset() {
@@ -54,7 +54,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
         double innerHeight = baseHeight;
 
         double xOffset = 0;
-        double yOffset = 0;
+        double yOffset = 2;
 
         double pitchDegrees = 15;
         
@@ -80,7 +80,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                         outerCone,
                         OperationTypeV2.DEFINE,
                         new EmptyBlockFillV2())
-                .withDebugColor(DebugUtils.COLOR_BLACK)
+//                .withDebugColor(DebugUtils.COLOR_BLACK)
                 .build();
         
 //        String middleShellId = idTracker++ + "";
@@ -115,13 +115,15 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
         String IgnorePlayerSpaceId = idTracker++ + "";
         Shape IgnoredPlayerSpaceBox = new TransformedShape(
                 new Box(-_scale, -_scale, 1, _scale, 1, _scale),
-                0, 0, 0,
-                -Math.toRadians(15),0,0);
+                0, 0, 0);
+//                -Math.toRadians(15),0,0);
         this.addOperation(IgnorePlayerSpaceId,
                         IgnoredPlayerSpaceBox,
-                       OperationTypeV2.EXCLUDE,
-                        null)
+//                        OperationTypeV2.EXCLUDE,
+                        OperationTypeV2.DEFINE,
+                        new EmptyBlockFillV2())
                 .withTransformFlags(_ignorePitch)
+                .withDebugColor(DebugUtils.COLOR_LIME)
 //                .withReference(outerConeId)
                 .build();
 
@@ -131,9 +133,11 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 0, 0, 0);
         this.addOperation(IgnorePlayerFeetId,
                         IgnoredPlayerFeetBox,
-                        OperationTypeV2.EXCLUDE,
-                        null)
+//                        OperationTypeV2.EXCLUDE,
+                        OperationTypeV2.DEFINE,
+                        new EmptyBlockFillV2())
                 .withTransformFlags(_ignorePitch)
+                .withDebugColor(DebugUtils.COLOR_RED)
 //                .withReference(outerConeId)
                 .build();
 

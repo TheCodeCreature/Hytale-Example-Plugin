@@ -26,7 +26,7 @@ public class ShapeCompositorV2 {
     
     private static final Logger LOGGER = Logger.getLogger("ShapeCompositorV2");
     private static final BlockFillTypeV2 CUT_FILL = new EmptyBlockFillV2();
-    private static final double PITCH_PIVOT_EYE_HEIGHT = 1;
+    private static final double PITCH_PIVOT_EYE_HEIGHT = 0;
     
     private Vector3d anchor = new Vector3d(0, 0, 0);
     private Vector3d offset;
@@ -42,7 +42,6 @@ public class ShapeCompositorV2 {
     }
     
     public void setAnchor(@Nonnull Vector3d newAnchor) {
-        newAnchor.y += PITCH_PIVOT_EYE_HEIGHT;
         this.anchor = newAnchor;
     }
     
@@ -225,7 +224,9 @@ public class ShapeCompositorV2 {
         Vector3d effectiveAnchor = getVector3d();
 
         List<ShapeOperationV2> timeline = getTimeline();
-        
+
+        //TODO: This re-creates the shape every "frame"
+        //TODO: This needs to be changed to call the finished shape and transform/rotate
         for (ShapeOperationV2 operation : timeline) {
             if (!operation.isEnabled()) {
                 continue;
@@ -263,7 +264,7 @@ public class ShapeCompositorV2 {
 
         return new Vector3d(
                 anchor.x + extX + pivotForward * (-sinYaw),
-                anchor.y + pivotY,
+                anchor.y + pivotY + PITCH_PIVOT_EYE_HEIGHT,
                 anchor.z + extZ + pivotForward * cosYaw
         );
     }
