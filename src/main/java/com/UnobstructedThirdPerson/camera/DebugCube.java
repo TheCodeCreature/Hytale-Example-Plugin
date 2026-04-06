@@ -1,9 +1,8 @@
 package com.UnobstructedThirdPerson.camera;
 
 import com.hypixel.hytale.math.block.BlockUtil;
-import com.hypixel.hytale.math.matrix.Matrix4d;
+import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
-import com.hypixel.hytale.protocol.DebugShape;
 import com.hypixel.hytale.server.core.modules.debug.DebugUtils;
 import com.hypixel.hytale.server.core.universe.world.World;
 
@@ -20,8 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class DebugCube {
 
     private static final double CUBE_SCALE = 0.95;
-    private static final float CUBE_DURATION_SECONDS = 0.2F;
-    private static final float CUBE_OPACITY = 0.05F;
+    private static final float CUBE_DURATION_SECONDS = 0.5F;
     private static final Map<World, Map<Long, Vector3f>> CACHED_DEBUG_CUBES_BY_WORLD =
             Collections.synchronizedMap(new WeakHashMap<>());
 
@@ -34,11 +32,8 @@ public final class DebugCube {
         int y = BlockUtil.unpackY(packedPos);
         int z = BlockUtil.unpackZ(packedPos);
 
-        Matrix4d matrix = new Matrix4d();
-        matrix.identity();
-        matrix.translate(x + 0.5, y + 0.5, z + 0.5);
-        matrix.scale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
-        DebugUtils.add(world, DebugShape.Cube, matrix, color, CUBE_OPACITY, CUBE_DURATION_SECONDS, 0);
+        Vector3d position = new Vector3d(x + 0.5, y + 0.5, z + 0.5);
+        DebugUtils.addCube(world, position, color, CUBE_SCALE, CUBE_DURATION_SECONDS);
     }
 
     @Nonnull
