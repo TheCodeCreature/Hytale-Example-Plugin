@@ -15,6 +15,7 @@ import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
+import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -221,21 +222,8 @@ public class ShapeCompositorV2 {
         // Compute effective anchor: anchor (orbit point) + shapeOffset
         // Y pivots by pitch (swings vertically with look direction)
         // X and Z are flat extensions (no further rotation)
-        double cosPitch = Math.cos(pitchRotation);
-        double sinPitch = Math.sin(pitchRotation);
-        double cosYaw = Math.cos(yawRotation);
-        double sinYaw = Math.sin(yawRotation);
-        
-        // Pivot Y by pitch: projects into world Y and forward (yaw-relative Z)
-        double pivotY = offset.y * cosPitch;
-        double pivotForward = offset.y * sinPitch;
-        
-        Vector3d effectiveAnchor = new Vector3d(
-                anchor.x + offset.x + pivotForward * (-sinYaw),
-                anchor.y + pivotY,
-                anchor.z + offset.z + pivotForward * cosYaw
-        );
-        
+        Vector3d effectiveAnchor = getVector3d();
+
         List<ShapeOperationV2> timeline = getTimeline();
         
         for (ShapeOperationV2 operation : timeline) {
@@ -258,7 +246,24 @@ public class ShapeCompositorV2 {
         
         return new ComposedRegionV2(effectiveAnchor, voxelMap, computedBlockIds, operationRegions, timeline);
     }
-    
+
+    private @NonNull Vector3d getVector3d() {
+        double cosPitch = Math.cos(pitchRotation);
+        double sinPitch = Math.sin(pitchRotation);
+        double cosYaw = Math.cos(yawRotation);
+        double sinYaw = Math.sin(yawRotation);
+
+        // Pivot Y by pitch: projects into world Y and forward (yaw-relative Z)
+        double pivotY = offset.y * cosPitch;
+        double pivotForward = offset.y * sinPitch;
+
+        return new Vector3d(
+                anchor.x + offset.x + pivotForward * (-sinYaw),
+                anchor.y + pivotY,
+                anchor.z + offset.z + pivotForward * cosYaw
+        );
+    }
+
     @Nonnull
     private Set<Long> executeOperation(@Nonnull ShapeOperationV2 operation,
                                        @Nonnull ChunkStore chunkStore,
