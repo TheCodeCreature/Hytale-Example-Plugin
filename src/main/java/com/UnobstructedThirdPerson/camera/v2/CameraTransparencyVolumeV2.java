@@ -269,21 +269,26 @@ public class CameraTransparencyVolumeV2 {
         // Clear all existing debug cubes and render fresh
         DebugCube.clearDebugCubes(world);
         
-        // Group by color and render
-        Map<String, Set<Long>> colorGroups = new HashMap<>();
+        // Group by color+opacity and render
+        Map<String, Set<Long>> styleGroups = new HashMap<>();
         Map<String, Vector3f> colorLookup = new HashMap<>();
+        Map<String, Float> opacityLookup = new HashMap<>();
         
         for (Map.Entry<Long, DebugStyle> entry : newDebugStyles.entrySet()) {
-            Vector3f color = entry.getValue().getColor();
-            String colorKey = color.x + "," + color.y + "," + color.z;
-            colorGroups.computeIfAbsent(colorKey, k -> new HashSet<>()).add(entry.getKey());
-            colorLookup.putIfAbsent(colorKey, color);
+            DebugStyle style = entry.getValue();
+            Vector3f color = style.getColor();
+            float opacity = style.getOpacity();
+            String groupKey = color.x + "," + color.y + "," + color.z + "," + opacity;
+            styleGroups.computeIfAbsent(groupKey, k -> new HashSet<>()).add(entry.getKey());
+            colorLookup.putIfAbsent(groupKey, color);
+            opacityLookup.putIfAbsent(groupKey, opacity);
         }
         
-        for (Map.Entry<String, Set<Long>> colorGroup : colorGroups.entrySet()) {
-            Vector3f color = colorLookup.get(colorGroup.getKey());
-            if (color != null && !colorGroup.getValue().isEmpty()) {
-                DebugCube.addDebugCubes(world, colorGroup.getValue(), color);
+        for (Map.Entry<String, Set<Long>> group : styleGroups.entrySet()) {
+            Vector3f color = colorLookup.get(group.getKey());
+            Float opacity = opacityLookup.get(group.getKey());
+            if (color != null && opacity != null && !group.getValue().isEmpty()) {
+                DebugCube.addDebugCubes(world, group.getValue(), color, opacity);
             }
         }
         
