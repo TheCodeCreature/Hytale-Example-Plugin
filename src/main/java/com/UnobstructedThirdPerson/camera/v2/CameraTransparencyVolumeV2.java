@@ -142,7 +142,11 @@ public class CameraTransparencyVolumeV2 {
         lastPitch = currentPitch;
 
         ChunkStore chunkStore = world.getChunkStore();
-        compositor.setAnchor(newAnchor);
+        compositor.setAnchor(new Vector3d(
+                newAnchor.x + compositor.getAnchor().x,
+                newAnchor.y + compositor.getAnchor().y,
+                newAnchor.z + compositor.getAnchor().z
+        ));
         
         ComposedRegionV2 region = compositor.compose(chunkStore);
         
