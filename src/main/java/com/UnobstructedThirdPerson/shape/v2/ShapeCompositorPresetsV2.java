@@ -38,7 +38,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
     }
 
     public ShapeCompositorPresetsV2() {
-        super(new Vector3d(-5, 0.5, 0));
+        super(new Vector3d(-5, 1, 0));
     }
 
     public ShapeCompositorV2 LayeredConePreset() {
@@ -54,7 +54,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
         double innerHeight = baseHeight;
 
         double xOffset = 0;
-        double yOffset = 3;
+        double yOffset = 0;
 
         double pitchDegrees = 15;
         
