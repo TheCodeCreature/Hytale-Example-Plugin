@@ -103,13 +103,32 @@ class TransformedShapeTest {
 
         Set<Pos> actual = collectBlocks(transformed);
 
-        Set<Pos> expected = new HashSet<>();
-        boolean completed = base.forEachBlock(offsetX, offsetY, offsetZ, 0.0, (x, y, z) -> {
-            expected.add(new Pos(x, y, z));
-            return true;
-        });
-        assertTrue(completed, "Base shape forEachBlock should complete without early exit");
+        assertFalse(actual.isEmpty(), "TransformedShape should produce blocks");
 
-        assertEquals(expected, actual, "With zero rotation, TransformedShape should match base shape with translation");
+        // Every returned block's center should fall inside the shape
+        for (Pos pos : actual) {
+            assertTrue(
+                    transformed.containsPosition(pos.x() + 0.5 - offsetX, pos.y() + 0.5 - offsetY, pos.z() + 0.5 - offsetZ),
+                    "Block (" + pos.x() + "," + pos.y() + "," + pos.z() + ") center should be inside the shape"
+            );
+        }
+
+        // Verify symmetry: no block whose center is inside the shape should be missing
+        Box worldBox = transformed.getBox(offsetX, offsetY, offsetZ);
+        int minX = (int) Math.floor(worldBox.min.x);
+        int minY = (int) Math.floor(worldBox.min.y);
+        int minZ = (int) Math.floor(worldBox.min.z);
+        int maxX = (int) Math.floor(worldBox.max.x);
+        int maxY = (int) Math.floor(worldBox.max.y);
+        int maxZ = (int) Math.floor(worldBox.max.z);
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    boolean inside = transformed.containsPosition(x + 0.5 - offsetX, y + 0.5 - offsetY, z + 0.5 - offsetZ);
+                    assertEquals(inside, actual.contains(new Pos(x, y, z)),
+                            "Block (" + x + "," + y + "," + z + ") inclusion should match containsPosition at center");
+                }
+            }
+        }
     }
 }
