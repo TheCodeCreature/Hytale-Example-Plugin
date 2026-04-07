@@ -139,7 +139,7 @@ public class CameraTransparencyVolumeV2 {
             return;
         }
 
-        lastAnchor = newAnchor;
+        lastAnchor = new Vector3d(newAnchor.x, newAnchor.y, newAnchor.z);
         lastYaw = currentYaw;
         lastPitch = currentPitch;
 

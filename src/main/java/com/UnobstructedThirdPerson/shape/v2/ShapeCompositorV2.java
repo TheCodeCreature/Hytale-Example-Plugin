@@ -221,7 +221,7 @@ public class ShapeCompositorV2 {
         // Compute effective anchor: anchor (orbit point) + shapeOffset
         // Y pivots by pitch (swings vertically with look direction)
         // X and Z are flat extensions (no further rotation)
-        Vector3d effectiveAnchor = getVector3d();
+        Vector3d effectiveAnchor = computeEffectiveAnchor(yawRotation, pitchRotation);
 
         List<ShapeOperationV2> timeline = getTimeline();
 
@@ -248,11 +248,11 @@ public class ShapeCompositorV2 {
         return new ComposedRegionV2(effectiveAnchor, voxelMap, computedBlockIds, operationRegions, timeline);
     }
 
-    private @NonNull Vector3d getVector3d() {
-        double cosPitch = Math.cos(pitchRotation);
-        double sinPitch = Math.sin(pitchRotation);
-        double cosYaw = Math.cos(yawRotation);
-        double sinYaw = Math.sin(yawRotation);
+    @NonNull Vector3d computeEffectiveAnchor(double effectiveYaw, double effectivePitch) {
+        double cosPitch = Math.cos(effectivePitch);
+        double sinPitch = Math.sin(effectivePitch);
+        double cosYaw = Math.cos(effectiveYaw);
+        double sinYaw = Math.sin(effectiveYaw);
 
         // Pivot Y by pitch: sin(pitch) maps to world Y (up when looking up),
         // cos(pitch) maps to forward along the yaw direction (max when looking straight)
@@ -268,6 +268,12 @@ public class ShapeCompositorV2 {
                 anchor.y + pivotY + PITCH_PIVOT_EYE_HEIGHT,
                 anchor.z + extZ + pivotForward * cosYaw
         );
+    }
+
+    @NonNull Vector3d computeEffectiveAnchor(@Nonnull TransformFlags flags) {
+        double effectiveYaw = flags.shouldApplyYaw() ? yawRotation : 0.0;
+        double effectivePitch = flags.shouldApplyPitch() ? pitchRotation : 0.0;
+        return computeEffectiveAnchor(effectiveYaw, effectivePitch);
     }
 
     @Nonnull
@@ -289,6 +295,10 @@ public class ShapeCompositorV2 {
                 ? operationRegions.getOrDefault(referenceId, Collections.emptySet())
                 : Collections.emptySet();
         
+        // Compute per-operation anchor respecting transform flags
+        TransformFlags flags = operation.getTransformFlags();
+        Vector3d operationAnchor = computeEffectiveAnchor(flags);
+
         // Source positions and apply filters + actions
         if (type.getPositionSource() == OperationTypeV2.PositionSource.SHAPE) {
             Shape baseShape = operation.getShape();
@@ -297,9 +307,9 @@ public class ShapeCompositorV2 {
                 return operationPositions;
             }
             
-            Shape shape = applyTransformations(baseShape, operation.getTransformFlags());
+            Shape shape = applyTransformations(baseShape, flags);
             
-            shape.forEachBlock(effectiveAnchor.x, effectiveAnchor.y, effectiveAnchor.z, (x, y, z) -> {
+            shape.forEachBlock(operationAnchor.x, operationAnchor.y, operationAnchor.z, (x, y, z) -> {
                 long pos = BlockUtil.packUnchecked(x, y, z);
                 
                 if (!passesFilters(pos, x, y, z, type, voxelMap, referencePositions, chunkStore)) {

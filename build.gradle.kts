@@ -138,6 +138,9 @@ afterEvaluate {
 
     if (targetTask != null) {
         targetTask.finalizedBy(syncAssets)
+
+        // Forward stdin so interactive server commands like /auth login work
+        (targetTask as? JavaExec)?.standardInput = System.`in`
         logger.lifecycle("✅ specific task '${targetTask.name}' hooked for auto-sync.")
     } else {
         logger.warn("⚠️ Could not find 'runServer' or 'server' task to hook auto-sync into.")
