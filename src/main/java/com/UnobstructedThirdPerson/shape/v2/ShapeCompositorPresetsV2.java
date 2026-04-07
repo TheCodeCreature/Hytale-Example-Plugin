@@ -33,47 +33,36 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
     }
 
     public ShapeCompositorPresetsV2(int radius) {
-        super(new Vector3d(0, 0.5, 0));
+        super(new Vector3d(0, 0, 0));
         _scale = radius;
     }
 
     public ShapeCompositorPresetsV2() {
-        super(new Vector3d(0, -7, 0));
+        super(new Vector3d(-0.5, 1.5, 0));
     }
 
     public ShapeCompositorV2 LayeredConePreset() {
         int idTracker = 0;
         double baseRadius = _scale;
-        double baseHeight = _scale;
-        double baseHeightOffset = baseHeight - 2;
+        double baseHeight = _scale * 1.5;
+        double zOffset = baseHeight-2.5;
 
 //        double middleRadius = baseRadius * 0.6;
-//        double middleHeight = baseHeight;
 
+//        double middleHeight = baseHeight;
         double innerRadius = baseRadius * 0.5;
         double innerHeight = baseHeight;
 
         double xOffset = 0;
-        double yOffset = 0;
+        double yOffset = _scale * 0.5;
 
-        double pitchDegrees = 0;
+        double pitchRadianOffset = -Math.toRadians(15);
+        double yawRadianOffset = -Math.toRadians(5);
         
         Shape outerCone = new TransformedShape(
                 new CircularCone(baseRadius, baseHeight),
-                xOffset, yOffset, -(baseHeightOffset)
-                ,0,-Math.toRadians(pitchDegrees),0);
-//        Shape outerSphere = new TransformedShape(
-//                new Ellipsoid(baseRadius),
-//                xOffset, yOffset, -(baseHeightOffset)
-//                ,0,-Math.toRadians(pitchDegrees),0);
-//        Shape middleCone = new TransformedShape(
-//                new CircularCone(middleRadius, middleHeight),
-//                xOffset, yOffset, -(baseHeightOffset+1)
-//                ,0,-Math.toRadians(pitchDegrees),0);
-        Shape innerCone = new TransformedShape(
-                new CircularCone(innerRadius, innerHeight),
-                xOffset, yOffset-1, -(baseHeightOffset)
-                ,0,-Math.toRadians(pitchDegrees),0);
+                xOffset, yOffset, -(zOffset)
+                ,yawRadianOffset, pitchRadianOffset,0);
 
         String outerConeId = idTracker++ + "";
         this.addOperation(outerConeId,
@@ -82,28 +71,24 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                         new EmptyBlockFillV2())
 //                .withDebugColor(DebugUtils.COLOR_BLACK)
                 .build();
-        
-//        String middleShellId = idTracker++ + "";
-//        this.addOperation(middleShellId,
-//                        middleCone,
+
+//        String innerConeId = idTracker++ + "";
+//        Shape innerCone = new TransformedShape(
+//                new CircularCone(innerRadius, innerHeight),
+//                xOffset, yOffset-1, -(zOffset)
+//                ,yawRadianOffset, pitchRadianOffset,0);
+//        this.addOperation(innerConeId,
+//                        innerCone,
 //                        OperationTypeV2.DEFINE,
 //                        new EmptyBlockFillV2())
-//                .withDebugColor(DebugUtils.COLOR_GRAY)
-//                .withReference(outerConeId)
+////                .withDebugColor(DebugUtils.COLOR_WHITE)
 //                .build();
-
-        String innerConeId = idTracker++ + "";
-        this.addOperation(innerConeId,
-                        innerCone,
-                        OperationTypeV2.DEFINE,
-                        new EmptyBlockFillV2())
-//                .withDebugColor(DebugUtils.COLOR_WHITE)
-                .build();
 
         String SideViewBoxId = idTracker++ + "";
         Shape sideViewBox = new TransformedShape(
-                new Box(-3, 1,-1,1,1,0),
-                0, -4, 0);
+                new Box(-1, 0,-1,1,1,0),
+                0, 1, -1,
+        yawRadianOffset, 0, 0);
         this.addOperation(SideViewBoxId,
                         sideViewBox,
                         OperationTypeV2.DEFINE,
@@ -112,44 +97,37 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 .withTransformFlags(_ignorePitch)
                 .build();
 
-//        String IgnorePlayerSpaceId = idTracker++ + "";
-//        Shape IgnoredPlayerSpaceBox = new TransformedShape(
-//                new Box(-_scale, -_scale, 1, _scale, 0, _scale),
-//                0, 0, 0);
-////                -Math.toRadians(15),0,0);
-//        this.addOperation(IgnorePlayerSpaceId,
-//                        IgnoredPlayerSpaceBox,
-//                        OperationTypeV2.EXCLUDE,
-////                        OperationTypeV2.DEFINE,
-////                        new EmptyBlockFillV2())
-//                null)
-//                .withTransformFlags(_ignorePitch)
-//                .withDebugColor(DebugUtils.COLOR_LIME)
-////                .withReference(outerConeId)
-//                .build();
+        String ignorePlayerFacingWallId = idTracker++ + "";
+        Shape ignorePlayerFacingWall = new TransformedShape(
+                new Box(-_scale, -_scale, -1, _scale, 2, _scale),
+                0, 0, 0,
+                yawRadianOffset,0,0);
+        this.addOperation(ignorePlayerFacingWallId,
+                        ignorePlayerFacingWall,
+                        OperationTypeV2.EXCLUDE,
+//                        OperationTypeV2.DEFINE,
+//                        new EmptyBlockFillV2())
+                null)
+                .withTransformFlags(_ignorePitch)
+                .withDebugColor(DebugUtils.COLOR_LIME)
+//                .withReference(outerConeId)
+                .build();
 //
-//        String IgnorePlayerFeetId = idTracker++ + "";
-//        Shape IgnoredPlayerFeetBox = new TransformedShape(
-//                new Box(-1, -1, -0, 1, 0, 1),
-//                0, -4, 0);
-//        this.addOperation(IgnorePlayerFeetId,
-//                        IgnoredPlayerFeetBox,
-//                        OperationTypeV2.EXCLUDE,
-////                        OperationTypeV2.DEFINE,
-////                        new EmptyBlockFillV2())
-//                null)
-//                .withTransformFlags(_ignorePitch)
-//                .withDebugColor(DebugUtils.COLOR_RED)
-////                .withReference(outerConeId)
-//                .build();
-
-//        this.addOperation(IgnorePlayerSpaceId,
-//                        IgnoredPlayerSpaceBox,
-//                        OperationTypeV2.SUBTRACT,
-//                        null)
-//                .withTransformFlags(_ignorePitch)
-//                .withReference(Inner)
-//                .build();
+        String IgnorePlayerFeetId = idTracker++ + "";
+        Shape IgnoredPlayerFeetBox = new TransformedShape(
+                new Box(-1, -1, -4, 1, 1, -1),
+                0, 0, 0,
+                yawRadianOffset,0,0);
+        this.addOperation(IgnorePlayerFeetId,
+                        IgnoredPlayerFeetBox,
+                        OperationTypeV2.EXCLUDE,
+//                        OperationTypeV2.DEFINE,
+//                        new EmptyBlockFillV2())
+                null)
+                .withTransformFlags(_ignorePitch)
+                .withDebugColor(DebugUtils.COLOR_RED)
+//                .withReference(outerConeId)
+                .build();
         
         return this;
     }
