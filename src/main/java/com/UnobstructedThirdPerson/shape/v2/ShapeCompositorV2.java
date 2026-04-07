@@ -429,13 +429,12 @@ public class ShapeCompositorV2 {
 
         if (effectivePitch != 0.0) {
             transformed = new TransformedShape(transformed, 0.0, 0.0, 0.0, 0.0, effectivePitch, 0.0);
-//            transformed = new TransformedShape(transformed, 0.0, PITCH_PIVOT_EYE_HEIGHT, 0.0);
+            transformed = new TransformedShape(transformed, 0.0, PITCH_PIVOT_EYE_HEIGHT, 0.0);
         }
 
         if (effectiveYaw != 0.0) {
             transformed = new TransformedShape(transformed, 0.0, 0.0, 0.0, effectiveYaw, 0.0, 0.0);
         }
-        transformed = new TransformedShape(transformed, 0.0, PITCH_PIVOT_EYE_HEIGHT, 0.0);
 
         return transformed;
     }
