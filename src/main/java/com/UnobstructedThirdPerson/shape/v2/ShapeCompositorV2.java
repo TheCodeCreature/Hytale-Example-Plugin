@@ -254,9 +254,10 @@ public class ShapeCompositorV2 {
         double cosYaw = Math.cos(yawRotation);
         double sinYaw = Math.sin(yawRotation);
 
-        // Pivot Y by pitch: projects into world Y and forward (yaw-relative Z)
-        double pivotY = offset.y * cosPitch;
-        double pivotForward = offset.y * sinPitch;
+        // Pivot Y by pitch: sin(pitch) maps to world Y (up when looking up),
+        // cos(pitch) maps to forward along the yaw direction (max when looking straight)
+        double pivotY = offset.y * sinPitch;
+        double pivotForward = offset.y * cosPitch;
 
         // X and Z are flat extensions relative to the player's facing direction
         double extX = offset.x * cosYaw - offset.z * sinYaw;
