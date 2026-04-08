@@ -55,7 +55,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         EntityStore entityStore = store.getExternalData();
         World world = entityStore.getWorld();
         CameraTransparencyVolumeV2.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresetsV2()
-                      .LayeredConePreset()
+                      .DefaultViewField()
         );
     }
 

@@ -42,7 +42,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 super(new Vector3d(0, _yPivotOffset, 0));
         }
 
-        public ShapeCompositorV2 LayeredConePreset() {
+        public ShapeCompositorV2 DefaultViewField() {
                 // #region Common Variables
                 int idTracker = 0;
                 double baseRadius = _scale;
@@ -82,18 +82,18 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 .build();
                 // #endregion
                 // #region SideViewBox
-                // String SideViewBoxId = idTracker++ + "";
-                // Shape sideViewBox = new TransformedShape(
-                //                 new Box(-2, 0, -1, 2, 1, 0),
-                //                 xOffset, 1, -1,
-                //                 yawRadianOffset, 0, 0);
-                // this.addOperation(SideViewBoxId,
-                //                 sideViewBox,
-                //                 OperationTypeV2.DEFINE)
-                //                 .withFill(new EmptyBlockFillV2())
-                //                 .withDebugColor(DebugUtils.COLOR_PURPLE)
-                //                 .withTransformFlags(_ignorePitch)
-                //                 .build();
+                String SideViewBoxId = idTracker++ + "";
+                Shape sideViewBox = new TransformedShape(
+                                new Box(-2, 0, -1, 2, 1, 0),
+                                xOffset, 1, -1,
+                                yawRadianOffset, 0, 0);
+                this.addOperation(SideViewBoxId,
+                                sideViewBox,
+                                OperationTypeV2.DEFINE)
+                                .withFill(new EmptyBlockFillV2())
+                                .withDebugColor(DebugUtils.COLOR_BLACK)
+                                .withTransformFlags(_ignorePitch)
+                                .build();
                 // #endregion
                 // #region PlayerFacingWall
                 String ignorePlayerFacingWallId = idTracker++ + "";

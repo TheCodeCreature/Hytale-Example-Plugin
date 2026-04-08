@@ -34,6 +34,8 @@ public class ShapeCompositorV2 {
     private double pitchRotation = 0.0;
     private final Map<String, ShapeOperationV2> operations;
     private final List<String> operationOrder;
+    private final Map<String, long[]> cachedShapePositions = new HashMap<>();
+    private boolean shapeCacheDirty = true;
     
     public ShapeCompositorV2(@Nonnull Vector3d offset) {
         this.offset = offset;
@@ -162,6 +164,7 @@ public class ShapeCompositorV2 {
             ShapeOperationV2 operation = builder.build();
             operations.put(id, operation);
             operationOrder.add(id);
+            shapeCacheDirty = true;
             
             return operation;
         }
@@ -207,6 +210,7 @@ public class ShapeCompositorV2 {
     public void removeOperation(@Nonnull String operationId) {
         operations.remove(operationId);
         operationOrder.remove(operationId);
+        shapeCacheDirty = true;
     }
     
     @Nonnull
@@ -231,6 +235,8 @@ public class ShapeCompositorV2 {
         // Y pivots by pitch (swings vertically with look direction)
         // X and Z are flat extensions (no further rotation)
         Vector3d effectiveAnchor = computeEffectiveAnchor(yawRotation, pitchRotation);
+
+        ensureShapeCacheBuilt();
 
         List<ShapeOperationV2> timeline = getTimeline();
 
@@ -289,6 +295,34 @@ public class ShapeCompositorV2 {
         return computeEffectiveAnchor(effectiveYaw, effectivePitch);
     }
 
+    private void ensureShapeCacheBuilt() {
+        if (!shapeCacheDirty) {
+            return;
+        }
+        cachedShapePositions.clear();
+        
+        for (String id : operationOrder) {
+            ShapeOperationV2 op = operations.get(id);
+            if (op == null) continue;
+            if (op.getType().getPositionSource() != OperationTypeV2.PositionSource.SHAPE) continue;
+            Shape baseShape = op.getShape();
+            if (baseShape == null) continue;
+            
+            List<Long> positions = new ArrayList<>();
+            baseShape.forEachBlock(0, 0, 0, (x, y, z) -> {
+                positions.add(BlockUtil.packUnchecked(x, y, z));
+                return true;
+            });
+            
+            long[] arr = new long[positions.size()];
+            for (int i = 0; i < positions.size(); i++) {
+                arr[i] = positions.get(i);
+            }
+            cachedShapePositions.put(id, arr);
+        }
+        shapeCacheDirty = false;
+    }
+
     @Nonnull
     private Set<Long> executeOperation(@Nonnull ShapeOperationV2 operation,
                                        @Nonnull ChunkStore chunkStore,
@@ -314,25 +348,47 @@ public class ShapeCompositorV2 {
 
         // Source positions and apply filters + actions
         if (type.getPositionSource() == OperationTypeV2.PositionSource.SHAPE) {
-            Shape baseShape = operation.getShape();
-            if (baseShape == null) {
-                LOGGER.warning(type + " operation '" + operation.getId() + "' has no shape");
+            long[] basePositions = cachedShapePositions.get(operation.getId());
+            if (basePositions == null || basePositions.length == 0) {
+                LOGGER.warning(type + " operation '" + operation.getId() + "' has no cached shape positions");
                 return operationPositions;
             }
             
-            Shape shape = applyTransformations(baseShape, flags);
+            double dynYaw = flags.shouldApplyYaw() ? yawRotation : 0.0;
+            double dynPitch = flags.shouldApplyPitch() ? pitchRotation : 0.0;
+            double cosY = Math.cos(dynYaw);
+            double sinY = Math.sin(dynYaw);
+            double cosP = Math.cos(dynPitch);
+            double sinP = Math.sin(dynPitch);
             
-            shape.forEachBlock(operationAnchor.x, operationAnchor.y, operationAnchor.z, (x, y, z) -> {
+            for (long basePos : basePositions) {
+                double cx = BlockUtil.unpackX(basePos) + 0.5;
+                double cy = BlockUtil.unpackY(basePos) + 0.5;
+                double cz = BlockUtil.unpackZ(basePos) + 0.5;
+                
+                // Apply pitch rotation (around X axis)
+                double py = cy * cosP + cz * sinP;
+                double pz = -cy * sinP + cz * cosP;
+                if (dynPitch != 0.0) {
+                    py += PITCH_PIVOT_EYE_HEIGHT;
+                }
+                
+                // Apply yaw rotation (around Y axis)
+                double rx = cx * cosY - pz * sinY;
+                double rz = cx * sinY + pz * cosY;
+                
+                int x = (int) Math.floor(rx + operationAnchor.x);
+                int y = (int) Math.floor(py + operationAnchor.y);
+                int z = (int) Math.floor(rz + operationAnchor.z);
                 long pos = BlockUtil.packUnchecked(x, y, z);
                 
                 if (!passesFilters(pos, x, y, z, type, voxelMap, referencePositions, chunkStore)) {
-                    return true;
+                    continue;
                 }
                 
                 applyAction(pos, x, y, z, type, operation, voxelMap, referenceId,
                         fillType, debugStyle, chunkStore, operationPositions);
-                return true;
-            });
+            }
         } else {
             // REFERENCE source: iterate the reference region
             for (Long pos : referencePositions) {
