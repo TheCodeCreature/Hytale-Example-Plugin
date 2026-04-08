@@ -179,6 +179,29 @@ public class TransformFlags {
     }
     
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TransformFlags that)) return false;
+        return applyAnchorX == that.applyAnchorX
+                && applyAnchorY == that.applyAnchorY
+                && applyAnchorZ == that.applyAnchorZ
+                && applyYaw == that.applyYaw
+                && applyPitch == that.applyPitch
+                && applyRoll == that.applyRoll;
+    }
+    
+    @Override
+    public int hashCode() {
+        int result = Boolean.hashCode(applyAnchorX);
+        result = 31 * result + Boolean.hashCode(applyAnchorY);
+        result = 31 * result + Boolean.hashCode(applyAnchorZ);
+        result = 31 * result + Boolean.hashCode(applyYaw);
+        result = 31 * result + Boolean.hashCode(applyPitch);
+        result = 31 * result + Boolean.hashCode(applyRoll);
+        return result;
+    }
+    
+    @Override
     public String toString() {
         return "TransformFlags{" +
                 "anchor=[" + (applyAnchorX ? "X" : "") + (applyAnchorY ? "Y" : "") + (applyAnchorZ ? "Z" : "") + "], " +

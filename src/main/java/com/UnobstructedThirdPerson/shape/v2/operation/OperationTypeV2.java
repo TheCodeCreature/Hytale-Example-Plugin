@@ -5,6 +5,7 @@ import javax.annotation.Nonnull;
 public enum OperationTypeV2 {
     
     DEFINE(10, PositionSource.SHAPE, VoxelAction.WRITE, true, false, false, true, false),
+    UNION(15, PositionSource.REFERENCE, VoxelAction.WRITE, false, true, false, false, false),
     FILL(20, PositionSource.SHAPE, VoxelAction.WRITE, true, false, false, true, true),
     CUT(20, PositionSource.SHAPE, VoxelAction.WRITE, true, false, false, true, false),
     INTERSECT(30, PositionSource.SHAPE, VoxelAction.WRITE, true, true, false, true, false),
@@ -86,50 +87,56 @@ public enum OperationTypeV2 {
     }
 
     @Nonnull
-    public static OperationRef Fill(@Nonnull String referenceId) {
-        return new OperationRef(FILL, referenceId);
+    public static OperationRef Union(@Nonnull String... referenceIds) {
+        return new OperationRef(UNION, referenceIds);
     }
 
     @Nonnull
-    public static OperationRef Cut(@Nonnull String referenceId) {
-        return new OperationRef(CUT, referenceId);
+    public static OperationRef Fill(@Nonnull String... referenceIds) {
+        return new OperationRef(FILL, referenceIds);
     }
 
     @Nonnull
-    public static OperationRef Intersect(@Nonnull String referenceId) {
-        return new OperationRef(INTERSECT, referenceId);
+    public static OperationRef Cut(@Nonnull String... referenceIds) {
+        return new OperationRef(CUT, referenceIds);
     }
 
     @Nonnull
-    public static OperationRef Subtract(@Nonnull String referenceId) {
-        return new OperationRef(SUBTRACT, referenceId);
+    public static OperationRef Intersect(@Nonnull String... referenceIds) {
+        return new OperationRef(INTERSECT, referenceIds);
     }
 
     @Nonnull
-    public static OperationRef FillRemaining(@Nonnull String referenceId) {
-        return new OperationRef(FILL_REMAINING, referenceId);
+    public static OperationRef Subtract(@Nonnull String... referenceIds) {
+        return new OperationRef(SUBTRACT, referenceIds);
     }
 
     @Nonnull
-    public static OperationRef Exclude(@Nonnull String referenceId) {
-        return new OperationRef(EXCLUDE, referenceId);
+    public static OperationRef FillRemaining(@Nonnull String... referenceIds) {
+        return new OperationRef(FILL_REMAINING, referenceIds);
+    }
+
+    @Nonnull
+    public static OperationRef Exclude(@Nonnull String... referenceIds) {
+        return new OperationRef(EXCLUDE, referenceIds);
     }
 
     public static class OperationRef {
         private final OperationTypeV2 type;
-        private final String referenceId;
+        private final String[] referenceIds;
 
-        public OperationRef(OperationTypeV2 type, String referenceId) {
+        public OperationRef(OperationTypeV2 type, @Nonnull String... referenceIds) {
             this.type = type;
-            this.referenceId = referenceId;
+            this.referenceIds = referenceIds.clone();
         }
 
         public OperationTypeV2 getType() {
             return type;
         }
 
-        public String getReferenceId() {
-            return referenceId;
+        @Nonnull
+        public String[] getReferenceIds() {
+            return referenceIds;
         }
     }
 }

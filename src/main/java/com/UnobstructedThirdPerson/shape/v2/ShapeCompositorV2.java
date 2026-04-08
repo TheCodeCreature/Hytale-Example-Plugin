@@ -2,8 +2,8 @@ package com.UnobstructedThirdPerson.shape.v2;
 
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.UnobstructedThirdPerson.shape.TransformFlags;
-import com.UnobstructedThirdPerson.shape.TransformedShape;
 import com.UnobstructedThirdPerson.shape.v1.placeholder.TransparentBlockUtils;
+import com.UnobstructedThirdPerson.shape.v2.composite.CompositeShape;
 import com.UnobstructedThirdPerson.shape.v2.fill.BlockFillTypeV2;
 import com.UnobstructedThirdPerson.shape.v2.fill.EmptyBlockFillV2;
 import com.UnobstructedThirdPerson.shape.v2.operation.OperationTypeV2;
@@ -13,7 +13,6 @@ import com.hypixel.hytale.math.block.BlockUtil;
 import com.hypixel.hytale.math.shape.Shape;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
-import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import org.jspecify.annotations.NonNull;
 
@@ -34,7 +33,8 @@ public class ShapeCompositorV2 {
     private double pitchRotation = 0.0;
     private final Map<String, ShapeOperationV2> operations;
     private final List<String> operationOrder;
-    private final Map<String, long[]> cachedShapePositions = new HashMap<>();
+    private final Map<String, CompositeShape> compositeShapes = new HashMap<>();
+    private final List<ShapeOperationV2> deferredOps = new ArrayList<>();
     private boolean shapeCacheDirty = true;
     
     public ShapeCompositorV2(@Nonnull Vector3d offset) {
@@ -98,7 +98,7 @@ public class ShapeCompositorV2 {
             @Nonnull OperationTypeV2.OperationRef operationRef) {
         
         OperationBuilder builder = addOperation(id, shape, operationRef.getType());
-        builder.referenceId = operationRef.getReferenceId();
+        builder.referenceIds = operationRef.getReferenceIds();
         return builder;
     }
     
@@ -107,7 +107,7 @@ public class ShapeCompositorV2 {
         private final Shape shape;
         private final OperationTypeV2 type;
         private BlockFillTypeV2 fillType;
-        private String referenceId;
+        private String[] referenceIds;
         private TransformFlags transformFlags;
         private DebugStyle debugStyle;
         
@@ -149,8 +149,8 @@ public class ShapeCompositorV2 {
                     .shape(shape)
                     .fillType(fillType);
             
-            if (referenceId != null) {
-                builder.withReference(referenceId);
+            if (referenceIds != null && referenceIds.length > 0) {
+                builder.withReferences(referenceIds);
             }
             
             if (transformFlags != null) {
@@ -174,7 +174,7 @@ public class ShapeCompositorV2 {
             if (t.isRequireShape() && shape == null) {
                 throw new IllegalArgumentException(t + " operation '" + id + "' requires a shape");
             }
-            if (t.isRequireReference() && referenceId == null) {
+            if (t.isRequireReference() && (referenceIds == null || referenceIds.length == 0)) {
                 throw new IllegalArgumentException(t + " operation '" + id + "' requires a reference");
             }
             if (t.isRequireFill() && fillType == null) {
@@ -231,26 +231,169 @@ public class ShapeCompositorV2 {
         Map<Long, VoxelEntry> voxelMap = new HashMap<>();
         Map<String, Set<Long>> operationRegions = new HashMap<>();
         
-        // Compute effective anchor: anchor (orbit point) + shapeOffset
-        // Y pivots by pitch (swings vertically with look direction)
-        // X and Z are flat extensions (no further rotation)
         Vector3d effectiveAnchor = computeEffectiveAnchor(yawRotation, pitchRotation);
 
-        ensureShapeCacheBuilt();
+        ensureCompositeShapesBuilt();
 
         List<ShapeOperationV2> timeline = getTimeline();
+        Set<Long> excludedWorldPositions = new HashSet<>();
 
-        //TODO: This re-creates the shape every "frame"
-        //TODO: This needs to be changed to call the finished shape and transform/rotate
+        // Phase 1: Place composite shapes and standalone DEFINEs into world space
         for (ShapeOperationV2 operation : timeline) {
-            if (!operation.isEnabled()) {
-                continue;
+            if (!operation.isEnabled()) continue;
+            OperationTypeV2 type = operation.getType();
+            
+            // Skip deferred ops (FILL_REMAINING) — handled in phase 3
+            if (type == OperationTypeV2.FILL_REMAINING) continue;
+            
+            CompositeShape composite = compositeShapes.get(operation.getId());
+            if (composite == null) continue;
+            
+            TransformFlags flags = operation.getTransformFlags();
+            Vector3d operationAnchor = computeEffectiveAnchor(flags);
+            
+            double dynYaw = flags.shouldApplyYaw() ? yawRotation : 0.0;
+            double dynPitch = flags.shouldApplyPitch() ? pitchRotation : 0.0;
+            double cosY = Math.cos(dynYaw);
+            double sinY = Math.sin(dynYaw);
+            double cosP = Math.cos(dynPitch);
+            double sinP = Math.sin(dynPitch);
+            
+            long[] localPositions = composite.getLocalPositions();
+            BlockFillTypeV2[] fills = composite.getFills();
+            String[] originIds = composite.getOriginIds();
+            DebugStyle[] debugStyles = composite.getDebugStyles();
+            
+            Set<Long> opPositions = new HashSet<>();
+            
+            for (int i = 0; i < composite.size(); i++) {
+                long basePos = localPositions[i];
+                double cx = BlockUtil.unpackX(basePos) + 0.5;
+                double cy = BlockUtil.unpackY(basePos) + 0.5;
+                double cz = BlockUtil.unpackZ(basePos) + 0.5;
+                
+                // Apply pitch rotation (around X axis)
+                double py = cy * cosP + cz * sinP;
+                double pz = -cy * sinP + cz * cosP;
+                if (dynPitch != 0.0) {
+                    py += PITCH_PIVOT_EYE_HEIGHT;
+                }
+                
+                // Apply yaw rotation (around Y axis)
+                double rx = cx * cosY - pz * sinY;
+                double rz = cx * sinY + pz * cosY;
+                
+                int x = (int) Math.floor(rx + operationAnchor.x);
+                int y = (int) Math.floor(py + operationAnchor.y);
+                int z = (int) Math.floor(rz + operationAnchor.z);
+                long pos = BlockUtil.packUnchecked(x, y, z);
+                
+                if (type == OperationTypeV2.EXCLUDE) {
+                    excludedWorldPositions.add(pos);
+                    opPositions.add(pos);
+                    continue;
+                }
+                
+                // Non-air check for WRITE actions
+                if (type.isRequireNonAir()) {
+                    VoxelEntry existing = voxelMap.get(pos);
+                    BlockSnapshot snapshot = (existing != null) ? existing.getOriginal() : null;
+                    if (snapshot == null || snapshot.blockId() == 0) {
+                        snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
+                    }
+                    if (snapshot == null || snapshot.blockId() == 0) {
+                        continue;
+                    }
+                }
+                
+                VoxelEntry entry = voxelMap.computeIfAbsent(pos, k -> new VoxelEntry());
+                opPositions.add(pos);
+                
+                if (entry.getOriginal() == null) {
+                    BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
+                    if (snapshot != null) {
+                        entry.setOriginal(snapshot);
+                    }
+                }
+                
+                BlockFillTypeV2 fill = fills[i];
+                if (fill != null) {
+                    entry.write(null, fill, originIds[i], debugStyles[i]);
+                }
+                
+                // Track per original operation
+                String originId = originIds[i];
+                if (originId != null) {
+                    operationRegions.computeIfAbsent(originId, k -> new HashSet<>()).add(pos);
+                }
             }
             
-            Set<Long> operationPositions = executeOperation(operation, chunkStore, voxelMap, operationRegions, effectiveAnchor);
-            operationRegions.put(operation.getId(), operationPositions);
+            operationRegions.put(operation.getId(), opPositions);
         }
 
+        // Phase 2: Apply exclusions
+        for (long excludedPos : excludedWorldPositions) {
+            VoxelEntry entry = voxelMap.computeIfAbsent(excludedPos, k -> new VoxelEntry());
+            entry.setExcluded(true);
+        }
+
+        // Phase 3: FILL_REMAINING post-pass (deferred ops using world positions)
+        for (ShapeOperationV2 operation : deferredOps) {
+            if (!operation.isEnabled()) continue;
+            
+            OperationTypeV2 type = operation.getType();
+            BlockFillTypeV2 fillType = operation.getFillType();
+            DebugStyle debugStyle = resolveDebugStyle(operation, fillType);
+            
+            // Collect reference positions from all referenced operations
+            Set<Long> referencePositions = new HashSet<>();
+            for (String refId : operation.getReferenceIds()) {
+                referencePositions.addAll(operationRegions.getOrDefault(refId, Collections.emptySet()));
+            }
+            
+            Set<Long> opPositions = new HashSet<>();
+            
+            for (long pos : referencePositions) {
+                int x = BlockUtil.unpackX(pos);
+                int y = BlockUtil.unpackY(pos);
+                int z = BlockUtil.unpackZ(pos);
+                
+                VoxelEntry existing = voxelMap.get(pos);
+                
+                // requireUnowned
+                if (type.isRequireUnowned() && existing != null && existing.getOwnerId() != null) {
+                    continue;
+                }
+                // requireNonAir
+                if (type.isRequireNonAir()) {
+                    BlockSnapshot snapshot = (existing != null) ? existing.getOriginal() : null;
+                    if (snapshot == null || snapshot.blockId() == 0) {
+                        snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
+                    }
+                    if (snapshot == null || snapshot.blockId() == 0) {
+                        continue;
+                    }
+                }
+                
+                VoxelEntry entry = voxelMap.computeIfAbsent(pos, k -> new VoxelEntry());
+                opPositions.add(pos);
+                
+                if (entry.getOriginal() == null) {
+                    BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
+                    if (snapshot != null) {
+                        entry.setOriginal(snapshot);
+                    }
+                }
+                
+                if (fillType != null) {
+                    entry.write(null, fillType, operation.getId(), debugStyle);
+                }
+            }
+            
+            operationRegions.put(operation.getId(), opPositions);
+        }
+
+        // Phase 4: Compute block IDs
         Map<Long, Integer> computedBlockIds = new HashMap<>();
         for (Map.Entry<Long, VoxelEntry> entry : voxelMap.entrySet()) {
             VoxelEntry voxel = entry.getValue();
@@ -295,16 +438,20 @@ public class ShapeCompositorV2 {
         return computeEffectiveAnchor(effectiveYaw, effectivePitch);
     }
 
-    private void ensureShapeCacheBuilt() {
+    private void ensureCompositeShapesBuilt() {
         if (!shapeCacheDirty) {
             return;
         }
-        cachedShapePositions.clear();
+        compositeShapes.clear();
+        deferredOps.clear();
         
+        // First pass: voxelize all SHAPE-sourced operations at origin
+        Map<String, long[]> rawPositions = new HashMap<>();
         for (String id : operationOrder) {
             ShapeOperationV2 op = operations.get(id);
-            if (op == null) continue;
+            if (op == null || !op.isEnabled()) continue;
             if (op.getType().getPositionSource() != OperationTypeV2.PositionSource.SHAPE) continue;
+            if (op.getType() == OperationTypeV2.UNION) continue;
             Shape baseShape = op.getShape();
             if (baseShape == null) continue;
             
@@ -318,206 +465,147 @@ public class ShapeCompositorV2 {
             for (int i = 0; i < positions.size(); i++) {
                 arr[i] = positions.get(i);
             }
-            cachedShapePositions.put(id, arr);
+            rawPositions.put(id, arr);
+        }
+        
+        // Second pass: process timeline in priority order to build composite shapes
+        List<ShapeOperationV2> timeline = getTimeline();
+        
+        for (ShapeOperationV2 op : timeline) {
+            if (!op.isEnabled()) continue;
+            OperationTypeV2 type = op.getType();
+            String opId = op.getId();
+            
+            BlockFillTypeV2 fillType = (type == OperationTypeV2.CUT) ? CUT_FILL : op.getFillType();
+            DebugStyle debugStyle = resolveDebugStyle(op, fillType);
+            
+            switch (type) {
+                case DEFINE, FILL -> {
+                    long[] positions = rawPositions.get(opId);
+                    if (positions == null) continue;
+                    CompositeShape.Builder builder = CompositeShape.builder();
+                    for (long pos : positions) {
+                        builder.addPoint(pos, fillType, opId, debugStyle);
+                    }
+                    compositeShapes.put(opId, builder.build());
+                }
+                case UNION -> {
+                    CompositeShape.Builder builder = CompositeShape.builder();
+                    for (String refId : op.getReferenceIds()) {
+                        CompositeShape ref = compositeShapes.get(refId);
+                        if (ref == null) {
+                            LOGGER.warning("UNION '" + opId + "' references unknown shape '" + refId + "'");
+                            continue;
+                        }
+                        for (int i = 0; i < ref.size(); i++) {
+                            // Only add if not already present (first-write wins for union)
+                            if (!builder.containsPoint(ref.getPosition(i))) {
+                                builder.addPoint(ref.getPosition(i), ref.getFill(i),
+                                        ref.getOriginId(i), ref.getDebugStyle(i));
+                            }
+                        }
+                    }
+                    compositeShapes.put(opId, builder.build());
+                }
+                case CUT -> {
+                    long[] positions = rawPositions.get(opId);
+                    if (positions == null) continue;
+                    Set<Long> cutPositions = new HashSet<>();
+                    for (long pos : positions) {
+                        cutPositions.add(pos);
+                    }
+                    for (String refId : op.getReferenceIds()) {
+                        CompositeShape ref = compositeShapes.get(refId);
+                        if (ref == null) continue;
+                        
+                        // Rebuild the reference composite with CUT applied
+                        CompositeShape.Builder builder = CompositeShape.builder();
+                        for (int i = 0; i < ref.size(); i++) {
+                            long pos = ref.getPosition(i);
+                            if (cutPositions.contains(pos)) {
+                                builder.addPoint(pos, CUT_FILL, opId, debugStyle);
+                            } else {
+                                builder.addPoint(pos, ref.getFill(i), ref.getOriginId(i), ref.getDebugStyle(i));
+                            }
+                        }
+                        compositeShapes.put(refId, builder.build());
+                    }
+                    // CUT itself also gets a composite for its own positions
+                    CompositeShape.Builder cutBuilder = CompositeShape.builder();
+                    for (long pos : positions) {
+                        cutBuilder.addPoint(pos, CUT_FILL, opId, debugStyle);
+                    }
+                    compositeShapes.put(opId, cutBuilder.build());
+                }
+                case INTERSECT -> {
+                    long[] positions = rawPositions.get(opId);
+                    if (positions == null) continue;
+                    Set<Long> shapePositions = new HashSet<>();
+                    for (long pos : positions) {
+                        shapePositions.add(pos);
+                    }
+                    
+                    // Only keep positions that exist in both shape and all references
+                    CompositeShape.Builder builder = CompositeShape.builder();
+                    for (String refId : op.getReferenceIds()) {
+                        CompositeShape ref = compositeShapes.get(refId);
+                        if (ref == null) continue;
+                        for (int i = 0; i < ref.size(); i++) {
+                            long pos = ref.getPosition(i);
+                            if (shapePositions.contains(pos)) {
+                                builder.addPoint(pos, fillType != null ? fillType : ref.getFill(i),
+                                        opId, debugStyle);
+                            }
+                        }
+                    }
+                    compositeShapes.put(opId, builder.build());
+                }
+                case SUBTRACT -> {
+                    long[] positions = rawPositions.get(opId);
+                    if (positions == null) continue;
+                    Set<Long> subtractPositions = new HashSet<>();
+                    for (long pos : positions) {
+                        subtractPositions.add(pos);
+                    }
+                    
+                    for (String refId : op.getReferenceIds()) {
+                        CompositeShape ref = compositeShapes.get(refId);
+                        if (ref == null) continue;
+                        
+                        // Rebuild reference without the subtracted positions
+                        CompositeShape.Builder builder = CompositeShape.builder();
+                        for (int i = 0; i < ref.size(); i++) {
+                            long pos = ref.getPosition(i);
+                            if (!subtractPositions.contains(pos)) {
+                                builder.addPoint(pos, ref.getFill(i), ref.getOriginId(i), ref.getDebugStyle(i));
+                            }
+                        }
+                        compositeShapes.put(refId, builder.build());
+                    }
+                    // SUBTRACT itself stores its shape positions (for operationRegions)
+                    CompositeShape.Builder subBuilder = CompositeShape.builder();
+                    for (long pos : positions) {
+                        subBuilder.addPoint(pos, null, opId, debugStyle);
+                    }
+                    compositeShapes.put(opId, subBuilder.build());
+                }
+                case EXCLUDE -> {
+                    long[] positions = rawPositions.get(opId);
+                    if (positions == null) continue;
+                    CompositeShape.Builder builder = CompositeShape.builder();
+                    for (long pos : positions) {
+                        builder.addPoint(pos, null, opId, debugStyle);
+                    }
+                    compositeShapes.put(opId, builder.build());
+                }
+                case FILL_REMAINING -> {
+                    deferredOps.add(op);
+                }
+            }
         }
         shapeCacheDirty = false;
     }
 
-    @Nonnull
-    private Set<Long> executeOperation(@Nonnull ShapeOperationV2 operation,
-                                       @Nonnull ChunkStore chunkStore,
-                                       @Nonnull Map<Long, VoxelEntry> voxelMap,
-                                       @Nonnull Map<String, Set<Long>> operationRegions,
-                                       @Nonnull Vector3d effectiveAnchor) {
-        OperationTypeV2 type = operation.getType();
-        Set<Long> operationPositions = new HashSet<>();
-        
-        // Resolve fill: CUT always uses CUT_FILL, others use operation's fill
-        BlockFillTypeV2 fillType = (type == OperationTypeV2.CUT) ? CUT_FILL : operation.getFillType();
-        DebugStyle debugStyle = resolveDebugStyle(operation, fillType);
-        
-        // Resolve reference positions
-        String referenceId = operation.getReferenceId();
-        Set<Long> referencePositions = (referenceId != null)
-                ? operationRegions.getOrDefault(referenceId, Collections.emptySet())
-                : Collections.emptySet();
-        
-        // Compute per-operation anchor respecting transform flags
-        TransformFlags flags = operation.getTransformFlags();
-        Vector3d operationAnchor = computeEffectiveAnchor(flags);
-
-        // Source positions and apply filters + actions
-        if (type.getPositionSource() == OperationTypeV2.PositionSource.SHAPE) {
-            long[] basePositions = cachedShapePositions.get(operation.getId());
-            if (basePositions == null || basePositions.length == 0) {
-                LOGGER.warning(type + " operation '" + operation.getId() + "' has no cached shape positions");
-                return operationPositions;
-            }
-            
-            double dynYaw = flags.shouldApplyYaw() ? yawRotation : 0.0;
-            double dynPitch = flags.shouldApplyPitch() ? pitchRotation : 0.0;
-            double cosY = Math.cos(dynYaw);
-            double sinY = Math.sin(dynYaw);
-            double cosP = Math.cos(dynPitch);
-            double sinP = Math.sin(dynPitch);
-            
-            for (long basePos : basePositions) {
-                double cx = BlockUtil.unpackX(basePos) + 0.5;
-                double cy = BlockUtil.unpackY(basePos) + 0.5;
-                double cz = BlockUtil.unpackZ(basePos) + 0.5;
-                
-                // Apply pitch rotation (around X axis)
-                double py = cy * cosP + cz * sinP;
-                double pz = -cy * sinP + cz * cosP;
-                if (dynPitch != 0.0) {
-                    py += PITCH_PIVOT_EYE_HEIGHT;
-                }
-                
-                // Apply yaw rotation (around Y axis)
-                double rx = cx * cosY - pz * sinY;
-                double rz = cx * sinY + pz * cosY;
-                
-                int x = (int) Math.floor(rx + operationAnchor.x);
-                int y = (int) Math.floor(py + operationAnchor.y);
-                int z = (int) Math.floor(rz + operationAnchor.z);
-                long pos = BlockUtil.packUnchecked(x, y, z);
-                
-                if (!passesFilters(pos, x, y, z, type, voxelMap, referencePositions, chunkStore)) {
-                    continue;
-                }
-                
-                applyAction(pos, x, y, z, type, operation, voxelMap, referenceId,
-                        fillType, debugStyle, chunkStore, operationPositions);
-            }
-        } else {
-            // REFERENCE source: iterate the reference region
-            for (Long pos : referencePositions) {
-                int x = BlockUtil.unpackX(pos);
-                int y = BlockUtil.unpackY(pos);
-                int z = BlockUtil.unpackZ(pos);
-                
-                if (!passesFilters(pos, x, y, z, type, voxelMap, referencePositions, chunkStore)) {
-                    continue;
-                }
-                
-                applyAction(pos, x, y, z, type, operation, voxelMap, referenceId,
-                        fillType, debugStyle, chunkStore, operationPositions);
-            }
-        }
-        
-        return operationPositions;
-    }
-    
-    private boolean passesFilters(long pos, int x, int y, int z,
-                                  @Nonnull OperationTypeV2 type,
-                                  @Nonnull Map<Long, VoxelEntry> voxelMap,
-                                  @Nonnull Set<Long> referencePositions,
-                                  @Nonnull ChunkStore chunkStore) {
-        VoxelEntry existing = voxelMap.get(pos);
-        
-        if (type.isSkipExcluded() && existing != null && existing.isExcluded()) {
-            return false;
-        }
-        
-        if (type.isRequireInReference() && !referencePositions.contains(pos)) {
-            return false;
-        }
-        
-        if (type.isRequireUnowned() && existing != null && existing.getOwnerId() != null) {
-            return false;
-        }
-        
-        if (type.isRequireNonAir()) {
-            BlockSnapshot snapshot = (existing != null) ? existing.getOriginal() : null;
-            if (snapshot == null || snapshot.blockId() == 0) {
-                snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
-            }
-            if (snapshot == null || snapshot.blockId() == 0) {
-                return false;
-            }
-        }
-        
-        return true;
-    }
-    
-    private void applyAction(long pos, int x, int y, int z,
-                             @Nonnull OperationTypeV2 type,
-                             @Nonnull ShapeOperationV2 operation,
-                             @Nonnull Map<Long, VoxelEntry> voxelMap,
-                             @Nullable String referenceId,
-                             @Nullable BlockFillTypeV2 fillType,
-                             @Nonnull DebugStyle debugStyle,
-                             @Nonnull ChunkStore chunkStore,
-                             @Nonnull Set<Long> operationPositions) {
-        switch (type.getAction()) {
-            case WRITE: {
-                VoxelEntry entry = voxelMap.computeIfAbsent(pos, k -> new VoxelEntry());
-                operationPositions.add(pos);
-                
-                // Ensure we have an original snapshot
-                if (entry.getOriginal() == null) {
-                    BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
-                    if (snapshot != null) {
-                        entry.setOriginal(snapshot);
-                    }
-                }
-                
-                if (fillType != null) {
-                    entry.write(null, fillType, operation.getId(), debugStyle);
-                }
-                break;
-            }
-            case REMOVE: {
-                VoxelEntry entry = voxelMap.get(pos);
-                operationPositions.add(pos);
-                if (entry != null) {
-                    String owner = entry.getOwnerId();
-                    if (owner == null || owner.equals(referenceId)) {
-                        entry.clearFill();
-                    }
-                }
-                break;
-            }
-            case MARK_EXCLUDED: {
-                VoxelEntry entry = voxelMap.computeIfAbsent(pos, k -> new VoxelEntry());
-                entry.setExcluded(true);
-                operationPositions.add(pos);
-                break;
-            }
-        }
-    }
-    
-    private Shape applyTransformations(Shape shape, TransformFlags flags) {
-        if (shape == null) {
-            return shape;
-        }
-        
-        double effectiveYaw = flags.shouldApplyYaw() ? yawRotation : 0.0;
-        double effectivePitch = flags.shouldApplyPitch() ? pitchRotation : 0.0;
-        double effectiveRoll = flags.shouldApplyRoll() ? 0.0 : 0.0;
-        
-        if (effectiveYaw == 0.0 && effectivePitch == 0.0 && effectiveRoll == 0.0) {
-            return shape;
-        }
-
-        Shape transformed = shape;
-
-        if (effectiveRoll != 0.0) {
-            transformed = new TransformedShape(transformed, 0.0, 0.0, 0.0, 0.0, 0.0, effectiveRoll);
-        }
-
-        if (effectivePitch != 0.0) {
-            transformed = new TransformedShape(transformed, 0.0, 0.0, 0.0, 0.0, effectivePitch, 0.0);
-            transformed = new TransformedShape(transformed, 0.0, PITCH_PIVOT_EYE_HEIGHT, 0.0);
-        }
-
-        if (effectiveYaw != 0.0) {
-            transformed = new TransformedShape(transformed, 0.0, 0.0, 0.0, effectiveYaw, 0.0, 0.0);
-        }
-
-        return transformed;
-    }
-    
     private DebugStyle resolveDebugStyle(ShapeOperationV2 operation, BlockFillTypeV2 fillType) {
         DebugStyle override = operation.getDebugStyleOverride();
         if (override != null) {

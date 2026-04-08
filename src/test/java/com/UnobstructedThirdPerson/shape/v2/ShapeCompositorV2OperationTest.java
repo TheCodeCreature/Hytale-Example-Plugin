@@ -20,7 +20,7 @@ class ShapeCompositorV2OperationTest {
     // --- OperationRef overload tests ---
 
     @Test
-    void addOperation_withSubtractRef_setsReferenceId() {
+    void addOperation_withSubtractRef_setsReferenceIds() {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
@@ -30,11 +30,11 @@ class ShapeCompositorV2OperationTest {
                 OperationTypeV2.Subtract("base")).build();
 
         assertEquals(OperationTypeV2.SUBTRACT, op.getType());
-        assertEquals("base", op.getReferenceId());
+        assertArrayEquals(new String[]{"base"}, op.getReferenceIds());
     }
 
     @Test
-    void addOperation_withFillRef_setsReferenceId() {
+    void addOperation_withFillRef_setsReferenceIds() {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
@@ -44,11 +44,11 @@ class ShapeCompositorV2OperationTest {
                 OperationTypeV2.Fill("base")).withFill(new EmptyBlockFillV2()).build();
 
         assertEquals(OperationTypeV2.FILL, op.getType());
-        assertEquals("base", op.getReferenceId());
+        assertArrayEquals(new String[]{"base"}, op.getReferenceIds());
     }
 
     @Test
-    void addOperation_withCutRef_setsReferenceId() {
+    void addOperation_withCutRef_setsReferenceIds() {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
@@ -58,11 +58,11 @@ class ShapeCompositorV2OperationTest {
                 OperationTypeV2.Cut("base")).build();
 
         assertEquals(OperationTypeV2.CUT, op.getType());
-        assertEquals("base", op.getReferenceId());
+        assertArrayEquals(new String[]{"base"}, op.getReferenceIds());
     }
 
     @Test
-    void addOperation_withIntersectRef_setsReferenceId() {
+    void addOperation_withIntersectRef_setsReferenceIds() {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
@@ -72,11 +72,11 @@ class ShapeCompositorV2OperationTest {
                 OperationTypeV2.Intersect("base")).withFill(new EmptyBlockFillV2()).build();
 
         assertEquals(OperationTypeV2.INTERSECT, op.getType());
-        assertEquals("base", op.getReferenceId());
+        assertArrayEquals(new String[]{"base"}, op.getReferenceIds());
     }
 
     @Test
-    void addOperation_withExcludeRef_setsReferenceId() {
+    void addOperation_withExcludeRef_setsReferenceIds() {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
@@ -86,11 +86,11 @@ class ShapeCompositorV2OperationTest {
                 OperationTypeV2.Exclude("base")).build();
 
         assertEquals(OperationTypeV2.EXCLUDE, op.getType());
-        assertEquals("base", op.getReferenceId());
+        assertArrayEquals(new String[]{"base"}, op.getReferenceIds());
     }
 
     @Test
-    void addOperation_withFillRemainingRef_setsReferenceId() {
+    void addOperation_withFillRemainingRef_setsReferenceIds() {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
@@ -100,7 +100,7 @@ class ShapeCompositorV2OperationTest {
                 OperationTypeV2.FillRemaining("base")).withFill(new EmptyBlockFillV2()).build();
 
         assertEquals(OperationTypeV2.FILL_REMAINING, op.getType());
-        assertEquals("base", op.getReferenceId());
+        assertArrayEquals(new String[]{"base"}, op.getReferenceIds());
     }
 
     // --- DEFINE with null fill acts as mask ---
@@ -138,7 +138,7 @@ class ShapeCompositorV2OperationTest {
         ShapeOperationV2 sub = comp.addOperation("sub", box,
                 OperationTypeV2.Subtract("mask")).build();
 
-        assertEquals("mask", sub.getReferenceId());
+        assertArrayEquals(new String[]{"mask"}, sub.getReferenceIds());
     }
 
     // --- Timeline ordering with refs ---
@@ -201,5 +201,60 @@ class ShapeCompositorV2OperationTest {
 
         assertThrows(IllegalArgumentException.class, () ->
                 comp.addOperation("base", box, OperationTypeV2.Subtract("base")));
+    }
+
+    // --- UNION operation tests ---
+
+    @Test
+    void addOperation_union_setsMultipleReferenceIds() {
+        ShapeCompositorV2 comp = createCompositor();
+        Box box = new Box(-1, -1, -1, 1, 1, 1);
+
+        comp.addOperation("a", box, OperationTypeV2.DEFINE).withFill(new EmptyBlockFillV2()).build();
+        comp.addOperation("b", box, OperationTypeV2.DEFINE).withFill(new EmptyBlockFillV2()).build();
+
+        ShapeOperationV2 op = comp.addOperation("union", null,
+                OperationTypeV2.Union("a", "b")).build();
+
+        assertEquals(OperationTypeV2.UNION, op.getType());
+        assertEquals(2, op.getReferenceIds().length);
+        assertEquals("a", op.getReferenceIds()[0]);
+        assertEquals("b", op.getReferenceIds()[1]);
+    }
+
+    @Test
+    void addOperation_union_appearsInTimeline() {
+        ShapeCompositorV2 comp = createCompositor();
+        Box box = new Box(-1, -1, -1, 1, 1, 1);
+
+        comp.addOperation("a", box, OperationTypeV2.DEFINE).withFill(new EmptyBlockFillV2()).build();
+        comp.addOperation("union", null, OperationTypeV2.Union("a")).build();
+
+        List<ShapeOperationV2> timeline = comp.getTimeline();
+        assertEquals(2, timeline.size());
+        // DEFINE(10) < UNION(15)
+        assertEquals("a", timeline.get(0).getId());
+        assertEquals("union", timeline.get(1).getId());
+    }
+
+    @Test
+    void addOperation_union_withoutReferences_throws() {
+        ShapeCompositorV2 comp = createCompositor();
+
+        assertThrows(IllegalArgumentException.class, () ->
+                comp.addOperation("union", null, OperationTypeV2.UNION).build());
+    }
+
+    @Test
+    void addOperation_union_canBeReferencedByExclude() {
+        ShapeCompositorV2 comp = createCompositor();
+        Box box = new Box(-1, -1, -1, 1, 1, 1);
+
+        comp.addOperation("a", box, OperationTypeV2.DEFINE).withFill(new EmptyBlockFillV2()).build();
+        comp.addOperation("union", null, OperationTypeV2.Union("a")).build();
+        ShapeOperationV2 excl = comp.addOperation("excl", box,
+                OperationTypeV2.Exclude("union")).build();
+
+        assertArrayEquals(new String[]{"union"}, excl.getReferenceIds());
     }
 }

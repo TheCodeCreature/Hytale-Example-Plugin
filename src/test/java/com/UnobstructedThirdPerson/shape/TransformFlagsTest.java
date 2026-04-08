@@ -91,4 +91,48 @@ class TransformFlagsTest {
         assertTrue(TransformFlags.ANCHOR_ONLY.shouldApplyAnyAnchor());
         assertFalse(TransformFlags.NONE.shouldApplyAnyAnchor());
     }
+
+    // --- equals/hashCode tests ---
+
+    @Test
+    void equals_sameFlags_returnsTrue() {
+        TransformFlags a = TransformFlags.builder().ignorePitch().build();
+        TransformFlags b = TransformFlags.builder().ignorePitch().build();
+        assertEquals(a, b);
+    }
+
+    @Test
+    void equals_differentFlags_returnsFalse() {
+        TransformFlags a = TransformFlags.builder().ignorePitch().build();
+        TransformFlags b = TransformFlags.builder().ignoreYaw().build();
+        assertNotEquals(a, b);
+    }
+
+    @Test
+    void equals_allPresets_selfEqual() {
+        assertEquals(TransformFlags.ALL, TransformFlags.ALL);
+        assertEquals(TransformFlags.NONE, TransformFlags.NONE);
+    }
+
+    @Test
+    void equals_allVsNone_notEqual() {
+        assertNotEquals(TransformFlags.ALL, TransformFlags.NONE);
+    }
+
+    @Test
+    void hashCode_sameFlags_sameHash() {
+        TransformFlags a = TransformFlags.builder().ignorePitch().build();
+        TransformFlags b = TransformFlags.builder().ignorePitch().build();
+        assertEquals(a.hashCode(), b.hashCode());
+    }
+
+    @Test
+    void hashCode_differentFlags_likelyDifferentHash() {
+        assertNotEquals(TransformFlags.ALL.hashCode(), TransformFlags.NONE.hashCode());
+    }
+
+    @Test
+    void equals_null_returnsFalse() {
+        assertNotEquals(null, TransformFlags.ALL);
+    }
 }

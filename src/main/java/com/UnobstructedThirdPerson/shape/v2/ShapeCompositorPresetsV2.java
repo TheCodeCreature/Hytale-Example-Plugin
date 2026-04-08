@@ -81,6 +81,13 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 // .withDebugColor(DebugUtils.COLOR_CYAN)
                                 .build();
                 // #endregion
+                // #region MainView UNION (outerCone after CUT)
+                String mainViewId = idTracker++ + "";
+                this.addOperation(mainViewId,
+                                null,
+                                OperationTypeV2.Union(outerConeId))
+                                .build();
+                // #endregion
                 // #region SideViewBox
                 String SideViewBoxId = idTracker++ + "";
                 Shape sideViewBox = new TransformedShape(
@@ -93,6 +100,13 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 .withFill(new EmptyBlockFillV2())
                                 .withDebugColor(DebugUtils.COLOR_BLACK)
                                 .withTransformFlags(_ignorePitch)
+                                .build();
+                // #endregion
+                // #region FullView UNION (mainView + sideViewBox)
+                String fullViewId = idTracker++ + "";
+                this.addOperation(fullViewId,
+                                null,
+                                OperationTypeV2.Union(mainViewId, SideViewBoxId))
                                 .build();
                 // #endregion
                 // #region PlayerFacingWall

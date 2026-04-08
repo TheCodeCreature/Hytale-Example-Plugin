@@ -13,7 +13,7 @@ public class ShapeOperationV2 {
     private final String id;
     private final Shape shape;
     private final OperationTypeV2 type;
-    private final String referenceId;
+    private final String[] referenceIds;
     private final TransformFlags transformFlags;
     private final DebugStyle debugStyleOverride;
     
@@ -26,7 +26,7 @@ public class ShapeOperationV2 {
         this.shape = builder.shape;
         this.type = builder.type;
         this.fillType = builder.fillType;
-        this.referenceId = builder.referenceId;
+        this.referenceIds = builder.referenceIds != null ? builder.referenceIds.clone() : new String[0];
         this.transformFlags = builder.transformFlags != null ? builder.transformFlags : TransformFlags.ALL;
         this.debugStyleOverride = builder.debugStyleOverride;
         this.priority = builder.priority != null ? builder.priority : type.getDefaultPriority();
@@ -53,9 +53,9 @@ public class ShapeOperationV2 {
         return fillType;
     }
     
-    @Nullable
-    public String getReferenceId() {
-        return referenceId;
+    @Nonnull
+    public String[] getReferenceIds() {
+        return referenceIds;
     }
     
     public int getPriority() {
@@ -98,7 +98,7 @@ public class ShapeOperationV2 {
         private final OperationTypeV2 type;
         private Shape shape;
         private BlockFillTypeV2 fillType;
-        private String referenceId;
+        private String[] referenceIds;
         private TransformFlags transformFlags;
         private DebugStyle debugStyleOverride;
         private Integer priority;
@@ -122,8 +122,8 @@ public class ShapeOperationV2 {
         }
         
         @Nonnull
-        public Builder withReference(@Nullable String referenceId) {
-            this.referenceId = referenceId;
+        public Builder withReferences(@Nonnull String... referenceIds) {
+            this.referenceIds = referenceIds;
             return this;
         }
         
