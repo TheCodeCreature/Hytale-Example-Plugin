@@ -18,141 +18,151 @@ import javax.annotation.Nonnull;
 
 public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 
-    private int _scale = 7;
-    private final TransformFlags _noMove = TransformFlags.builder()
-            .ignorePitch()
-            .ignoreYaw()
-            .build();
-    private final TransformFlags _ignorePitch = TransformFlags.builder()
-            .ignorePitch()
-            .build();
+        private int _scale = 7;
+        private static final double _yPivotOffset = 1.5;
+        private final TransformFlags _noMove = TransformFlags.builder()
+                        .ignorePitch()
+                        .ignoreYaw()
+                        .build();
+        private final TransformFlags _ignorePitch = TransformFlags.builder()
+                        .ignorePitch()
+                        .build();
 
-    public ShapeCompositorPresetsV2(@Nonnull Vector3d anchor, int radius) {
-        super(anchor);
-        _scale = radius;
-    }
+        public ShapeCompositorPresetsV2(@Nonnull Vector3d anchor, int radius) {
+                super(anchor);
+                _scale = radius;
+        }
 
-    public ShapeCompositorPresetsV2(int radius) {
-        super(new Vector3d(0, 0, 0));
-        _scale = radius;
-    }
+        public ShapeCompositorPresetsV2(int radius) {
+                super(new Vector3d(0, 0, 0));
+                _scale = radius;
+        }
 
-    public ShapeCompositorPresetsV2() {
-        super(new Vector3d(-0.5, 1.5, 0));
-    }
+        public ShapeCompositorPresetsV2() {
+                super(new Vector3d(0, _yPivotOffset, 0));
+        }
 
-    public ShapeCompositorV2 LayeredConePreset() {
-        int idTracker = 0;
-        double baseRadius = _scale;
-        double baseHeight = _scale * 1.5;
-        double zOffset = baseHeight-2.5;
+        public ShapeCompositorV2 LayeredConePreset() {
+                // #region Common Variables
+                int idTracker = 0;
+                double baseRadius = _scale;
+                double baseHeight = _scale * 1.5;
 
-//        double middleRadius = baseRadius * 0.6;
+                double xOffset = -0.5;
+                double yOffset = _scale * 0.5;
+                double zOffset = baseHeight - 1;
 
-//        double middleHeight = baseHeight;
-        double innerRadius = baseRadius * 0.5;
-        double innerHeight = baseHeight;
+                double pitchRadianOffset = -Math.toRadians(15);
+                double yawRadianOffset = -Math.toRadians(5);
+                // #endregion
+                // #region OuterCone
+                String outerConeId = idTracker++ + "";
+                Shape outerCone = new TransformedShape(
+                                new CircularCone(baseRadius, baseHeight),
+                                xOffset, yOffset, -(zOffset), yawRadianOffset, pitchRadianOffset, 0);
+                this.addOperation(outerConeId,
+                                outerCone,
+                                OperationTypeV2.DEFINE,
+                                new EmptyBlockFillV2())
+                                .withDebugColor(DebugUtils.COLOR_BLACK)
+                                .build();
+                // #endregion
+                // #region InnerViewBox
+                String innerViewBoxId = idTracker++ + "";
+                double innerViewBoxXScale = 0.75;
+                Shape innerViewBoxShape = new TransformedShape(
+                                new Box(-innerViewBoxXScale, 0, -_scale, innerViewBoxXScale, 2, 0),
+                                -0.25, 1, 0,
+                                yawRadianOffset, 0, 0);
+                this.addOperation(innerViewBoxId,
+                                innerViewBoxShape,
+                                OperationTypeV2.Cut(outerConeId),
+                                // new EmptyBlockFillV2()
+                                null
+                                )
+                                // .withDebugColor(DebugUtils.COLOR_CYAN)
+                                .build();
+                // #endregion
+                // #region SideViewBox
+                // String SideViewBoxId = idTracker++ + "";
+                // Shape sideViewBox = new TransformedShape(
+                //                 new Box(-2, 0, -1, 2, 1, 0),
+                //                 xOffset, 1, -1,
+                //                 yawRadianOffset, 0, 0);
+                // this.addOperation(SideViewBoxId,
+                //                 sideViewBox,
+                //                 OperationTypeV2.DEFINE,
+                //                 new EmptyBlockFillV2())
+                //                 .withDebugColor(DebugUtils.COLOR_PURPLE)
+                //                 .withTransformFlags(_ignorePitch)
+                //                 .build();
+                // #endregion
+                // #region PlayerFacingWall
+                String ignorePlayerFacingWallId = idTracker++ + "";
+                Shape ignorePlayerFacingWall = new TransformedShape(
+                                new Box(-_scale, -_scale, -1, _scale, 2, _scale),
+                                0, 0, 0,
+                                yawRadianOffset, 0, 0);
+                this.addOperation(ignorePlayerFacingWallId,
+                                ignorePlayerFacingWall,
+                                OperationTypeV2.EXCLUDE,
+                                null)
+                                .withTransformFlags(_ignorePitch)
+                                .withDebugColor(DebugUtils.COLOR_LIME)
+                                .build();
+                // #endregion
+                // #region PlayerFacingWallPlus
+                String ignorePlayerFacingWallPlusId = idTracker++ + "";
+                Shape ignorePlayerFacingWallPlus = new TransformedShape(
+                                new Box(-_scale, 0, 0.5, _scale, _scale, _scale),
+                                0, 0, 0,
+                                yawRadianOffset, 0, 0);
+                this.addOperation(ignorePlayerFacingWallPlusId,
+                                ignorePlayerFacingWallPlus,
+                                OperationTypeV2.EXCLUDE,
+                                null)
+                                .withTransformFlags(_ignorePitch)
+                                .withDebugColor(DebugUtils.COLOR_LIME)
+                                .build();
+                // #endregion
+                // #region PlayerFeetBox
+                String IgnorePlayerFeetId = idTracker++ + "";
+                Shape IgnoredPlayerFeetBox = new TransformedShape(
+                                new Box(-_scale, -1, -_scale, _scale, 1, _scale),
+                                0, 0, 0,
+                                yawRadianOffset, 0, 0);
+                this.addOperation(IgnorePlayerFeetId,
+                                IgnoredPlayerFeetBox,
+                                OperationTypeV2.EXCLUDE,
+                                null)
+                                .withTransformFlags(_ignorePitch)
+                                .withDebugColor(DebugUtils.COLOR_RED)
+                                .build();
+                // #endregion
+                return this;
+        }
 
-        double xOffset = 0;
-        double yOffset = _scale * 0.5;
+        public ShapeCompositorV2 SimpleTestCone() {
+                int idTracker = 0;
+                double height = _scale * 1.5;
+                double radius = _scale;
 
-        double pitchRadianOffset = -Math.toRadians(15);
-        double yawRadianOffset = -Math.toRadians(5);
-        
-        Shape outerCone = new TransformedShape(
-                new CircularCone(baseRadius, baseHeight),
-                xOffset, yOffset, -(zOffset)
-                ,yawRadianOffset, pitchRadianOffset,0);
+                CircularCone cone = new CircularCone(radius, height);
 
-        String outerConeId = idTracker++ + "";
-        this.addOperation(outerConeId,
-                        outerCone,
-                        OperationTypeV2.DEFINE,
-                        new EmptyBlockFillV2())
-//                .withDebugColor(DebugUtils.COLOR_BLACK)
-                .build();
+                this.addOperation(idTracker++ + "",
+                                cone,
+                                OperationTypeV2.DEFINE,
+                                new EmptyBlockFillV2())
+                                .withDebugColor(DebugUtils.COLOR_GRAY)
+                                .build();
 
-//        String innerConeId = idTracker++ + "";
-//        Shape innerCone = new TransformedShape(
-//                new CircularCone(innerRadius, innerHeight),
-//                xOffset, yOffset-1, -(zOffset)
-//                ,yawRadianOffset, pitchRadianOffset,0);
-//        this.addOperation(innerConeId,
-//                        innerCone,
-//                        OperationTypeV2.DEFINE,
-//                        new EmptyBlockFillV2())
-////                .withDebugColor(DebugUtils.COLOR_WHITE)
-//                .build();
+                this.addOperation(idTracker++ + "",
+                                new Box(-_scale, -_scale, -0.5, _scale, -1, _scale),
+                                OperationTypeV2.EXCLUDE,
+                                null)
+                                .withTransformFlags(_ignorePitch)
+                                .build();
 
-        String SideViewBoxId = idTracker++ + "";
-        Shape sideViewBox = new TransformedShape(
-                new Box(-1, 0,-1,1,1,0),
-                0, 1, -1,
-        yawRadianOffset, 0, 0);
-        this.addOperation(SideViewBoxId,
-                        sideViewBox,
-                        OperationTypeV2.DEFINE,
-                        new EmptyBlockFillV2())
-                .withDebugColor(DebugUtils.COLOR_PURPLE)
-                .withTransformFlags(_ignorePitch)
-                .build();
-
-        String ignorePlayerFacingWallId = idTracker++ + "";
-        Shape ignorePlayerFacingWall = new TransformedShape(
-                new Box(-_scale, -_scale, -1, _scale, 2, _scale),
-                0, 0, 0,
-                yawRadianOffset,0,0);
-        this.addOperation(ignorePlayerFacingWallId,
-                        ignorePlayerFacingWall,
-                        OperationTypeV2.EXCLUDE,
-//                        OperationTypeV2.DEFINE,
-//                        new EmptyBlockFillV2())
-                null)
-                .withTransformFlags(_ignorePitch)
-                .withDebugColor(DebugUtils.COLOR_LIME)
-//                .withReference(outerConeId)
-                .build();
-//
-        String IgnorePlayerFeetId = idTracker++ + "";
-        Shape IgnoredPlayerFeetBox = new TransformedShape(
-                new Box(-1, -1, -4, 1, 1, -1),
-                0, 0, 0,
-                yawRadianOffset,0,0);
-        this.addOperation(IgnorePlayerFeetId,
-                        IgnoredPlayerFeetBox,
-                        OperationTypeV2.EXCLUDE,
-//                        OperationTypeV2.DEFINE,
-//                        new EmptyBlockFillV2())
-                null)
-                .withTransformFlags(_ignorePitch)
-                .withDebugColor(DebugUtils.COLOR_RED)
-//                .withReference(outerConeId)
-                .build();
-        
-        return this;
-    }
-
-    public ShapeCompositorV2 SimpleTestCone() {
-        int idTracker = 0;
-        double height = _scale * 1.5;
-        double radius = _scale;
-        
-        CircularCone cone = new CircularCone(radius, height);
-        
-        this.addOperation(idTracker++ + "",
-                        cone,
-                        OperationTypeV2.DEFINE,
-                        new EmptyBlockFillV2())
-                .withDebugColor(DebugUtils.COLOR_GRAY)
-                .build();
-        
-        this.addOperation(idTracker++ + "",
-                        new Box(-_scale, -_scale, -0.5, _scale, -1, _scale),
-                        OperationTypeV2.EXCLUDE,
-                        null)
-                .withTransformFlags(_ignorePitch)
-                .build();
-        
-        return this;
-    }
+                return this;
+        }
 }

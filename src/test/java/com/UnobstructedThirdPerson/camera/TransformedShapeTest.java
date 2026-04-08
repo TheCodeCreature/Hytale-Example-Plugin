@@ -192,19 +192,18 @@ class TransformedShapeTest {
     }
 
     @Test
-    void offsetX_isNegated_inConstructor() {
-        // TransformedShape negates offsetX: this.offsetX = -offsetX
-        // So TransformedShape(base, 3, 0, 0) stores offsetX = -3
-        // containsPosition subtracts offsetX: localX = x - (-3) = x + 3
-        // The base box center is at (0,0,0), so containsPosition(x,0,0) → base.contains(x+3, 0, 0)
-        // base.contains(0,0,0)=true → we need x+3=0 → x=-3
+    void offsetX_isConsistentWithYAndZ() {
+        // TransformedShape stores offsetX as-is (same as Y and Z).
+        // containsPosition subtracts offsetX: localX = x - 3
+        // The base box center is at (0,0,0), so containsPosition(x,0,0) → base.contains(x-3, 0, 0)
+        // base.contains(0,0,0)=true → we need x-3=0 → x=3
         Shape base = new Box(-1, -1, -1, 1, 1, 1);
         TransformedShape transformed = new TransformedShape(base, 3, 0, 0, 0.0, 0.0, 0.0);
 
-        assertTrue(transformed.containsPosition(-3, 0, 0),
-                "Due to offsetX negation, shape should be at x=-3");
-        assertFalse(transformed.containsPosition(3, 0, 0),
-                "Shape should NOT be at x=+3 (offsetX is negated)");
+        assertTrue(transformed.containsPosition(3, 0, 0),
+                "Positive offsetX should shift shape to positive X");
+        assertFalse(transformed.containsPosition(-3, 0, 0),
+                "Shape should NOT be at x=-3");
     }
 
     @Test

@@ -60,7 +60,7 @@ public class TransformedShape implements Shape {
     public TransformedShape(@Nonnull Shape baseShape, double offsetX, double offsetY, double offsetZ,
                            double yaw, double pitch, double roll) {
         this.baseShape = baseShape;
-        this.offsetX = -offsetX;
+        this.offsetX = offsetX;
         this.offsetY = offsetY;
         this.offsetZ = offsetZ;
         this.yaw = yaw;

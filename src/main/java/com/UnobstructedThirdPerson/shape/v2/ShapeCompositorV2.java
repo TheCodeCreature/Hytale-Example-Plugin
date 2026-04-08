@@ -89,6 +89,18 @@ public class ShapeCompositorV2 {
         
         return new OperationBuilder(id, shape, type, fillType);
     }
+
+    @Nonnull
+    public OperationBuilder addOperation(
+            @Nonnull String id,
+            @Nullable Shape shape,
+            @Nonnull OperationTypeV2.OperationRef operationRef,
+            @Nullable BlockFillTypeV2 fillType) {
+        
+        OperationBuilder builder = addOperation(id, shape, operationRef.getType(), fillType);
+        builder.referenceId = operationRef.getReferenceId();
+        return builder;
+    }
     
     public class OperationBuilder {
         private final String id;
@@ -104,12 +116,6 @@ public class ShapeCompositorV2 {
             this.shape = shape;
             this.type = type;
             this.fillType = fillType;
-        }
-        
-        @Nonnull
-        public OperationBuilder withReference(@Nullable String referenceId) {
-            this.referenceId = referenceId;
-            return this;
         }
         
         @Nonnull
@@ -246,6 +252,10 @@ public class ShapeCompositorV2 {
         }
         
         return new ComposedRegionV2(effectiveAnchor, voxelMap, computedBlockIds, operationRegions, timeline);
+    }
+
+    @NonNull Vector3d getVector3d() {
+        return computeEffectiveAnchor(yawRotation, pitchRotation);
     }
 
     @NonNull Vector3d computeEffectiveAnchor(double effectiveYaw, double effectivePitch) {

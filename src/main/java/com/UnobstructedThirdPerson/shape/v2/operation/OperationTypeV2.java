@@ -1,5 +1,7 @@
 package com.UnobstructedThirdPerson.shape.v2.operation;
 
+import javax.annotation.Nonnull;
+
 public enum OperationTypeV2 {
     
     DEFINE(10, PositionSource.SHAPE, VoxelAction.WRITE, true, false, false, true, false),
@@ -81,5 +83,53 @@ public enum OperationTypeV2 {
         WRITE,
         REMOVE,
         MARK_EXCLUDED
+    }
+
+    @Nonnull
+    public static OperationRef Fill(@Nonnull String referenceId) {
+        return new OperationRef(FILL, referenceId);
+    }
+
+    @Nonnull
+    public static OperationRef Cut(@Nonnull String referenceId) {
+        return new OperationRef(CUT, referenceId);
+    }
+
+    @Nonnull
+    public static OperationRef Intersect(@Nonnull String referenceId) {
+        return new OperationRef(INTERSECT, referenceId);
+    }
+
+    @Nonnull
+    public static OperationRef Subtract(@Nonnull String referenceId) {
+        return new OperationRef(SUBTRACT, referenceId);
+    }
+
+    @Nonnull
+    public static OperationRef FillRemaining(@Nonnull String referenceId) {
+        return new OperationRef(FILL_REMAINING, referenceId);
+    }
+
+    @Nonnull
+    public static OperationRef Exclude(@Nonnull String referenceId) {
+        return new OperationRef(EXCLUDE, referenceId);
+    }
+
+    public static class OperationRef {
+        private final OperationTypeV2 type;
+        private final String referenceId;
+
+        public OperationRef(OperationTypeV2 type, String referenceId) {
+            this.type = type;
+            this.referenceId = referenceId;
+        }
+
+        public OperationTypeV2 getType() {
+            return type;
+        }
+
+        public String getReferenceId() {
+            return referenceId;
+        }
     }
 }
