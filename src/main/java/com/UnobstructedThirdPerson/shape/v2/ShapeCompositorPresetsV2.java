@@ -62,8 +62,8 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 xOffset, yOffset, -(zOffset), yawRadianOffset, pitchRadianOffset, 0);
                 this.addOperation(outerConeId,
                                 outerCone,
-                                OperationTypeV2.DEFINE,
-                                new EmptyBlockFillV2())
+                                OperationTypeV2.DEFINE)
+                                .withFill(new EmptyBlockFillV2())
                                 .withDebugColor(DebugUtils.COLOR_BLACK)
                                 .build();
                 // #endregion
@@ -76,10 +76,8 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 yawRadianOffset, 0, 0);
                 this.addOperation(innerViewBoxId,
                                 innerViewBoxShape,
-                                OperationTypeV2.Cut(outerConeId),
-                                // new EmptyBlockFillV2()
-                                null
-                                )
+                                OperationTypeV2.Cut(outerConeId))
+                                // .withFill(new EmptyBlockFillV2())
                                 // .withDebugColor(DebugUtils.COLOR_CYAN)
                                 .build();
                 // #endregion
@@ -91,8 +89,8 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 //                 yawRadianOffset, 0, 0);
                 // this.addOperation(SideViewBoxId,
                 //                 sideViewBox,
-                //                 OperationTypeV2.DEFINE,
-                //                 new EmptyBlockFillV2())
+                //                 OperationTypeV2.DEFINE)
+                //                 .withFill(new EmptyBlockFillV2())
                 //                 .withDebugColor(DebugUtils.COLOR_PURPLE)
                 //                 .withTransformFlags(_ignorePitch)
                 //                 .build();
@@ -105,8 +103,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 yawRadianOffset, 0, 0);
                 this.addOperation(ignorePlayerFacingWallId,
                                 ignorePlayerFacingWall,
-                                OperationTypeV2.EXCLUDE,
-                                null)
+                                OperationTypeV2.EXCLUDE)
                                 .withTransformFlags(_ignorePitch)
                                 .withDebugColor(DebugUtils.COLOR_LIME)
                                 .build();
@@ -119,8 +116,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 yawRadianOffset, 0, 0);
                 this.addOperation(ignorePlayerFacingWallPlusId,
                                 ignorePlayerFacingWallPlus,
-                                OperationTypeV2.EXCLUDE,
-                                null)
+                                OperationTypeV2.EXCLUDE)
                                 .withTransformFlags(_ignorePitch)
                                 .withDebugColor(DebugUtils.COLOR_LIME)
                                 .build();
@@ -133,8 +129,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 yawRadianOffset, 0, 0);
                 this.addOperation(IgnorePlayerFeetId,
                                 IgnoredPlayerFeetBox,
-                                OperationTypeV2.EXCLUDE,
-                                null)
+                                OperationTypeV2.EXCLUDE)
                                 .withTransformFlags(_ignorePitch)
                                 .withDebugColor(DebugUtils.COLOR_RED)
                                 .build();
@@ -151,15 +146,14 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 
                 this.addOperation(idTracker++ + "",
                                 cone,
-                                OperationTypeV2.DEFINE,
-                                new EmptyBlockFillV2())
+                                OperationTypeV2.DEFINE)
+                                .withFill(new EmptyBlockFillV2())
                                 .withDebugColor(DebugUtils.COLOR_GRAY)
                                 .build();
 
                 this.addOperation(idTracker++ + "",
                                 new Box(-_scale, -_scale, -0.5, _scale, -1, _scale),
-                                OperationTypeV2.EXCLUDE,
-                                null)
+                                OperationTypeV2.EXCLUDE)
                                 .withTransformFlags(_ignorePitch)
                                 .build();
 

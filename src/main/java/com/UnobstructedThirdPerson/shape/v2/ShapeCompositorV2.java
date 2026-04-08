@@ -80,24 +80,22 @@ public class ShapeCompositorV2 {
     public OperationBuilder addOperation(
             @Nonnull String id,
             @Nullable Shape shape,
-            @Nonnull OperationTypeV2 type,
-            @Nullable BlockFillTypeV2 fillType) {
+            @Nonnull OperationTypeV2 type) {
         
         if (operations.containsKey(id)) {
             throw new IllegalArgumentException("Operation with ID '" + id + "' already exists");
         }
         
-        return new OperationBuilder(id, shape, type, fillType);
+        return new OperationBuilder(id, shape, type);
     }
 
     @Nonnull
     public OperationBuilder addOperation(
             @Nonnull String id,
             @Nullable Shape shape,
-            @Nonnull OperationTypeV2.OperationRef operationRef,
-            @Nullable BlockFillTypeV2 fillType) {
+            @Nonnull OperationTypeV2.OperationRef operationRef) {
         
-        OperationBuilder builder = addOperation(id, shape, operationRef.getType(), fillType);
+        OperationBuilder builder = addOperation(id, shape, operationRef.getType());
         builder.referenceId = operationRef.getReferenceId();
         return builder;
     }
@@ -106,16 +104,21 @@ public class ShapeCompositorV2 {
         private final String id;
         private final Shape shape;
         private final OperationTypeV2 type;
-        private final BlockFillTypeV2 fillType;
+        private BlockFillTypeV2 fillType;
         private String referenceId;
         private TransformFlags transformFlags;
         private DebugStyle debugStyle;
         
-        private OperationBuilder(String id, Shape shape, OperationTypeV2 type, BlockFillTypeV2 fillType) {
+        private OperationBuilder(String id, Shape shape, OperationTypeV2 type) {
             this.id = id;
             this.shape = shape;
             this.type = type;
+        }
+
+        @Nonnull
+        public OperationBuilder withFill(@Nonnull BlockFillTypeV2 fillType) {
             this.fillType = fillType;
+            return this;
         }
         
         @Nonnull

@@ -24,10 +24,10 @@ class ShapeCompositorV2OperationTest {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
-        comp.addOperation("base", box, OperationTypeV2.DEFINE, new EmptyBlockFillV2()).build();
+        comp.addOperation("base", box, OperationTypeV2.DEFINE).withFill(new EmptyBlockFillV2()).build();
 
         ShapeOperationV2 op = comp.addOperation("sub", box,
-                OperationTypeV2.Subtract("base"), null).build();
+                OperationTypeV2.Subtract("base")).build();
 
         assertEquals(OperationTypeV2.SUBTRACT, op.getType());
         assertEquals("base", op.getReferenceId());
@@ -38,10 +38,10 @@ class ShapeCompositorV2OperationTest {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
-        comp.addOperation("base", box, OperationTypeV2.DEFINE, new EmptyBlockFillV2()).build();
+        comp.addOperation("base", box, OperationTypeV2.DEFINE).withFill(new EmptyBlockFillV2()).build();
 
         ShapeOperationV2 op = comp.addOperation("fill", box,
-                OperationTypeV2.Fill("base"), new EmptyBlockFillV2()).build();
+                OperationTypeV2.Fill("base")).withFill(new EmptyBlockFillV2()).build();
 
         assertEquals(OperationTypeV2.FILL, op.getType());
         assertEquals("base", op.getReferenceId());
@@ -52,10 +52,10 @@ class ShapeCompositorV2OperationTest {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
-        comp.addOperation("base", box, OperationTypeV2.DEFINE, new EmptyBlockFillV2()).build();
+        comp.addOperation("base", box, OperationTypeV2.DEFINE).withFill(new EmptyBlockFillV2()).build();
 
         ShapeOperationV2 op = comp.addOperation("cut", box,
-                OperationTypeV2.Cut("base"), null).build();
+                OperationTypeV2.Cut("base")).build();
 
         assertEquals(OperationTypeV2.CUT, op.getType());
         assertEquals("base", op.getReferenceId());
@@ -66,10 +66,10 @@ class ShapeCompositorV2OperationTest {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
-        comp.addOperation("base", box, OperationTypeV2.DEFINE, new EmptyBlockFillV2()).build();
+        comp.addOperation("base", box, OperationTypeV2.DEFINE).withFill(new EmptyBlockFillV2()).build();
 
         ShapeOperationV2 op = comp.addOperation("inter", box,
-                OperationTypeV2.Intersect("base"), new EmptyBlockFillV2()).build();
+                OperationTypeV2.Intersect("base")).withFill(new EmptyBlockFillV2()).build();
 
         assertEquals(OperationTypeV2.INTERSECT, op.getType());
         assertEquals("base", op.getReferenceId());
@@ -80,10 +80,10 @@ class ShapeCompositorV2OperationTest {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
-        comp.addOperation("base", box, OperationTypeV2.DEFINE, new EmptyBlockFillV2()).build();
+        comp.addOperation("base", box, OperationTypeV2.DEFINE).withFill(new EmptyBlockFillV2()).build();
 
         ShapeOperationV2 op = comp.addOperation("excl", box,
-                OperationTypeV2.Exclude("base"), null).build();
+                OperationTypeV2.Exclude("base")).build();
 
         assertEquals(OperationTypeV2.EXCLUDE, op.getType());
         assertEquals("base", op.getReferenceId());
@@ -94,10 +94,10 @@ class ShapeCompositorV2OperationTest {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
-        comp.addOperation("base", box, OperationTypeV2.DEFINE, new EmptyBlockFillV2()).build();
+        comp.addOperation("base", box, OperationTypeV2.DEFINE).withFill(new EmptyBlockFillV2()).build();
 
         ShapeOperationV2 op = comp.addOperation("fillrem", null,
-                OperationTypeV2.FillRemaining("base"), new EmptyBlockFillV2()).build();
+                OperationTypeV2.FillRemaining("base")).withFill(new EmptyBlockFillV2()).build();
 
         assertEquals(OperationTypeV2.FILL_REMAINING, op.getType());
         assertEquals("base", op.getReferenceId());
@@ -110,7 +110,7 @@ class ShapeCompositorV2OperationTest {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
-        ShapeOperationV2 op = comp.addOperation("mask", box, OperationTypeV2.DEFINE, null).build();
+        ShapeOperationV2 op = comp.addOperation("mask", box, OperationTypeV2.DEFINE).build();
 
         assertEquals(OperationTypeV2.DEFINE, op.getType());
         assertNull(op.getFillType());
@@ -121,7 +121,7 @@ class ShapeCompositorV2OperationTest {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
-        comp.addOperation("mask", box, OperationTypeV2.DEFINE, null).build();
+        comp.addOperation("mask", box, OperationTypeV2.DEFINE).build();
 
         List<ShapeOperationV2> timeline = comp.getTimeline();
         assertEquals(1, timeline.size());
@@ -134,9 +134,9 @@ class ShapeCompositorV2OperationTest {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
-        comp.addOperation("mask", box, OperationTypeV2.DEFINE, null).build();
+        comp.addOperation("mask", box, OperationTypeV2.DEFINE).build();
         ShapeOperationV2 sub = comp.addOperation("sub", box,
-                OperationTypeV2.Subtract("mask"), null).build();
+                OperationTypeV2.Subtract("mask")).build();
 
         assertEquals("mask", sub.getReferenceId());
     }
@@ -148,9 +148,9 @@ class ShapeCompositorV2OperationTest {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
-        comp.addOperation("define", box, OperationTypeV2.DEFINE, new EmptyBlockFillV2()).build();
-        comp.addOperation("subtract", box, OperationTypeV2.Subtract("define"), null).build();
-        comp.addOperation("exclude", box, OperationTypeV2.Exclude("define"), null).build();
+        comp.addOperation("define", box, OperationTypeV2.DEFINE).withFill(new EmptyBlockFillV2()).build();
+        comp.addOperation("subtract", box, OperationTypeV2.Subtract("define")).build();
+        comp.addOperation("exclude", box, OperationTypeV2.Exclude("define")).build();
 
         List<ShapeOperationV2> timeline = comp.getTimeline();
         assertEquals(3, timeline.size());
@@ -167,10 +167,10 @@ class ShapeCompositorV2OperationTest {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
-        comp.addOperation("op1", box, OperationTypeV2.DEFINE, new EmptyBlockFillV2()).build();
+        comp.addOperation("op1", box, OperationTypeV2.DEFINE).withFill(new EmptyBlockFillV2()).build();
 
         assertThrows(IllegalArgumentException.class, () ->
-                comp.addOperation("op1", box, OperationTypeV2.DEFINE, new EmptyBlockFillV2()));
+                comp.addOperation("op1", box, OperationTypeV2.DEFINE));
     }
 
     @Test
@@ -179,7 +179,7 @@ class ShapeCompositorV2OperationTest {
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
         assertThrows(IllegalArgumentException.class, () ->
-                comp.addOperation("sub", box, OperationTypeV2.SUBTRACT, null).build());
+                comp.addOperation("sub", box, OperationTypeV2.SUBTRACT).build());
     }
 
     @Test
@@ -189,7 +189,7 @@ class ShapeCompositorV2OperationTest {
 
         assertThrows(IllegalArgumentException.class, () ->
                 comp.addOperation("fill", box,
-                        OperationTypeV2.Fill("base"), null).build());
+                        OperationTypeV2.Fill("base")).build());
     }
 
     @Test
@@ -197,9 +197,9 @@ class ShapeCompositorV2OperationTest {
         ShapeCompositorV2 comp = createCompositor();
         Box box = new Box(-1, -1, -1, 1, 1, 1);
 
-        comp.addOperation("base", box, OperationTypeV2.DEFINE, new EmptyBlockFillV2()).build();
+        comp.addOperation("base", box, OperationTypeV2.DEFINE).withFill(new EmptyBlockFillV2()).build();
 
         assertThrows(IllegalArgumentException.class, () ->
-                comp.addOperation("base", box, OperationTypeV2.Subtract("base"), null));
+                comp.addOperation("base", box, OperationTypeV2.Subtract("base")));
     }
 }
