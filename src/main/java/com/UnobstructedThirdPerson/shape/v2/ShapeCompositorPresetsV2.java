@@ -65,12 +65,13 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 outerCone,
                                 OperationTypeV2.DEFINE)
                                 .withFill(new EmptyBlockFillV2())
-                                .withDebugBoundingBox(DebugUtils.COLOR_WHITE, DebugShape.Cone)
+                                .withShadowCubes(DebugUtils.COLOR_BLACK)
+                                // .withDebugBoundingShape(DebugUtils.COLOR_WHITE, DebugShape.Cone)
                                 .build();
                 // #endregion
                 // #region InnerViewBox
                 String innerViewBoxId = idTracker++ + "";
-                double innerViewBoxXScale = 0.75;
+                double innerViewBoxXScale = 1;
                 Shape innerViewBoxShape = new TransformedShape(
                                 new Box(-innerViewBoxXScale, 0, -_scale, innerViewBoxXScale, 2, 0),
                                 -0.25, 1, 0,
@@ -79,22 +80,24 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 innerViewBoxShape,
                                 OperationTypeV2.Cut(outerConeId))
                                 .withFill(new EmptyBlockFillV2())
-                                .withDebugCube(DebugUtils.COLOR_CYAN)
+                                // .withShadowCubes(DebugUtils.COLOR_CYAN)
+                                // .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cube)
                                 .build();
                 // #endregion
                 // #region SideViewBox
-                String SideViewBoxId = idTracker++ + "";
-                Shape sideViewBox = new TransformedShape(
-                                new Box(-2, 0, -1, 2, 1, 0),
-                                xOffset, 1, -1,
-                                yawRadianOffset, 0, 0);
-                this.addOperation(SideViewBoxId,
-                                sideViewBox,
-                                OperationTypeV2.DEFINE)
-                                .withFill(new EmptyBlockFillV2())
-                                .withDebugCube(DebugUtils.COLOR_PURPLE)
-                                .withTransformFlags(_ignorePitch)
-                                .build();
+                // String SideViewBoxId = idTracker++ + "";
+                // Shape sideViewBox = new TransformedShape(
+                //                 new Box(-2, 0, -1, 2, 1, 0),
+                //                 xOffset, 1, -1,
+                //                 yawRadianOffset, 0, 0);
+                // this.addOperation(SideViewBoxId,
+                //                 sideViewBox,
+                //                 OperationTypeV2.DEFINE)
+                //                 .withFill(new EmptyBlockFillV2())
+                //                 .withShadowCubes(DebugUtils.COLOR_PURPLE)
+                //                 // .withDebugBoundingShape(DebugUtils.COLOR_PURPLE, DebugShape.Cube)
+                //                 .withTransformFlags(_ignorePitch)
+                //                 .build();
                 // #endregion
                 // #region PlayerFacingWall
                 String ignorePlayerFacingWallId = idTracker++ + "";
@@ -107,13 +110,14 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 OperationTypeV2.EXCLUDE)
                                 .withFill(new EmptyBlockFillV2())
                                 .withTransformFlags(_ignorePitch)
-                                .withDebugCube(DebugUtils.COLOR_LIME)
+                                // .withShadowCubes(DebugUtils.COLOR_LIME)
+                                // .withDebugBoundingShape(DebugUtils.COLOR_LIME, DebugShape.Cube)
                                 .build();
                 // #endregion
                 // #region PlayerFacingWallPlus
                 String ignorePlayerFacingWallPlusId = idTracker++ + "";
                 Shape ignorePlayerFacingWallPlus = new TransformedShape(
-                                new Box(-_scale, 0, 0.5, _scale, _scale, _scale),
+                                new Box(-_scale, 2, 0.5, _scale, _scale, _scale),
                                 0, 0, 0,
                                 yawRadianOffset, 0, 0);
                 this.addOperation(ignorePlayerFacingWallPlusId,
@@ -121,13 +125,14 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 OperationTypeV2.EXCLUDE)
                                 .withFill(new EmptyBlockFillV2())
                                 .withTransformFlags(_ignorePitch)
-                                .withDebugCube(DebugUtils.COLOR_LIME)
+                                // .withShadowCubes(DebugUtils.COLOR_GREEN)
+                                // .withDebugBoundingShape(DebugUtils.COLOR_GREEN, DebugShape.Cube)
                                 .build();
                 // #endregion
                 // #region PlayerFeetBox
                 String IgnorePlayerFeetId = idTracker++ + "";
                 Shape IgnoredPlayerFeetBox = new TransformedShape(
-                                new Box(-_scale, -1, -_scale, _scale, 1, _scale),
+                                new Box(-_scale, -_scale, -_scale, _scale, 1, _scale),
                                 0, 0, 0,
                                 yawRadianOffset, 0, 0);
                 this.addOperation(IgnorePlayerFeetId,
@@ -135,14 +140,16 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 OperationTypeV2.EXCLUDE)
                                 .withFill(new EmptyBlockFillV2())
                                 .withTransformFlags(_ignorePitch)
-                                .withDebugCube(DebugUtils.COLOR_RED)
+                                // .withShadowCubes(DebugUtils.COLOR_RED)
+                                // .withDebugBoundingShape(DebugUtils.COLOR_RED, DebugShape.Cube)
                                 .build();
                 // #endregion
                 // #region IgnorePitch UNION (sideViewBox + all ignorePitch EXCLUDE boxes)
                 String ignorePitchUnionId = idTracker++ + "";
                 this.addOperation(ignorePitchUnionId,
                                 null,
-                                OperationTypeV2.Union(SideViewBoxId,
+                                OperationTypeV2.Union(
+                                        // SideViewBoxId,
                                         ignorePlayerFacingWallId,
                                         ignorePlayerFacingWallPlusId,
                                         IgnorePlayerFeetId))
@@ -163,7 +170,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 cone,
                                 OperationTypeV2.DEFINE)
                                 .withFill(new EmptyBlockFillV2())
-                                .withDebugCube(DebugUtils.COLOR_GRAY)
+                                .withShadowCubes(DebugUtils.COLOR_GRAY)
                                 .build();
 
                 this.addOperation(idTracker++ + "",

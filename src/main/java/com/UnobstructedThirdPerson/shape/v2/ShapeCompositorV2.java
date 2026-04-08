@@ -150,7 +150,7 @@ public class ShapeCompositorV2 {
         }
 
         @Nonnull
-        public OperationBuilder withDebugCube(@Nonnull Vector3f color) {
+        public OperationBuilder withShadowCubes(@Nonnull Vector3f color) {
             this.debugStyle = new DebugStyle(true, color, 0.05f, DebugVisualization.CUBE);
             return this;
         }
@@ -180,7 +180,7 @@ public class ShapeCompositorV2 {
         }
 
         @Nonnull
-        public OperationBuilder withDebugBoundingBox(@Nonnull Vector3f color, @Nonnull DebugShape shape) {
+        public OperationBuilder withDebugBoundingShape(@Nonnull Vector3f color, @Nonnull DebugShape shape) {
             this.debugStyle = new DebugStyle(true, color, 0.15f, DebugVisualization.BOUNDING_BOX, shape);
             return this;
         }
