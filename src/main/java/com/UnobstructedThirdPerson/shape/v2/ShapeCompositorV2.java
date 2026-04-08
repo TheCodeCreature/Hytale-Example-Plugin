@@ -301,110 +301,133 @@ public class ShapeCompositorV2 {
             
             double dynYaw = flags.shouldApplyYaw() ? yawRotation : 0.0;
             double dynPitch = flags.shouldApplyPitch() ? pitchRotation : 0.0;
+            
+            // Inverse rotation trig (negate angles for world→local mapping)
+            double cosInvY = Math.cos(-dynYaw);
+            double sinInvY = Math.sin(-dynYaw);
+            double cosInvP = Math.cos(-dynPitch);
+            double sinInvP = Math.sin(-dynPitch);
+            // Forward rotation trig (for computing world-space AABB)
             double cosY = Math.cos(dynYaw);
             double sinY = Math.sin(dynYaw);
             double cosP = Math.cos(dynPitch);
             double sinP = Math.sin(dynPitch);
             
             long[] localPositions = composite.getLocalPositions();
-            BlockFillTypeV2[] fills = composite.getFills();
-            String[] originIds = composite.getOriginIds();
-            DebugStyle[] debugStyles = composite.getDebugStyles();
+            
+            // Compute world-space AABB by forward-rotating all local positions
+            int wMinX = Integer.MAX_VALUE, wMinY = Integer.MAX_VALUE, wMinZ = Integer.MAX_VALUE;
+            int wMaxX = Integer.MIN_VALUE, wMaxY = Integer.MIN_VALUE, wMaxZ = Integer.MIN_VALUE;
+            for (long basePos : localPositions) {
+                double cx = BlockUtil.unpackX(basePos) + 0.5;
+                double cy = BlockUtil.unpackY(basePos) + 0.5;
+                double cz = BlockUtil.unpackZ(basePos) + 0.5;
+                double py = cy * cosP + cz * sinP;
+                double pz = -cy * sinP + cz * cosP;
+                double rx = cx * cosY - pz * sinY;
+                double rz = cx * sinY + pz * cosY;
+                int wx = (int) Math.floor(rx + operationAnchor.x);
+                int wy = (int) Math.floor(py + operationAnchor.y);
+                int wz = (int) Math.floor(rz + operationAnchor.z);
+                if (wx < wMinX) wMinX = wx; if (wx > wMaxX) wMaxX = wx;
+                if (wy < wMinY) wMinY = wy; if (wy > wMaxY) wMaxY = wy;
+                if (wz < wMinZ) wMinZ = wz; if (wz > wMaxZ) wMaxZ = wz;
+            }
+            // Also include excluded positions in AABB
+            for (long basePos : composite.getExcludedPositions()) {
+                double cx = BlockUtil.unpackX(basePos) + 0.5;
+                double cy = BlockUtil.unpackY(basePos) + 0.5;
+                double cz = BlockUtil.unpackZ(basePos) + 0.5;
+                double py = cy * cosP + cz * sinP;
+                double pz = -cy * sinP + cz * cosP;
+                double rx = cx * cosY - pz * sinY;
+                double rz = cx * sinY + pz * cosY;
+                int wx = (int) Math.floor(rx + operationAnchor.x);
+                int wy = (int) Math.floor(py + operationAnchor.y);
+                int wz = (int) Math.floor(rz + operationAnchor.z);
+                if (wx < wMinX) wMinX = wx; if (wx > wMaxX) wMaxX = wx;
+                if (wy < wMinY) wMinY = wy; if (wy > wMaxY) wMaxY = wy;
+                if (wz < wMinZ) wMinZ = wz; if (wz > wMaxZ) wMaxZ = wz;
+            }
+            
+            if (wMinX > wMaxX) continue; // empty composite
+            
+            // Expand AABB by 1 to catch boundary rounding
+            wMinX--; wMinY--; wMinZ--;
+            wMaxX++; wMaxY++; wMaxZ++;
             
             Set<Long> opPositions = new HashSet<>();
             
-            for (int i = 0; i < composite.size(); i++) {
-                long basePos = localPositions[i];
-                double cx = BlockUtil.unpackX(basePos) + 0.5;
-                double cy = BlockUtil.unpackY(basePos) + 0.5;
-                double cz = BlockUtil.unpackZ(basePos) + 0.5;
-                
-                // Apply pitch rotation (around X axis)
-                double py = cy * cosP + cz * sinP;
-                double pz = -cy * sinP + cz * cosP;
-                if (dynPitch != 0.0) {
-                    py += PITCH_PIVOT_EYE_HEIGHT;
-                }
-                
-                // Apply yaw rotation (around Y axis)
-                double rx = cx * cosY - pz * sinY;
-                double rz = cx * sinY + pz * cosY;
-                
-                int x = (int) Math.floor(rx + operationAnchor.x);
-                int y = (int) Math.floor(py + operationAnchor.y);
-                int z = (int) Math.floor(rz + operationAnchor.z);
-                long pos = BlockUtil.packUnchecked(x, y, z);
-                
-                if (type == OperationTypeV2.EXCLUDE) {
-                    excludedWorldPositions.add(pos);
-                    opPositions.add(pos);
-                    continue;
-                }
-                
-                // Non-air check for WRITE actions
-                if (type.isRequireNonAir()) {
-                    VoxelEntry existing = voxelMap.get(pos);
-                    BlockSnapshot snapshot = (existing != null) ? existing.getOriginal() : null;
-                    if (snapshot == null || snapshot.blockId() == 0) {
-                        snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
+            // Iterate world-space AABB, inverse-rotate to find local position
+            for (int wx = wMinX; wx <= wMaxX; wx++) {
+                for (int wy = wMinY; wy <= wMaxY; wy++) {
+                    for (int wz = wMinZ; wz <= wMaxZ; wz++) {
+                        double worldCx = wx + 0.5 - operationAnchor.x;
+                        double worldCy = wy + 0.5 - operationAnchor.y;
+                        double worldCz = wz + 0.5 - operationAnchor.z;
+                        
+                        // Inverse yaw (around Y axis)
+                        double ix = worldCx * cosInvY - worldCz * sinInvY;
+                        double iz = worldCx * sinInvY + worldCz * cosInvY;
+                        
+                        // Inverse pitch (around X axis)
+                        double iy = worldCy * cosInvP + iz * sinInvP;
+                        iz = -worldCy * sinInvP + iz * cosInvP;
+                        
+                        int localX = (int) Math.floor(ix);
+                        int localY = (int) Math.floor(iy);
+                        int localZ = (int) Math.floor(iz);
+                        long localPos = BlockUtil.packUnchecked(localX, localY, localZ);
+                        long pos = BlockUtil.packUnchecked(wx, wy, wz);
+                        
+                        // Check excluded first
+                        if (composite.containsExcluded(localPos)) {
+                            excludedWorldPositions.add(pos);
+                            opPositions.add(pos);
+                            continue;
+                        }
+                        
+                        int idx = composite.indexOf(localPos);
+                        if (idx < 0) continue;
+                        
+                        if (type == OperationTypeV2.EXCLUDE) {
+                            excludedWorldPositions.add(pos);
+                            opPositions.add(pos);
+                            continue;
+                        }
+                        
+                        // Non-air check for WRITE actions
+                        if (type.isRequireNonAir()) {
+                            VoxelEntry existing = voxelMap.get(pos);
+                            BlockSnapshot snapshot = (existing != null) ? existing.getOriginal() : null;
+                            if (snapshot == null || snapshot.blockId() == 0) {
+                                snapshot = TransparentBlockUtils.readBlock(chunkStore, wx, wy, wz);
+                            }
+                            if (snapshot == null || snapshot.blockId() == 0) {
+                                continue;
+                            }
+                        }
+                        
+                        VoxelEntry entry = voxelMap.computeIfAbsent(pos, k -> new VoxelEntry());
+                        opPositions.add(pos);
+                        
+                        if (entry.getOriginal() == null) {
+                            BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, wx, wy, wz);
+                            if (snapshot != null) {
+                                entry.setOriginal(snapshot);
+                            }
+                        }
+                        
+                        BlockFillTypeV2 fill = composite.getFill(idx);
+                        if (fill != null) {
+                            entry.write(null, fill, composite.getOriginId(idx), composite.getDebugStyle(idx));
+                        }
+                        
+                        String originId = composite.getOriginId(idx);
+                        if (originId != null) {
+                            operationRegions.computeIfAbsent(originId, k -> new HashSet<>()).add(pos);
+                        }
                     }
-                    if (snapshot == null || snapshot.blockId() == 0) {
-                        continue;
-                    }
-                }
-                
-                VoxelEntry entry = voxelMap.computeIfAbsent(pos, k -> new VoxelEntry());
-                opPositions.add(pos);
-                
-                if (entry.getOriginal() == null) {
-                    BlockSnapshot snapshot = TransparentBlockUtils.readBlock(chunkStore, x, y, z);
-                    if (snapshot != null) {
-                        entry.setOriginal(snapshot);
-                    }
-                }
-                
-                BlockFillTypeV2 fill = fills[i];
-                if (fill != null) {
-                    entry.write(null, fill, originIds[i], debugStyles[i]);
-                }
-                
-                // Track per original operation
-                String originId = originIds[i];
-                if (originId != null) {
-                    operationRegions.computeIfAbsent(originId, k -> new HashSet<>()).add(pos);
-                }
-            }
-            
-            // Process excluded points embedded in composite (from UNION'd EXCLUDE refs)
-            long[] excludedLocalPositions = composite.getExcludedPositions();
-            String[] excludedOriginIds = composite.getExcludedOriginIds();
-            
-            for (int i = 0; i < composite.excludedSize(); i++) {
-                long basePos = excludedLocalPositions[i];
-                double cx = BlockUtil.unpackX(basePos) + 0.5;
-                double cy = BlockUtil.unpackY(basePos) + 0.5;
-                double cz = BlockUtil.unpackZ(basePos) + 0.5;
-                
-                double py = cy * cosP + cz * sinP;
-                double pz = -cy * sinP + cz * cosP;
-                if (dynPitch != 0.0) {
-                    py += PITCH_PIVOT_EYE_HEIGHT;
-                }
-                
-                double rx = cx * cosY - pz * sinY;
-                double rz = cx * sinY + pz * cosY;
-                
-                int x = (int) Math.floor(rx + operationAnchor.x);
-                int y = (int) Math.floor(py + operationAnchor.y);
-                int z = (int) Math.floor(rz + operationAnchor.z);
-                long pos = BlockUtil.packUnchecked(x, y, z);
-                
-                excludedWorldPositions.add(pos);
-                opPositions.add(pos);
-                
-                String originId = excludedOriginIds[i];
-                if (originId != null) {
-                    operationRegions.computeIfAbsent(originId, k -> new HashSet<>()).add(pos);
                 }
             }
             
@@ -508,8 +531,10 @@ public class ShapeCompositorV2 {
             // Align Z-up geometry (CircularCone) to Y-up engine debug shapes (Cone, Cylinder)
             if (cfg.debugShape == DebugShape.Cone || cfg.debugShape == DebugShape.Cylinder) {
                 matrix.rotateEuler(-Math.PI / 2, 0, 0, tmp);
+                matrix.scale(cfg.extentX, cfg.extentZ, cfg.extentY);
+            } else {
+                matrix.scale(cfg.extentX, cfg.extentY, cfg.extentZ);
             }
-            matrix.scale(cfg.extentX, cfg.extentY, cfg.extentZ);
             
             boundingShapes.add(new BoundingShapeDebug(matrix, cfg.debugShape, cfg.color, cfg.opacity));
         }

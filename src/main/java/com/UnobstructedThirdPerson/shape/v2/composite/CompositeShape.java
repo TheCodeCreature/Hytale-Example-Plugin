@@ -24,6 +24,8 @@ public class CompositeShape {
     private final long[] excludedPositions;
     private final String[] excludedOriginIds;
     private final DebugStyle[] excludedDebugStyles;
+    private final Map<Long, Integer> positionIndex;
+    private final Set<Long> excludedPositionSet;
     
     private CompositeShape(long[] localPositions, BlockFillTypeV2[] fills,
                            String[] originIds, DebugStyle[] debugStyles,
@@ -36,6 +38,15 @@ public class CompositeShape {
         this.excludedPositions = excludedPositions;
         this.excludedOriginIds = excludedOriginIds;
         this.excludedDebugStyles = excludedDebugStyles;
+        
+        this.positionIndex = new HashMap<>(localPositions.length * 2);
+        for (int i = 0; i < localPositions.length; i++) {
+            positionIndex.put(localPositions[i], i);
+        }
+        this.excludedPositionSet = new HashSet<>(excludedPositions.length * 2);
+        for (long pos : excludedPositions) {
+            excludedPositionSet.add(pos);
+        }
     }
     
     public int size() {
@@ -98,6 +109,15 @@ public class CompositeShape {
     @Nonnull
     public DebugStyle getDebugStyle(int index) {
         return debugStyles[index];
+    }
+    
+    public int indexOf(long packedPos) {
+        Integer idx = positionIndex.get(packedPos);
+        return idx != null ? idx : -1;
+    }
+    
+    public boolean containsExcluded(long packedPos) {
+        return excludedPositionSet.contains(packedPos);
     }
     
     @Nonnull

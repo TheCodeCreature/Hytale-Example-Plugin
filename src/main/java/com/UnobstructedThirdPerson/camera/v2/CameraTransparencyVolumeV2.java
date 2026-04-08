@@ -7,6 +7,7 @@ import com.UnobstructedThirdPerson.shape.v2.ComposedRegionV2;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorV2;
 import com.UnobstructedThirdPerson.shape.v2.VoxelEntry;
 import com.UnobstructedThirdPerson.shape.v2.fill.PlaceholderFillV2;
+import com.UnobstructedThirdPerson.shape.v2.visual.BoundingShapeDebug;
 import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
 import com.UnobstructedThirdPerson.shape.v2.visual.DebugVisualization;
 import com.UnobstructedThirdPerson.shape.v1.placeholder.PlaceholderTransparencyUtil;
@@ -48,6 +49,7 @@ public class CameraTransparencyVolumeV2 {
     private final Map<Long, BlockSnapshot> activeBlocks = new HashMap<>();
     private final Map<Long, Integer> activeBlockIds = new HashMap<>();
     private Map<Long, DebugStyle> lastRenderedDebugStyles = new HashMap<>();
+    private List<BoundingShapeDebug> lastBoundingShapes = List.of();
     private Vector3d lastAnchor = null;
     private double lastYaw = Double.NaN;
     private double lastPitch = Double.NaN;
@@ -275,10 +277,12 @@ public class CameraTransparencyVolumeV2 {
         DebugCube.renderBoundingShapes(world, region.getBoundingShapes());
         
         lastRenderedDebugStyles = perVoxelStyles;
+        lastBoundingShapes = region.getBoundingShapes();
     }
 
     private void renderCachedDebugCubes() {
         DebugCube.renderCachedDebugCubes(world);
+        DebugCube.renderBoundingShapes(world, lastBoundingShapes);
     }
 
     private int restorePositions(@Nonnull Collection<Long> positionsToRestore) {
