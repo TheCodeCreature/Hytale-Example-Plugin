@@ -8,6 +8,7 @@ import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorV2;
 import com.UnobstructedThirdPerson.shape.v2.VoxelEntry;
 import com.UnobstructedThirdPerson.shape.v2.fill.PlaceholderFillV2;
 import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
+import com.UnobstructedThirdPerson.shape.v2.visual.DebugVisualization;
 import com.UnobstructedThirdPerson.shape.v1.placeholder.PlaceholderTransparencyUtil;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -249,24 +250,31 @@ public class CameraTransparencyVolumeV2 {
     }
 
     private void renderDebugCubesFromRegion(@Nonnull ComposedRegionV2 region) {
-        Map<Long, DebugStyle> newDebugStyles = new HashMap<>();
+        Map<Long, DebugStyle> perVoxelStyles = new HashMap<>();
         
-        // Collect debug styles from ALL voxels in the region (not just those with fills)
+        // Collect debug styles from voxels (skip BOUNDING_BOX — handled via pre-computed entries)
         for (Map.Entry<Long, VoxelEntry> entry : region.getVoxelMap().entrySet()) {
             VoxelEntry voxel = entry.getValue();
             if (voxel.isExcluded()) {
                 continue;
             }
             DebugStyle style = voxel.getDebugStyle();
-            if (style.isEnabled() && style.getColor() != null) {
-                newDebugStyles.put(entry.getKey(), style);
+            if (!style.isEnabled() || style.getColor() == null) {
+                continue;
             }
+            if (style.getVisualization() == DebugVisualization.BOUNDING_BOX) {
+                continue;
+            }
+            perVoxelStyles.put(entry.getKey(), style);
         }
         
-        // Differentially update: stale cubes expire naturally, active cubes get refreshed
-        DebugCube.updateDebugCubes(world, newDebugStyles);
+        // Differentially update per-voxel shapes (cubes and vector points)
+        DebugCube.updateDebugCubes(world, perVoxelStyles);
         
-        lastRenderedDebugStyles = newDebugStyles;
+        // Render bounding shapes with full transforms (recomputed each frame)
+        DebugCube.renderBoundingShapes(world, region.getBoundingShapes());
+        
+        lastRenderedDebugStyles = perVoxelStyles;
     }
 
     private void renderCachedDebugCubes() {

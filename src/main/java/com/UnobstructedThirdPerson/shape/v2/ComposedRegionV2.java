@@ -3,6 +3,7 @@ package com.UnobstructedThirdPerson.shape.v2;
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.UnobstructedThirdPerson.shape.v2.fill.BlockFillTypeV2;
 import com.UnobstructedThirdPerson.shape.v2.operation.ShapeOperationV2;
+import com.UnobstructedThirdPerson.shape.v2.visual.BoundingShapeDebug;
 import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
@@ -19,17 +20,20 @@ public class ComposedRegionV2 {
     private final Map<Long, Integer> computedBlockIds;
     private final Map<String, Set<Long>> operationRegions;
     private final List<ShapeOperationV2> timeline;
+    private final List<BoundingShapeDebug> boundingShapes;
     
     public ComposedRegionV2(
             @Nonnull Vector3d anchor,
             @Nonnull Map<Long, VoxelEntry> voxelMap,
             @Nonnull Map<Long, Integer> computedBlockIds,
             @Nonnull Map<String, Set<Long>> operationRegions,
-            @Nonnull List<ShapeOperationV2> timeline) {
+            @Nonnull List<ShapeOperationV2> timeline,
+            @Nonnull List<BoundingShapeDebug> boundingShapes) {
         this.anchor = anchor;
         this.computedBlockIds = new HashMap<>(computedBlockIds);
         this.operationRegions = new HashMap<>(operationRegions);
         this.timeline = new ArrayList<>(timeline);
+        this.boundingShapes = new ArrayList<>(boundingShapes);
         
         // Defensive copy of voxel entries
         this.voxelMap = new HashMap<>();
@@ -121,6 +125,11 @@ public class ComposedRegionV2 {
     @Nonnull
     public List<ShapeOperationV2> getTimeline() {
         return Collections.unmodifiableList(timeline);
+    }
+    
+    @Nonnull
+    public List<BoundingShapeDebug> getBoundingShapes() {
+        return Collections.unmodifiableList(boundingShapes);
     }
     
     public int getTotalBlockCount() {

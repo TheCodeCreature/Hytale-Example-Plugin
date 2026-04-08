@@ -2,6 +2,7 @@ package com.UnobstructedThirdPerson.shape.v2;
 
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.UnobstructedThirdPerson.shape.TransformFlags;
+import com.UnobstructedThirdPerson.shape.TransformedShape;
 import com.UnobstructedThirdPerson.shape.v1.placeholder.TransparentBlockUtils;
 import com.UnobstructedThirdPerson.shape.v2.composite.CompositeShape;
 import com.UnobstructedThirdPerson.shape.v2.fill.BlockFillTypeV2;
@@ -9,11 +10,15 @@ import com.UnobstructedThirdPerson.shape.v2.fill.EmptyBlockFillV2;
 import com.UnobstructedThirdPerson.shape.v2.operation.OperationTypeV2;
 import com.UnobstructedThirdPerson.shape.v2.operation.ShapeOperationV2;
 import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
+import com.UnobstructedThirdPerson.shape.v2.visual.DebugVisualization;
+import com.UnobstructedThirdPerson.shape.v2.visual.BoundingShapeDebug;
 import com.hypixel.hytale.math.block.BlockUtil;
+import com.hypixel.hytale.math.matrix.Matrix4d;
 import com.hypixel.hytale.math.shape.Shape;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
+import com.hypixel.hytale.protocol.DebugShape;
 import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nonnull;
@@ -36,7 +41,15 @@ public class ShapeCompositorV2 {
     private final Map<String, CompositeShape> compositeShapes = new HashMap<>();
     private final Set<String> unionConsumedOps = new HashSet<>();
     private final List<ShapeOperationV2> deferredOps = new ArrayList<>();
+    private final Map<String, BoundingShapeConfig> boundingShapeConfigs = new HashMap<>();
     private boolean shapeCacheDirty = true;
+    
+    private record BoundingShapeConfig(
+            double centerX, double centerY, double centerZ,
+            double extentX, double extentY, double extentZ,
+            double offsetX, double offsetY, double offsetZ,
+            double localPitch, double localYaw, double localRoll,
+            DebugShape debugShape, Vector3f color, float opacity) {}
     
     public ShapeCompositorV2(@Nonnull Vector3d offset) {
         this.offset = offset;
@@ -131,14 +144,44 @@ public class ShapeCompositorV2 {
         }
         
         @Nonnull
-        public OperationBuilder withDebugStyle(@Nonnull DebugStyle debugStyle) {
-            this.debugStyle = debugStyle;
+        public OperationBuilder withDebugCube(@Nonnull DebugStyle debugStyle) {
+            this.debugStyle = debugStyle.withVisualization(DebugVisualization.CUBE);
             return this;
         }
 
         @Nonnull
-        public OperationBuilder withDebugColor(@Nonnull Vector3f color) {
-            this.debugStyle = new DebugStyle(color);
+        public OperationBuilder withDebugCube(@Nonnull Vector3f color) {
+            this.debugStyle = new DebugStyle(true, color, 0.05f, DebugVisualization.CUBE);
+            return this;
+        }
+        
+        @Nonnull
+        public OperationBuilder withDebugVectorPoints(@Nonnull DebugStyle debugStyle) {
+            this.debugStyle = debugStyle.withVisualization(DebugVisualization.VECTOR_POINTS);
+            return this;
+        }
+
+        @Nonnull
+        public OperationBuilder withDebugVectorPoints(@Nonnull Vector3f color) {
+            this.debugStyle = new DebugStyle(true, color, 0.5f, DebugVisualization.VECTOR_POINTS);
+            return this;
+        }
+        
+        @Nonnull
+        public OperationBuilder withDebugBoundingBox(@Nonnull DebugStyle debugStyle) {
+            this.debugStyle = debugStyle.withVisualization(DebugVisualization.BOUNDING_BOX);
+            return this;
+        }
+
+        @Nonnull
+        public OperationBuilder withDebugBoundingBox(@Nonnull Vector3f color) {
+            this.debugStyle = new DebugStyle(true, color, 0.15f, DebugVisualization.BOUNDING_BOX);
+            return this;
+        }
+
+        @Nonnull
+        public OperationBuilder withDebugBoundingBox(@Nonnull Vector3f color, @Nonnull DebugShape shape) {
+            this.debugStyle = new DebugStyle(true, color, 0.15f, DebugVisualization.BOUNDING_BOX, shape);
             return this;
         }
         
@@ -440,7 +483,39 @@ public class ShapeCompositorV2 {
             }
         }
         
-        return new ComposedRegionV2(effectiveAnchor, voxelMap, computedBlockIds, operationRegions, timeline);
+        // Phase 5: Build bounding shape debug entries with full transforms
+        List<BoundingShapeDebug> boundingShapes = new ArrayList<>();
+        Matrix4d tmp = new Matrix4d();
+        for (Map.Entry<String, BoundingShapeConfig> cfgEntry : boundingShapeConfigs.entrySet()) {
+            String opId = cfgEntry.getKey();
+            BoundingShapeConfig cfg = cfgEntry.getValue();
+            
+            ShapeOperationV2 op = operations.get(opId);
+            if (op == null) continue;
+            TransformFlags flags = op.getTransformFlags();
+            
+            double dynYaw = flags.shouldApplyYaw() ? yawRotation : 0.0;
+            double dynPitch = flags.shouldApplyPitch() ? pitchRotation : 0.0;
+            Vector3d opAnchor = computeEffectiveAnchor(flags);
+            
+            Matrix4d matrix = new Matrix4d();
+            matrix.identity();
+            matrix.translate(opAnchor.x, opAnchor.y, opAnchor.z);
+            matrix.rotateEuler(dynPitch, dynYaw, 0, tmp);
+            matrix.translate(cfg.offsetX, cfg.offsetY, cfg.offsetZ);
+            matrix.rotateEuler(cfg.localPitch, cfg.localYaw, cfg.localRoll, tmp);
+            matrix.translate(cfg.centerX, cfg.centerY, cfg.centerZ);
+            // Align Z-up geometry (CircularCone) to Y-up engine debug shapes (Cone, Cylinder)
+            if (cfg.debugShape == DebugShape.Cone || cfg.debugShape == DebugShape.Cylinder) {
+                matrix.rotateEuler(-Math.PI / 2, 0, 0, tmp);
+            }
+            matrix.scale(cfg.extentX, cfg.extentY, cfg.extentZ);
+            
+            boundingShapes.add(new BoundingShapeDebug(matrix, cfg.debugShape, cfg.color, cfg.opacity));
+        }
+        
+        return new ComposedRegionV2(effectiveAnchor, voxelMap, computedBlockIds,
+                operationRegions, timeline, boundingShapes);
     }
 
     @NonNull Vector3d getVector3d() {
@@ -482,6 +557,7 @@ public class ShapeCompositorV2 {
         compositeShapes.clear();
         unionConsumedOps.clear();
         deferredOps.clear();
+        boundingShapeConfigs.clear();
         
         // First pass: voxelize all SHAPE-sourced operations at origin
         Map<String, long[]> rawPositions = new HashMap<>();
@@ -653,6 +729,69 @@ public class ShapeCompositorV2 {
                 }
             }
         }
+        
+        // Build bounding shape configs for BOUNDING_BOX debug visualization
+        for (String id : operationOrder) {
+            ShapeOperationV2 op = operations.get(id);
+            if (op == null || !op.isEnabled()) continue;
+            Shape shape = op.getShape();
+            if (shape == null) continue;
+            
+            BlockFillTypeV2 fillType = op.getFillType();
+            DebugStyle debugStyle = resolveDebugStyle(op, fillType);
+            if (debugStyle.getVisualization() != DebugVisualization.BOUNDING_BOX) continue;
+            if (debugStyle.getColor() == null) continue;
+            
+            DebugShape debugShape = debugStyle.getDebugShape() != null
+                    ? debugStyle.getDebugShape() : DebugShape.Cube;
+            
+            double offsetX = 0, offsetY = 0, offsetZ = 0;
+            double localPitch = 0, localYaw = 0, localRoll = 0;
+            Shape baseShape = shape;
+            
+            if (shape instanceof TransformedShape ts) {
+                offsetX = ts.getOffsetX();
+                offsetY = ts.getOffsetY();
+                offsetZ = ts.getOffsetZ();
+                localYaw = ts.getYaw();
+                localPitch = ts.getPitch();
+                localRoll = ts.getRoll();
+                baseShape = ts.getBaseShape();
+            }
+            
+            // Compute base shape AABB at origin (without TransformedShape rotation/offset)
+            double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
+            double maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
+            
+            final double[] bounds = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE,
+                    -Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
+            baseShape.forEachBlock(0, 0, 0, (bx, by, bz) -> {
+                if (bx < bounds[0]) bounds[0] = bx;
+                if (by < bounds[1]) bounds[1] = by;
+                if (bz < bounds[2]) bounds[2] = bz;
+                if (bx + 1 > bounds[3]) bounds[3] = bx + 1;
+                if (by + 1 > bounds[4]) bounds[4] = by + 1;
+                if (bz + 1 > bounds[5]) bounds[5] = bz + 1;
+                return true;
+            });
+            
+            if (bounds[0] == Double.MAX_VALUE) continue;
+            
+            double centerX = (bounds[0] + bounds[3]) / 2.0;
+            double centerY = (bounds[1] + bounds[4]) / 2.0;
+            double centerZ = (bounds[2] + bounds[5]) / 2.0;
+            double extentX = bounds[3] - bounds[0];
+            double extentY = bounds[4] - bounds[1];
+            double extentZ = bounds[5] - bounds[2];
+            
+            boundingShapeConfigs.put(id, new BoundingShapeConfig(
+                    centerX, centerY, centerZ,
+                    extentX, extentY, extentZ,
+                    offsetX, offsetY, offsetZ,
+                    localPitch, localYaw, localRoll,
+                    debugShape, debugStyle.getColor(), debugStyle.getOpacity()));
+        }
+        
         shapeCacheDirty = false;
     }
 

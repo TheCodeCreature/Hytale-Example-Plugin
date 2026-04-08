@@ -8,9 +8,12 @@ import com.hypixel.hytale.server.core.modules.debug.DebugUtils;
 import com.hypixel.hytale.server.core.universe.world.World;
 
 import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
+import com.UnobstructedThirdPerson.shape.v2.visual.DebugVisualization;
+import com.UnobstructedThirdPerson.shape.v2.visual.BoundingShapeDebug;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -23,39 +26,54 @@ public final class DebugCube {
 
 //    private static final double CUBE_SCALE = 1.01;
     private static final double CUBE_SCALE = 0.99;
+    private static final double SPHERE_SCALE = 0.3;
     private static final float CUBE_DURATION_SECONDS = 0.5F;
     private static final float DEFAULT_OPACITY = 0.15F;
-    private static final Map<World, Map<Long, CachedCube>> CACHED_DEBUG_CUBES_BY_WORLD =
+    private static final Map<World, Map<Long, CachedShape>> CACHED_DEBUG_SHAPES_BY_WORLD =
             Collections.synchronizedMap(new WeakHashMap<>());
 
     private DebugCube() {
         // Utility class
     }
 
-    private record CachedCube(@Nonnull Vector3f color, float opacity) {}
+    private record CachedShape(@Nonnull Vector3f color, float opacity, @Nonnull DebugVisualization visualization) {}
 
-    private static void renderDebugCube(@Nonnull World world, long packedPos, @Nonnull Vector3f color, float opacity) {
+    private static void renderDebugShape(@Nonnull World world, long packedPos,
+                                         @Nonnull Vector3f color, float opacity,
+                                         @Nonnull DebugVisualization visualization) {
         int x = BlockUtil.unpackX(packedPos);
         int y = BlockUtil.unpackY(packedPos);
         int z = BlockUtil.unpackZ(packedPos);
 
+        DebugShape shape = (visualization == DebugVisualization.VECTOR_POINTS)
+                ? DebugShape.Sphere : DebugShape.Cube;
+        double scale = (visualization == DebugVisualization.VECTOR_POINTS)
+                ? SPHERE_SCALE : CUBE_SCALE;
+
         Matrix4d matrix = new Matrix4d();
         matrix.identity();
         matrix.translate(x + 0.5, y + 0.5, z + 0.5);
-        matrix.scale(CUBE_SCALE, CUBE_SCALE, CUBE_SCALE);
-        DebugUtils.add(world, DebugShape.Cube, matrix, color, opacity, CUBE_DURATION_SECONDS, DebugUtils.FLAG_NO_WIREFRAME);
+        matrix.scale(scale, scale, scale);
+        DebugUtils.add(world, shape, matrix, color, opacity,
+                CUBE_DURATION_SECONDS, DebugUtils.FLAG_NO_WIREFRAME);
+    }
+
+    private static void renderBoundingShape(@Nonnull World world, @Nonnull BoundingShapeDebug entry) {
+        DebugUtils.add(world, entry.shape(), entry.transform(), entry.color(), entry.opacity(),
+                CUBE_DURATION_SECONDS, 0);
     }
 
     @Nonnull
-    private static Map<Long, CachedCube> getOrCreateWorldCache(@Nonnull World world) {
-        synchronized (CACHED_DEBUG_CUBES_BY_WORLD) {
-            return CACHED_DEBUG_CUBES_BY_WORLD.computeIfAbsent(world, ignored -> new ConcurrentHashMap<>());
+    private static Map<Long, CachedShape> getOrCreateWorldCache(@Nonnull World world) {
+        synchronized (CACHED_DEBUG_SHAPES_BY_WORLD) {
+            return CACHED_DEBUG_SHAPES_BY_WORLD.computeIfAbsent(world, ignored -> new ConcurrentHashMap<>());
         }
     }
 
     public static void addDebugCube(@Nonnull World world, long packedPos, @Nonnull Vector3f color, float opacity) {
-        getOrCreateWorldCache(world).put(packedPos, new CachedCube(new Vector3f(color.x, color.y, color.z), opacity));
-        renderDebugCube(world, packedPos, color, opacity);
+        getOrCreateWorldCache(world).put(packedPos,
+                new CachedShape(new Vector3f(color.x, color.y, color.z), opacity, DebugVisualization.CUBE));
+        renderDebugShape(world, packedPos, color, opacity, DebugVisualization.CUBE);
     }
 
     public static void addDebugCubes(@Nonnull World world, @Nonnull Set<Long> packedPositions, @Nonnull Vector3f color) {
@@ -63,10 +81,11 @@ public final class DebugCube {
     }
 
     public static void addDebugCubes(@Nonnull World world, @Nonnull Set<Long> packedPositions, @Nonnull Vector3f color, float opacity) {
-        Map<Long, CachedCube> worldCache = getOrCreateWorldCache(world);
+        Map<Long, CachedShape> worldCache = getOrCreateWorldCache(world);
         for (Long packedPos : packedPositions) {
-            worldCache.put(packedPos, new CachedCube(new Vector3f(color.x, color.y, color.z), opacity));
-            renderDebugCube(world, packedPos, color, opacity);
+            worldCache.put(packedPos,
+                    new CachedShape(new Vector3f(color.x, color.y, color.z), opacity, DebugVisualization.CUBE));
+            renderDebugShape(world, packedPos, color, opacity, DebugVisualization.CUBE);
         }
     }
 
@@ -74,17 +93,17 @@ public final class DebugCube {
      * Re-renders all cached debug cubes, refreshing their lifetime on the client.
      */
     public static void renderCachedDebugCubes(@Nonnull World world) {
-        Map<Long, CachedCube> worldCache;
-        synchronized (CACHED_DEBUG_CUBES_BY_WORLD) {
-            worldCache = CACHED_DEBUG_CUBES_BY_WORLD.get(world);
+        Map<Long, CachedShape> worldCache;
+        synchronized (CACHED_DEBUG_SHAPES_BY_WORLD) {
+            worldCache = CACHED_DEBUG_SHAPES_BY_WORLD.get(world);
         }
         if (worldCache == null || worldCache.isEmpty()) {
             return;
         }
 
-        for (Map.Entry<Long, CachedCube> entry : worldCache.entrySet()) {
-            CachedCube cached = entry.getValue();
-            renderDebugCube(world, entry.getKey(), cached.color(), cached.opacity());
+        for (Map.Entry<Long, CachedShape> entry : worldCache.entrySet()) {
+            CachedShape cached = entry.getValue();
+            renderDebugShape(world, entry.getKey(), cached.color(), cached.opacity(), cached.visualization());
         }
     }
 
@@ -101,21 +120,34 @@ public final class DebugCube {
      * @param debugStyles map of packed positions to their debug styles (only enabled styles with non-null color are used)
      */
     public static void updateDebugCubes(@Nonnull World world, @Nonnull Map<Long, DebugStyle> debugStyles) {
-        Map<Long, CachedCube> worldCache = getOrCreateWorldCache(world);
+        Map<Long, CachedShape> worldCache = getOrCreateWorldCache(world);
 
         // Remove stale entries (no longer in the new set) — they expire naturally on the client
         worldCache.keySet().retainAll(debugStyles.keySet());
 
-        // Add/update entries and render all active cubes
+        // Add/update entries and render all active shapes
         for (Map.Entry<Long, DebugStyle> entry : debugStyles.entrySet()) {
             DebugStyle style = entry.getValue();
             Vector3f color = style.getColor();
             if (color == null) {
                 continue;
             }
-            CachedCube cached = new CachedCube(new Vector3f(color.x, color.y, color.z), style.getOpacity());
+            DebugVisualization vis = style.getVisualization();
+            CachedShape cached = new CachedShape(new Vector3f(color.x, color.y, color.z),
+                    style.getOpacity(), vis);
             worldCache.put(entry.getKey(), cached);
-            renderDebugCube(world, entry.getKey(), cached.color(), cached.opacity());
+            renderDebugShape(world, entry.getKey(), cached.color(), cached.opacity(), vis);
+        }
+    }
+
+    /**
+     * Renders pre-computed bounding shape debug entries.
+     * Each entry contains a full transform matrix, debug shape, and style.
+     */
+    public static void renderBoundingShapes(@Nonnull World world,
+                                            @Nonnull List<BoundingShapeDebug> boundingShapes) {
+        for (BoundingShapeDebug entry : boundingShapes) {
+            renderBoundingShape(world, entry);
         }
     }
 
@@ -123,9 +155,9 @@ public final class DebugCube {
      * Removes specific positions from the cache. They will expire naturally on the client.
      */
     public static void removeCachedPositions(@Nonnull World world, @Nonnull Set<Long> positions) {
-        Map<Long, CachedCube> worldCache;
-        synchronized (CACHED_DEBUG_CUBES_BY_WORLD) {
-            worldCache = CACHED_DEBUG_CUBES_BY_WORLD.get(world);
+        Map<Long, CachedShape> worldCache;
+        synchronized (CACHED_DEBUG_SHAPES_BY_WORLD) {
+            worldCache = CACHED_DEBUG_SHAPES_BY_WORLD.get(world);
         }
         if (worldCache == null) {
             return;
@@ -136,8 +168,8 @@ public final class DebugCube {
     }
 
     public static void clearCachedDebugCubes(@Nonnull World world) {
-        synchronized (CACHED_DEBUG_CUBES_BY_WORLD) {
-            Map<Long, CachedCube> worldCache = CACHED_DEBUG_CUBES_BY_WORLD.get(world);
+        synchronized (CACHED_DEBUG_SHAPES_BY_WORLD) {
+            Map<Long, CachedShape> worldCache = CACHED_DEBUG_SHAPES_BY_WORLD.get(world);
             if (worldCache != null) {
                 worldCache.clear();
             }

@@ -12,6 +12,7 @@ import com.hypixel.hytale.math.shape.Shape;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.protocol.DebugShape;
 import com.hypixel.hytale.server.core.modules.debug.DebugUtils;
 
 import javax.annotation.Nonnull;
@@ -64,7 +65,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 outerCone,
                                 OperationTypeV2.DEFINE)
                                 .withFill(new EmptyBlockFillV2())
-                                .withDebugColor(DebugUtils.COLOR_WHITE)
+                                .withDebugBoundingBox(DebugUtils.COLOR_WHITE, DebugShape.Cone)
                                 .build();
                 // #endregion
                 // #region InnerViewBox
@@ -78,7 +79,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 innerViewBoxShape,
                                 OperationTypeV2.Cut(outerConeId))
                                 .withFill(new EmptyBlockFillV2())
-                                .withDebugColor(DebugUtils.COLOR_CYAN)
+                                .withDebugCube(DebugUtils.COLOR_CYAN)
                                 .build();
                 // #endregion
                 // #region SideViewBox
@@ -91,7 +92,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 sideViewBox,
                                 OperationTypeV2.DEFINE)
                                 .withFill(new EmptyBlockFillV2())
-                                .withDebugColor(DebugUtils.COLOR_PURPLE)
+                                .withDebugCube(DebugUtils.COLOR_PURPLE)
                                 .withTransformFlags(_ignorePitch)
                                 .build();
                 // #endregion
@@ -106,7 +107,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 OperationTypeV2.EXCLUDE)
                                 .withFill(new EmptyBlockFillV2())
                                 .withTransformFlags(_ignorePitch)
-                                .withDebugColor(DebugUtils.COLOR_LIME)
+                                .withDebugCube(DebugUtils.COLOR_LIME)
                                 .build();
                 // #endregion
                 // #region PlayerFacingWallPlus
@@ -120,7 +121,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 OperationTypeV2.EXCLUDE)
                                 .withFill(new EmptyBlockFillV2())
                                 .withTransformFlags(_ignorePitch)
-                                .withDebugColor(DebugUtils.COLOR_LIME)
+                                .withDebugCube(DebugUtils.COLOR_LIME)
                                 .build();
                 // #endregion
                 // #region PlayerFeetBox
@@ -134,7 +135,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 OperationTypeV2.EXCLUDE)
                                 .withFill(new EmptyBlockFillV2())
                                 .withTransformFlags(_ignorePitch)
-                                .withDebugColor(DebugUtils.COLOR_RED)
+                                .withDebugCube(DebugUtils.COLOR_RED)
                                 .build();
                 // #endregion
                 // #region IgnorePitch UNION (sideViewBox + all ignorePitch EXCLUDE boxes)
@@ -162,7 +163,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 cone,
                                 OperationTypeV2.DEFINE)
                                 .withFill(new EmptyBlockFillV2())
-                                .withDebugColor(DebugUtils.COLOR_GRAY)
+                                .withDebugCube(DebugUtils.COLOR_GRAY)
                                 .build();
 
                 this.addOperation(idTracker++ + "",

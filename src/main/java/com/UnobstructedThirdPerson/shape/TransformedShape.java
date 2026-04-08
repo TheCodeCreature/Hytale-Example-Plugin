@@ -68,6 +68,35 @@ public class TransformedShape implements Shape {
         this.roll = roll;
     }
     
+    @Nonnull
+    public Shape getBaseShape() {
+        return baseShape;
+    }
+    
+    public double getOffsetX() {
+        return offsetX;
+    }
+    
+    public double getOffsetY() {
+        return offsetY;
+    }
+    
+    public double getOffsetZ() {
+        return offsetZ;
+    }
+    
+    public double getYaw() {
+        return yaw;
+    }
+    
+    public double getPitch() {
+        return pitch;
+    }
+    
+    public double getRoll() {
+        return roll;
+    }
+    
     @Override
     public Box getBox(double x, double y, double z) {
         // Fast path when no rotation is applied.
