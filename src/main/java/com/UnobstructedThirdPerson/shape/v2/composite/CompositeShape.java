@@ -21,17 +21,29 @@ public class CompositeShape {
     private final BlockFillTypeV2[] fills;
     private final String[] originIds;
     private final DebugStyle[] debugStyles;
+    private final long[] excludedPositions;
+    private final String[] excludedOriginIds;
+    private final DebugStyle[] excludedDebugStyles;
     
     private CompositeShape(long[] localPositions, BlockFillTypeV2[] fills,
-                           String[] originIds, DebugStyle[] debugStyles) {
+                           String[] originIds, DebugStyle[] debugStyles,
+                           long[] excludedPositions, String[] excludedOriginIds,
+                           DebugStyle[] excludedDebugStyles) {
         this.localPositions = localPositions;
         this.fills = fills;
         this.originIds = originIds;
         this.debugStyles = debugStyles;
+        this.excludedPositions = excludedPositions;
+        this.excludedOriginIds = excludedOriginIds;
+        this.excludedDebugStyles = excludedDebugStyles;
     }
     
     public int size() {
         return localPositions.length;
+    }
+    
+    public int excludedSize() {
+        return excludedPositions.length;
     }
     
     @Nonnull
@@ -52,6 +64,21 @@ public class CompositeShape {
     @Nonnull
     public DebugStyle[] getDebugStyles() {
         return debugStyles;
+    }
+    
+    @Nonnull
+    public long[] getExcludedPositions() {
+        return excludedPositions;
+    }
+    
+    @Nonnull
+    public String[] getExcludedOriginIds() {
+        return excludedOriginIds;
+    }
+    
+    @Nonnull
+    public DebugStyle[] getExcludedDebugStyles() {
+        return excludedDebugStyles;
     }
     
     public long getPosition(int index) {
@@ -80,11 +107,8 @@ public class CompositeShape {
     
     public static class Builder {
         private final Map<Long, PointData> points = new LinkedHashMap<>();
+        private final Map<Long, PointData> excludedPoints = new LinkedHashMap<>();
         
-        /**
-         * Add a point to the composite. If a point at the same position already
-         * exists, it is overwritten (last-write wins, matching operation priority ordering).
-         */
         @Nonnull
         public Builder addPoint(long packedPos, @Nullable BlockFillTypeV2 fill,
                                 @Nullable String originId, @Nonnull DebugStyle debugStyle) {
@@ -92,41 +116,33 @@ public class CompositeShape {
             return this;
         }
         
-        /**
-         * Remove a point from the composite (used by SUBTRACT).
-         */
+        @Nonnull
+        public Builder addExcludedPoint(long packedPos, @Nullable String originId,
+                                        @Nonnull DebugStyle debugStyle) {
+            excludedPoints.put(packedPos, new PointData(null, originId, debugStyle));
+            return this;
+        }
+        
         @Nonnull
         public Builder removePoint(long packedPos) {
             points.remove(packedPos);
             return this;
         }
         
-        /**
-         * Check if a position exists in the current point set.
-         */
         public boolean containsPoint(long packedPos) {
             return points.containsKey(packedPos);
         }
         
-        /**
-         * Get the origin operation ID for a position, or null if not present.
-         */
         @Nullable
         public String getOriginId(long packedPos) {
             PointData data = points.get(packedPos);
             return data != null ? data.originId : null;
         }
         
-        /**
-         * Get the current number of points.
-         */
         public int size() {
             return points.size();
         }
         
-        /**
-         * Get all current positions as a set (for intersection/reference checks).
-         */
         @Nonnull
         public Set<Long> getPositionSet() {
             return Collections.unmodifiableSet(points.keySet());
@@ -134,11 +150,10 @@ public class CompositeShape {
         
         @Nonnull
         public CompositeShape build() {
-            int size = points.size();
-            long[] positions = new long[size];
-            BlockFillTypeV2[] fills = new BlockFillTypeV2[size];
-            String[] origins = new String[size];
-            DebugStyle[] styles = new DebugStyle[size];
+            long[] positions = new long[points.size()];
+            BlockFillTypeV2[] fills = new BlockFillTypeV2[points.size()];
+            String[] origins = new String[points.size()];
+            DebugStyle[] styles = new DebugStyle[points.size()];
             
             int i = 0;
             for (Map.Entry<Long, PointData> entry : points.entrySet()) {
@@ -150,7 +165,21 @@ public class CompositeShape {
                 i++;
             }
             
-            return new CompositeShape(positions, fills, origins, styles);
+            long[] exPositions = new long[excludedPoints.size()];
+            String[] exOrigins = new String[excludedPoints.size()];
+            DebugStyle[] exStyles = new DebugStyle[excludedPoints.size()];
+            
+            int j = 0;
+            for (Map.Entry<Long, PointData> entry : excludedPoints.entrySet()) {
+                exPositions[j] = entry.getKey();
+                PointData data = entry.getValue();
+                exOrigins[j] = data.originId;
+                exStyles[j] = data.debugStyle;
+                j++;
+            }
+            
+            return new CompositeShape(positions, fills, origins, styles,
+                    exPositions, exOrigins, exStyles);
         }
         
         private record PointData(@Nullable BlockFillTypeV2 fill, @Nullable String originId,
@@ -160,6 +189,7 @@ public class CompositeShape {
     
     @Override
     public String toString() {
-        return "CompositeShape{points=" + localPositions.length + "}";
+        return "CompositeShape{points=" + localPositions.length
+                + ", excluded=" + excludedPositions.length + "}";
     }
 }

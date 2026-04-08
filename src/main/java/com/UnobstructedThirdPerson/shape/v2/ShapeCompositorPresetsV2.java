@@ -64,7 +64,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 outerCone,
                                 OperationTypeV2.DEFINE)
                                 .withFill(new EmptyBlockFillV2())
-                                .withDebugColor(DebugUtils.COLOR_BLACK)
+                                .withDebugColor(DebugUtils.COLOR_WHITE)
                                 .build();
                 // #endregion
                 // #region InnerViewBox
@@ -77,15 +77,8 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 this.addOperation(innerViewBoxId,
                                 innerViewBoxShape,
                                 OperationTypeV2.Cut(outerConeId))
-                                // .withFill(new EmptyBlockFillV2())
-                                // .withDebugColor(DebugUtils.COLOR_CYAN)
-                                .build();
-                // #endregion
-                // #region MainView UNION (outerCone after CUT)
-                String mainViewId = idTracker++ + "";
-                this.addOperation(mainViewId,
-                                null,
-                                OperationTypeV2.Union(outerConeId))
+                                .withFill(new EmptyBlockFillV2())
+                                .withDebugColor(DebugUtils.COLOR_CYAN)
                                 .build();
                 // #endregion
                 // #region SideViewBox
@@ -98,15 +91,8 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 sideViewBox,
                                 OperationTypeV2.DEFINE)
                                 .withFill(new EmptyBlockFillV2())
-                                .withDebugColor(DebugUtils.COLOR_BLACK)
+                                .withDebugColor(DebugUtils.COLOR_PURPLE)
                                 .withTransformFlags(_ignorePitch)
-                                .build();
-                // #endregion
-                // #region FullView UNION (mainView + sideViewBox)
-                String fullViewId = idTracker++ + "";
-                this.addOperation(fullViewId,
-                                null,
-                                OperationTypeV2.Union(mainViewId, SideViewBoxId))
                                 .build();
                 // #endregion
                 // #region PlayerFacingWall
@@ -118,6 +104,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 this.addOperation(ignorePlayerFacingWallId,
                                 ignorePlayerFacingWall,
                                 OperationTypeV2.EXCLUDE)
+                                .withFill(new EmptyBlockFillV2())
                                 .withTransformFlags(_ignorePitch)
                                 .withDebugColor(DebugUtils.COLOR_LIME)
                                 .build();
@@ -131,6 +118,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 this.addOperation(ignorePlayerFacingWallPlusId,
                                 ignorePlayerFacingWallPlus,
                                 OperationTypeV2.EXCLUDE)
+                                .withFill(new EmptyBlockFillV2())
                                 .withTransformFlags(_ignorePitch)
                                 .withDebugColor(DebugUtils.COLOR_LIME)
                                 .build();
@@ -144,8 +132,20 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 this.addOperation(IgnorePlayerFeetId,
                                 IgnoredPlayerFeetBox,
                                 OperationTypeV2.EXCLUDE)
+                                .withFill(new EmptyBlockFillV2())
                                 .withTransformFlags(_ignorePitch)
                                 .withDebugColor(DebugUtils.COLOR_RED)
+                                .build();
+                // #endregion
+                // #region IgnorePitch UNION (sideViewBox + all ignorePitch EXCLUDE boxes)
+                String ignorePitchUnionId = idTracker++ + "";
+                this.addOperation(ignorePitchUnionId,
+                                null,
+                                OperationTypeV2.Union(SideViewBoxId,
+                                        ignorePlayerFacingWallId,
+                                        ignorePlayerFacingWallPlusId,
+                                        IgnorePlayerFeetId))
+                                .withTransformFlags(_ignorePitch)
                                 .build();
                 // #endregion
                 return this;

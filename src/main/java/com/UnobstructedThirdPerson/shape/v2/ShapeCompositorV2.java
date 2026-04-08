@@ -34,6 +34,7 @@ public class ShapeCompositorV2 {
     private final Map<String, ShapeOperationV2> operations;
     private final List<String> operationOrder;
     private final Map<String, CompositeShape> compositeShapes = new HashMap<>();
+    private final Set<String> unionConsumedOps = new HashSet<>();
     private final List<ShapeOperationV2> deferredOps = new ArrayList<>();
     private boolean shapeCacheDirty = true;
     
@@ -246,6 +247,9 @@ public class ShapeCompositorV2 {
             // Skip deferred ops (FILL_REMAINING) — handled in phase 3
             if (type == OperationTypeV2.FILL_REMAINING) continue;
             
+            // Skip operations consumed by a UNION — handled through the UNION composite
+            if (unionConsumedOps.contains(operation.getId())) continue;
+            
             CompositeShape composite = compositeShapes.get(operation.getId());
             if (composite == null) continue;
             
@@ -323,6 +327,39 @@ public class ShapeCompositorV2 {
                 
                 // Track per original operation
                 String originId = originIds[i];
+                if (originId != null) {
+                    operationRegions.computeIfAbsent(originId, k -> new HashSet<>()).add(pos);
+                }
+            }
+            
+            // Process excluded points embedded in composite (from UNION'd EXCLUDE refs)
+            long[] excludedLocalPositions = composite.getExcludedPositions();
+            String[] excludedOriginIds = composite.getExcludedOriginIds();
+            
+            for (int i = 0; i < composite.excludedSize(); i++) {
+                long basePos = excludedLocalPositions[i];
+                double cx = BlockUtil.unpackX(basePos) + 0.5;
+                double cy = BlockUtil.unpackY(basePos) + 0.5;
+                double cz = BlockUtil.unpackZ(basePos) + 0.5;
+                
+                double py = cy * cosP + cz * sinP;
+                double pz = -cy * sinP + cz * cosP;
+                if (dynPitch != 0.0) {
+                    py += PITCH_PIVOT_EYE_HEIGHT;
+                }
+                
+                double rx = cx * cosY - pz * sinY;
+                double rz = cx * sinY + pz * cosY;
+                
+                int x = (int) Math.floor(rx + operationAnchor.x);
+                int y = (int) Math.floor(py + operationAnchor.y);
+                int z = (int) Math.floor(rz + operationAnchor.z);
+                long pos = BlockUtil.packUnchecked(x, y, z);
+                
+                excludedWorldPositions.add(pos);
+                opPositions.add(pos);
+                
+                String originId = excludedOriginIds[i];
                 if (originId != null) {
                     operationRegions.computeIfAbsent(originId, k -> new HashSet<>()).add(pos);
                 }
@@ -443,6 +480,7 @@ public class ShapeCompositorV2 {
             return;
         }
         compositeShapes.clear();
+        unionConsumedOps.clear();
         deferredOps.clear();
         
         // First pass: voxelize all SHAPE-sourced operations at origin
@@ -497,13 +535,25 @@ public class ShapeCompositorV2 {
                             LOGGER.warning("UNION '" + opId + "' references unknown shape '" + refId + "'");
                             continue;
                         }
-                        for (int i = 0; i < ref.size(); i++) {
-                            // Only add if not already present (first-write wins for union)
-                            if (!builder.containsPoint(ref.getPosition(i))) {
-                                builder.addPoint(ref.getPosition(i), ref.getFill(i),
-                                        ref.getOriginId(i), ref.getDebugStyle(i));
+                        ShapeOperationV2 refOp = operations.get(refId);
+                        boolean isExclude = refOp != null && refOp.getType() == OperationTypeV2.EXCLUDE;
+                        
+                        if (isExclude) {
+                            for (int i = 0; i < ref.size(); i++) {
+                                if (!builder.containsPoint(ref.getPosition(i))) {
+                                    builder.addExcludedPoint(ref.getPosition(i),
+                                            ref.getOriginId(i), ref.getDebugStyle(i));
+                                }
+                            }
+                        } else {
+                            for (int i = 0; i < ref.size(); i++) {
+                                if (!builder.containsPoint(ref.getPosition(i))) {
+                                    builder.addPoint(ref.getPosition(i), ref.getFill(i),
+                                            ref.getOriginId(i), ref.getDebugStyle(i));
+                                }
                             }
                         }
+                        unionConsumedOps.add(refId);
                     }
                     compositeShapes.put(opId, builder.build());
                 }
