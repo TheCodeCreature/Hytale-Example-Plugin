@@ -40,6 +40,8 @@ public class ShapeCompositorV2 {
     private final Map<String, ShapeOperationV2> operations;
     private final List<String> operationOrder;
     private final Map<String, CompositeShape> compositeShapes = new HashMap<>();
+    private final Map<String, Shape[]> compositeContainmentShapes = new HashMap<>();
+    private final Map<String, Shape[]> compositeExcludeShapes = new HashMap<>();
     private final Set<String> unionConsumedOps = new HashSet<>();
     private final List<ShapeOperationV2> deferredOps = new ArrayList<>();
     private final Map<String, BoundingShapeConfig> boundingShapeConfigs = new HashMap<>();
@@ -359,6 +361,10 @@ public class ShapeCompositorV2 {
             
             Set<Long> opPositions = new HashSet<>();
             
+            // Resolve containment shapes for continuous-space testing
+            Shape[] containmentShapes = compositeContainmentShapes.get(operation.getId());
+            Shape[] excludeShapes = compositeExcludeShapes.get(operation.getId());
+            
             // Iterate world-space AABB, inverse-rotate to find local position
             for (int wx = wMinX; wx <= wMaxX; wx++) {
                 for (int wy = wMinY; wy <= wMaxY; wy++) {
@@ -375,21 +381,44 @@ public class ShapeCompositorV2 {
                         double iy = worldCy * cosInvP + iz * sinInvP;
                         iz = -worldCy * sinInvP + iz * cosInvP;
                         
+                        // Continuous-space containment test against the original shape(s).
+                        // This correctly handles fractional anchor offsets — the continuous
+                        // coordinates (ix, iy, iz) preserve decimal precision, unlike the
+                        // integer index lookup which snaps to block boundaries.
+                        boolean contained = false;
+                        if (containmentShapes != null) {
+                            for (Shape shape : containmentShapes) {
+                                if (shape.containsPosition(ix, iy, iz)) {
+                                    contained = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!contained) continue;
+                        
+                        long pos = BlockUtil.packUnchecked(wx, wy, wz);
+                        
+                        // Integer lookup for metadata (fill, debugStyle, originId)
                         int localX = (int) Math.floor(ix);
                         int localY = (int) Math.floor(iy);
                         int localZ = (int) Math.floor(iz);
                         long localPos = BlockUtil.packUnchecked(localX, localY, localZ);
-                        long pos = BlockUtil.packUnchecked(wx, wy, wz);
                         
-                        // Check excluded first
-                        if (composite.containsExcluded(localPos)) {
+                        // Check excluded via continuous-space test
+                        boolean isExcluded = false;
+                        if (excludeShapes != null) {
+                            for (Shape exShape : excludeShapes) {
+                                if (exShape.containsPosition(ix, iy, iz)) {
+                                    isExcluded = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (isExcluded) {
                             excludedWorldPositions.add(pos);
                             opPositions.add(pos);
                             continue;
                         }
-                        
-                        int idx = composite.indexOf(localPos);
-                        if (idx < 0) continue;
                         
                         if (type == OperationTypeV2.EXCLUDE) {
                             excludedWorldPositions.add(pos);
@@ -419,14 +448,26 @@ public class ShapeCompositorV2 {
                             }
                         }
                         
-                        BlockFillTypeV2 fill = composite.getFill(idx);
-                        if (fill != null) {
-                            entry.write(null, fill, composite.getOriginId(idx), composite.getDebugStyle(idx));
-                        }
-                        
-                        String originId = composite.getOriginId(idx);
-                        if (originId != null) {
-                            operationRegions.computeIfAbsent(originId, k -> new HashSet<>()).add(pos);
+                        // Metadata from composite (best-effort integer lookup)
+                        int idx = composite.indexOf(localPos);
+                        if (idx >= 0) {
+                            BlockFillTypeV2 fill = composite.getFill(idx);
+                            if (fill != null) {
+                                entry.write(null, fill, composite.getOriginId(idx), composite.getDebugStyle(idx));
+                            }
+                            String originId = composite.getOriginId(idx);
+                            if (originId != null) {
+                                operationRegions.computeIfAbsent(originId, k -> new HashSet<>()).add(pos);
+                            }
+                        } else {
+                            // Fractional boundary: contained by shape but integer lookup missed.
+                            // Use the operation's default fill and debug style.
+                            BlockFillTypeV2 opFill = operation.getFillType();
+                            DebugStyle opDebug = resolveDebugStyle(operation, opFill);
+                            if (opFill != null) {
+                                entry.write(null, opFill, operation.getId(), opDebug);
+                            }
+                            operationRegions.computeIfAbsent(operation.getId(), k -> new HashSet<>()).add(pos);
                         }
                     }
                 }
@@ -570,6 +611,8 @@ public class ShapeCompositorV2 {
             return;
         }
         compositeShapes.clear();
+        compositeContainmentShapes.clear();
+        compositeExcludeShapes.clear();
         unionConsumedOps.clear();
         deferredOps.clear();
         boundingShapeConfigs.clear();
@@ -742,6 +785,34 @@ public class ShapeCompositorV2 {
                 case FILL_REMAINING -> {
                     deferredOps.add(op);
                 }
+            }
+        }
+        
+        // Build containment shape arrays for continuous-space testing in compose.
+        // Non-UNION ops use their own shape; UNIONs collect constituent shapes.
+        for (ShapeOperationV2 op : timeline) {
+            if (!op.isEnabled()) continue;
+            String opId = op.getId();
+            if (!compositeShapes.containsKey(opId)) continue;
+            
+            if (op.getType() == OperationTypeV2.UNION) {
+                List<Shape> shapes = new ArrayList<>();
+                List<Shape> excludeShapes = new ArrayList<>();
+                for (String refId : op.getReferenceIds()) {
+                    ShapeOperationV2 refOp = operations.get(refId);
+                    if (refOp != null && refOp.getShape() != null) {
+                        if (refOp.getType() == OperationTypeV2.EXCLUDE) {
+                            excludeShapes.add(refOp.getShape());
+                        }
+                        shapes.add(refOp.getShape());
+                    }
+                }
+                compositeContainmentShapes.put(opId, shapes.toArray(new Shape[0]));
+                if (!excludeShapes.isEmpty()) {
+                    compositeExcludeShapes.put(opId, excludeShapes.toArray(new Shape[0]));
+                }
+            } else if (op.getShape() != null) {
+                compositeContainmentShapes.put(opId, new Shape[]{op.getShape()});
             }
         }
         
