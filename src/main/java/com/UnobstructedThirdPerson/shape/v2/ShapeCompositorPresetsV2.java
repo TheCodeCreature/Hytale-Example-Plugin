@@ -21,7 +21,11 @@ import javax.annotation.Nonnull;
 public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 
         private int _scale = 7;
-        private static final double _yPivotOffset = 1.8;
+        // Forward distance from the player along the look direction (Z in local space).
+        // Fractional values produce visible sub-block shifts because the forward axis
+        // rotates with yaw, distributing the offset across world X and Z where the
+        // player's .5 fractional coordinates create non-aligned block boundaries.
+        private static final double _forwardOffset = 1.8;
         private static final double _xOffset = -1.0;
         private final TransformFlags _noMove = TransformFlags.builder()
                         .ignorePitch()
@@ -32,18 +36,18 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                         .build();
 
         public ShapeCompositorPresetsV2(@Nonnull Vector3d anchor, int radius) {
-                super(new SpatialOffset(_xOffset, _yPivotOffset, 0));
+                super(new SpatialOffset(_xOffset, 0, _forwardOffset));
                 setAnchor(anchor);
                 _scale = radius;
         }
 
         public ShapeCompositorPresetsV2(int radius) {
-                super(new SpatialOffset(_xOffset, _yPivotOffset, 0));
+                super(new SpatialOffset(_xOffset, 0, _forwardOffset));
                 _scale = radius;
         }
 
         public ShapeCompositorPresetsV2() {
-                super(new SpatialOffset(_xOffset, _yPivotOffset, 0));
+                super(new SpatialOffset(_xOffset, 0, _forwardOffset));
         }
 
         public ShapeCompositorV2 DefaultViewField() {
@@ -53,7 +57,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 double baseHeight = _scale * 1.5;
 
                 double yOffset = 0;
-                double yOffsetFloor = -_yPivotOffset;
+                double yOffsetFloor = 0;
                 double zOffset = 0;
 
                 double pitchRadianOffset = -Math.toRadians(15);
