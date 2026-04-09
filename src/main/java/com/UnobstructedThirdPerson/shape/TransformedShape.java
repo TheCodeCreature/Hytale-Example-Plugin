@@ -17,9 +17,7 @@ import javax.annotation.Nonnull;
 public class TransformedShape implements Shape {
     
     private final Shape baseShape;
-    private final double offsetX;
-    private final double offsetY;
-    private final double offsetZ;
+    private final SpatialOffset offset;
     private final double yaw;   // Rotation around Y axis (radians)
     private final double pitch; // Rotation around X axis (radians)
     private final double roll;  // Rotation around Z axis (radians)
@@ -51,7 +49,7 @@ public class TransformedShape implements Shape {
      * 
      * @param baseShape The base shape to transform
      * @param offsetX Translation offset in X
-     * @param offsetY Translation offset in Y
+     * @param offsetY Translation offset in Y (vertical / up)
      * @param offsetZ Translation offset in Z
      * @param yaw Rotation around Y axis in radians (horizontal rotation)
      * @param pitch Rotation around X axis in radians (vertical tilt)
@@ -60,9 +58,7 @@ public class TransformedShape implements Shape {
     public TransformedShape(@Nonnull Shape baseShape, double offsetX, double offsetY, double offsetZ,
                            double yaw, double pitch, double roll) {
         this.baseShape = baseShape;
-        this.offsetX = offsetX;
-        this.offsetY = offsetY;
-        this.offsetZ = offsetZ;
+        this.offset = new SpatialOffset(offsetX, offsetY, offsetZ);
         this.yaw = yaw;
         this.pitch = pitch;
         this.roll = roll;
@@ -72,17 +68,22 @@ public class TransformedShape implements Shape {
     public Shape getBaseShape() {
         return baseShape;
     }
+
+    @Nonnull
+    public SpatialOffset getOffset() {
+        return offset;
+    }
     
     public double getOffsetX() {
-        return offsetX;
+        return offset.x();
     }
     
     public double getOffsetY() {
-        return offsetY;
+        return offset.y();
     }
     
     public double getOffsetZ() {
-        return offsetZ;
+        return offset.z();
     }
     
     public double getYaw() {
@@ -101,7 +102,7 @@ public class TransformedShape implements Shape {
     public Box getBox(double x, double y, double z) {
         // Fast path when no rotation is applied.
         if (yaw == 0.0 && pitch == 0.0 && roll == 0.0) {
-            return baseShape.getBox(x + offsetX, y + offsetY, z + offsetZ);
+            return baseShape.getBox(x + offset.x(), y + offset.y(), z + offset.z());
         }
 
         Box baseBox = baseShape.getBox(0, 0, 0);
@@ -119,10 +120,10 @@ public class TransformedShape implements Shape {
         for (double localX : xValues) {
             for (double localY : yValues) {
                 for (double localZ : zValues) {
-                    double[] rotated = applyForwardRotation(localX, localY, localZ);
-                    double worldX = x + offsetX + rotated[0];
-                    double worldY = y + offsetY + rotated[1];
-                    double worldZ = z + offsetZ + rotated[2];
+                    double[] rotated = SpatialOffset.forwardRotate(localX, localY, localZ, yaw, pitch, roll);
+                    double worldX = x + offset.x() + rotated[0];
+                    double worldY = y + offset.y() + rotated[1];
+                    double worldZ = z + offset.z() + rotated[2];
 
                     minX = Math.min(minX, worldX);
                     minY = Math.min(minY, worldY);
@@ -136,79 +137,20 @@ public class TransformedShape implements Shape {
 
         return new Box(minX, minY, minZ, maxX, maxY, maxZ);
     }
-
-    /**
-     * Apply forward rotation to a local-space point.
-     * Order matches containsPosition inverse math: roll -> pitch -> yaw.
-     */
-    private double[] applyForwardRotation(double x, double y, double z) {
-        double rotatedX = x;
-        double rotatedY = y;
-        double rotatedZ = z;
-
-        if (roll != 0.0) {
-            double cosRoll = Math.cos(roll);
-            double sinRoll = Math.sin(roll);
-            double xTemp = rotatedX * cosRoll + rotatedY * sinRoll;
-            double yTemp = -rotatedX * sinRoll + rotatedY * cosRoll;
-            rotatedX = xTemp;
-            rotatedY = yTemp;
-        }
-
-        if (pitch != 0.0) {
-            double cosPitch = Math.cos(pitch);
-            double sinPitch = Math.sin(pitch);
-            double yTemp = rotatedY * cosPitch + rotatedZ * sinPitch;
-            double zTemp = -rotatedY * sinPitch + rotatedZ * cosPitch;
-            rotatedY = yTemp;
-            rotatedZ = zTemp;
-        }
-
-        if (yaw != 0.0) {
-            double cosYaw = Math.cos(yaw);
-            double sinYaw = Math.sin(yaw);
-            double xTemp = rotatedX * cosYaw - rotatedZ * sinYaw;
-            double zTemp = rotatedX * sinYaw + rotatedZ * cosYaw;
-            rotatedX = xTemp;
-            rotatedZ = zTemp;
-        }
-
-        return new double[] {rotatedX, rotatedY, rotatedZ};
-    }
     
     @Override
     public boolean containsPosition(double x, double y, double z) {
         // Transform the world position back to local coordinates
-        double localX = x - offsetX;
-        double localY = y - offsetY;
-        double localZ = z - offsetZ;
+        double localX = x - offset.x();
+        double localY = y - offset.y();
+        double localZ = z - offset.z();
         
-        // Apply inverse rotation
+        // Apply inverse rotation (delegates to shared SpatialOffset math)
         if (yaw != 0.0 || pitch != 0.0 || roll != 0.0) {
-            double cosYaw = Math.cos(-yaw);
-            double sinYaw = Math.sin(-yaw);
-            double cosPitch = Math.cos(-pitch);
-            double sinPitch = Math.sin(-pitch);
-            double cosRoll = Math.cos(-roll);
-            double sinRoll = Math.sin(-roll);
-            
-            // Inverse yaw
-            double xTemp = localX * cosYaw - localZ * sinYaw;
-            double zTemp = localX * sinYaw + localZ * cosYaw;
-            localX = xTemp;
-            localZ = zTemp;
-            
-            // Inverse pitch
-            double yTemp = localY * cosPitch + localZ * sinPitch;
-            zTemp = -localY * sinPitch + localZ * cosPitch;
-            localY = yTemp;
-            localZ = zTemp;
-            
-            // Inverse roll
-            xTemp = localX * cosRoll + localY * sinRoll;
-            yTemp = -localX * sinRoll + localY * cosRoll;
-            localX = xTemp;
-            localY = yTemp;
+            double[] inv = SpatialOffset.inverseRotate(localX, localY, localZ, yaw, pitch, roll);
+            localX = inv[0];
+            localY = inv[1];
+            localZ = inv[2];
         }
         
         return baseShape.containsPosition(localX, localY, localZ);

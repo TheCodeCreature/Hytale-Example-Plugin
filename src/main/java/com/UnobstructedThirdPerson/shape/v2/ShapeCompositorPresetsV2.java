@@ -1,6 +1,7 @@
 package com.UnobstructedThirdPerson.shape.v2;
 
 import com.UnobstructedThirdPerson.shape.CircularCone;
+import com.UnobstructedThirdPerson.shape.SpatialOffset;
 import com.UnobstructedThirdPerson.shape.TransformFlags;
 import com.UnobstructedThirdPerson.shape.TransformedShape;
 import com.UnobstructedThirdPerson.shape.v2.fill.EmptyBlockFillV2;
@@ -30,17 +31,18 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                         .build();
 
         public ShapeCompositorPresetsV2(@Nonnull Vector3d anchor, int radius) {
-                super(anchor);
+                super(SpatialOffset.ZERO);
+                setAnchor(anchor);
                 _scale = radius;
         }
 
         public ShapeCompositorPresetsV2(int radius) {
-                super(new Vector3d(0, 0, 0));
+                super(SpatialOffset.ZERO);
                 _scale = radius;
         }
 
         public ShapeCompositorPresetsV2() {
-                super(new Vector3d(0, _yPivotOffset, 0));
+                super(new SpatialOffset(0, _yPivotOffset, 0));
         }
 
         public ShapeCompositorV2 DefaultViewField() {

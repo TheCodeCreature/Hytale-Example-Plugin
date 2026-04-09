@@ -3,6 +3,7 @@ package com.UnobstructedThirdPerson.camera.v2;
 import com.UnobstructedThirdPerson.camera.DebugCube;
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
 import com.UnobstructedThirdPerson.shape.v1.placeholder.TransparentBlockUtils;
+import com.UnobstructedThirdPerson.shape.SpatialOffset;
 import com.UnobstructedThirdPerson.shape.v2.ComposedRegionV2;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorV2;
 import com.UnobstructedThirdPerson.shape.v2.VoxelEntry;
@@ -43,7 +44,7 @@ public class CameraTransparencyVolumeV2 {
     private final PlayerRef playerRef;
     private final World world;
     private final ShapeCompositorV2 compositor;
-    private final Vector3d compositorOffset;
+    private final SpatialOffset compositorOffset;
 
     private final Set<Long> currentPositions = new HashSet<>();
     private final Map<Long, BlockSnapshot> activeBlocks = new HashMap<>();

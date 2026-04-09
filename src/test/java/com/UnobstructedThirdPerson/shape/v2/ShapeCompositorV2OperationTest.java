@@ -1,5 +1,6 @@
 package com.UnobstructedThirdPerson.shape.v2;
 
+import com.UnobstructedThirdPerson.shape.SpatialOffset;
 import com.UnobstructedThirdPerson.shape.v2.fill.EmptyBlockFillV2;
 import com.UnobstructedThirdPerson.shape.v2.operation.OperationTypeV2;
 import com.UnobstructedThirdPerson.shape.v2.operation.ShapeOperationV2;
@@ -14,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ShapeCompositorV2OperationTest {
 
     private ShapeCompositorV2 createCompositor() {
-        return new ShapeCompositorV2(new Vector3d(0, 0, 0));
+        return new ShapeCompositorV2(SpatialOffset.ZERO);
     }
 
     // --- OperationRef overload tests ---

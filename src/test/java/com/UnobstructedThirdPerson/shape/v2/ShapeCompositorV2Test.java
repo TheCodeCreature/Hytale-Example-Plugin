@@ -1,5 +1,6 @@
 package com.UnobstructedThirdPerson.shape.v2;
 
+import com.UnobstructedThirdPerson.shape.SpatialOffset;
 import com.hypixel.hytale.math.vector.Vector3d;
 import org.junit.jupiter.api.Test;
 
@@ -11,27 +12,25 @@ class ShapeCompositorV2Test {
 
     @Test
     void getVector3d_zeroRotation_anchorPlusOffset() {
-        ShapeCompositorV2 comp = new ShapeCompositorV2(new Vector3d(-0.5, 1.5, 0));
+        ShapeCompositorV2 comp = new ShapeCompositorV2(new SpatialOffset(-0.5, 1.5, 0));
         comp.setAnchor(new Vector3d(10, 20, 30));
         comp.setRotation(0, 0);
 
         Vector3d result = comp.getVector3d();
 
         // No rotation: effective = anchor + offset directly
-        // offset.x=-0.5 rotated by yaw=0: extX = -0.5*cos0 - 0*sin0 = -0.5
-        // offset.z=0 rotated by yaw=0: extZ = -0.5*sin0 + 0*cos0 = 0
-        // offset.y=1.5 with pitch=0: pivotY = 1.5*sin0 = 0, pivotForward = 1.5*cos0 = 1.5
-        // x = 10 + (-0.5) + 1.5*(-sin0) = 10 - 0.5 + 0 = 9.5
-        // y = 20 + 0 + 0 = 20  (PITCH_PIVOT_EYE_HEIGHT=0)
-        // z = 30 + 0 + 1.5*cos0 = 30 + 1.5 = 31.5
+        // offset = (-0.5, 1.5, 0), rotated(0, 0) = (-0.5, 1.5, 0)
+        // x = 10 + (-0.5) = 9.5
+        // y = 20 + 1.5 = 21.5
+        // z = 30 + 0 = 30.0
         assertEquals(9.5, result.x, EPSILON);
-        assertEquals(20.0, result.y, EPSILON);
-        assertEquals(31.5, result.z, EPSILON);
+        assertEquals(21.5, result.y, EPSILON);
+        assertEquals(30.0, result.z, EPSILON);
     }
 
     @Test
     void getVector3d_yaw90_rotatesXZOffset() {
-        ShapeCompositorV2 comp = new ShapeCompositorV2(new Vector3d(-5, 0, 0));
+        ShapeCompositorV2 comp = new ShapeCompositorV2(new SpatialOffset(-5, 0, 0));
         comp.setAnchor(new Vector3d(0, 0, 0));
         double yaw90 = Math.PI / 2;
         comp.setRotation(yaw90, 0);
@@ -39,20 +38,16 @@ class ShapeCompositorV2Test {
         Vector3d result = comp.getVector3d();
 
         // offset=(-5, 0, 0), yaw=90°, pitch=0
-        // cosYaw=0, sinYaw=1
-        // extX = -5*0 - 0*1 = 0
-        // extZ = -5*1 + 0*0 = -5
-        // pivotY = 0*sin0 = 0, pivotForward = 0*cos0 = 0
-        // x = 0 + 0 + 0 = 0
-        // z = 0 + (-5) + 0 = -5
+        // pitch=0: no change
+        // yaw=90°: cosY=0, sinY=1 → rx = -5*0 - 0*1 = 0, rz = -5*1 + 0*0 = -5
         assertEquals(0.0, result.x, EPSILON);
         assertEquals(0.0, result.y, EPSILON);
         assertEquals(-5.0, result.z, EPSILON);
     }
 
     @Test
-    void getVector3d_yOffsetPitch90_goesVertical() {
-        ShapeCompositorV2 comp = new ShapeCompositorV2(new Vector3d(0, 5, 0));
+    void getVector3d_yOffsetPitch90_rotatesIntoZ() {
+        ShapeCompositorV2 comp = new ShapeCompositorV2(new SpatialOffset(0, 5, 0));
         comp.setAnchor(new Vector3d(0, 0, 0));
         double pitch90 = Math.PI / 2;
         comp.setRotation(0, pitch90);
@@ -60,39 +55,32 @@ class ShapeCompositorV2Test {
         Vector3d result = comp.getVector3d();
 
         // offset=(0, 5, 0), yaw=0, pitch=90°
-        // cosPitch=0, sinPitch=1
-        // pivotY = 5*1 = 5, pivotForward = 5*0 = 0
-        // extX = 0, extZ = 0
-        // x = 0 + 0 + 0 = 0
-        // y = 0 + 5 + 0 = 5
-        // z = 0 + 0 + 0 = 0
+        // pitch rotation: ry = 5*cos90 = 0, rz = -5*sin90 = -5
+        // yaw=0: no change
+        // Result: (0, 0, -5)
         assertEquals(0.0, result.x, EPSILON);
-        assertEquals(5.0, result.y, EPSILON);
-        assertEquals(0.0, result.z, EPSILON);
+        assertEquals(0.0, result.y, EPSILON);
+        assertEquals(-5.0, result.z, EPSILON);
     }
 
     @Test
-    void getVector3d_yOffsetPitchZero_goesForward() {
-        ShapeCompositorV2 comp = new ShapeCompositorV2(new Vector3d(0, 5, 0));
+    void getVector3d_yOffsetPitchZero_staysVertical() {
+        ShapeCompositorV2 comp = new ShapeCompositorV2(new SpatialOffset(0, 5, 0));
         comp.setAnchor(new Vector3d(0, 10, 0));
         comp.setRotation(0, 0);
 
         Vector3d result = comp.getVector3d();
 
-        // offset=(0, 5, 0), yaw=0, pitch=0
-        // pivotY = 5*sin0 = 0, pivotForward = 5*cos0 = 5
-        // extX=0, extZ=0
-        // x = 0 + 0 + 5*(-sin0) = 0
-        // y = 10 + 0 + 0 = 10
-        // z = 0 + 0 + 5*cos0 = 5
+        // offset=(0, 5, 0), yaw=0, pitch=0 — no rotation
+        // Y offset stays vertical: result.y = 10 + 5 = 15
         assertEquals(0.0, result.x, EPSILON);
-        assertEquals(10.0, result.y, EPSILON);
-        assertEquals(5.0, result.z, EPSILON);
+        assertEquals(15.0, result.y, EPSILON);
+        assertEquals(0.0, result.z, EPSILON);
     }
 
     @Test
     void getVector3d_pitchAndYaw_yComponentPivots() {
-        ShapeCompositorV2 comp = new ShapeCompositorV2(new Vector3d(0, 5, 0));
+        ShapeCompositorV2 comp = new ShapeCompositorV2(new SpatialOffset(0, 5, 0));
         comp.setAnchor(new Vector3d(0, 0, 0));
         double yaw90 = Math.PI / 2;
         double pitch45 = Math.PI / 4;
@@ -101,22 +89,20 @@ class ShapeCompositorV2Test {
         Vector3d result = comp.getVector3d();
 
         // offset=(0, 5, 0), yaw=90°, pitch=45°
-        // cosPitch=√2/2, sinPitch=√2/2, cosYaw=0, sinYaw=1
-        // pivotY = 5*(√2/2) ≈ 3.536
-        // pivotForward = 5*(√2/2) ≈ 3.536
-        // extX = 0, extZ = 0
-        // x = 0 + 0 + 3.536*(-1) = -3.536
-        // y = 0 + 3.536 + 0 = 3.536
-        // z = 0 + 0 + 3.536*0 = 0
+        // pitch: ry = 5*cos45 = 5√2/2, rz = -5*sin45 = -5√2/2
+        // yaw=90°: cosY=0, sinY=1
+        //   rx = 0*0 - (-5√2/2)*1 = 5√2/2
+        //   rz = 0*1 + (-5√2/2)*0 = 0
+        // Result: (5√2/2, 5√2/2, 0)
         double s = 5 * Math.sin(Math.PI / 4);
-        assertEquals(-s, result.x, EPSILON);
+        assertEquals(s, result.x, EPSILON);
         assertEquals(s, result.y, EPSILON);
         assertEquals(0.0, result.z, EPSILON);
     }
 
     @Test
     void setRotation_yawOnly_pitchRemainsZero() {
-        ShapeCompositorV2 comp = new ShapeCompositorV2(new Vector3d(0, 0, 0));
+        ShapeCompositorV2 comp = new ShapeCompositorV2(SpatialOffset.ZERO);
         comp.setRotation(1.5);
 
         assertEquals(1.5, comp.getYawRotation(), EPSILON);
@@ -125,7 +111,7 @@ class ShapeCompositorV2Test {
 
     @Test
     void setRotation_yawAndPitch_bothSet() {
-        ShapeCompositorV2 comp = new ShapeCompositorV2(new Vector3d(0, 0, 0));
+        ShapeCompositorV2 comp = new ShapeCompositorV2(SpatialOffset.ZERO);
         comp.setRotation(1.5, 0.8);
 
         assertEquals(1.5, comp.getYawRotation(), EPSILON);

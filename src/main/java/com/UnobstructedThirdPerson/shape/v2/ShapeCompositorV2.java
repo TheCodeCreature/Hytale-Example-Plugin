@@ -1,6 +1,7 @@
 package com.UnobstructedThirdPerson.shape.v2;
 
 import com.UnobstructedThirdPerson.records.BlockSnapshot;
+import com.UnobstructedThirdPerson.shape.SpatialOffset;
 import com.UnobstructedThirdPerson.shape.TransformFlags;
 import com.UnobstructedThirdPerson.shape.TransformedShape;
 import com.UnobstructedThirdPerson.shape.v1.placeholder.TransparentBlockUtils;
@@ -33,7 +34,7 @@ public class ShapeCompositorV2 {
     private static final double PITCH_PIVOT_EYE_HEIGHT = 0;
     
     private Vector3d anchor = new Vector3d(0, 0, 0);
-    private Vector3d offset;
+    private SpatialOffset offset;
     private double yawRotation = 0.0;
     private double pitchRotation = 0.0;
     private final Map<String, ShapeOperationV2> operations;
@@ -51,7 +52,7 @@ public class ShapeCompositorV2 {
             double localPitch, double localYaw, double localRoll,
             DebugShape debugShape, Vector3f color, float opacity) {}
     
-    public ShapeCompositorV2(@Nonnull Vector3d offset) {
+    public ShapeCompositorV2(@Nonnull SpatialOffset offset) {
         this.offset = offset;
         this.operations = new LinkedHashMap<>();
         this.operationOrder = new ArrayList<>();
@@ -66,12 +67,12 @@ public class ShapeCompositorV2 {
         return anchor;
     }
     
-    public void setOffset(@Nonnull Vector3d offset) {
+    public void setOffset(@Nonnull SpatialOffset offset) {
         this.offset = offset;
     }
     
     @Nonnull
-    public Vector3d getOffset() {
+    public SpatialOffset getOffset() {
         return offset;
     }
     
@@ -548,24 +549,13 @@ public class ShapeCompositorV2 {
     }
 
     @NonNull Vector3d computeEffectiveAnchor(double effectiveYaw, double effectivePitch) {
-        double cosPitch = Math.cos(effectivePitch);
-        double sinPitch = Math.sin(effectivePitch);
-        double cosYaw = Math.cos(effectiveYaw);
-        double sinYaw = Math.sin(effectiveYaw);
-
-        // Pivot Y by pitch: sin(pitch) maps to world Y (up when looking up),
-        // cos(pitch) maps to forward along the yaw direction (max when looking straight)
-        double pivotY = offset.y * sinPitch;
-        double pivotForward = offset.y * cosPitch;
-
-        // X and Z are flat extensions relative to the player's facing direction
-        double extX = offset.x * cosYaw - offset.z * sinYaw;
-        double extZ = offset.x * sinYaw + offset.z * cosYaw;
+        // Delegate to SpatialOffset — same rotation convention as TransformedShape
+        SpatialOffset rotated = offset.rotated(effectiveYaw, effectivePitch);
 
         return new Vector3d(
-                anchor.x + extX + pivotForward * (-sinYaw),
-                anchor.y + pivotY + PITCH_PIVOT_EYE_HEIGHT,
-                anchor.z + extZ + pivotForward * cosYaw
+                anchor.x + rotated.x(),
+                anchor.y + rotated.y() + PITCH_PIVOT_EYE_HEIGHT,
+                anchor.z + rotated.z()
         );
     }
 
