@@ -21,7 +21,8 @@ import javax.annotation.Nonnull;
 public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 
         private int _scale = 7;
-        private static final double _yPivotOffset = 1.5;
+        private static final double _yPivotOffset = 1.8;
+        private static final double _xOffset = -1.0;
         private final TransformFlags _noMove = TransformFlags.builder()
                         .ignorePitch()
                         .ignoreYaw()
@@ -31,18 +32,18 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                         .build();
 
         public ShapeCompositorPresetsV2(@Nonnull Vector3d anchor, int radius) {
-                super(SpatialOffset.ZERO);
+                super(new SpatialOffset(_xOffset, _yPivotOffset, 0));
                 setAnchor(anchor);
                 _scale = radius;
         }
 
         public ShapeCompositorPresetsV2(int radius) {
-                super(SpatialOffset.ZERO);
+                super(new SpatialOffset(_xOffset, _yPivotOffset, 0));
                 _scale = radius;
         }
 
         public ShapeCompositorPresetsV2() {
-                super(new SpatialOffset(0, _yPivotOffset, 0));
+                super(new SpatialOffset(_xOffset, _yPivotOffset, 0));
         }
 
         public ShapeCompositorV2 DefaultViewField() {
@@ -51,9 +52,9 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 double baseRadius = _scale;
                 double baseHeight = _scale * 1.5;
 
-                double xOffset = -0.5;
-                double yOffset = _scale * 0.5;
-                double zOffset = baseHeight - 1.5;
+                double yOffset = 0;
+                double yOffsetFloor = -_yPivotOffset;
+                double zOffset = 0;
 
                 double pitchRadianOffset = -Math.toRadians(15);
                 double yawRadianOffset = -Math.toRadians(5);
@@ -62,12 +63,12 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 String outerConeId = idTracker++ + "";
                 Shape outerCone = new TransformedShape(
                                 new CircularCone(baseRadius, baseHeight),
-                                xOffset, yOffset, -(zOffset), yawRadianOffset, pitchRadianOffset, 0);
+                                0, yOffset, -(zOffset), yawRadianOffset, pitchRadianOffset, 0);
                 this.addOperation(outerConeId,
                                 outerCone,
                                 OperationTypeV2.DEFINE)
                                 .withFill(new EmptyBlockFillV2())
-                                .withShadowCubes(DebugUtils.COLOR_BLACK)
+                                // .withShadowCubes(DebugUtils.COLOR_BLACK)
                                 .build();
 
                 this.addOperation(idTracker++ + "",
@@ -77,18 +78,22 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 .build();
                 // #endregion
                 // #region InnerViewBox
-                String innerViewBoxId = idTracker++ + "";
-                double innerViewBoxXScale = 1.25;
-                Shape innerViewBoxShape = new TransformedShape(
-                                new Box(-innerViewBoxXScale, 0, -_scale, innerViewBoxXScale, 3, -1),
-                                -0, 1, 0,
-                                yawRadianOffset, 0, 0);
-                this.addOperation(innerViewBoxId,
-                                innerViewBoxShape,
+                String innerViewId = idTracker++ + "";
+                double innerViewBoxXScale = 1.5;
+                Shape innerViewConeShape = new TransformedShape(
+                                new CircularCone(innerViewBoxXScale, baseHeight),
+                                0, 0, -(zOffset), yawRadianOffset, pitchRadianOffset, 0);
+                // Shape innerViewBoxShape = new TransformedShape(
+                //                 new Box(-innerViewBoxXScale, 0, -_scale, innerViewBoxXScale, 3, -1),
+                //                 -0, 1, 0,
+                //                 yawRadianOffset, 0, 0);
+                this.addOperation(innerViewId,
+                                innerViewConeShape,
                                 OperationTypeV2.Cut(outerConeId))
                                 .withFill(new EmptyBlockFillV2())
                                 // .withShadowCubes(DebugUtils.COLOR_CYAN)
-                                .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cube)
+                                // .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cube)
+                                .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cone)
                                 .build();
                 // #endregion
                 // #region SideViewBox
@@ -109,8 +114,8 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 // #region PlayerFacingWall
                 String ignorePlayerFacingWallId = idTracker++ + "";
                 Shape ignorePlayerFacingWall = new TransformedShape(
-                                new Box(-_scale, 1, -1, _scale, 2, _scale),
-                                0, 0, 0,
+                                new Box(-_scale, 1, 0, _scale, 2, _scale),
+                                0, yOffsetFloor, 0,
                                 yawRadianOffset, 0, 0);
                 this.addOperation(ignorePlayerFacingWallId,
                                 ignorePlayerFacingWall,
@@ -123,8 +128,8 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 // #region PlayerFacingWallPlus
                 String ignorePlayerFacingWallPlusId = idTracker++ + "";
                 Shape ignorePlayerFacingWallPlus = new TransformedShape(
-                                new Box(-_scale, 2, 0.5, _scale, _scale, _scale),
-                                0, 0, 0,
+                                new Box(-_scale, 2, 1, _scale, _scale, _scale),
+                                0, yOffsetFloor, 0,
                                 yawRadianOffset, 0, 0);
                 this.addOperation(ignorePlayerFacingWallPlusId,
                                 ignorePlayerFacingWallPlus,
@@ -135,13 +140,13 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 .build();
                 // #endregion
                 // #region PlayerFeetBox
-                String IgnorePlayerFeetId = idTracker++ + "";
-                Shape IgnoredPlayerFeetBox = new TransformedShape(
+                String IgnorePlayerFeetPlusId = idTracker++ + "";
+                Shape IgnoredPlayerFeetPlusBox = new TransformedShape(
                                 new Box(-_scale, -_scale, -_scale, _scale, 1, _scale),
-                                0, 0, 0,
+                                0, yOffsetFloor, 0,
                                 yawRadianOffset, 0, 0);
-                this.addOperation(IgnorePlayerFeetId,
-                                IgnoredPlayerFeetBox,
+                this.addOperation(IgnorePlayerFeetPlusId,
+                                IgnoredPlayerFeetPlusBox,
                                 OperationTypeV2.EXCLUDE)
                                 .withTransformFlags(_ignorePitch)
                                 // .withShadowCubes(DebugUtils.COLOR_RED)
@@ -156,7 +161,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                         // SideViewBoxId,
                                         ignorePlayerFacingWallId,
                                         ignorePlayerFacingWallPlusId,
-                                        IgnorePlayerFeetId))
+                                        IgnorePlayerFeetPlusId))
                                 .withTransformFlags(_ignorePitch)
                                 .build();
                 // #endregion
