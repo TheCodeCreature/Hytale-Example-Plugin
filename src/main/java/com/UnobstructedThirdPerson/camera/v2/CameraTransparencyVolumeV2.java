@@ -50,6 +50,7 @@ public class CameraTransparencyVolumeV2 {
     private final Map<Long, Integer> activeBlockIds = new HashMap<>();
     private Map<Long, DebugStyle> lastRenderedDebugStyles = new HashMap<>();
     private List<BoundingShapeDebug> lastBoundingShapes = List.of();
+    private boolean debugBoundingShapesEnabled = false;
     private Vector3d lastAnchor = null;
     private double lastYaw = Double.NaN;
     private double lastPitch = Double.NaN;
@@ -79,6 +80,18 @@ public class CameraTransparencyVolumeV2 {
     @Nonnull
     public Map<Long, BlockSnapshot> getActiveBlocks() {
         return Collections.unmodifiableMap(activeBlocks);
+    }
+
+    public static CameraTransparencyVolumeV2 getInstance(@Nonnull UUID playerId) {
+        return INSTANCES.get(playerId);
+    }
+
+    public boolean isDebugBoundingShapesEnabled() {
+        return debugBoundingShapesEnabled;
+    }
+
+    public void setDebugBoundingShapesEnabled(boolean enabled) {
+        this.debugBoundingShapesEnabled = enabled;
     }
 
     public static void remove(@Nonnull UUID playerId) {
@@ -274,15 +287,19 @@ public class CameraTransparencyVolumeV2 {
         DebugCube.updateDebugCubes(world, perVoxelStyles);
         
         // Render bounding shapes with full transforms (recomputed each frame)
-        DebugCube.renderBoundingShapes(world, region.getBoundingShapes());
+        lastBoundingShapes = region.getBoundingShapes();
+        if (debugBoundingShapesEnabled) {
+            DebugCube.renderBoundingShapes(world, lastBoundingShapes);
+        }
         
         lastRenderedDebugStyles = perVoxelStyles;
-        lastBoundingShapes = region.getBoundingShapes();
     }
 
     private void renderCachedDebugCubes() {
         DebugCube.renderCachedDebugCubes(world);
-        DebugCube.renderBoundingShapes(world, lastBoundingShapes);
+        if (debugBoundingShapesEnabled) {
+            DebugCube.renderBoundingShapes(world, lastBoundingShapes);
+        }
     }
 
     private int restorePositions(@Nonnull Collection<Long> positionsToRestore) {

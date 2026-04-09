@@ -51,7 +51,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 
                 double xOffset = -0.5;
                 double yOffset = _scale * 0.5;
-                double zOffset = baseHeight - 1;
+                double zOffset = baseHeight - 1.5;
 
                 double pitchRadianOffset = -Math.toRadians(15);
                 double yawRadianOffset = -Math.toRadians(5);
@@ -66,22 +66,27 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 OperationTypeV2.DEFINE)
                                 .withFill(new EmptyBlockFillV2())
                                 .withShadowCubes(DebugUtils.COLOR_BLACK)
-                                // .withDebugBoundingShape(DebugUtils.COLOR_WHITE, DebugShape.Cone)
+                                .build();
+
+                this.addOperation(idTracker++ + "",
+                                outerCone,
+                                OperationTypeV2.DEFINE)
+                                .withDebugBoundingShape(DebugUtils.COLOR_WHITE, DebugShape.Cone)
                                 .build();
                 // #endregion
                 // #region InnerViewBox
                 String innerViewBoxId = idTracker++ + "";
-                double innerViewBoxXScale = 1;
+                double innerViewBoxXScale = 1.25;
                 Shape innerViewBoxShape = new TransformedShape(
-                                new Box(-innerViewBoxXScale, 0, -_scale, innerViewBoxXScale, 2, 0),
-                                -0.25, 1, 0,
+                                new Box(-innerViewBoxXScale, 0, -_scale, innerViewBoxXScale, 3, -1),
+                                -0, 1, 0,
                                 yawRadianOffset, 0, 0);
                 this.addOperation(innerViewBoxId,
                                 innerViewBoxShape,
                                 OperationTypeV2.Cut(outerConeId))
                                 .withFill(new EmptyBlockFillV2())
                                 // .withShadowCubes(DebugUtils.COLOR_CYAN)
-                                // .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cube)
+                                .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cube)
                                 .build();
                 // #endregion
                 // #region SideViewBox
@@ -102,16 +107,15 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 // #region PlayerFacingWall
                 String ignorePlayerFacingWallId = idTracker++ + "";
                 Shape ignorePlayerFacingWall = new TransformedShape(
-                                new Box(-_scale, -_scale, -1, _scale, 2, _scale),
+                                new Box(-_scale, 1, -1, _scale, 2, _scale),
                                 0, 0, 0,
                                 yawRadianOffset, 0, 0);
                 this.addOperation(ignorePlayerFacingWallId,
                                 ignorePlayerFacingWall,
                                 OperationTypeV2.EXCLUDE)
-                                .withFill(new EmptyBlockFillV2())
                                 .withTransformFlags(_ignorePitch)
                                 // .withShadowCubes(DebugUtils.COLOR_LIME)
-                                // .withDebugBoundingShape(DebugUtils.COLOR_LIME, DebugShape.Cube)
+                                .withDebugBoundingShape(DebugUtils.COLOR_LIME, DebugShape.Cube)
                                 .build();
                 // #endregion
                 // #region PlayerFacingWallPlus
@@ -123,10 +127,9 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 this.addOperation(ignorePlayerFacingWallPlusId,
                                 ignorePlayerFacingWallPlus,
                                 OperationTypeV2.EXCLUDE)
-                                .withFill(new EmptyBlockFillV2())
                                 .withTransformFlags(_ignorePitch)
                                 // .withShadowCubes(DebugUtils.COLOR_GREEN)
-                                // .withDebugBoundingShape(DebugUtils.COLOR_GREEN, DebugShape.Cube)
+                                .withDebugBoundingShape(DebugUtils.COLOR_GREEN, DebugShape.Cube)
                                 .build();
                 // #endregion
                 // #region PlayerFeetBox
@@ -138,10 +141,9 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 this.addOperation(IgnorePlayerFeetId,
                                 IgnoredPlayerFeetBox,
                                 OperationTypeV2.EXCLUDE)
-                                .withFill(new EmptyBlockFillV2())
                                 .withTransformFlags(_ignorePitch)
                                 // .withShadowCubes(DebugUtils.COLOR_RED)
-                                // .withDebugBoundingShape(DebugUtils.COLOR_RED, DebugShape.Cube)
+                                .withDebugBoundingShape(DebugUtils.COLOR_RED, DebugShape.Cube)
                                 .build();
                 // #endregion
                 // #region IgnorePitch UNION (sideViewBox + all ignorePitch EXCLUDE boxes)
