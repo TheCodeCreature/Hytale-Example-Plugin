@@ -157,6 +157,12 @@ public class ShapeCompositorV2 {
             this.debugStyle = new DebugStyle(true, color, 0.05f, DebugVisualization.CUBE);
             return this;
         }
+
+        @Nonnull
+        public OperationBuilder withShadowCubes(@Nonnull Vector3f color, float opacity) {
+            this.debugStyle = new DebugStyle(true, color, opacity, DebugVisualization.CUBE);
+            return this;
+        }
         
         @Nonnull
         public OperationBuilder withDebugVectorPoints(@Nonnull DebugStyle debugStyle) {
@@ -845,30 +851,18 @@ public class ShapeCompositorV2 {
                 baseShape = ts.getBaseShape();
             }
             
-            // Compute base shape AABB at origin (without TransformedShape rotation/offset)
-            double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, minZ = Double.MAX_VALUE;
-            double maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
+            // Compute base shape AABB from continuous geometry (not voxelized blocks)
+            // so fractional boundaries like Box(..., 1.5, ...) are accurately represented.
+            com.hypixel.hytale.math.shape.Box baseBox = baseShape.getBox(0, 0, 0);
             
-            final double[] bounds = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE,
-                    -Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
-            baseShape.forEachBlock(0, 0, 0, (bx, by, bz) -> {
-                if (bx < bounds[0]) bounds[0] = bx;
-                if (by < bounds[1]) bounds[1] = by;
-                if (bz < bounds[2]) bounds[2] = bz;
-                if (bx + 1 > bounds[3]) bounds[3] = bx + 1;
-                if (by + 1 > bounds[4]) bounds[4] = by + 1;
-                if (bz + 1 > bounds[5]) bounds[5] = bz + 1;
-                return true;
-            });
+            if (baseBox == null) continue;
             
-            if (bounds[0] == Double.MAX_VALUE) continue;
-            
-            double centerX = (bounds[0] + bounds[3]) / 2.0;
-            double centerY = (bounds[1] + bounds[4]) / 2.0;
-            double centerZ = (bounds[2] + bounds[5]) / 2.0;
-            double extentX = bounds[3] - bounds[0];
-            double extentY = bounds[4] - bounds[1];
-            double extentZ = bounds[5] - bounds[2];
+            double centerX = (baseBox.min.x + baseBox.max.x) / 2.0;
+            double centerY = (baseBox.min.y + baseBox.max.y) / 2.0;
+            double centerZ = (baseBox.min.z + baseBox.max.z) / 2.0;
+            double extentX = baseBox.max.x - baseBox.min.x;
+            double extentY = baseBox.max.y - baseBox.min.y;
+            double extentZ = baseBox.max.z - baseBox.min.z;
             
             boundingShapeConfigs.put(id, new BoundingShapeConfig(
                     centerX, centerY, centerZ,

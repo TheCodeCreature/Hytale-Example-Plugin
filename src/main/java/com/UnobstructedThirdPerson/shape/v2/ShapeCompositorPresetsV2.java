@@ -8,6 +8,7 @@ import com.UnobstructedThirdPerson.shape.v2.fill.EmptyBlockFillV2;
 import com.UnobstructedThirdPerson.shape.v2.operation.OperationTypeV2;
 import com.UnobstructedThirdPerson.shape.v2.visual.DebugStyle;
 import com.hypixel.hytale.math.shape.Box;
+import com.hypixel.hytale.math.shape.Cylinder;
 import com.hypixel.hytale.math.shape.Ellipsoid;
 import com.hypixel.hytale.math.shape.Shape;
 import com.hypixel.hytale.math.vector.Vector3d;
@@ -18,11 +19,14 @@ import com.hypixel.hytale.server.core.modules.debug.DebugUtils;
 
 import javax.annotation.Nonnull;
 
+import org.jetbrains.annotations.Debug;
+
 public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
 
         private int _scale = 7;
-        private static final double _yOffset = 1.8;
+        private static final double _yOffset = 2;
         private static final double _xOffset = -1.0;
+        private static final double _zOffset = 0;
         private final TransformFlags _noMove = TransformFlags.builder()
                         .ignorePitch()
                         .ignoreYaw()
@@ -32,18 +36,18 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                         .build();
 
         public ShapeCompositorPresetsV2(@Nonnull Vector3d anchor, int radius) {
-                super(new SpatialOffset(_xOffset, _yOffset, 0));
+                super(new SpatialOffset(_xOffset, _yOffset, _zOffset));
                 setAnchor(anchor);
                 _scale = radius;
         }
 
         public ShapeCompositorPresetsV2(int radius) {
-                super(new SpatialOffset(_xOffset, _yOffset, 0));
+                super(new SpatialOffset(_xOffset, _yOffset, _zOffset));
                 _scale = radius;
         }
 
         public ShapeCompositorPresetsV2() {
-                super(new SpatialOffset(_xOffset, _yOffset, 0));
+                super(new SpatialOffset(_xOffset, _yOffset, _zOffset));
         }
 
         public ShapeCompositorV2 DefaultViewField() {
@@ -52,11 +56,12 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 double baseRadius = _scale;
                 double baseHeight = _scale * 1.5;
 
-                double yOffset = 0;
+                double yOffset = 2.5;//baseRadius / 2.0 - 0.5;
                 double yOffsetFloor = -_yOffset;
-                double zOffset = 0;
+                double zOffset = baseHeight - 2.5;
 
-                double pitchRadianOffset = -Math.toRadians(15);
+                double pitchRadianOffset = -Math.toRadians(10);
+                double pitchRadianOffsetViewField = -Math.toRadians(90);
                 double yawRadianOffset = -Math.toRadians(5);
                 // #endregion
                 // #region OuterCone
@@ -68,7 +73,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 outerCone,
                                 OperationTypeV2.DEFINE)
                                 .withFill(new EmptyBlockFillV2())
-                                // .withShadowCubes(DebugUtils.COLOR_BLACK)
+                                .withShadowCubes(DebugUtils.COLOR_BLACK, 0.025f)
                                 .build();
 
                 this.addOperation(idTracker++ + "",
@@ -79,22 +84,23 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 // #endregion
                 // #region InnerViewBox
                 String innerViewId = idTracker++ + "";
-                double innerViewBoxXScale = 1.5;
+                double innerViewBoxXScale = 0.75;
                 Shape innerViewConeShape = new TransformedShape(
-                                new CircularCone(innerViewBoxXScale, baseHeight),
-                                0, 0, -(zOffset), yawRadianOffset, pitchRadianOffset, 0);
+                                new Cylinder(baseHeight, innerViewBoxXScale, innerViewBoxXScale),
+                                // new CircularCone(innerViewBoxXScale, baseHeight),
+                                0, 0, -(zOffset+2), yawRadianOffset, pitchRadianOffsetViewField, 0);
                 // Shape innerViewBoxShape = new TransformedShape(
                 //                 new Box(-innerViewBoxXScale, 0, -_scale, innerViewBoxXScale, 3, -1),
                 //                 -0, 1, 0,
                 //                 yawRadianOffset, 0, 0);
-                this.addOperation(innerViewId,
-                                innerViewConeShape,
-                                OperationTypeV2.Cut(outerConeId))
-                                .withFill(new EmptyBlockFillV2())
-                                // .withShadowCubes(DebugUtils.COLOR_CYAN)
-                                // .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cube)
-                                .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cone)
-                                .build();
+                // this.addOperation(innerViewId,
+                //                 innerViewConeShape,
+                //                 OperationTypeV2.Cut(outerConeId))
+                //                 .withFill(new EmptyBlockFillV2())
+                //                 .withShadowCubes(DebugUtils.COLOR_BLACK, 0.02f)
+                //                 // .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cylinder)
+                //                 // .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cube)
+                //                 .build();
                 // #endregion
                 // #region SideViewBox
                 // String SideViewBoxId = idTracker++ + "";
@@ -128,7 +134,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 // #region PlayerFacingWallPlus
                 String ignorePlayerFacingWallPlusId = idTracker++ + "";
                 Shape ignorePlayerFacingWallPlus = new TransformedShape(
-                                new Box(-_scale, 2, 1, _scale, _scale, _scale),
+                                new Box(-_scale, 2, 2, _scale, _scale, _scale),
                                 0, yOffsetFloor, 0,
                                 yawRadianOffset, 0, 0);
                 this.addOperation(ignorePlayerFacingWallPlusId,
