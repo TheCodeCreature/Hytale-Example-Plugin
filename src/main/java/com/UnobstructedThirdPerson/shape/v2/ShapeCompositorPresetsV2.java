@@ -61,7 +61,6 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 double zOffset = baseHeight - 2.5;
 
                 double pitchRadianOffset = -Math.toRadians(10);
-                double pitchRadianOffsetViewField = -Math.toRadians(90);
                 double yawRadianOffset = -Math.toRadians(5);
                 // #endregion
                 // #region OuterCone
@@ -83,16 +82,18 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                 .build();
                 // #endregion
                 // #region InnerViewBox
+                double pitchRadianOffsetViewField = -Math.toRadians(95);
+                double yawRadianOffsetViewField = -Math.toRadians(5);
                 String innerViewId = idTracker++ + "";
-                double innerViewBoxXScale = 1;
+                double innerViewBoxXScale = 0.75;
                 Shape innerViewConeShape = new TransformedShape(
-                                new Cylinder(baseHeight, innerViewBoxXScale, innerViewBoxXScale),
+                                new Cylinder(baseHeight, innerViewBoxXScale, innerViewBoxXScale*2),
                                 // new CircularCone(innerViewBoxXScale, baseHeight),
-                                0, 0, -(zOffset+2), yawRadianOffset, pitchRadianOffsetViewField, 0);
-                 Shape innerViewBoxShape = new TransformedShape(
-                                 new Box(-innerViewBoxXScale, 0, -_scale, innerViewBoxXScale, 3, -1),
-                                 -0, 1, 0,
-                                 yawRadianOffset, 0, 0);
+                                -0.25, 0.75, -(baseHeight), yawRadianOffsetViewField, pitchRadianOffsetViewField, 0);
+                //  Shape innerViewBoxShape = new TransformedShape(
+                //                  new Box(-innerViewBoxXScale, 0, -_scale, innerViewBoxXScale, 3, -1),
+                //                  -1.5, 1, 0,
+                //                  yawRadianOffset, 0, 0);
                  this.addOperation(innerViewId,
                                  innerViewConeShape,
                                  OperationTypeV2.Cut(outerConeId))
