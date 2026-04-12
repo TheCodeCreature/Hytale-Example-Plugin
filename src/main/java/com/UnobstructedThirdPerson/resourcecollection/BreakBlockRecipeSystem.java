@@ -31,8 +31,8 @@ public class BreakBlockRecipeSystem extends EntityEventSystem<EntityStore, Break
             @Nonnull CommandBuffer<EntityStore> commandBuffer,
             @Nonnull BreakBlockEvent event
     ) {
-        // Delegate to the existing static handler which has all the logic
-        RecipeDropListener.onBlockBreak(event);
+        // Pass the store so the handler can spawn items after deferring
+        RecipeDropListener.onBlockBreak(event, store);
     }
 
     @Nullable

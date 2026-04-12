@@ -15,16 +15,14 @@ import com.hypixel.hytale.server.core.event.events.ecs.BreakBlockEvent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
-import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.modules.interaction.BlockHarvestUtils;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.SetBlockSettings;
 import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -63,14 +61,11 @@ public class RecipeDropListener {
 
     /**
      * ECS event handler for BreakBlockEvent.
-     * If the broken block has a crafting recipe, logs the match.
+     * If the broken block has a crafting recipe, cancels default drops
+     * and spawns a Rock_Stone instead (deferred to after ECS tick).
      */
-    public static void onBlockBreak(@Nonnull BreakBlockEvent event) {
+    public static void onBlockBreak(@Nonnull BreakBlockEvent event, @Nonnull Store<EntityStore> store) {
         try {
-            log("BreakBlockEvent fired | cancelled=" + event.isCancelled()
-                    + " blockType=" + event.getBlockType().getId()
-                    + " pos=" + event.getTargetBlock());
-
             if (event.isCancelled()) {
                 return;
             }
@@ -89,123 +84,82 @@ public class RecipeDropListener {
 
             CraftingRecipe recipe = BLOCK_RECIPE_CACHE.get(blockTypeId);
             if (recipe == null) {
-                log("No recipe for blockType=" + blockTypeId);
                 return;
             }
 
-            // Log the recipe match and its inputs
-            MaterialQuantity[] inputs = recipe.getInput();
-            StringBuilder inputStr = new StringBuilder();
-            if (inputs != null) {
-                for (MaterialQuantity mq : inputs) {
-                    if (mq != null) {
-                        inputStr.append(mq.getItemId() != null ? mq.getItemId() : mq.getResourceTypeId())
-                                .append(" x").append(mq.getQuantity()).append(", ");
+            log("Recipe match for " + blockTypeId + " — cancelling default drop, will spawn Rock_Stone");
+
+            // Cancel default break behavior (prevents normal drops AND block removal)
+            event.setCancelled(true);
+
+            // Capture position before deferring
+            Vector3i pos = event.getTargetBlock();
+            int bx = pos.getX();
+            int by = pos.getY();
+            int bz = pos.getZ();
+
+            // Defer world modifications to after the ECS tick completes
+            World world = store.getExternalData().getWorld();
+            world.execute(() -> {
+                try {
+                    ChunkStore chunkStore = world.getChunkStore();
+                    long chunkIndex = ChunkUtil.indexChunkFromBlock(bx, bz);
+                    Ref<ChunkStore> chunkRef = chunkStore.getChunkReference(chunkIndex);
+
+                    if (chunkRef == null || !chunkRef.isValid()) {
+                        log("Chunk not loaded at " + bx + "," + by + "," + bz);
+                        return;
                     }
+
+                    Store<EntityStore> esStore = world.getEntityStore().getStore();
+                    Store<ChunkStore> csStore = chunkStore.getStore();
+
+                    // Break block with particles + sounds, but suppress item drops
+                    BlockHarvestUtils.naturallyRemoveBlock(
+                            new Vector3i(bx, by, bz),
+                            blockType,
+                            0,     // filler
+                            0,     // quantity (irrelevant — drops suppressed)
+                            null,  // itemId
+                            null,  // dropListId
+                            SetBlockSettings.PERFORM_BLOCK_UPDATE | SetBlockSettings.NO_DROP_ITEMS,
+                            chunkRef,
+                            esStore,
+                            csStore
+                    );
+
+                    // Spawn a Rock_Stone item drop at the block center
+                    spawnItem(world, bx + 0.5, by + 0.5, bz + 0.5, "Rock_Stone", 1);
+
+                    log("Dropped Rock_Stone at " + bx + "," + by + "," + bz);
+                } catch (Exception e) {
+                    log("Deferred action error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
                 }
-            }
-            log("Recipe FOUND for blockType=" + blockTypeId + " inputs=[" + inputStr + "]");
+            });
 
         } catch (Exception e) {
             log("ERROR: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 
-    @Nullable
-    private static World findActiveWorld() {
-        for (World world : PLAYER_WORLDS.values()) {
-            if (world != null) {
-                return world;
-            }
-        }
-        return null;
-    }
-
     /**
-     * Removes the block at the given position by setting it to empty/air
-     * through the chunk's block storage.
+     * Spawns an item drop entity at the given position.
+     * Must be called on the world thread.
      */
-    private static void removeBlock(@Nonnull World world, @Nonnull Vector3i pos) {
-        try {
-            ChunkStore chunkStore = world.getChunkStore();
-            long chunkIndex = ChunkUtil.indexChunkFromBlock(pos.getX(), pos.getZ());
-            Ref<ChunkStore> chunkRef = chunkStore.getChunkReference(chunkIndex);
+    private static void spawnItem(@Nonnull World world, double x, double y, double z,
+                                  @Nonnull String itemId, int quantity) {
+        EntityStore entityStore = world.getEntityStore();
+        Store<EntityStore> store = entityStore.getStore();
 
-            if (chunkRef == null || !chunkRef.isValid()) {
-                log("Chunk not loaded at " + pos);
-                return;
-            }
+        ItemStack itemStack = new ItemStack(itemId, quantity);
+        Vector3d position = new Vector3d(x, y, z);
+        Vector3f rotation = new Vector3f();
 
-            WorldChunk chunk = chunkStore.getStore().getComponent(chunkRef, WorldChunk.getComponentType());
-            if (chunk == null) {
-                log("Could not get WorldChunk at " + pos);
-                return;
-            }
-
-            int emptyId = BlockType.getAssetMap().getIndex("Empty");
-            BlockType emptyBlockType = BlockType.getAssetMap().getAsset("Empty");
-
-            // Block coordinates within a chunk are local: x & 15, z & 15; y is absolute
-            int localX = pos.getX() & 15;
-            int localZ = pos.getZ() & 15;
-
-            chunk.setBlock(localX, pos.getY(), localZ, emptyId, emptyBlockType, 0, 0, 0);
-            log("Removed block at " + pos);
-        } catch (Exception e) {
-            log("Error removing block: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Spawns the crafting recipe's input ingredients as item drops
-     * at the center of the broken block's position.
-     */
-    private static void spawnRecipeIngredients(@Nonnull World world, @Nonnull Vector3i pos, @Nonnull CraftingRecipe recipe) {
-        try {
-            EntityStore entityStore = world.getEntityStore();
-            Store<EntityStore> store = entityStore.getStore();
-
-            // Center the drop position on the block
-            Vector3d dropPosition = new Vector3d(
-                    pos.getX() + 0.5,
-                    pos.getY() + 0.5,
-                    pos.getZ() + 0.5
-            );
-            Vector3f rotation = new Vector3f();
-
-            MaterialQuantity[] inputs = recipe.getInput();
-            if (inputs == null || inputs.length == 0) {
-                return;
-            }
-
-            List<ItemStack> itemStacks = new ArrayList<>();
-            for (MaterialQuantity input : inputs) {
-                if (input == null) continue;
-
-                ItemStack itemStack = input.toItemStack();
-                if (itemStack != null && !itemStack.isEmpty()) {
-                    itemStacks.add(itemStack);
-                }
-            }
-
-            if (itemStacks.isEmpty()) {
-                return;
-            }
-
-            // Generate item drop entity holders and add them to the world
-            Holder<EntityStore>[] holders = ItemComponent.generateItemDrops(
-                    store, itemStacks, dropPosition, rotation
-            );
-            for (Holder<EntityStore> holder : holders) {
-                if (holder != null) {
-                    store.addEntity(holder, AddReason.SPAWN);
-                }
-            }
-
-            log("Dropped " + itemStacks.size()
-                    + " ingredient(s) at " + pos);
-        } catch (Exception e) {
-            log("Error spawning ingredients: " + e.getMessage());
+        Holder<EntityStore> holder = ItemComponent.generateItemDrop(
+                store, itemStack, position, rotation, 0.0f, 3.25f, 0.0f
+        );
+        if (holder != null) {
+            store.addEntity(holder, AddReason.SPAWN);
         }
     }
 
