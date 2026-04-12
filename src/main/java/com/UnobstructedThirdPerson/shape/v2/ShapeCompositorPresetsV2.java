@@ -84,23 +84,23 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                 // #endregion
                 // #region InnerViewBox
                 String innerViewId = idTracker++ + "";
-                double innerViewBoxXScale = 0.75;
+                double innerViewBoxXScale = 1;
                 Shape innerViewConeShape = new TransformedShape(
                                 new Cylinder(baseHeight, innerViewBoxXScale, innerViewBoxXScale),
                                 // new CircularCone(innerViewBoxXScale, baseHeight),
                                 0, 0, -(zOffset+2), yawRadianOffset, pitchRadianOffsetViewField, 0);
-                // Shape innerViewBoxShape = new TransformedShape(
-                //                 new Box(-innerViewBoxXScale, 0, -_scale, innerViewBoxXScale, 3, -1),
-                //                 -0, 1, 0,
-                //                 yawRadianOffset, 0, 0);
-                // this.addOperation(innerViewId,
-                //                 innerViewConeShape,
-                //                 OperationTypeV2.Cut(outerConeId))
-                //                 .withFill(new EmptyBlockFillV2())
-                //                 .withShadowCubes(DebugUtils.COLOR_BLACK, 0.02f)
-                //                 // .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cylinder)
-                //                 // .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cube)
-                //                 .build();
+                 Shape innerViewBoxShape = new TransformedShape(
+                                 new Box(-innerViewBoxXScale, 0, -_scale, innerViewBoxXScale, 3, -1),
+                                 -0, 1, 0,
+                                 yawRadianOffset, 0, 0);
+                 this.addOperation(innerViewId,
+                                 innerViewConeShape,
+                                 OperationTypeV2.Cut(outerConeId))
+                                 .withFill(new EmptyBlockFillV2())
+//                                 .withShadowCubes(DebugUtils.COLOR_BLACK, 0.02f)
+                                 // .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cylinder)
+                                  .withDebugBoundingShape(DebugUtils.COLOR_CYAN, DebugShape.Cube)
+                                 .build();
                 // #endregion
                 // #region SideViewBox
                 // String SideViewBoxId = idTracker++ + "";
