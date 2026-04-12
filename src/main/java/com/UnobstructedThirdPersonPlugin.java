@@ -7,10 +7,13 @@ import com.UnobstructedThirdPerson.command.debug.DebugCommand;
 import com.UnobstructedThirdPerson.command.PreviewCommand;
 import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
+import com.UnobstructedThirdPerson.resourcecollection.BreakBlockRecipeSystem;
+import com.UnobstructedThirdPerson.resourcecollection.RecipeDropListener;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
@@ -36,6 +39,9 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 //        this.getCommandRegistry().registerCommand(new NewMovementCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, UnobstructedThirdPersonPlugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, UnobstructedThirdPersonPlugin::onPlayerDisconnect);
+
+        // Register recipe-drop ECS system: intercepts BreakBlockEvent via entity store
+        this.getEntityStoreRegistry().registerSystem(new BreakBlockRecipeSystem());
         
         // Register server-side collision validation system
         // Now works because we declared dependency on EntityModule in MANIFEST
@@ -54,6 +60,11 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
         EntityStore entityStore = store.getExternalData();
         World world = entityStore.getWorld();
+
+        // Track world and player for recipe drop system
+        RecipeDropListener.setPlayerWorld(playerRef.getUuid(), playerRef, world);
+        playerRef.sendMessage(Message.raw("§a[Plugin] RecipeDrop system active. Break a craftable block to test."));
+
         CameraTransparencyVolumeV2.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresetsV2()
                       .DefaultViewField()
         );
@@ -64,6 +75,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         CameraTransparencyVolume.remove(playerRef.getUuid());
         CameraTransparencyVolumeV2.remove(playerRef.getUuid());
         PreviewBlockManager.remove(playerRef.getUuid());
+        RecipeDropListener.removePlayer(playerRef.getUuid());
         NewMovementSystem.disableMoonGravity(playerRef.getUuid());
     }
 }
