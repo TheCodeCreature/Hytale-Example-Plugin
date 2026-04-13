@@ -15,6 +15,7 @@ import com.UnobstructedThirdPerson.resourcecollection.IngredientDropModifier;
 import com.UnobstructedThirdPerson.resourcecollection.NaturalDropModifier;
 import com.UnobstructedThirdPerson.resourcecollection.NaturalResourceRegistry;
 import com.UnobstructedThirdPerson.resourcecollection.NaturalStackSizeModifier;
+import com.UnobstructedThirdPerson.resourcecollection.PlacedBlockDropModifier;
 import com.UnobstructedThirdPerson.resourcecollection.RecipeDropListener;
 import com.UnobstructedThirdPerson.resourcecollection.RecipeDropModifier;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
@@ -105,6 +106,9 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         NaturalDropModifier.apply();
         RecipeDropModifier.apply();
         IngredientDropModifier.apply();
+
+        // Mark natural blocks so player-placed copies drop 1x (not 12x)
+        // PlacedBlockDropModifier.apply();
 
         // Boost stack sizes for natural resource items
         NaturalStackSizeModifier.apply();

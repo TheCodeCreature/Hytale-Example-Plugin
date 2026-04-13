@@ -246,6 +246,16 @@ public final class AssetTestHelper {
         return readField(HarvestingDropType.class, harvest, "dropListId");
     }
 
+    public static boolean readUseDefaultDropWhenPlaced(BlockGathering g) {
+        try {
+            Field f = BlockGathering.class.getDeclaredField("useDefaultDropWhenPlaced");
+            f.setAccessible(true);
+            return f.getBoolean(g);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to read useDefaultDropWhenPlaced", e);
+        }
+    }
+
     // ──────────────────────────────────────────────────────────────
     //  Cleanup
     // ──────────────────────────────────────────────────────────────

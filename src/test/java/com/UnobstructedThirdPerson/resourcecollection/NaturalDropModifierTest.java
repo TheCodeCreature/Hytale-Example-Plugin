@@ -40,9 +40,11 @@ class NaturalDropModifierTest {
         NaturalDropModifier.apply();
 
         int expected = 1 * ResourceConstants.RESOURCE_MULTIPLIER;
-        assertEquals(expected, readBreakingQuantity(data.rockBreaking),
+        assertEquals(expected,
+                readBreakingQuantity(readGatheringBreaking(data.rockStone.getGathering())),
                 "Rock_Stone breaking quantity should be 12x");
-        assertEquals(expected, readBreakingQuantity(data.logBreaking),
+        assertEquals(expected,
+                readBreakingQuantity(readGatheringBreaking(data.woodLogOak.getGathering())),
                 "Wood_Log_Oak breaking quantity should be 12x");
     }
 
@@ -103,7 +105,7 @@ class NaturalDropModifierTest {
     }
 
     @Test
-    void sharedBreakingInstanceOnlyMultipliedOnce() {
+    void sharedBreakingInstanceEachBlockGetsOwnCopy() {
         // Two blocks share the exact same BlockBreakingDropType instance
         BlockBreakingDropType sharedBreaking =
                 new BlockBreakingDropType("Rocks", 0, 1, "Shared_Stone", null);
@@ -118,10 +120,17 @@ class NaturalDropModifierTest {
 
         NaturalDropModifier.apply();
 
-        // Should be multiplied exactly once (12x, not 144x)
+        // Each block should get its own 12x breaking (not shared, not 144x)
         int expected = ResourceConstants.RESOURCE_MULTIPLIER;
-        assertEquals(expected, readBreakingQuantity(sharedBreaking),
-                "Shared breaking instance should only be multiplied once");
+        assertEquals(expected,
+                readBreakingQuantity(readGatheringBreaking(block1.getGathering())),
+                "SharedBlock_A should have 12x breaking quantity");
+        assertEquals(expected,
+                readBreakingQuantity(readGatheringBreaking(block2.getGathering())),
+                "SharedBlock_B should have 12x breaking quantity");
+        // Original shared instance should be untouched
+        assertEquals(1, readBreakingQuantity(sharedBreaking),
+                "Original shared breaking should remain unmodified");
     }
 
     @Test
@@ -165,7 +174,8 @@ class NaturalDropModifierTest {
 
         NaturalDropModifier.apply();
 
-        assertEquals(3 * ResourceConstants.RESOURCE_MULTIPLIER, readBreakingQuantity(multiBreaking),
+        assertEquals(3 * ResourceConstants.RESOURCE_MULTIPLIER,
+                readBreakingQuantity(readGatheringBreaking(multiBlock.getGathering())),
                 "Quantity=3 × 12 = 36");
     }
 

@@ -2,6 +2,7 @@ package com.UnobstructedThirdPerson.resourcecollection;
 
 import com.hypixel.hytale.protocol.BenchType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockBreakingDropType;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockGathering;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.SoftBlockDropType;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
@@ -49,6 +50,7 @@ class ResourceScalingIntegrationTest {
         NaturalDropModifier.apply();
         RecipeDropModifier.apply();
         IngredientDropModifier.apply();
+        PlacedBlockDropModifier.apply();
         NaturalStackSizeModifier.apply();
     }
 
@@ -58,13 +60,15 @@ class ResourceScalingIntegrationTest {
         @Test
         void stoneDrops12x() {
             applyFullPipeline();
-            assertEquals(12, readBreakingQuantity(data.rockBreaking));
+            assertEquals(12,
+                    readBreakingQuantity(readGatheringBreaking(data.rockStone.getGathering())));
         }
 
         @Test
         void logDrops12x() {
             applyFullPipeline();
-            assertEquals(12, readBreakingQuantity(data.logBreaking));
+            assertEquals(12,
+                    readBreakingQuantity(readGatheringBreaking(data.woodLogOak.getGathering())));
         }
 
         @Test
@@ -223,6 +227,44 @@ class ResourceScalingIntegrationTest {
             var doorBreaking = readGatheringBreaking(data.doorWoodOak.getGathering());
             assertEquals("Wood_Planks_Oak", doorBreaking.getItemId(),
                     "Door should drop ingredients even if in natural registry");
+        }
+    }
+
+    @Nested
+    class PlacedBlockBehavior {
+
+        @Test
+        void naturalBlocksGetUseDefaultDropWhenPlaced() {
+            applyFullPipeline();
+            assertTrue(readUseDefaultDropWhenPlaced(data.rockStone.getGathering()),
+                    "Rock_Stone should have useDefaultDropWhenPlaced=true");
+            assertTrue(readUseDefaultDropWhenPlaced(data.woodLogOak.getGathering()),
+                    "Wood_Log_Oak should have useDefaultDropWhenPlaced=true");
+        }
+
+        @Test
+        void recipeBlocksDoNotGetUseDefaultDropWhenPlaced() {
+            applyFullPipeline();
+            assertFalse(readUseDefaultDropWhenPlaced(data.woodSlabOak.getGathering()),
+                    "Recipe block Wood_Slab_Oak should NOT have useDefaultDropWhenPlaced");
+            assertFalse(readUseDefaultDropWhenPlaced(data.railIron.getGathering()),
+                    "Recipe block Rail_Iron should NOT have useDefaultDropWhenPlaced");
+            assertFalse(readUseDefaultDropWhenPlaced(data.doorWoodOak.getGathering()),
+                    "Recipe block Door_Wood_Oak should NOT have useDefaultDropWhenPlaced");
+        }
+
+        @Test
+        void baseBlockDoesNotGetUseDefaultDropWhenPlaced() {
+            applyFullPipeline();
+            assertFalse(readUseDefaultDropWhenPlaced(data.woodPlanksOak.getGathering()),
+                    "Base block Wood_Planks_Oak should NOT have useDefaultDropWhenPlaced");
+        }
+
+        @Test
+        void sandWithSoftGatheringGetsFlagSet() {
+            applyFullPipeline();
+            assertTrue(readUseDefaultDropWhenPlaced(data.sand.getGathering()),
+                    "Sand (soft-only natural) should have useDefaultDropWhenPlaced=true");
         }
     }
 

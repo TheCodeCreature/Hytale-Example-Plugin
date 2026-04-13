@@ -1,5 +1,7 @@
 package com.UnobstructedThirdPerson.resourcecollection;
 
+import com.hypixel.hytale.protocol.BenchRequirement;
+import com.hypixel.hytale.protocol.BenchType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockBreakingDropType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockGathering;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -47,13 +49,23 @@ public final class NaturalResourceRegistry {
         Set<String> itemIds = new HashSet<>();
 
         // Build set of block type IDs that have a non-Salvage crafting recipe
+        // from a Crafting or StructuralCrafting bench.  Processing recipes
+        // (e.g. 2× Rock_Shale → 1× Rock_Shale at the stonecutter) are
+        // refinement recipes and should NOT disqualify a block from being natural.
         Set<String> craftableBlockIds = new HashSet<>();
         for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()) {
             if (recipe == null || recipe.getId().startsWith("Salvage")) continue;
+            if (!isCraftingBench(recipe)) continue;
             if (recipe.getPrimaryOutput() == null || recipe.getPrimaryOutput().getItemId() == null) continue;
             Item item = Item.getAssetMap().getAsset(recipe.getPrimaryOutput().getItemId());
-            if (item != null && item.hasBlockType()) {
-                craftableBlockIds.add(item.getBlockId());
+            if (item != null) {
+                // Use getBlockId() instead of hasBlockType() — some items
+                // (e.g. rails, doors) reference an external block definition
+                // and won't have hasBlockType=true, but still have a blockId.
+                String blockId = item.getBlockId();
+                if (blockId != null && !blockId.isEmpty()) {
+                    craftableBlockIds.add(blockId);
+                }
             }
         }
 
@@ -180,5 +192,23 @@ public final class NaturalResourceRegistry {
     /** Returns the full set of natural resource item IDs (read-only). */
     public static Set<String> getNaturalItemIds() {
         return naturalItemIds;
+    }
+
+    /**
+     * Returns true if the recipe requires a Crafting or StructuralCrafting
+     * bench.  Processing recipes (stonecutter/refinery) are excluded because
+     * they are resource-refinement recipes that don't make the output block
+     * a "crafted" block.
+     */
+    private static boolean isCraftingBench(@Nonnull CraftingRecipe recipe) {
+        BenchRequirement[] reqs = recipe.getBenchRequirement();
+        if (reqs == null) return false;
+        for (BenchRequirement req : reqs) {
+            if (req != null && (req.type == BenchType.Crafting
+                    || req.type == BenchType.StructuralCrafting)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

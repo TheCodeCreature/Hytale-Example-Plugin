@@ -61,9 +61,12 @@ public final class BlockRecipeRegistry {
             if (outputItemId == null) continue;
 
             Item item = Item.getAssetMap().getAsset(outputItemId);
-            if (item == null || !item.hasBlockType()) continue;
-
+            if (item == null) continue;
+            // Use getBlockId() instead of hasBlockType() — some items
+            // (e.g. rails, doors) reference an external block definition
+            // without having hasBlockType=true.
             String blockTypeId = item.getBlockId();
+            if (blockTypeId == null || blockTypeId.isEmpty()) continue;
             byBlock.putIfAbsent(blockTypeId, recipe);
             byId.put(recipe.getId(), recipe);
         }

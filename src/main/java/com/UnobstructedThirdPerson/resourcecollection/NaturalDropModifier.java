@@ -4,15 +4,21 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockBreakingD
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockGathering;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.Set;
+import java.lang.reflect.Modifier;
 
 /**
  * Multiplies the drop quantity of natural blocks that have a {@code breaking}
  * config by {@link ResourceConstants#RESOURCE_MULTIPLIER}.
  * Soft-only blocks (e.g. dirt, grass) are left untouched — their vanilla
  * drops are handled by the soft config which has no quantity field.
+ *
+ * <p>To avoid contaminating non-natural blocks that share the same
+ * {@link BlockBreakingDropType} or {@link BlockGathering} Java instance
+ * (due to Hytale's asset inheritance), this modifier creates private
+ * copies of both objects before applying the multiplier.
+ *
  * Must be called after {@link NaturalResourceRegistry#init()}.
  */
 public final class NaturalDropModifier {
@@ -26,19 +32,20 @@ public final class NaturalDropModifier {
     public static void apply() {
         int multiplier = ResourceConstants.RESOURCE_MULTIPLIER;
 
-        Field quantityField;
+        Field breakingField;
+        Field gatheringField;
         try {
-            quantityField = BlockBreakingDropType.class.getDeclaredField("quantity");
-            quantityField.setAccessible(true);
+            breakingField = BlockGathering.class.getDeclaredField("breaking");
+            breakingField.setAccessible(true);
+            gatheringField = BlockType.class.getDeclaredField("gathering");
+            gatheringField.setAccessible(true);
         } catch (NoSuchFieldException e) {
-            log("ERROR: Could not find quantity field on BlockBreakingDropType: " + e.getMessage());
+            log("ERROR: Could not find required field: " + e.getMessage());
             return;
         }
 
         int modified = 0;
         int skipped = 0;
-        // Track already-modified instances to avoid double-multiplying shared configs
-        Set<BlockBreakingDropType> alreadyModified = Collections.newSetFromMap(new java.util.IdentityHashMap<>());
 
         for (String blockTypeId : NaturalResourceRegistry.getNaturalBlockTypes()) {
             BlockType bt = BlockType.getAssetMap().getAssetMap().get(blockTypeId);
@@ -72,23 +79,45 @@ public final class NaturalDropModifier {
                 continue;
             }
 
-            if (alreadyModified.contains(breaking)) continue;
+            int current = breaking.getQuantity();
+            if (current <= 0) {
+                skipped++;
+                continue;
+            }
 
             try {
-                int current = quantityField.getInt(breaking);
-                if (current > 0) {
-                    quantityField.setInt(breaking, current * multiplier);
-                    alreadyModified.add(breaking);
-                    modified++;
-                } else {
-                    skipped++;
-                }
-            } catch (IllegalAccessException e) {
-                log("ERROR setting quantity for " + blockTypeId + ": " + e.getMessage());
+                // Create a private copy of the breaking with the multiplied quantity
+                BlockBreakingDropType newBreaking = new BlockBreakingDropType(
+                        breaking.getGatherType(), breaking.getQuality(),
+                        current * multiplier,
+                        breaking.getItemId(), breaking.getDropListId());
+
+                // Clone the gathering so non-natural blocks sharing the
+                // original instance are not affected
+                BlockGathering newGathering = cloneGathering(gathering);
+                breakingField.set(newGathering, newBreaking);
+
+                // Assign the private gathering to this BlockType
+                gatheringField.set(bt, newGathering);
+                modified++;
+            } catch (Exception e) {
+                log("ERROR cloning gathering for " + blockTypeId + ": " + e.getMessage());
             }
         }
 
         log("Multiplied drop quantity (" + multiplier + "x) for " + modified
                 + " natural blocks (" + skipped + " skipped — no breaking drop or quantity=0)");
+    }
+
+    static BlockGathering cloneGathering(BlockGathering original) throws Exception {
+        Constructor<BlockGathering> ctor = BlockGathering.class.getDeclaredConstructor();
+        ctor.setAccessible(true);
+        BlockGathering clone = ctor.newInstance();
+        for (Field f : BlockGathering.class.getDeclaredFields()) {
+            if (Modifier.isStatic(f.getModifiers())) continue;
+            f.setAccessible(true);
+            f.set(clone, f.get(original));
+        }
+        return clone;
     }
 }
