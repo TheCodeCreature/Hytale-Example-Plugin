@@ -9,13 +9,15 @@ import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
 import com.UnobstructedThirdPerson.resourcecollection.BreakBlockRecipeSystem;
 import com.UnobstructedThirdPerson.resourcecollection.BreakBlockNaturalSystem;
-import com.UnobstructedThirdPerson.resourcecollection.NaturalResourceDropListener;
+import com.UnobstructedThirdPerson.resourcecollection.NaturalResourceRegistry;
+import com.UnobstructedThirdPerson.resourcecollection.NaturalStackSizeModifier;
 import com.UnobstructedThirdPerson.resourcecollection.RecipeDropListener;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.asset.LoadAssetEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
@@ -46,6 +48,9 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         this.getEntityStoreRegistry().registerSystem(new BreakBlockRecipeSystem());
         // Register natural-resource ECS system: multiplies drops for natural blocks
         this.getEntityStoreRegistry().registerSystem(new BreakBlockNaturalSystem());
+
+        // Boost stack sizes after assets are loaded
+        this.getEventRegistry().register(LoadAssetEvent.class, UnobstructedThirdPersonPlugin::onAssetsLoaded);
         
         // Register server-side collision validation system
         // Now works because we declared dependency on EntityModule in MANIFEST
@@ -81,5 +86,10 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         PreviewBlockManager.remove(playerRef.getUuid());
         RecipeDropListener.removePlayer(playerRef.getUuid());
         NewMovementSystem.disableMoonGravity(playerRef.getUuid());
+    }
+
+    private static void onAssetsLoaded(LoadAssetEvent event) {
+        NaturalResourceRegistry.init();
+        NaturalStackSizeModifier.apply();
     }
 }

@@ -14,8 +14,6 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.HarvestingDropType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.PhysicsDropType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.SoftBlockDropType;
-import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.event.events.ecs.BreakBlockEvent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
@@ -32,10 +30,8 @@ import javax.annotation.Nonnull;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Handles naturally-spawned blocks (not player-placed, not craftable).
@@ -49,9 +45,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class NaturalResourceDropListener {
 
-    // Cache: block type ID -> whether it has a non-salvage crafting recipe
-    private static final ConcurrentHashMap<String, Boolean> HAS_RECIPE_CACHE = new ConcurrentHashMap<>();
-
     // Max blocks the pre-emptive cascade BFS will break in one pass
     private static final int MAX_CASCADE_BLOCKS = 300;
 
@@ -61,25 +54,6 @@ public class NaturalResourceDropListener {
 
     private record DropInfo(String itemId, String dropListId, int quantity) {
         static final DropInfo EMPTY = new DropInfo(null, null, 1);
-    }
-
-    /**
-     * Returns true if the given block type has a non-Salvage crafting recipe.
-     * Blocks with recipes are handled by RecipeDropListener, not here.
-     */
-    private static boolean hasCraftingRecipe(@Nonnull String blockTypeId) {
-        return HAS_RECIPE_CACHE.computeIfAbsent(blockTypeId, id -> {
-            Optional<CraftingRecipe> recipe = CraftingRecipe.getAssetMap().getAssetMap().values().stream()
-                    .filter(r -> r != null && r.getPrimaryOutput() != null
-                            && r.getPrimaryOutput().getItemId() != null)
-                    .filter(r -> {
-                        Item item = Item.getAssetMap().getAsset(r.getPrimaryOutput().getItemId());
-                        return item != null && item.hasBlockType() && id.equals(item.getBlockId());
-                    })
-                    .filter(r -> !r.getId().startsWith("Salvage"))
-                    .findFirst();
-            return recipe.isPresent();
-        });
     }
 
     /**
@@ -149,8 +123,8 @@ public class NaturalResourceDropListener {
                 return;
             }
 
-            // Skip blocks that have a crafting recipe — RecipeDropListener handles those
-            if (hasCraftingRecipe(blockTypeId)) {
+            // Skip blocks that are not natural — RecipeDropListener handles those
+            if (!NaturalResourceRegistry.isNaturalBlock(blockTypeId)) {
                 return;
             }
 
@@ -236,10 +210,6 @@ public class NaturalResourceDropListener {
         }
     }
 
-    public static void invalidateCache() {
-        HAS_RECIPE_CACHE.clear();
-    }
-
     // ========================= Pre-emptive Cascade =========================
 
     private static final int[][] NEIGHBORS = {{0,1,0},{0,-1,0},{1,0,0},{-1,0,0},{0,0,1},{0,0,-1}};
@@ -289,7 +259,7 @@ public class NaturalResourceDropListener {
             if (bt == null) continue;
             String btId = bt.getId();
             if ("Empty".equals(btId) || "Unknown".equals(btId)) continue;
-            if (hasCraftingRecipe(btId)) continue;
+            if (!NaturalResourceRegistry.isNaturalBlock(btId)) continue;
 
             // Skip deco (player-placed) blocks
             if (isDeco(x, y, z, cRef, csStore)) continue;
