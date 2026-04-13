@@ -139,12 +139,7 @@ class DropBehaviorScenarioTest {
     }
 
     private void applyFullPipeline() {
-        CraftingCostModifier.apply();
-        NaturalDropModifier.apply();
-        RecipeDropModifier.apply();
-        IngredientDropModifier.apply();
-        PlacedBlockDropModifier.apply();
-        NaturalStackSizeModifier.apply();
+        DropScaler.applyModifications();
     }
 
     // -- Test 1: World Rock_Shale -> 12 Rock_Shale_Cobble ---------

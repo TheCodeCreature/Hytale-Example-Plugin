@@ -238,11 +238,7 @@ class BlockIdWithoutHasBlockTypeTest {
 
         @Test
         void railDropsIngredientsNotSelf() {
-            NaturalResourceRegistry.init();
-            BlockRecipeRegistry.init();
-            CraftingCostModifier.apply();
-            NaturalDropModifier.apply();
-            RecipeDropModifier.apply();
+            DropScaler.apply();
 
             var breaking = readGatheringBreaking(railBlock.getGathering());
             assertEquals("Metal_Ingot_Iron", breaking.getItemId(),
@@ -253,11 +249,7 @@ class BlockIdWithoutHasBlockTypeTest {
 
         @Test
         void doorDropsIngredientsNotSelf() {
-            NaturalResourceRegistry.init();
-            BlockRecipeRegistry.init();
-            CraftingCostModifier.apply();
-            NaturalDropModifier.apply();
-            RecipeDropModifier.apply();
+            DropScaler.apply();
 
             var breaking = readGatheringBreaking(doorBlock.getGathering());
             assertEquals("Wood_Planks", breaking.getItemId(),
@@ -268,12 +260,7 @@ class BlockIdWithoutHasBlockTypeTest {
 
         @Test
         void railNeverDrops12xOfItself() {
-            NaturalResourceRegistry.init();
-            BlockRecipeRegistry.init();
-            CraftingCostModifier.apply();
-            NaturalDropModifier.apply();
-            RecipeDropModifier.apply();
-            IngredientDropModifier.apply();
+            DropScaler.apply();
 
             var breaking = readGatheringBreaking(railBlock.getGathering());
             assertFalse(
@@ -283,11 +270,7 @@ class BlockIdWithoutHasBlockTypeTest {
 
         @Test
         void doorNeverDrops12xOfItself() {
-            NaturalResourceRegistry.init();
-            BlockRecipeRegistry.init();
-            CraftingCostModifier.apply();
-            NaturalDropModifier.apply();
-            RecipeDropModifier.apply();
+            DropScaler.apply();
             IngredientDropModifier.apply();
 
             var breaking = readGatheringBreaking(doorBlock.getGathering());

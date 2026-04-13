@@ -60,12 +60,7 @@ class SharedInstanceDropBugTest {
     }
 
     private void applyFullPipeline() {
-        CraftingCostModifier.apply();
-        NaturalDropModifier.apply();
-        RecipeDropModifier.apply();
-        IngredientDropModifier.apply();
-        PlacedBlockDropModifier.apply();
-        NaturalStackSizeModifier.apply();
+        DropScaler.applyModifications();
     }
 
     // =================================================================

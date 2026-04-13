@@ -7,17 +7,8 @@ import com.UnobstructedThirdPerson.command.debug.DebugCommand;
 import com.UnobstructedThirdPerson.command.PreviewCommand;
 import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
-import com.UnobstructedThirdPerson.resourcecollection.BlockRecipeRegistry;
-import com.UnobstructedThirdPerson.resourcecollection.BreakBlockRecipeSystem;
-import com.UnobstructedThirdPerson.resourcecollection.BreakBlockNaturalSystem;
-import com.UnobstructedThirdPerson.resourcecollection.CraftingCostModifier;
-import com.UnobstructedThirdPerson.resourcecollection.IngredientDropModifier;
-import com.UnobstructedThirdPerson.resourcecollection.NaturalDropModifier;
-import com.UnobstructedThirdPerson.resourcecollection.NaturalResourceRegistry;
-import com.UnobstructedThirdPerson.resourcecollection.NaturalStackSizeModifier;
-import com.UnobstructedThirdPerson.resourcecollection.PlacedBlockDropModifier;
+import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
 import com.UnobstructedThirdPerson.resourcecollection.RecipeDropListener;
-import com.UnobstructedThirdPerson.resourcecollection.RecipeDropModifier;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -49,11 +40,6 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 //        this.getCommandRegistry().registerCommand(new NewMovementCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, UnobstructedThirdPersonPlugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, UnobstructedThirdPersonPlugin::onPlayerDisconnect);
-
-        // // Register recipe-drop ECS system: intercepts BreakBlockEvent via entity store
-        // this.getEntityStoreRegistry().registerSystem(new BreakBlockRecipeSystem());
-        // // Register natural-resource ECS system: multiplies drops for natural blocks
-        // this.getEntityStoreRegistry().registerSystem(new BreakBlockNaturalSystem());
 
         // Boost stack sizes after assets are loaded
         this.getEventRegistry().register(LoadAssetEvent.class, UnobstructedThirdPersonPlugin::onAssetsLoaded);
@@ -95,22 +81,6 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
     }
 
     private static void onAssetsLoaded(LoadAssetEvent event) {
-        // Build registries first
-        NaturalResourceRegistry.init();
-        BlockRecipeRegistry.init();
-
-        // Modify crafting costs (must be before RecipeDropModifier)
-        CraftingCostModifier.apply();
-
-        // Modify drop quantities
-        NaturalDropModifier.apply();
-        RecipeDropModifier.apply();
-        IngredientDropModifier.apply();
-
-        // Mark natural blocks so player-placed copies drop 1x (not 12x)
-        // PlacedBlockDropModifier.apply();
-
-        // Boost stack sizes for natural resource items
-        NaturalStackSizeModifier.apply();
+        DropScaler.apply();
     }
 }

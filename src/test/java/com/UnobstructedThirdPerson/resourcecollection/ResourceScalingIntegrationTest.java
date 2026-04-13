@@ -21,6 +21,8 @@ import java.util.Set;
 import static com.UnobstructedThirdPerson.resourcecollection.AssetTestHelper.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+// Uses DropScaler.applyModifications() to test the consolidated single-pass pipeline
+
 /**
  * Integration tests that verify the full modifier pipeline produces correct
  * end-to-end results: natural blocks drop 12x, recipe blocks drop scaled
@@ -43,15 +45,10 @@ class ResourceScalingIntegrationTest {
     }
 
     /**
-     * Runs the full modifier pipeline in the correct order.
+     * Runs the consolidated single-pass pipeline.
      */
     private void applyFullPipeline() {
-        CraftingCostModifier.apply();
-        NaturalDropModifier.apply();
-        RecipeDropModifier.apply();
-        IngredientDropModifier.apply();
-        PlacedBlockDropModifier.apply();
-        NaturalStackSizeModifier.apply();
+        DropScaler.applyModifications();
     }
 
     @Nested
