@@ -138,11 +138,66 @@ val syncAssets = tasks.register<Copy>("syncAssets") {
     }
 }
 
+val killExistingServers = tasks.register("killExistingServers") {
+    group = "hytale"
+    description = "Kills any already-running HytaleServer processes to free the port."
+
+    doLast {
+        val os = System.getProperty("os.name").lowercase()
+        if (os.contains("win")) {
+            val result = providers.exec {
+                isIgnoreExitValue = true
+                commandLine("powershell", "-NoProfile", "-Command",
+                    """
+                    Get-CimInstance Win32_Process -Filter "Name='java.exe'" |
+                        Where-Object { ${'$'}_.CommandLine -like '*com.hypixel.hytale.Main*' } |
+                        ForEach-Object { ${'$'}_.ProcessId }
+                    """.trimIndent()
+                )
+            }.standardOutput.asText.get()
+
+            val pids = result.lines().map { it.trim() }.filter { it.isNotEmpty() }
+
+            if (pids.isEmpty()) {
+                logger.lifecycle("✅ No existing HytaleServer processes found.")
+            } else {
+                pids.forEach { pid ->
+                    logger.lifecycle("⚠️ Killing existing HytaleServer process (PID $pid)...")
+                    providers.exec {
+                        commandLine("taskkill", "/F", "/PID", pid)
+                        isIgnoreExitValue = true
+                    }
+                }
+                Thread.sleep(1000)
+                logger.lifecycle("✅ Killed ${pids.size} existing server process(es).")
+            }
+        } else {
+            val result = providers.exec {
+                commandLine("sh", "-c", "pgrep -f 'com.hypixel.hytale.Main' || true")
+            }.standardOutput.asText.get()
+
+            val pids = result.lines().map { it.trim() }.filter { it.isNotEmpty() }
+
+            if (pids.isEmpty()) {
+                logger.lifecycle("✅ No existing HytaleServer processes found.")
+            } else {
+                pids.forEach { pid ->
+                    logger.lifecycle("⚠️ Killing existing HytaleServer process (PID $pid)...")
+                    providers.exec { commandLine("kill", "-9", pid) }
+                }
+                Thread.sleep(1000)
+                logger.lifecycle("✅ Killed ${pids.size} existing server process(es).")
+            }
+        }
+    }
+}
+
 afterEvaluate {
     // Now Gradle will find it, because the plugin has finished working
     val targetTask = tasks.findByName("runServer") ?: tasks.findByName("server")
 
     if (targetTask != null) {
+        targetTask.dependsOn(killExistingServers)
         targetTask.finalizedBy(syncAssets)
 
         // Forward stdin so interactive server commands like /auth login work
