@@ -9,6 +9,7 @@ import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
+import com.hypixel.hytale.server.core.asset.type.item.config.BlockGroup;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.event.events.ecs.BreakBlockEvent;
@@ -16,15 +17,23 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
 import com.hypixel.hytale.server.core.modules.interaction.BlockHarvestUtils;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.SetBlockSettings;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.assetstore.AssetRegistry;
+import com.hypixel.hytale.assetstore.map.DefaultAssetMap;
+import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
+import com.hypixel.hytale.protocol.ItemResourceType;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,9 +47,18 @@ public class RecipeDropListener {
     private static final ConcurrentHashMap<UUID, PlayerRef> PLAYER_REFS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<UUID, World> PLAYER_WORLDS = new ConcurrentHashMap<>();
 
-    // Cache mapping block type ID -> crafting recipe (built lazily on first block break)
-    private static final ConcurrentHashMap<String, CraftingRecipe> BLOCK_RECIPE_CACHE = new ConcurrentHashMap<>();
-    private static volatile boolean cacheBuilt = false;
+    /**
+     * Resource group resolution strategy:
+     *   0 (default) = Approach 1: Prefer non-variant items whose ID contains the resource type name
+     *   1           = Approach 2: Prefer items that have NO crafting recipe (raw/base materials)
+     *   2           = Approach 3: Replace resId prefix with FullBlocks (e.g. Wood_Hardwood -> FullBlocks_Hardwood)
+     */
+    private static final int RESOLVE_MODE = 2;
+
+    // Cache mapping block type ID -> crafting recipe (populated lazily per block type)
+    private static final ConcurrentHashMap<String, Optional<CraftingRecipe>> BLOCK_RECIPE_CACHE = new ConcurrentHashMap<>();
+    // Cache mapping resourceTypeId -> resolved item ID
+    private static final ConcurrentHashMap<String, Optional<String>> RESOURCE_GROUP_CACHE = new ConcurrentHashMap<>();
 
     public static void setPlayerWorld(@Nonnull UUID playerId, @Nonnull PlayerRef playerRef, @Nonnull World world) {
         PLAYER_REFS.put(playerId, playerRef);
@@ -60,9 +78,19 @@ public class RecipeDropListener {
     }
 
     /**
+     * Sends a message to all online players. Must be called from the world thread.
+     */
+    private static void broadcast(@Nonnull String msg) {
+        Message message = Message.raw(msg);
+        for (PlayerRef ref : PLAYER_REFS.values()) {
+            ref.sendMessage(message);
+        }
+    }
+
+    /**
      * ECS event handler for BreakBlockEvent.
      * If the broken block has a crafting recipe, cancels default drops
-     * and spawns a Rock_Stone instead (deferred to after ECS tick).
+     * and spawns the recipe's input ingredients instead.
      */
     public static void onBlockBreak(@Nonnull BreakBlockEvent event, @Nonnull Store<EntityStore> store) {
         try {
@@ -77,17 +105,103 @@ public class RecipeDropListener {
                 return;
             }
 
-            // Lazily build the recipe cache on first use
-            if (!cacheBuilt) {
-                buildRecipeCache();
-            }
-
-            CraftingRecipe recipe = BLOCK_RECIPE_CACHE.get(blockTypeId);
+            // Look up or compute the recipe for this block type
+            CraftingRecipe recipe = BLOCK_RECIPE_CACHE.computeIfAbsent(blockTypeId, id ->
+                    CraftingRecipe.getAssetMap().getAssetMap().values().stream()
+                            .filter(r -> r != null && r.getPrimaryOutput() != null
+                                    && r.getPrimaryOutput().getItemId() != null)
+                            .filter(r -> {
+                                Item item = Item.getAssetMap().getAsset(r.getPrimaryOutput().getItemId());
+                                return item != null && item.hasBlockType() && id.equals(item.getBlockId());
+                            })
+                            .findFirst()
+            ).orElse(null);
             if (recipe == null) {
                 return;
             }
 
-            log("Recipe match for " + blockTypeId + " — cancelling default drop, will spawn Rock_Stone");
+            // Resolve recipe inputs to droppable ItemStacks
+            MaterialQuantity[] inputs = recipe.getInput();
+            List<ItemStack> ingredients = new ArrayList<>();
+            StringBuilder debugInfo = new StringBuilder();
+            debugInfo.append("Block: ").append(blockTypeId).append(" | Recipe: ").append(recipe.getId());
+
+            if (inputs == null || inputs.length == 0) {
+                debugInfo.append("\nInputs: NONE (null or empty array)");
+            } else {
+                debugInfo.append("\nInputs (").append(inputs.length).append("):");
+                for (int i = 0; i < inputs.length; i++) {
+                    MaterialQuantity input = inputs[i];
+                    if (input == null) {
+                        debugInfo.append("\n  [").append(i).append("] NULL entry");
+                        continue;
+                    }
+                    String itemId = input.getItemId();
+                    String resId = input.getResourceTypeId();
+                    int qty = input.getQuantity();
+                    int tagIdx = input.getTagIndex();
+
+                    debugInfo.append("\n  [").append(i).append("] itemId=").append(itemId)
+                            .append(" resourceTypeId=").append(resId)
+                            .append(" tagIndex=").append(tagIdx)
+                            .append(" qty=").append(qty);
+
+                    // If itemId is set, use it directly
+                    if (itemId != null && !"Empty".equals(itemId)) {
+                        Item directItem = Item.getAssetMap().getAsset(itemId);
+                        if (directItem != null) {
+                            ingredients.add(new ItemStack(itemId, qty));
+                            debugInfo.append(" -> DROP ").append(itemId);
+                        } else {
+                            debugInfo.append(" -> ITEM NOT FOUND: ").append(itemId);
+                        }
+                    } else if (resId != null) {
+                        // Resolve resourceTypeId to a specific item via configured strategy
+                        String resolvedId = RESOURCE_GROUP_CACHE.computeIfAbsent(resId,
+                                rid -> switch (RESOLVE_MODE) {
+                                    case 1  -> resolveByBaseMaterial(rid);
+                                    case 2  -> resolveByBlockGroup(rid);
+                                    default -> resolveByNonVariant(rid);
+                                }
+                        ).orElse(null);
+
+                        String modeName = switch (RESOLVE_MODE) {
+                            case 1  -> "base";
+                            case 2  -> "blockGroup";
+                            default -> "nonVariant";
+                        };
+
+                        if (resolvedId != null) {
+                            ingredients.add(new ItemStack(resolvedId, qty));
+                            debugInfo.append(" -> GROUP '").append(resId)
+                                    .append("' [mode=").append(modeName)
+                                    .append("] -> DROP ").append(resolvedId);
+                        } else {
+                            debugInfo.append(" -> NO ITEM IN GROUP '").append(resId)
+                                    .append("' [mode=").append(modeName).append("]");
+                        }
+                    } else {
+                        debugInfo.append(" -> SKIPPED (no itemId or resourceTypeId)");
+                    }
+                }
+            }
+
+            MaterialQuantity primaryOutput = recipe.getPrimaryOutput();
+            if (primaryOutput != null) {
+                debugInfo.append("\nPrimaryOutput: itemId=").append(primaryOutput.getItemId())
+                        .append(" resourceTypeId=").append(primaryOutput.getResourceTypeId())
+                        .append(" qty=").append(primaryOutput.getQuantity());
+            }
+
+            debugInfo.append("\nIngredient stacks resolved: ").append(ingredients.size());
+            String chatMessage = debugInfo.toString();
+
+            if (ingredients.isEmpty()) {
+                // Still send debug so we can see why nothing resolved
+                World debugWorld = store.getExternalData().getWorld();
+                debugWorld.execute(() -> broadcast(chatMessage + "\n*** NO DROPS — all inputs unresolved ***"));
+                return;
+            }
 
             // Cancel default break behavior (prevents normal drops AND block removal)
             event.setCancelled(true);
@@ -102,12 +216,15 @@ public class RecipeDropListener {
             World world = store.getExternalData().getWorld();
             world.execute(() -> {
                 try {
+                    // Send debug info to chat
+                    broadcast(chatMessage);
+                    flushDeferredBroadcasts();
+
                     ChunkStore chunkStore = world.getChunkStore();
                     long chunkIndex = ChunkUtil.indexChunkFromBlock(bx, bz);
                     Ref<ChunkStore> chunkRef = chunkStore.getChunkReference(chunkIndex);
 
                     if (chunkRef == null || !chunkRef.isValid()) {
-                        log("Chunk not loaded at " + bx + "," + by + "," + bz);
                         return;
                     }
 
@@ -128,10 +245,21 @@ public class RecipeDropListener {
                             csStore
                     );
 
-                    // Spawn a Rock_Stone item drop at the block center
-                    spawnItem(world, bx + 0.5, by + 0.5, bz + 0.5, "Rock_Stone", 1);
-
-                    log("Dropped Rock_Stone at " + bx + "," + by + "," + bz);
+                    // Spawn recipe input ingredients as item drops at the block center
+                    Vector3d dropPos = new Vector3d(bx + 0.5, by + 0.5, bz + 0.5);
+                    broadcast(chatMessage + "\nSpawning " + ingredients.size() + " stack(s) at " + dropPos);
+                    Holder<EntityStore>[] holders = ItemComponent.generateItemDrops(
+                            esStore, ingredients, dropPos, new Vector3f()
+                    );
+                    broadcast("generateItemDrops returned " + holders.length + " holder(s)");
+                    int spawned = 0;
+                    for (Holder<EntityStore> holder : holders) {
+                        if (holder != null) {
+                            esStore.addEntity(holder, AddReason.SPAWN);
+                            spawned++;
+                        }
+                    }
+                    broadcast("Spawned " + spawned + " item entities");
                 } catch (Exception e) {
                     log("Deferred action error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
                 }
@@ -143,110 +271,191 @@ public class RecipeDropListener {
     }
 
     /**
-     * Spawns an item drop entity at the given position.
-     * Must be called on the world thread.
-     */
-    private static void spawnItem(@Nonnull World world, double x, double y, double z,
-                                  @Nonnull String itemId, int quantity) {
-        EntityStore entityStore = world.getEntityStore();
-        Store<EntityStore> store = entityStore.getStore();
-
-        ItemStack itemStack = new ItemStack(itemId, quantity);
-        Vector3d position = new Vector3d(x, y, z);
-        Vector3f rotation = new Vector3f();
-
-        Holder<EntityStore> holder = ItemComponent.generateItemDrop(
-                store, itemStack, position, rotation, 0.0f, 3.25f, 0.0f
-        );
-        if (holder != null) {
-            store.addEntity(holder, AddReason.SPAWN);
-        }
-    }
-
-    /**
-     * Builds a lookup cache from block type ID -> CraftingRecipe.
-     * Iterates all crafting recipes and items to find blocks that can be crafted.
-     */
-    private static synchronized void buildRecipeCache() {
-        if (cacheBuilt) {
-            return;
-        }
-
-        try {
-            Map<String, CraftingRecipe> recipes = CraftingRecipe.getAssetMap().getAssetMap();
-            log("Total crafting recipes: " + (recipes == null ? "null" : recipes.size()));
-
-            if (recipes == null || recipes.isEmpty()) {
-                log("No crafting recipes found!");
-                cacheBuilt = true;
-                return;
-            }
-
-            int totalRecipes = 0;
-            int withPrimaryOutput = 0;
-            int withItem = 0;
-            int withBlockType = 0;
-
-            for (Map.Entry<String, CraftingRecipe> entry : recipes.entrySet()) {
-                CraftingRecipe recipe = entry.getValue();
-                totalRecipes++;
-                if (recipe == null) continue;
-
-                MaterialQuantity primaryOutput = recipe.getPrimaryOutput();
-                if (primaryOutput == null) continue;
-
-                String outputItemId = primaryOutput.getItemId();
-                if (outputItemId == null) continue;
-                withPrimaryOutput++;
-
-                // Look up the item to see if it places a block
-                Item item = Item.getAssetMap().getAsset(outputItemId);
-                if (item == null) {
-                    continue;
-                }
-                withItem++;
-
-                if (item.hasBlockType()) {
-                    withBlockType++;
-                    String blockId = item.getBlockId();
-                    if (blockId != null && !"Empty".equals(blockId)) {
-                        BLOCK_RECIPE_CACHE.putIfAbsent(blockId, recipe);
-                        // Log each input for this recipe
-                        MaterialQuantity[] inputs = recipe.getInput();
-                        StringBuilder inputStr = new StringBuilder();
-                        if (inputs != null) {
-                            for (MaterialQuantity mq : inputs) {
-                                if (mq != null) {
-                                    inputStr.append(mq.getItemId() != null ? mq.getItemId() : mq.getResourceTypeId())
-                                            .append(" x").append(mq.getQuantity()).append(", ");
-                                }
-                            }
-                        }
-                        log("MAPPED: " + blockId
-                                + " <- recipe=" + entry.getKey()
-                                + " inputs=[" + inputStr + "]");
-                    }
-                }
-            }
-
-            cacheBuilt = true;
-            log("Cache: " + totalRecipes + " recipes, "
-                    + withPrimaryOutput + " w/output, "
-                    + withItem + " w/item, "
-                    + withBlockType + " block-placing, "
-                    + BLOCK_RECIPE_CACHE.size() + " mapped");
-        } catch (Exception e) {
-            log("Cache build error: " + e.getMessage());
-            cacheBuilt = true; // Prevent repeated failures
-        }
-    }
-
-    /**
-     * Clears the recipe cache so it will be rebuilt on next block break.
+     * Clears the recipe cache so lookups will be recomputed.
      * Useful if asset packs are reloaded.
      */
     public static void invalidateCache() {
         BLOCK_RECIPE_CACHE.clear();
-        cacheBuilt = false;
+        RESOURCE_GROUP_CACHE.clear();
+    }
+
+    // ========================= Resource Group Resolution Strategies =========================
+
+    /**
+     * Approach 1 (default): Among items in the resource group, prefer non-variant items
+     * whose ID contains the resource type name. Falls back to any non-variant, then any item.
+     *
+     * Priority: exact ID match > non-variant + name contains resId > non-variant > any
+     */
+    @Nonnull
+    private static Optional<String> resolveByNonVariant(@Nonnull String resId) {
+        List<Map.Entry<String, Item>> groupItems = Item.getAssetMap().getAssetMap().entrySet().stream()
+                .filter(e -> e.getValue() != null
+                        && ItemContainer.getMatchingResourceType(e.getValue(), resId) != null)
+                .toList();
+
+        if (groupItems.isEmpty()) return Optional.empty();
+
+        // Exact ID match (item key == resource type ID)
+        for (Map.Entry<String, Item> e : groupItems) {
+            if (e.getKey().equals(resId)) return Optional.of(e.getKey());
+        }
+
+        // Non-variant whose ID contains the resource type name
+        for (Map.Entry<String, Item> e : groupItems) {
+            if (!e.getValue().isVariant() && e.getKey().contains(resId)) return Optional.of(e.getKey());
+        }
+
+        // Any non-variant
+        for (Map.Entry<String, Item> e : groupItems) {
+            if (!e.getValue().isVariant()) return Optional.of(e.getKey());
+        }
+
+        // Fallback: first item in group
+        return Optional.of(groupItems.getFirst().getKey());
+    }
+
+    /**
+     * Approach 2: Among items in the resource group, prefer items that have NO crafting recipe
+     * (i.e., raw/base materials that can't be crafted from something else).
+     * Falls back to non-variant, then any item.
+     *
+     * Priority: no recipe + non-variant > no recipe > non-variant > any
+     */
+    @Nonnull
+    private static Optional<String> resolveByBaseMaterial(@Nonnull String resId) {
+        List<Map.Entry<String, Item>> groupItems = Item.getAssetMap().getAssetMap().entrySet().stream()
+                .filter(e -> e.getValue() != null
+                        && ItemContainer.getMatchingResourceType(e.getValue(), resId) != null)
+                .toList();
+
+        if (groupItems.isEmpty()) return Optional.empty();
+
+        // Check which items have a crafting recipe that produces them
+        Map<String, CraftingRecipe> allRecipes = CraftingRecipe.getAssetMap().getAssetMap();
+
+        // No recipe + non-variant
+        for (Map.Entry<String, Item> e : groupItems) {
+            if (!e.getValue().isVariant() && !hasRecipeProducing(e.getKey(), allRecipes)) {
+                return Optional.of(e.getKey());
+            }
+        }
+
+        // No recipe (even if variant)
+        for (Map.Entry<String, Item> e : groupItems) {
+            if (!hasRecipeProducing(e.getKey(), allRecipes)) {
+                return Optional.of(e.getKey());
+            }
+        }
+
+        // Any non-variant
+        for (Map.Entry<String, Item> e : groupItems) {
+            if (!e.getValue().isVariant()) return Optional.of(e.getKey());
+        }
+
+        // Fallback: first item in group
+        return Optional.of(groupItems.getFirst().getKey());
+    }
+
+    /**
+     * Returns true if any crafting recipe's primary output produces the given item ID.
+     */
+    private static boolean hasRecipeProducing(@Nonnull String itemId,
+                                              @Nonnull Map<String, CraftingRecipe> allRecipes) {
+        return allRecipes.values().stream().anyMatch(r ->
+                r != null && r.getPrimaryOutput() != null
+                        && itemId.equals(r.getPrimaryOutput().getItemId()));
+    }
+
+    /**
+     * Approach 3: Replace the prefix of resId (before first '_') with "FullBlocks" and look up in BlockGroup asset registry.
+     * The group's blocks array contains block type IDs — find the first one that
+     * maps to a valid item and return that item ID.
+     * Prints the full group list to chat for debugging.
+     */
+    @Nonnull
+    @SuppressWarnings("unchecked")
+    private static Optional<String> resolveByBlockGroup(@Nonnull String resId) {
+        int underscoreIdx = resId.indexOf('_');
+        String groupName = underscoreIdx >= 0
+                ? "FullBlocks" + resId.substring(underscoreIdx)
+                : "FullBlocks_" + resId;
+        DefaultAssetMap<String, BlockGroup> blockGroupMap =
+                (DefaultAssetMap<String, BlockGroup>) AssetRegistry.getAssetStore(BlockGroup.class).getAssetMap();
+        BlockGroup group = blockGroupMap.getAsset(groupName);
+
+        StringBuilder groupDebug = new StringBuilder();
+        groupDebug.append("\n[BlockGroup] Looking up '").append(groupName).append("'");
+
+        if (group == null) {
+            groupDebug.append(" -> NOT FOUND");
+            // Defer broadcast so it's on the world thread
+            broadcastDeferred(groupDebug.toString());
+            return Optional.empty();
+        }
+
+        groupDebug.append(" -> FOUND (").append(group.size()).append(" blocks):");
+        for (int i = 0; i < group.size(); i++) {
+            String blockId = group.get(i);
+            groupDebug.append("\n  [").append(i).append("] ").append(blockId);
+        }
+
+        // The block group contains block type IDs. Find the first one that
+        // has a corresponding item (items reference blocks via getBlockId()).
+        String resolvedItemId = null;
+        for (int i = 0; i < group.size(); i++) {
+            String blockId = group.get(i);
+            // Try blockId directly as an item ID first
+            Item item = Item.getAssetMap().getAsset(blockId);
+            if (item != null) {
+                resolvedItemId = blockId;
+                groupDebug.append("\n  -> Selected [").append(i).append("] ").append(blockId).append(" (direct item match)");
+                break;
+            }
+        }
+
+        if (resolvedItemId == null) {
+            // Search all items for one whose blockId matches the first group entry
+            for (int i = 0; i < group.size(); i++) {
+                String blockId = group.get(i);
+                for (Map.Entry<String, Item> entry : Item.getAssetMap().getAssetMap().entrySet()) {
+                    if (entry.getValue() != null && blockId.equals(entry.getValue().getBlockId())) {
+                        resolvedItemId = entry.getKey();
+                        groupDebug.append("\n  -> Selected [").append(i).append("] item=").append(resolvedItemId)
+                                .append(" (block=").append(blockId).append(")");
+                        break;
+                    }
+                }
+                if (resolvedItemId != null) break;
+            }
+        }
+
+        if (resolvedItemId == null) {
+            groupDebug.append("\n  -> NO MATCHING ITEM FOUND");
+        }
+
+        broadcastDeferred(groupDebug.toString());
+        return Optional.ofNullable(resolvedItemId);
+    }
+
+    /**
+     * Queues a broadcast for the next world.execute() cycle. Used when resolving
+     * from computeIfAbsent (not yet on the world thread).
+     */
+    private static final List<String> PENDING_BROADCASTS = new ArrayList<>();
+
+    private static void broadcastDeferred(@Nonnull String msg) {
+        synchronized (PENDING_BROADCASTS) {
+            PENDING_BROADCASTS.add(msg);
+        }
+    }
+
+    private static void flushDeferredBroadcasts() {
+        synchronized (PENDING_BROADCASTS) {
+            for (String msg : PENDING_BROADCASTS) {
+                broadcast(msg);
+            }
+            PENDING_BROADCASTS.clear();
+        }
     }
 }
