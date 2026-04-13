@@ -46,8 +46,6 @@ public class RecipeDropListener {
     private static final ConcurrentHashMap<UUID, PlayerRef> PLAYER_REFS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<UUID, World> PLAYER_WORLDS = new ConcurrentHashMap<>();
 
-    // Cache mapping block type ID -> crafting recipe (populated lazily per block type)
-    private static final ConcurrentHashMap<String, Optional<CraftingRecipe>> BLOCK_RECIPE_CACHE = new ConcurrentHashMap<>();
     // Cache mapping resourceTypeId -> resolved item ID
     private static final ConcurrentHashMap<String, Optional<String>> RESOURCE_GROUP_CACHE = new ConcurrentHashMap<>();
 
@@ -96,32 +94,23 @@ public class RecipeDropListener {
                 return;
             }
 
-            // Look up or compute the recipe for this block type
-            CraftingRecipe recipe = BLOCK_RECIPE_CACHE.computeIfAbsent(blockTypeId, id ->
-                    CraftingRecipe.getAssetMap().getAssetMap().values().stream()
-                            .filter(r -> r != null && r.getPrimaryOutput() != null
-                                    && r.getPrimaryOutput().getItemId() != null)
-                            .filter(r -> {
-                                Item item = Item.getAssetMap().getAsset(r.getPrimaryOutput().getItemId());
-                                return item != null && item.hasBlockType() && id.equals(item.getBlockId());
-                            })
-                            .findFirst()
-            ).orElse(null);
-            if (recipe == null || recipe.getId().startsWith("Salvage")) {
+            // Look up recipe for this block type via shared registry
+            CraftingRecipe recipe = BlockRecipeRegistry.getRecipeForBlock(blockTypeId);
+            if (recipe == null) {
                 return;
             }
 
             // Resolve recipe inputs to droppable ItemStacks
+            // Inputs are already scaled by CraftingCostModifier (12x),
+            // so we just divide by outputQty to get per-block drops.
             MaterialQuantity[] inputs = recipe.getInput();
             MaterialQuantity primaryOut = recipe.getPrimaryOutput();
             int outputQty = (primaryOut != null && primaryOut.getQuantity() > 0) ? primaryOut.getQuantity() : 1;
-            int multiplier = ResourceConstants.RESOURCE_MULTIPLIER;
 
             List<ItemStack> ingredients = new ArrayList<>();
             StringBuilder debugInfo = new StringBuilder();
             debugInfo.append("Block: ").append(blockTypeId).append(" | Recipe: ").append(recipe.getId())
-                    .append(" | outputQty=").append(outputQty)
-                    .append(" | multiplier=").append(multiplier);
+                    .append(" | outputQty=").append(outputQty);
 
             if (inputs == null || inputs.length == 0) {
                 debugInfo.append("\nInputs: NONE (null or empty array)");
@@ -136,7 +125,7 @@ public class RecipeDropListener {
                     String itemId = input.getItemId();
                     String resId = input.getResourceTypeId();
                     int baseQty = input.getQuantity();
-                    int qty = Math.max(1, baseQty * multiplier / outputQty);
+                    int qty = Math.max(1, baseQty / outputQty);
                     int tagIdx = input.getTagIndex();
 
                     debugInfo.append("\n  [").append(i).append("] itemId=").append(itemId)
@@ -261,7 +250,6 @@ public class RecipeDropListener {
      * Useful if asset packs are reloaded.
      */
     public static void invalidateCache() {
-        BLOCK_RECIPE_CACHE.clear();
         RESOURCE_GROUP_CACHE.clear();
     }
 

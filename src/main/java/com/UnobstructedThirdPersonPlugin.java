@@ -7,8 +7,10 @@ import com.UnobstructedThirdPerson.command.debug.DebugCommand;
 import com.UnobstructedThirdPerson.command.PreviewCommand;
 import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
+import com.UnobstructedThirdPerson.resourcecollection.BlockRecipeRegistry;
 import com.UnobstructedThirdPerson.resourcecollection.BreakBlockRecipeSystem;
 import com.UnobstructedThirdPerson.resourcecollection.BreakBlockNaturalSystem;
+import com.UnobstructedThirdPerson.resourcecollection.CraftingCostModifier;
 import com.UnobstructedThirdPerson.resourcecollection.NaturalResourceRegistry;
 import com.UnobstructedThirdPerson.resourcecollection.NaturalStackSizeModifier;
 import com.UnobstructedThirdPerson.resourcecollection.RecipeDropListener;
@@ -91,5 +93,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
     private static void onAssetsLoaded(LoadAssetEvent event) {
         NaturalResourceRegistry.init();
         NaturalStackSizeModifier.apply();
+        BlockRecipeRegistry.init();
+        CraftingCostModifier.apply();
     }
 }
