@@ -88,6 +88,12 @@ tasks.test {
     useJUnitPlatform()
 
     systemProperty("java.util.logging.manager", "com.hypixel.hytale.logger.backend.HytaleLogManager")
+
+    // Allow reflective access for resource collection unit tests
+    jvmArgs(
+        "--add-opens", "java.base/sun.misc=ALL-UNNAMED",
+        "--add-opens", "java.base/java.lang.reflect=ALL-UNNAMED"
+    )
 }
 
 publishing {
