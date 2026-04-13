@@ -8,6 +8,8 @@ import com.UnobstructedThirdPerson.command.PreviewCommand;
 import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
 import com.UnobstructedThirdPerson.resourcecollection.BreakBlockRecipeSystem;
+import com.UnobstructedThirdPerson.resourcecollection.BreakBlockNaturalSystem;
+import com.UnobstructedThirdPerson.resourcecollection.NaturalResourceDropListener;
 import com.UnobstructedThirdPerson.resourcecollection.RecipeDropListener;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
 import com.hypixel.hytale.component.Ref;
@@ -42,6 +44,8 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
         // Register recipe-drop ECS system: intercepts BreakBlockEvent via entity store
         this.getEntityStoreRegistry().registerSystem(new BreakBlockRecipeSystem());
+        // Register natural-resource ECS system: multiplies drops for natural blocks
+        this.getEntityStoreRegistry().registerSystem(new BreakBlockNaturalSystem());
         
         // Register server-side collision validation system
         // Now works because we declared dependency on EntityModule in MANIFEST
@@ -63,7 +67,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
         // Track world and player for recipe drop system
         RecipeDropListener.setPlayerWorld(playerRef.getUuid(), playerRef, world);
-        playerRef.sendMessage(Message.raw("§a[Plugin] RecipeDrop system active. Break a craftable block to test."));
+        playerRef.sendMessage(Message.raw("§a[Plugin] RecipeDrop + NaturalDrop systems active."));
 
         CameraTransparencyVolumeV2.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresetsV2()
                       .DefaultViewField()

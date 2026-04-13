@@ -113,9 +113,15 @@ public class RecipeDropListener {
 
             // Resolve recipe inputs to droppable ItemStacks
             MaterialQuantity[] inputs = recipe.getInput();
+            MaterialQuantity primaryOut = recipe.getPrimaryOutput();
+            int outputQty = (primaryOut != null && primaryOut.getQuantity() > 0) ? primaryOut.getQuantity() : 1;
+            int multiplier = ResourceConstants.RESOURCE_MULTIPLIER;
+
             List<ItemStack> ingredients = new ArrayList<>();
             StringBuilder debugInfo = new StringBuilder();
-            debugInfo.append("Block: ").append(blockTypeId).append(" | Recipe: ").append(recipe.getId());
+            debugInfo.append("Block: ").append(blockTypeId).append(" | Recipe: ").append(recipe.getId())
+                    .append(" | outputQty=").append(outputQty)
+                    .append(" | multiplier=").append(multiplier);
 
             if (inputs == null || inputs.length == 0) {
                 debugInfo.append("\nInputs: NONE (null or empty array)");
@@ -129,13 +135,15 @@ public class RecipeDropListener {
                     }
                     String itemId = input.getItemId();
                     String resId = input.getResourceTypeId();
-                    int qty = input.getQuantity();
+                    int baseQty = input.getQuantity();
+                    int qty = Math.max(1, baseQty * multiplier / outputQty);
                     int tagIdx = input.getTagIndex();
 
                     debugInfo.append("\n  [").append(i).append("] itemId=").append(itemId)
                             .append(" resourceTypeId=").append(resId)
                             .append(" tagIndex=").append(tagIdx)
-                            .append(" qty=").append(qty);
+                            .append(" baseQty=").append(baseQty)
+                            .append(" scaledQty=").append(qty);
 
                     // If itemId is set, use it directly
                     if (itemId != null && !"Empty".equals(itemId)) {
@@ -165,11 +173,10 @@ public class RecipeDropListener {
                 }
             }
 
-            MaterialQuantity primaryOutput = recipe.getPrimaryOutput();
-            if (primaryOutput != null) {
-                debugInfo.append("\nPrimaryOutput: itemId=").append(primaryOutput.getItemId())
-                        .append(" resourceTypeId=").append(primaryOutput.getResourceTypeId())
-                        .append(" qty=").append(primaryOutput.getQuantity());
+            if (primaryOut != null) {
+                debugInfo.append("\nPrimaryOutput: itemId=").append(primaryOut.getItemId())
+                        .append(" resourceTypeId=").append(primaryOut.getResourceTypeId())
+                        .append(" qty=").append(primaryOut.getQuantity());
             }
 
             debugInfo.append("\nIngredient stacks resolved: ").append(ingredients.size());
