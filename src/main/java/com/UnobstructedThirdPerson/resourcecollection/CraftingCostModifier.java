@@ -36,9 +36,17 @@ public final class CraftingCostModifier {
         }
 
         int modified = 0;
+        int baseSkipped = 0;
         for (var entry : BlockRecipeRegistry.getAllRecipesById().entrySet()) {
             String recipeId = entry.getKey();
             CraftingRecipe recipe = entry.getValue();
+
+            // Skip base block recipes — their inputs are natural resources
+            // and should stay at 1x (the natural 12x drop already covers them)
+            if (BlockRecipeRegistry.isBaseBlockRecipe(recipeId)) {
+                baseSkipped++;
+                continue;
+            }
 
             MaterialQuantity[] inputs = recipe.getInput();
             if (inputs == null || inputs.length == 0) continue;
@@ -62,6 +70,7 @@ public final class CraftingCostModifier {
             }
         }
 
-        log("Scaled input costs (" + multiplier + "x) for " + modified + " block recipes");
+        log("Scaled input costs (" + multiplier + "x) for " + modified
+                + " block recipes (" + baseSkipped + " base blocks kept at 1x)");
     }
 }
