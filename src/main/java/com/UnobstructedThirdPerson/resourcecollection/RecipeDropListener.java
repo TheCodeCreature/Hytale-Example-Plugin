@@ -25,8 +25,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.ChunkStore;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.assetstore.AssetRegistry;
 import com.hypixel.hytale.assetstore.map.DefaultAssetMap;
-import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
-import com.hypixel.hytale.protocol.ItemResourceType;
+
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -46,14 +45,6 @@ public class RecipeDropListener {
     // Stores player refs so we can send chat messages and access worlds
     private static final ConcurrentHashMap<UUID, PlayerRef> PLAYER_REFS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<UUID, World> PLAYER_WORLDS = new ConcurrentHashMap<>();
-
-    /**
-     * Resource group resolution strategy:
-     *   0 (default) = Approach 1: Prefer non-variant items whose ID contains the resource type name
-     *   1           = Approach 2: Prefer items that have NO crafting recipe (raw/base materials)
-     *   2           = Approach 3: Replace resId prefix with FullBlocks (e.g. Wood_Hardwood -> FullBlocks_Hardwood)
-     */
-    private static final int RESOLVE_MODE = 2;
 
     // Cache mapping block type ID -> crafting recipe (populated lazily per block type)
     private static final ConcurrentHashMap<String, Optional<CraftingRecipe>> BLOCK_RECIPE_CACHE = new ConcurrentHashMap<>();
@@ -116,7 +107,7 @@ public class RecipeDropListener {
                             })
                             .findFirst()
             ).orElse(null);
-            if (recipe == null) {
+            if (recipe == null || recipe.getId().startsWith("Salvage")) {
                 return;
             }
 
@@ -158,27 +149,15 @@ public class RecipeDropListener {
                     } else if (resId != null) {
                         // Resolve resourceTypeId to a specific item via configured strategy
                         String resolvedId = RESOURCE_GROUP_CACHE.computeIfAbsent(resId,
-                                rid -> switch (RESOLVE_MODE) {
-                                    case 1  -> resolveByBaseMaterial(rid);
-                                    case 2  -> resolveByBlockGroup(rid);
-                                    default -> resolveByNonVariant(rid);
-                                }
+                                RecipeDropListener::resolveByBlockGroup
                         ).orElse(null);
-
-                        String modeName = switch (RESOLVE_MODE) {
-                            case 1  -> "base";
-                            case 2  -> "blockGroup";
-                            default -> "nonVariant";
-                        };
 
                         if (resolvedId != null) {
                             ingredients.add(new ItemStack(resolvedId, qty));
                             debugInfo.append(" -> GROUP '").append(resId)
-                                    .append("' [mode=").append(modeName)
-                                    .append("] -> DROP ").append(resolvedId);
+                                    .append("' -> DROP ").append(resolvedId);
                         } else {
-                            debugInfo.append(" -> NO ITEM IN GROUP '").append(resId)
-                                    .append("' [mode=").append(modeName).append("]");
+                            debugInfo.append(" -> NO ITEM IN GROUP '").append(resId).append("'");
                         }
                     } else {
                         debugInfo.append(" -> SKIPPED (no itemId or resourceTypeId)");
@@ -279,96 +258,9 @@ public class RecipeDropListener {
         RESOURCE_GROUP_CACHE.clear();
     }
 
-    // ========================= Resource Group Resolution Strategies =========================
-
     /**
-     * Approach 1 (default): Among items in the resource group, prefer non-variant items
-     * whose ID contains the resource type name. Falls back to any non-variant, then any item.
-     *
-     * Priority: exact ID match > non-variant + name contains resId > non-variant > any
-     */
-    @Nonnull
-    private static Optional<String> resolveByNonVariant(@Nonnull String resId) {
-        List<Map.Entry<String, Item>> groupItems = Item.getAssetMap().getAssetMap().entrySet().stream()
-                .filter(e -> e.getValue() != null
-                        && ItemContainer.getMatchingResourceType(e.getValue(), resId) != null)
-                .toList();
-
-        if (groupItems.isEmpty()) return Optional.empty();
-
-        // Exact ID match (item key == resource type ID)
-        for (Map.Entry<String, Item> e : groupItems) {
-            if (e.getKey().equals(resId)) return Optional.of(e.getKey());
-        }
-
-        // Non-variant whose ID contains the resource type name
-        for (Map.Entry<String, Item> e : groupItems) {
-            if (!e.getValue().isVariant() && e.getKey().contains(resId)) return Optional.of(e.getKey());
-        }
-
-        // Any non-variant
-        for (Map.Entry<String, Item> e : groupItems) {
-            if (!e.getValue().isVariant()) return Optional.of(e.getKey());
-        }
-
-        // Fallback: first item in group
-        return Optional.of(groupItems.getFirst().getKey());
-    }
-
-    /**
-     * Approach 2: Among items in the resource group, prefer items that have NO crafting recipe
-     * (i.e., raw/base materials that can't be crafted from something else).
-     * Falls back to non-variant, then any item.
-     *
-     * Priority: no recipe + non-variant > no recipe > non-variant > any
-     */
-    @Nonnull
-    private static Optional<String> resolveByBaseMaterial(@Nonnull String resId) {
-        List<Map.Entry<String, Item>> groupItems = Item.getAssetMap().getAssetMap().entrySet().stream()
-                .filter(e -> e.getValue() != null
-                        && ItemContainer.getMatchingResourceType(e.getValue(), resId) != null)
-                .toList();
-
-        if (groupItems.isEmpty()) return Optional.empty();
-
-        // Check which items have a crafting recipe that produces them
-        Map<String, CraftingRecipe> allRecipes = CraftingRecipe.getAssetMap().getAssetMap();
-
-        // No recipe + non-variant
-        for (Map.Entry<String, Item> e : groupItems) {
-            if (!e.getValue().isVariant() && !hasRecipeProducing(e.getKey(), allRecipes)) {
-                return Optional.of(e.getKey());
-            }
-        }
-
-        // No recipe (even if variant)
-        for (Map.Entry<String, Item> e : groupItems) {
-            if (!hasRecipeProducing(e.getKey(), allRecipes)) {
-                return Optional.of(e.getKey());
-            }
-        }
-
-        // Any non-variant
-        for (Map.Entry<String, Item> e : groupItems) {
-            if (!e.getValue().isVariant()) return Optional.of(e.getKey());
-        }
-
-        // Fallback: first item in group
-        return Optional.of(groupItems.getFirst().getKey());
-    }
-
-    /**
-     * Returns true if any crafting recipe's primary output produces the given item ID.
-     */
-    private static boolean hasRecipeProducing(@Nonnull String itemId,
-                                              @Nonnull Map<String, CraftingRecipe> allRecipes) {
-        return allRecipes.values().stream().anyMatch(r ->
-                r != null && r.getPrimaryOutput() != null
-                        && itemId.equals(r.getPrimaryOutput().getItemId()));
-    }
-
-    /**
-     * Approach 3: Replace the prefix of resId (before first '_') with "FullBlocks" and look up in BlockGroup asset registry.
+     * Resolves a resourceTypeId to a specific item by looking up the corresponding BlockGroup.
+     * Replaces the prefix of resId (before first '_') with "FullBlocks" and looks up in BlockGroup asset registry.
      * The group's blocks array contains block type IDs — find the first one that
      * maps to a valid item and return that item ID.
      * Prints the full group list to chat for debugging.
