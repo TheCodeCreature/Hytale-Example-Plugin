@@ -80,12 +80,15 @@ public final class IngredientDropModifier {
 
         int directSwapped = 0;
         int dropListsModified = 0;
-        List<ItemDropList> newDropLists = new ArrayList<>();
+        List<ItemDropList> newDropLists = new ArrayList<>();    
 
-        // 3. Scan natural blocks for soft/harvest drops
+        // 3. Scan natural blocks for ingredient drops
         for (String blockTypeId : NaturalResourceRegistry.getNaturalBlockTypes()) {
             BlockType bt = BlockType.getAssetMap().getAssetMap().get(blockTypeId);
             if (bt == null) continue;
+
+            // Skip blocks that have a crafting recipe — handled by RecipeDropModifier
+            if (BlockRecipeRegistry.hasRecipe(blockTypeId)) continue;
 
             BlockGathering gathering = bt.getGathering();
             if (gathering == null) continue;

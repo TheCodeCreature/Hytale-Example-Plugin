@@ -44,6 +44,14 @@ public final class NaturalDropModifier {
             BlockType bt = BlockType.getAssetMap().getAssetMap().get(blockTypeId);
             if (bt == null) continue;
 
+            // Skip blocks that have a crafting recipe — RecipeDropModifier
+            // handles those. Without this, recipe blocks that slip into
+            // NaturalResourceRegistry would get 12x of themselves.
+            if (BlockRecipeRegistry.hasRecipe(blockTypeId)) {
+                skipped++;
+                continue;
+            }
+
             BlockGathering gathering = bt.getGathering();
             if (gathering == null) {
                 skipped++;
