@@ -7,14 +7,18 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.SoftBlockDropType;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
+import com.hypixel.hytale.server.core.asset.type.item.config.ItemDrop;
+import com.hypixel.hytale.server.core.asset.type.item.config.ItemDropList;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -314,6 +318,82 @@ class ResourceScalingIntegrationTest {
             var rockBreaking = data.rockStone.getGathering().getBreaking();
             assertEquals("Rocks", rockBreaking.getGatherType(),
                     "GatherType should be unchanged for natural blocks");
+        }
+    }
+
+    @Nested
+    class MultiIngredientRecipeScaling {
+
+        @Test
+        void furnitureBedUsesDropList() {
+            applyFullPipeline();
+            var breaking = readGatheringBreaking(data.furnitureBed.getGathering());
+            assertNull(readBreakingItemId(breaking),
+                    "Multi-ingredient recipe should use dropListId, not direct itemId");
+            assertEquals("Plugin_RecipeDrop_Furniture_Bed",
+                    readBreakingDropListId(breaking));
+        }
+
+        @Test
+        void furnitureBedDropsAllIngredients() {
+            applyFullPipeline();
+            ItemDropList dl = ItemDropList.getAssetMap().getAssetMap()
+                    .get("Plugin_RecipeDrop_Furniture_Bed");
+            assertNotNull(dl, "Synthetic drop list should be registered");
+
+            List<ItemDrop> drops = dl.getContainer().getAllDrops(new ArrayList<>());
+            assertEquals(3, drops.size(), "Should have 3 ingredient drops");
+
+            // 3x Wood_Planks_Oak * 12 / 1 output = 36
+            assertEquals("Wood_Planks_Oak", drops.get(0).getItemId());
+            assertEquals(36, drops.get(0).getQuantityMin());
+            assertEquals(36, drops.get(0).getQuantityMax());
+
+            // 4x Ingredient_Fibre * 12 / 1 output = 48
+            assertEquals("Ingredient_Fibre", drops.get(1).getItemId());
+            assertEquals(48, drops.get(1).getQuantityMin());
+            assertEquals(48, drops.get(1).getQuantityMax());
+
+            // 2x Cloth_Wool_Red * 12 / 1 output = 24
+            assertEquals("Cloth_Wool_Red", drops.get(2).getItemId());
+            assertEquals(24, drops.get(2).getQuantityMin());
+            assertEquals(24, drops.get(2).getQuantityMax());
+        }
+
+        @Test
+        void furnitureBedDoesNotDropSelf() {
+            applyFullPipeline();
+            var breaking = readGatheringBreaking(data.furnitureBed.getGathering());
+            assertNotEquals("Furniture_Bed", readBreakingItemId(breaking),
+                    "Multi-ingredient recipe block should not drop itself");
+        }
+
+        @Test
+        void furnitureBedPreservesGatherType() {
+            applyFullPipeline();
+            var breaking = readGatheringBreaking(data.furnitureBed.getGathering());
+            assertEquals("Woods", breaking.getGatherType(),
+                    "GatherType should be preserved for multi-ingredient recipe blocks");
+        }
+
+        @Test
+        void singleIngredientRecipeStillUseDirectItemId() {
+            applyFullPipeline();
+            // Door: single input (2x Wood_Planks_Oak → 1x Door_Wood_Oak) — should stay direct
+            var breaking = readGatheringBreaking(data.doorWoodOak.getGathering());
+            assertEquals("Wood_Planks_Oak", readBreakingItemId(breaking),
+                    "Single-ingredient recipe should use direct itemId");
+            assertNull(readBreakingDropListId(breaking),
+                    "Single-ingredient recipe should not use dropListId");
+        }
+
+        @Test
+        void multiIngredientRecipeCostsScaled() {
+            applyFullPipeline();
+            MaterialQuantity[] inputs = readRecipeInputs(data.recipeFurnitureBed);
+            assertEquals(36, inputs[0].getQuantity(), "3 * 12 = 36");
+            assertEquals(48, inputs[1].getQuantity(), "4 * 12 = 48");
+            assertEquals(24, inputs[2].getQuantity(), "2 * 12 = 24");
         }
     }
 }

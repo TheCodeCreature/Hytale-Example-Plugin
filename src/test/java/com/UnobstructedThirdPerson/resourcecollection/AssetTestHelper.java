@@ -69,12 +69,19 @@ public final class AssetTestHelper {
     public static CraftingRecipe recipe(String id, MaterialQuantity[] inputs,
                                         MaterialQuantity primaryOutput,
                                         BenchType benchType) {
+        return recipe(id, inputs, primaryOutput, benchType, null);
+    }
+
+    /** Creates a CraftingRecipe via reflection with a specific bench ID. */
+    public static CraftingRecipe recipe(String id, MaterialQuantity[] inputs,
+                                        MaterialQuantity primaryOutput,
+                                        BenchType benchType, String benchId) {
         CraftingRecipe r = construct(CraftingRecipe.class);
         setField(CraftingRecipe.class, r, "id", id);
         setField(CraftingRecipe.class, r, "input", inputs);
         setField(CraftingRecipe.class, r, "primaryOutput", primaryOutput);
         if (benchType != null) {
-            BenchRequirement req = new BenchRequirement(benchType, null, null, 0);
+            BenchRequirement req = new BenchRequirement(benchType, benchId, null, 0);
             setField(CraftingRecipe.class, r, "benchRequirement", new BenchRequirement[]{req});
         }
         return r;
@@ -183,15 +190,41 @@ public final class AssetTestHelper {
                 Collections.unmodifiableSet(naturalItemIds));
     }
 
-    public static void setBlockRecipeRegistry(Map<String, CraftingRecipe> byBlock,
-                                              Map<String, CraftingRecipe> byId,
-                                              Set<String> baseBlockRecipeIds) {
-        setStaticField(BlockRecipeRegistry.class, "recipesByBlockType",
-                Collections.unmodifiableMap(byBlock));
-        setStaticField(BlockRecipeRegistry.class, "recipesById",
-                Collections.unmodifiableMap(byId));
-        setStaticField(BlockRecipeRegistry.class, "baseBlockRecipeIds",
-                Collections.unmodifiableSet(baseBlockRecipeIds));
+    /**
+     * Pre-populates the BenchRecipeRegistries static state by creating
+     * BenchRecipeRegistry instances with the given data.
+     * The benchId is applied to all entries in the single registry.
+     */
+    public static void setBenchRecipeRegistries(String benchId,
+                                                Map<String, CraftingRecipe> byBlock,
+                                                Map<String, CraftingRecipe> byId,
+                                                Set<String> baseBlockRecipeIds) {
+        setBenchRecipeRegistries(
+                Map.of(benchId, byBlock),
+                Map.of(benchId, byId),
+                Map.of(benchId, baseBlockRecipeIds));
+    }
+
+    /**
+     * Pre-populates the BenchRecipeRegistries static state with multiple benches.
+     */
+    public static void setBenchRecipeRegistries(
+            Map<String, Map<String, CraftingRecipe>> byBlockPerBench,
+            Map<String, Map<String, CraftingRecipe>> byIdPerBench,
+            Map<String, Set<String>> baseIdsPerBench) {
+        java.util.LinkedHashMap<String, BenchRecipeRegistry> regs = new java.util.LinkedHashMap<>();
+        for (String benchId : byBlockPerBench.keySet()) {
+            BenchRecipeRegistry reg = new BenchRecipeRegistry(benchId);
+            setField(BenchRecipeRegistry.class, reg, "recipesByBlockType",
+                    Collections.unmodifiableMap(byBlockPerBench.getOrDefault(benchId, Collections.emptyMap())));
+            setField(BenchRecipeRegistry.class, reg, "recipesById",
+                    Collections.unmodifiableMap(byIdPerBench.getOrDefault(benchId, Collections.emptyMap())));
+            setField(BenchRecipeRegistry.class, reg, "baseBlockRecipeIds",
+                    Collections.unmodifiableSet(baseIdsPerBench.getOrDefault(benchId, Collections.emptySet())));
+            regs.put(benchId, reg);
+        }
+        setStaticField(BenchRecipeRegistries.class, "registries",
+                Collections.unmodifiableMap(regs));
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -268,7 +301,7 @@ public final class AssetTestHelper {
         setStaticField(ItemDropList.class, "ASSET_STORE", null);
 
         setNaturalRegistry(Collections.emptySet(), Collections.emptySet());
-        setBlockRecipeRegistry(Collections.emptyMap(), Collections.emptyMap(), Collections.emptySet());
+        setStaticField(BenchRecipeRegistries.class, "registries", Collections.emptyMap());
     }
 
     // ──────────────────────────────────────────────────────────────

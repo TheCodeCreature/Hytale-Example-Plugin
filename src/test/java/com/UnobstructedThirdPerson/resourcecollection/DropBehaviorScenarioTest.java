@@ -112,7 +112,7 @@ class DropBehaviorScenarioTest {
         // Rail_Recipe_Generated_0:
         //   input: resourceTypeId=Wood_Planks qty=2, itemId=Ingredient_Bar_Iron qty=1
         //   output: Rail qty=4
-        //   bench: Crafting (NOT StructuralCrafting)
+        //   bench: Crafting (Workbench — not a registered bench)
         recipes.put("Rail_Recipe_Generated_0",
                 recipe("Rail_Recipe_Generated_0",
                         new MaterialQuantity[]{
@@ -120,7 +120,7 @@ class DropBehaviorScenarioTest {
                                 materialQty("Ingredient_Bar_Iron", 1)
                         },
                         materialQty("Rail", 4),
-                        BenchType.Crafting));
+                        BenchType.Crafting, "Workbench"));
 
         // -- Install everything and run real init() logic ---------
 
@@ -130,7 +130,7 @@ class DropBehaviorScenarioTest {
         installDropLists(Map.of());
 
         NaturalResourceRegistry.init();
-        BlockRecipeRegistry.init();
+        BenchRecipeRegistries.init("Builders", "Furniture_Bench");
     }
 
     @AfterEach
@@ -212,8 +212,8 @@ class DropBehaviorScenarioTest {
     void playerPlacedRailDrops1Rail() {
         applyFullPipeline();
 
-        // Rail has a Crafting-bench recipe (not StructuralCrafting), so it
-        // should NOT be in BlockRecipeRegistry and should keep its vanilla
+        // Rail has a Crafting-bench recipe (Workbench, not a registered bench), so it
+        // should NOT be in BenchRecipeRegistries and should keep its vanilla
         // config.  Verify no modifier has changed the drop to ingredients.
         var breaking = readGatheringBreaking(rail.getGathering());
         String itemId = readBreakingItemId(breaking);

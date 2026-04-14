@@ -8,7 +8,6 @@ import com.UnobstructedThirdPerson.command.PreviewCommand;
 import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
 import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
-import com.UnobstructedThirdPerson.resourcecollection.RecipeDropListener;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -62,9 +61,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         EntityStore entityStore = store.getExternalData();
         World world = entityStore.getWorld();
 
-        // Track world and player for recipe drop system
-        RecipeDropListener.setPlayerWorld(playerRef.getUuid(), playerRef, world);
-        playerRef.sendMessage(Message.raw("§a[Plugin] RecipeDrop + NaturalDrop systems active."));
+        playerRef.sendMessage(Message.raw("§a[Plugin] Resource scaling active."));
 
         CameraTransparencyVolumeV2.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresetsV2()
                       .DefaultViewField()
@@ -76,7 +73,6 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         CameraTransparencyVolume.remove(playerRef.getUuid());
         CameraTransparencyVolumeV2.remove(playerRef.getUuid());
         PreviewBlockManager.remove(playerRef.getUuid());
-        RecipeDropListener.removePlayer(playerRef.getUuid());
         NewMovementSystem.disableMoonGravity(playerRef.getUuid());
     }
 

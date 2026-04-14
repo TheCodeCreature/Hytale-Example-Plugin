@@ -56,7 +56,7 @@ class SharedInstanceDropBugTest {
         installRecipes(recipes);
         installDropLists(Map.of());
         NaturalResourceRegistry.init();
-        BlockRecipeRegistry.init();
+        BenchRecipeRegistries.init("Builders", "Furniture_Bench");
     }
 
     private void applyFullPipeline() {
@@ -102,7 +102,7 @@ class SharedInstanceDropBugTest {
             recipes.put("Crafted_Wall_Recipe", recipe("Crafted_Wall_Recipe",
                     new MaterialQuantity[]{materialQty("Cobble_Stone", 2)},
                     materialQty("Crafted_Wall", 1),
-                    BenchType.StructuralCrafting));
+                    BenchType.StructuralCrafting, "Builders"));
 
             installAndInit(blockTypes, items, recipes);
             applyFullPipeline();
@@ -153,7 +153,7 @@ class SharedInstanceDropBugTest {
             recipes.put("Rail_Recipe_Generated_0", recipe("Rail_Recipe_Generated_0",
                     new MaterialQuantity[]{materialQty("Ingredient_Bar_Iron", 1)},
                     materialQty("Rail", 4),
-                    BenchType.Crafting));
+                    BenchType.Crafting, "Workbench"));
 
             installAndInit(blockTypes, items, recipes);
             applyFullPipeline();
@@ -203,7 +203,7 @@ class SharedInstanceDropBugTest {
                     recipe("Rock_Shale_Cobble_Stairs_Recipe_Generated_0",
                             new MaterialQuantity[]{materialQty("Rock_Shale_Cobble", 1)},
                             materialQty("Rock_Shale_Cobble_Stairs", 1),
-                            BenchType.StructuralCrafting));
+                            BenchType.StructuralCrafting, "Builders"));
 
             installAndInit(blockTypes, items, recipes);
             applyFullPipeline();
@@ -254,7 +254,7 @@ class SharedInstanceDropBugTest {
             recipes.put("Recipe_Block_Recipe", recipe("Recipe_Block_Recipe",
                     new MaterialQuantity[]{materialQty("Some_Item", 2)},
                     materialQty("Recipe_Block", 1),
-                    BenchType.StructuralCrafting));
+                    BenchType.StructuralCrafting, "Builders"));
 
             installAndInit(blockTypes, items, recipes);
             applyFullPipeline();
@@ -298,7 +298,7 @@ class SharedInstanceDropBugTest {
                     recipe("Rock_Shale_Cobble_Stairs_Recipe_Generated_0",
                             new MaterialQuantity[]{materialQty("Rock_Shale_Cobble", 1)},
                             materialQty("Rock_Shale_Cobble_Stairs", 1),
-                            BenchType.StructuralCrafting));
+                            BenchType.StructuralCrafting, "Builders"));
 
             installAndInit(blockTypes, items, recipes);
             applyFullPipeline();
@@ -350,12 +350,13 @@ class SharedInstanceDropBugTest {
 
         /**
          * Rail has a Crafting-bench recipe (not StructuralCrafting).
-         * BlockRecipeRegistry only tracks StructuralCrafting, so Rail
-         * should NOT be in it. But NaturalResourceRegistry should still
-         * exclude Rail (isCraftingBench covers Crafting too).
+         * BenchRecipeRegistries only tracks configured benches (Builders,
+         * Furniture_Bench), so Rail should NOT be in it. But
+         * NaturalResourceRegistry should still exclude Rail
+         * (isCraftingBench covers Workbench too).
          */
         @Test
-        void railWithCraftingBenchNotInBlockRecipeRegistry() {
+        void railWithCraftingBenchNotInBenchRecipeRegistries() {
             BlockType rail = blockType("Rail",
                     gathering(new BlockBreakingDropType("SoftBlocks", 0, 1, null, null),
                             null, null, null));
@@ -372,15 +373,15 @@ class SharedInstanceDropBugTest {
                     recipe("Rail_Recipe_Generated_0",
                             new MaterialQuantity[]{materialQty("Ingredient_Bar_Iron", 1)},
                             materialQty("Rail", 4),
-                            BenchType.Crafting));
+                            BenchType.Crafting, "Workbench"));
 
             installAndInit(blockTypes, items, recipes);
 
             assertFalse(NaturalResourceRegistry.isNaturalBlock("Rail"),
                     "Rail should NOT be natural (has Crafting-bench recipe)");
-            assertFalse(BlockRecipeRegistry.hasRecipe("Rail"),
-                    "Rail should NOT be in BlockRecipeRegistry "
-                            + "(Crafting bench != StructuralCrafting)");
+            assertFalse(BenchRecipeRegistries.hasRecipeAnywhere("Rail"),
+                    "Rail should NOT be in BenchRecipeRegistries "
+                            + "(Workbench is not a registered bench)");
         }
 
         /**
@@ -407,7 +408,7 @@ class SharedInstanceDropBugTest {
                     recipe("Rail_Recipe_Generated_0",
                             new MaterialQuantity[]{materialQty("Ingredient_Bar_Iron", 1)},
                             materialQty("Rail", 4),
-                            BenchType.Crafting));
+                            BenchType.Crafting, "Workbench"));
 
             installAndInit(blockTypes, items, recipes);
             applyFullPipeline();

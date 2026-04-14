@@ -91,6 +91,14 @@ public final class TestDataSet {
     public final BlockType thatchBlock;
     public final Item itemThatchBlock;
 
+    // ── Multi-ingredient recipe block (furniture bench style) ──
+    public final BlockBreakingDropType furnitureBedBreaking;
+    public final BlockType furnitureBed;
+    public final Item itemFurnitureBed;
+    public final Item itemIngredientFibre;
+    public final Item itemClothWoolRed;
+    public final CraftingRecipe recipeFurnitureBed; // non-base: 3x Wood_Planks_Oak + 4x Ingredient_Fibre + 2x Cloth_Wool_Red → 1x Furniture_Bed
+
     // ── Drop lists ──
     public final ItemDrop bushPlantFiberDrop;
     public final ItemDrop bushBerryDrop;
@@ -190,31 +198,31 @@ public final class TestDataSet {
         recipePlanksOak = recipe("Planks_Oak",
                 new MaterialQuantity[]{materialQty("Wood_Log_Oak", 1)},
                 materialQty("Wood_Planks_Oak", 2),
-                BenchType.StructuralCrafting);
+                BenchType.StructuralCrafting, "Builders");
 
         // Non-base: 1x Wood_Planks_Oak → 2x Wood_Slab_Oak
         recipeSlabOak = recipe("Slab_Oak",
                 new MaterialQuantity[]{materialQty("Wood_Planks_Oak", 1)},
                 materialQty("Wood_Slab_Oak", 2),
-                BenchType.StructuralCrafting);
+                BenchType.StructuralCrafting, "Builders");
 
         // Non-base: 2x Metal_Ingot_Iron → 1x Rail_Iron
         recipeRailIron = recipe("Rail_Iron",
                 new MaterialQuantity[]{materialQty("Metal_Ingot_Iron", 2)},
                 materialQty("Rail_Iron", 1),
-                BenchType.StructuralCrafting);
+                BenchType.StructuralCrafting, "Builders");
 
         // Non-base: 2x Wood_Planks_Oak → 1x Door_Wood_Oak
         recipeDoorWood = recipe("Door_Wood",
                 new MaterialQuantity[]{materialQty("Wood_Planks_Oak", 2)},
                 materialQty("Door_Wood_Oak", 1),
-                BenchType.StructuralCrafting);
+                BenchType.StructuralCrafting, "Builders");
 
         // Non-base: 4x Plant_Fiber → 1x Thatch_Block (makes Plant_Fiber an ingredient)
         recipeThatch = recipe("Thatch_Block",
                 new MaterialQuantity[]{materialQty("Plant_Fiber", 4)},
                 materialQty("Thatch_Block", 1),
-                BenchType.StructuralCrafting);
+                BenchType.StructuralCrafting, "Builders");
 
         // Thatch block setup
         thatchBreaking = new BlockBreakingDropType("Woods", 0, 1, "Thatch_Block", null);
@@ -222,11 +230,27 @@ public final class TestDataSet {
                 gathering(thatchBreaking, null, null, null));
         itemThatchBlock = item("Thatch_Block", "Thatch_Block", true, 100);
 
+        // Multi-ingredient: 3x Wood_Planks_Oak + 4x Ingredient_Fibre + 2x Cloth_Wool_Red → 1x Furniture_Bed
+        furnitureBedBreaking = new BlockBreakingDropType("Woods", 0, 1, "Furniture_Bed", null);
+        furnitureBed = blockType("Furniture_Bed",
+                gathering(furnitureBedBreaking, null, null, null));
+        itemFurnitureBed = item("Furniture_Bed", "Furniture_Bed", true, 1);
+        itemIngredientFibre = item("Ingredient_Fibre", null, false, 100);
+        itemClothWoolRed = item("Cloth_Wool_Red", null, false, 100);
+        recipeFurnitureBed = recipe("Furniture_Bed",
+                new MaterialQuantity[]{
+                        materialQty("Wood_Planks_Oak", 3),
+                        materialQty("Ingredient_Fibre", 4),
+                        materialQty("Cloth_Wool_Red", 2)
+                },
+                materialQty("Furniture_Bed", 1),
+                BenchType.StructuralCrafting, "Builders");
+
         // Salvage recipe (should be filtered out)
         salvageSlab = recipe("Salvage_Slab_Oak",
                 new MaterialQuantity[]{materialQty("Wood_Slab_Oak", 1)},
                 materialQty("Wood_Planks_Oak", 1),
-                BenchType.StructuralCrafting);
+                BenchType.StructuralCrafting, "Builders");
 
         // Processing recipe (wrong bench type, should be filtered out)
         recipeIngotIron = recipe("Ingot_Iron",
@@ -261,6 +285,7 @@ public final class TestDataSet {
         blockTypes.put("Rail_Iron", railIron);
         blockTypes.put("Door_Wood_Oak", doorWoodOak);
         blockTypes.put("Thatch_Block", thatchBlock);
+        blockTypes.put("Furniture_Bed", furnitureBed);
 
         // Items
         items.put("Rock_Stone", itemRockStone);
@@ -275,6 +300,9 @@ public final class TestDataSet {
         items.put("Door_Wood_Oak", itemDoorWoodOak);
         items.put("Metal_Ingot_Iron", itemMetalIngotIron);
         items.put("Thatch_Block", itemThatchBlock);
+        items.put("Furniture_Bed", itemFurnitureBed);
+        items.put("Ingredient_Fibre", itemIngredientFibre);
+        items.put("Cloth_Wool_Red", itemClothWoolRed);
 
         // Recipes (all of them, including salvage/processing for registry tests)
         recipes.put("Planks_Oak", recipePlanksOak);
@@ -284,6 +312,7 @@ public final class TestDataSet {
         recipes.put("Thatch_Block", recipeThatch);
         recipes.put("Salvage_Slab_Oak", salvageSlab);
         recipes.put("Ingot_Iron", recipeIngotIron);
+        recipes.put("Furniture_Bed", recipeFurnitureBed);
 
         // Drop lists
         dropLists.put("DropList_Bush", dropListBush);
@@ -314,12 +343,14 @@ public final class TestDataSet {
         recipesByBlockType.put("Rail_Iron", recipeRailIron);
         recipesByBlockType.put("Door_Wood_Oak", recipeDoorWood);
         recipesByBlockType.put("Thatch_Block", recipeThatch);
+        recipesByBlockType.put("Furniture_Bed", recipeFurnitureBed);
 
         recipesById.put("Planks_Oak", recipePlanksOak);
         recipesById.put("Slab_Oak", recipeSlabOak);
         recipesById.put("Rail_Iron", recipeRailIron);
         recipesById.put("Door_Wood", recipeDoorWood);
         recipesById.put("Thatch_Block", recipeThatch);
+        recipesById.put("Furniture_Bed", recipeFurnitureBed);
 
         // Base block: Planks_Oak (all inputs natural: Wood_Log_Oak ∈ naturalItemIds)
         baseBlockRecipeIds.add("Planks_Oak");
@@ -332,6 +363,6 @@ public final class TestDataSet {
         installRecipes(recipes);
         installDropLists(dropLists);
         setNaturalRegistry(naturalBlockIds, naturalItemIds);
-        setBlockRecipeRegistry(recipesByBlockType, recipesById, baseBlockRecipeIds);
+        setBenchRecipeRegistries("Builders", recipesByBlockType, recipesById, baseBlockRecipeIds);
     }
 }

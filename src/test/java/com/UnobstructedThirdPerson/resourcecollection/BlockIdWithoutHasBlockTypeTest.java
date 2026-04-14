@@ -79,7 +79,7 @@ class BlockIdWithoutHasBlockTypeTest {
         railRecipe = recipe("Rail_Iron",
                 new MaterialQuantity[]{materialQty("Metal_Ingot_Iron", 2)},
                 materialQty("Rail_Iron", 1),
-                BenchType.StructuralCrafting);
+                BenchType.StructuralCrafting, "Builders");
 
         // ── Door: hasBlockType=false, blockId="Door_Wood" ──
         doorBreaking = new BlockBreakingDropType("Woods", 0, 1, "Door_Wood", null);
@@ -88,7 +88,7 @@ class BlockIdWithoutHasBlockTypeTest {
         doorRecipe = recipe("Door_Wood",
                 new MaterialQuantity[]{materialQty("Wood_Planks", 2)},
                 materialQty("Door_Wood", 1),
-                BenchType.StructuralCrafting);
+                BenchType.StructuralCrafting, "Builders");
 
         // Populate asset maps
         blockTypes.put("Wood_Log", logBlock);
@@ -159,47 +159,44 @@ class BlockIdWithoutHasBlockTypeTest {
         @Test
         void railWithBlockIdDetectedByRecipeRegistry() {
             NaturalResourceRegistry.init();
-            BlockRecipeRegistry.init();
+            BenchRecipeRegistries.init("Builders");
 
-            assertTrue(BlockRecipeRegistry.hasRecipe("Rail_Iron"),
-                    "Rail_Iron should be in BlockRecipeRegistry "
+            assertTrue(BenchRecipeRegistries.hasRecipeAnywhere("Rail_Iron"),
+                    "Rail_Iron should be in BenchRecipeRegistries "
                             + "(even though hasBlockType=false, blockId is set)");
         }
 
         @Test
         void doorWithBlockIdDetectedByRecipeRegistry() {
             NaturalResourceRegistry.init();
-            BlockRecipeRegistry.init();
+            BenchRecipeRegistries.init("Builders");
 
-            assertTrue(BlockRecipeRegistry.hasRecipe("Door_Wood"),
-                    "Door_Wood should be in BlockRecipeRegistry "
+            assertTrue(BenchRecipeRegistries.hasRecipeAnywhere("Door_Wood"),
+                    "Door_Wood should be in BenchRecipeRegistries "
                             + "(even though hasBlockType=false, blockId is set)");
         }
 
         @Test
         void recipeForRailResolvesCorrectly() {
             NaturalResourceRegistry.init();
-            BlockRecipeRegistry.init();
+            BenchRecipeRegistries.init("Builders");
 
-            CraftingRecipe recipe = BlockRecipeRegistry.getRecipeForBlock("Rail_Iron");
+            CraftingRecipe recipe = BenchRecipeRegistries.getRecipeForBlock("Rail_Iron");
             assertNotNull(recipe);
             assertEquals("Rail_Iron", recipe.getId());
         }
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  NaturalDropModifier tests — the 12x bug
+    //  Drop scaling — the 12x bug guard
     // ─────────────────────────────────────────────────────────────
 
     @Nested
-    class NaturalDropModifierGuard {
+    class DropScalerGuard {
 
         @Test
         void railDoesNotGet12xDrop() {
-            NaturalResourceRegistry.init();
-            BlockRecipeRegistry.init();
-
-            NaturalDropModifier.apply();
+            DropScaler.apply();
 
             assertEquals(1, readBreakingQuantity(railBreaking),
                     "Rail_Iron should keep 1x drop quantity — NOT 12x");
@@ -207,10 +204,7 @@ class BlockIdWithoutHasBlockTypeTest {
 
         @Test
         void doorDoesNotGet12xDrop() {
-            NaturalResourceRegistry.init();
-            BlockRecipeRegistry.init();
-
-            NaturalDropModifier.apply();
+            DropScaler.apply();
 
             assertEquals(1, readBreakingQuantity(doorBreaking),
                     "Door_Wood should keep 1x drop quantity — NOT 12x");
@@ -218,10 +212,7 @@ class BlockIdWithoutHasBlockTypeTest {
 
         @Test
         void logStillGets12xDrop() {
-            NaturalResourceRegistry.init();
-            BlockRecipeRegistry.init();
-
-            NaturalDropModifier.apply();
+            DropScaler.apply();
 
             assertEquals(12,
                     readBreakingQuantity(readGatheringBreaking(logBlock.getGathering())),
@@ -271,7 +262,6 @@ class BlockIdWithoutHasBlockTypeTest {
         @Test
         void doorNeverDrops12xOfItself() {
             DropScaler.apply();
-            IngredientDropModifier.apply();
 
             var breaking = readGatheringBreaking(doorBlock.getGathering());
             assertFalse(
@@ -293,14 +283,14 @@ class BlockIdWithoutHasBlockTypeTest {
             CraftingRecipe toolRecipe = recipe("Tool_Recipe",
                     new MaterialQuantity[]{materialQty("Metal_Ingot_Iron", 3)},
                     materialQty("Metal_Ingot_Iron", 1),  // output is non-block item
-                    BenchType.StructuralCrafting);
+                    BenchType.StructuralCrafting, "Builders");
             recipes.put("Tool_Recipe", toolRecipe);
             installRecipes(recipes);
 
             NaturalResourceRegistry.init();
-            BlockRecipeRegistry.init();
+            BenchRecipeRegistries.init("Builders");
 
-            assertFalse(BlockRecipeRegistry.hasRecipe("Metal_Ingot_Iron"),
+            assertFalse(BenchRecipeRegistries.hasRecipeAnywhere("Metal_Ingot_Iron"),
                     "Non-block item should not create a block recipe entry");
         }
 
@@ -312,15 +302,15 @@ class BlockIdWithoutHasBlockTypeTest {
             CraftingRecipe emptyRecipe = recipe("Empty_BlockId_Recipe",
                     new MaterialQuantity[]{materialQty("Wood_Log", 1)},
                     materialQty("Empty_BlockId", 1),
-                    BenchType.StructuralCrafting);
+                    BenchType.StructuralCrafting, "Builders");
             recipes.put("Empty_BlockId_Recipe", emptyRecipe);
             installItems(items);
             installRecipes(recipes);
 
             NaturalResourceRegistry.init();
-            BlockRecipeRegistry.init();
+            BenchRecipeRegistries.init("Builders");
 
-            assertFalse(BlockRecipeRegistry.hasRecipe(""),
+            assertFalse(BenchRecipeRegistries.hasRecipeAnywhere(""),
                     "Item with empty blockId should not create block recipe entry");
         }
     }

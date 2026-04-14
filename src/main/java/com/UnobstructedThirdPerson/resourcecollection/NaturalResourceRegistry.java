@@ -1,7 +1,6 @@
 package com.UnobstructedThirdPerson.resourcecollection;
 
 import com.hypixel.hytale.protocol.BenchRequirement;
-import com.hypixel.hytale.protocol.BenchType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockBreakingDropType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockGathering;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -195,8 +194,15 @@ public final class NaturalResourceRegistry {
     }
 
     /**
-     * Returns true if the recipe requires a Crafting or StructuralCrafting
-     * bench.  Processing recipes (stonecutter/refinery) are excluded because
+     * Bench IDs whose recipes disqualify a block from being natural.
+     * Must match the bench IDs passed to {@link BenchRecipeRegistries#init}.
+     */
+    private static final Set<String> CRAFTING_BENCH_IDS = Set.of(
+            "Builders", "Furniture_Bench", "Workbench", "Fieldcraft");
+
+    /**
+     * Returns true if the recipe requires one of the known crafting benches.
+     * Processing recipes (stonecutter/refinery) are excluded because
      * they are resource-refinement recipes that don't make the output block
      * a "crafted" block.
      */
@@ -204,8 +210,7 @@ public final class NaturalResourceRegistry {
         BenchRequirement[] reqs = recipe.getBenchRequirement();
         if (reqs == null) return false;
         for (BenchRequirement req : reqs) {
-            if (req != null && (req.type == BenchType.Crafting
-                    || req.type == BenchType.StructuralCrafting)) {
+            if (req != null && req.id != null && CRAFTING_BENCH_IDS.contains(req.id)) {
                 return true;
             }
         }
