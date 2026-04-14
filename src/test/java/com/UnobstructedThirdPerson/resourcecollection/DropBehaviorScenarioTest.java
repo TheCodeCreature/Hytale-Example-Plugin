@@ -168,15 +168,15 @@ class DropBehaviorScenarioTest {
                 "World Rock_Shale_Cobble should drop quantity 12");
     }
 
-    // -- Test 3: Player-placed Rock_Shale_Cobble -> 1 Rock_Shale_Cobble
+    // -- Test 3: Player-placed Rock_Shale_Cobble -> PlacementCostScaler enforces 12x cost
 
     @Test
-    void playerPlacedRockShaleCobbleDrops1() {
+    void playerPlacedRockShaleCobbleNoUseDefaultDropFlag() {
         applyFullPipeline();
 
-        assertTrue(readUseDefaultDropWhenPlaced(rockShaleCobble.getGathering()),
-                "Rock_Shale_Cobble should have useDefaultDropWhenPlaced=true "
-                        + "so player-placed copies drop 1x of themselves");
+        assertFalse(readUseDefaultDropWhenPlaced(rockShaleCobble.getGathering()),
+                "Rock_Shale_Cobble should NOT have useDefaultDropWhenPlaced "
+                        + "(placement cost enforced by PlacementCostScaler at runtime)");
     }
 
     // -- Test 4: World Rail -> 1 Rail -----------------------------

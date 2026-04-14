@@ -8,6 +8,7 @@ import com.UnobstructedThirdPerson.command.PreviewCommand;
 import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
 import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
+import com.UnobstructedThirdPerson.resourcecollection.PlacementCostScaler;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -43,6 +44,9 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         // Boost stack sizes after assets are loaded
         this.getEventRegistry().register(LoadAssetEvent.class, UnobstructedThirdPersonPlugin::onAssetsLoaded);
         
+        // Consume extra items when placing natural blocks (12x cost to match 12x drops)
+        this.getEntityStoreRegistry().registerSystem(new PlacementCostScaler());
+
         // Register server-side collision validation system
         // Now works because we declared dependency on EntityModule in MANIFEST
 //        this.getEntityStoreRegistry().registerSystem(new NewMovementSystem());

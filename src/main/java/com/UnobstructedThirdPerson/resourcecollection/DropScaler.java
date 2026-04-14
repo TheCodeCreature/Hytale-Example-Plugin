@@ -229,8 +229,8 @@ public final class DropScaler {
                 processedConfigs.add(physics);
             }
 
-            // ── Flag for player-placed detection ──
-            f.gatheringUseDefaultDrop.setBoolean(gathering, true);
+            // Placement cost enforcement is handled at runtime by PlacementCostScaler,
+            // so useDefaultDropWhenPlaced is intentionally NOT set here.
 
             return true;
         } catch (Exception e) {
