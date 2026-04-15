@@ -153,27 +153,43 @@ public final class BenchRecipeRegistry {
         return null;
     }
 
+    /**
+     * Resolves a resourceTypeId to a concrete item by scanning BlockGroups
+     * for blocks whose name starts with the resource type prefix.
+     *
+     * <p>Specific types (e.g. {@code "Wood_Hardwood"}) match blocks starting
+     * with {@code "Wood_Hardwood_"} — typically found in {@code FullBlocks_Hardwood}.
+     *
+     * <p>Wildcard types ending in {@code "_All"} (e.g. {@code "Wood_All"}) strip
+     * the suffix and match any block starting with {@code "Wood_"} — picks the
+     * first valid item across all groups.
+     */
     @Nullable
     @SuppressWarnings("unchecked")
     private static String resolveByBlockGroup(@Nonnull String resId) {
-        int underscoreIdx = resId.indexOf('_');
-        String groupName = underscoreIdx >= 0
-                ? "FullBlocks" + resId.substring(underscoreIdx)
-                : "FullBlocks_" + resId;
+        var store = AssetRegistry.getAssetStore(BlockGroup.class);
+        if (store == null) return null;
         DefaultAssetMap<String, BlockGroup> blockGroupMap =
-                (DefaultAssetMap<String, BlockGroup>) AssetRegistry.getAssetStore(BlockGroup.class).getAssetMap();
-        BlockGroup group = blockGroupMap.getAsset(groupName);
-        if (group == null) return null;
-        for (int i = 0; i < group.size(); i++) {
-            String blockId = group.get(i);
-            Item item = Item.getAssetMap().getAsset(blockId);
-            if (item != null) return blockId;
-        }
-        for (int i = 0; i < group.size(); i++) {
-            String blockId = group.get(i);
-            for (Map.Entry<String, Item> e : Item.getAssetMap().getAssetMap().entrySet()) {
-                if (e.getValue() != null && blockId.equals(e.getValue().getBlockId())) {
-                    return e.getKey();
+                (DefaultAssetMap<String, BlockGroup>) store.getAssetMap();
+
+        // "Wood_All" → match "Wood_"; "Wood_Hardwood" → match "Wood_Hardwood_"; "Rock" → match "Rock_"
+        String blockPrefix = resId.endsWith("_All")
+                ? resId.substring(0, resId.length() - "All".length())
+                : resId + "_";
+
+        for (var groupEntry : blockGroupMap.getAssetMap().entrySet()) {
+            BlockGroup group = groupEntry.getValue();
+            if (group == null) continue;
+            for (int i = 0; i < group.size(); i++) {
+                String blockId = group.get(i);
+                if (blockId == null || !blockId.startsWith(blockPrefix)) continue;
+                Item item = Item.getAssetMap().getAsset(blockId);
+                if (item != null) return blockId;
+                // Block ID may not be a direct item key — find item by blockId field
+                for (Map.Entry<String, Item> e : Item.getAssetMap().getAssetMap().entrySet()) {
+                    if (e.getValue() != null && blockId.equals(e.getValue().getBlockId())) {
+                        return e.getKey();
+                    }
                 }
             }
         }

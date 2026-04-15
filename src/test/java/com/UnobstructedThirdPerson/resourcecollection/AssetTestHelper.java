@@ -16,6 +16,7 @@ import com.hypixel.hytale.server.core.asset.type.blocktype.config.HarvestingDrop
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.PhysicsDropType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.SoftBlockDropType;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
+import com.hypixel.hytale.server.core.asset.type.item.config.BlockGroup;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemDrop;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemDropList;
@@ -176,6 +177,27 @@ public final class AssetTestHelper {
             setStaticField(ItemDropList.class, "ASSET_STORE", store);
         } catch (Exception e) {
             throw new RuntimeException("Failed to install ItemDropList store", e);
+        }
+    }
+
+    /**
+     * Installs a fake BlockGroup asset store on the AssetRegistry.
+     * BlockGroup uses AssetRegistry.getAssetStore(BlockGroup.class) rather than a static field.
+     */
+    @SuppressWarnings("unchecked")
+    public static void installBlockGroups(Map<String, BlockGroup> groups) {
+        try {
+            DefaultAssetMap<String, BlockGroup> map = new DefaultAssetMap<>(new HashMap<>(groups));
+            AssetStore<String, BlockGroup, DefaultAssetMap<String, BlockGroup>> store =
+                    createStore(String.class, BlockGroup.class, map, null);
+            // BlockGroup is looked up via AssetRegistry.getAssetStore(BlockGroup.class),
+            // which reads from the private storeMap. Inject directly.
+            Field storeMapField = com.hypixel.hytale.assetstore.AssetRegistry.class.getDeclaredField("storeMap");
+            storeMapField.setAccessible(true);
+            Map<Class<?>, Object> storeMap = (Map<Class<?>, Object>) storeMapField.get(null);
+            storeMap.put(BlockGroup.class, store);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to install BlockGroup store", e);
         }
     }
 

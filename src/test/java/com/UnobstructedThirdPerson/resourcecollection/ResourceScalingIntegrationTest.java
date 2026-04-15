@@ -386,4 +386,54 @@ class ResourceScalingIntegrationTest {
             assertEquals(24, inputs[2].getQuantity(), "2 * 12 = 24");
         }
     }
+
+    @Nested
+    class GenericResourceTypeRecipeDrops {
+
+        @Test
+        void kweebecBedUsesDropList() {
+            applyFullPipeline();
+            var breaking = readGatheringBreaking(data.kweebecBed.getGathering());
+            assertNull(readBreakingItemId(breaking),
+                    "Kweebec bed (multi-ingredient with ResourceTypeId) should use dropListId");
+            assertEquals("Plugin_RecipeDrop_Furniture_Kweebec_Bed",
+                    readBreakingDropListId(breaking));
+        }
+
+        @Test
+        void kweebecBedDoesNotDropSelf() {
+            applyFullPipeline();
+            var breaking = readGatheringBreaking(data.kweebecBed.getGathering());
+            assertNotEquals("Furniture_Kweebec_Bed", readBreakingItemId(breaking),
+                    "Kweebec bed should not drop itself — should drop recipe ingredients");
+        }
+
+        @Test
+        void kweebecBedResolvesWoodAllToFirstMatchingWood() {
+            applyFullPipeline();
+            // Wood_All should resolve to the first block in any BlockGroup
+            // that starts with "Wood_" — in our test data that's
+            // Wood_Blackwood_Planks from FullBlocks_Blackwood
+            var breaking = readGatheringBreaking(data.kweebecBed.getGathering());
+            String dropListId = readBreakingDropListId(breaking);
+            assertNotNull(dropListId,
+                    "Kweebec bed should have a synthetic drop list (Wood_All resolved)");
+        }
+
+        @Test
+        void kweebecBedPreservesGatherType() {
+            applyFullPipeline();
+            var breaking = readGatheringBreaking(data.kweebecBed.getGathering());
+            assertEquals("Woods", breaking.getGatherType(),
+                    "GatherType should be preserved for Kweebec bed");
+        }
+
+        @Test
+        void kweebecBedRecipeCostsScaled() {
+            applyFullPipeline();
+            MaterialQuantity[] inputs = readRecipeInputs(data.recipeKweebecBed);
+            assertEquals(36, inputs[0].getQuantity(), "3 * 12 = 36 (Wood_All via ResourceTypeId)");
+            assertEquals(48, inputs[1].getQuantity(), "4 * 12 = 48 (Ingredient_Fibre)");
+        }
+    }
 }
