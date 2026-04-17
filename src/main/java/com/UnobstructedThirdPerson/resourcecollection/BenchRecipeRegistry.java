@@ -1,9 +1,6 @@
 package com.UnobstructedThirdPerson.resourcecollection;
 
-import com.hypixel.hytale.assetstore.AssetRegistry;
-import com.hypixel.hytale.assetstore.map.DefaultAssetMap;
 import com.hypixel.hytale.protocol.BenchRequirement;
-import com.hypixel.hytale.server.core.asset.type.item.config.BlockGroup;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
@@ -136,65 +133,8 @@ public final class BenchRecipeRegistry {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    //  Input resolution (static utilities — shared across instances)
+    //  Base-block classification
     // ═══════════════════════════════════════════════════════════════
-
-    @Nullable
-    public static String resolveInputItemId(@Nonnull MaterialQuantity input) {
-        String itemId = input.getItemId();
-        if (itemId != null && !"Empty".equals(itemId)) {
-            Item item = Item.getAssetMap().getAsset(itemId);
-            return item != null ? itemId : null;
-        }
-        String resId = input.getResourceTypeId();
-        if (resId != null) {
-            return resolveByBlockGroup(resId);
-        }
-        return null;
-    }
-
-    /**
-     * Resolves a resourceTypeId to a concrete item by scanning BlockGroups
-     * for blocks whose name starts with the resource type prefix.
-     *
-     * <p>Specific types (e.g. {@code "Wood_Hardwood"}) match blocks starting
-     * with {@code "Wood_Hardwood_"} — typically found in {@code FullBlocks_Hardwood}.
-     *
-     * <p>Wildcard types ending in {@code "_All"} (e.g. {@code "Wood_All"}) strip
-     * the suffix and match any block starting with {@code "Wood_"} — picks the
-     * first valid item across all groups.
-     */
-    @Nullable
-    @SuppressWarnings("unchecked")
-    private static String resolveByBlockGroup(@Nonnull String resId) {
-        var store = AssetRegistry.getAssetStore(BlockGroup.class);
-        if (store == null) return null;
-        DefaultAssetMap<String, BlockGroup> blockGroupMap =
-                (DefaultAssetMap<String, BlockGroup>) store.getAssetMap();
-
-        // "Wood_All" → match "Wood_"; "Wood_Hardwood" → match "Wood_Hardwood_"; "Rock" → match "Rock_"
-        String blockPrefix = resId.endsWith("_All")
-                ? resId.substring(0, resId.length() - "All".length())
-                : resId + "_";
-
-        for (var groupEntry : blockGroupMap.getAssetMap().entrySet()) {
-            BlockGroup group = groupEntry.getValue();
-            if (group == null) continue;
-            for (int i = 0; i < group.size(); i++) {
-                String blockId = group.get(i);
-                if (blockId == null || !blockId.startsWith(blockPrefix)) continue;
-                Item item = Item.getAssetMap().getAsset(blockId);
-                if (item != null) return blockId;
-                // Block ID may not be a direct item key — find item by blockId field
-                for (Map.Entry<String, Item> e : Item.getAssetMap().getAssetMap().entrySet()) {
-                    if (e.getValue() != null && blockId.equals(e.getValue().getBlockId())) {
-                        return e.getKey();
-                    }
-                }
-            }
-        }
-        return null;
-    }
 
     private static boolean allInputsNatural(@Nonnull CraftingRecipe recipe,
                                             @Nonnull Set<String> naturalItems) {
@@ -202,9 +142,14 @@ public final class BenchRecipeRegistry {
         if (inputs == null || inputs.length == 0) return false;
         for (MaterialQuantity mq : inputs) {
             if (mq == null) continue;
-            String resolved = resolveInputItemId(mq);
-            if (resolved == null || !naturalItems.contains(resolved)) {
-                return false;
+            String itemId = mq.getItemId();
+            if (itemId != null && !"Empty".equals(itemId)) {
+                if (!naturalItems.contains(itemId)) return false;
+            } else {
+                String resId = mq.getResourceTypeId();
+                if (resId == null) return false;
+                if (!ResourceTypeResolver.isResourceTypeExclusivelyNatural(resId, naturalItems))
+                    return false;
             }
         }
         return true;

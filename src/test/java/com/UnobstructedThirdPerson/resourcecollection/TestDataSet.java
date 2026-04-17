@@ -2,7 +2,6 @@ package com.UnobstructedThirdPerson.resourcecollection;
 
 import com.hypixel.hytale.protocol.BenchType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockBreakingDropType;
-import com.hypixel.hytale.server.core.asset.type.item.config.BlockGroup;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockGathering;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.HarvestingDropType;
@@ -106,6 +105,12 @@ public final class TestDataSet {
     public final Item itemKweebecBed;
     public final CraftingRecipe recipeKweebecBed; // non-base: 3x Wood_All (resourceTypeId) + 4x Ingredient_Fibre → 1x Furniture_Kweebec_Bed
 
+    // ── Hardwood Fence: single ResourceTypeId input "Wood_Hardwood" (Builders bench) ──
+    public final BlockBreakingDropType fenceHardwoodBreaking;
+    public final BlockType fenceHardwood;
+    public final Item itemFenceHardwood;
+    public final CraftingRecipe recipeFenceHardwood; // non-base: 1x Wood_Hardwood (resourceTypeId) → 2x Wood_Hardwood_Fence
+
     // ── Drop lists ──
     public final ItemDrop bushPlantFiberDrop;
     public final ItemDrop bushBerryDrop;
@@ -116,7 +121,6 @@ public final class TestDataSet {
     public final Map<String, Item> items = new HashMap<>();
     public final Map<String, CraftingRecipe> recipes = new HashMap<>();
     public final Map<String, ItemDropList> dropLists = new HashMap<>();
-    public final Map<String, BlockGroup> blockGroups = new HashMap<>();
 
     // ── Registry sets ──
     public final Set<String> naturalBlockIds = new HashSet<>();
@@ -188,21 +192,33 @@ public final class TestDataSet {
         //  Items
         // ────────────────────────────────────────────────
 
-        itemRockStone = item("Rock_Stone", "Rock_Stone", true, 100);
-        itemWoodLogOak = item("Wood_Log_Oak", "Wood_Log_Oak", true, 100);
+        itemRockStone = item("Rock_Stone", "Rock_Stone", true, 100,
+                resourceType("Rock"));
+        itemWoodLogOak = item("Wood_Log_Oak", "Wood_Log_Oak", true, 100,
+                resourceType("Wood_All"), resourceType("Wood_Hardwood"),
+                resourceType("Wood_Trunk"), resourceType("Fuel"));
         itemDirt = item("Dirt", "Dirt", true, 100);
         itemSand = item("Sand", "Sand", true, 100);
         itemPlantFiber = item("Plant_Fiber", null, false, 100);
         itemBerry = item("Berry", null, false, 64);
-        itemWoodPlanksOak = item("Wood_Planks_Oak", "Wood_Planks_Oak", true, 100);
+        itemWoodPlanksOak = item("Wood_Planks_Oak", "Wood_Planks_Oak", true, 100,
+                resourceType("Wood_Planks"), resourceType("Fuel"));
         itemWoodSlabOak = item("Wood_Slab_Oak", "Wood_Slab_Oak", true, 100);
         itemRailIron = item("Rail_Iron", "Rail_Iron", true, 100);
         itemDoorWoodOak = item("Door_Wood_Oak", "Door_Wood_Oak", true, 100);
         itemMetalIngotIron = item("Metal_Ingot_Iron", null, false, 100);
 
-        // Items referenced by BlockGroups (for resolveByBlockGroup tests)
-        items.put("Wood_Blackwood_Planks", item("Wood_Blackwood_Planks", "Wood_Blackwood_Planks", true, 100));
-        items.put("Wood_Hardwood_Planks", item("Wood_Hardwood_Planks", "Wood_Hardwood_Planks", true, 100));
+        items.put("Wood_Blackwood_Planks", item("Wood_Blackwood_Planks", "Wood_Blackwood_Planks", true, 100,
+                resourceType("Wood_Planks")));
+        items.put("Wood_Hardwood_Planks", item("Wood_Hardwood_Planks", "Wood_Hardwood_Planks", true, 100,
+                "Wood_Hardwood_Planks",
+                resourceType("Wood_Planks"), resourceType("Wood_Hardwood")));
+        items.put("Wood_Hardwood_Decorative", item("Wood_Hardwood_Decorative", "Wood_Hardwood_Decorative", true, 100,
+                "Wood_Hardwood_Planks",
+                resourceType("Wood_Hardwood")));
+        items.put("Wood_Hardwood_Ornate", item("Wood_Hardwood_Ornate", "Wood_Hardwood_Ornate", true, 100,
+                "Wood_Hardwood_Planks",
+                resourceType("Wood_Hardwood")));
 
         // ────────────────────────────────────────────────
         //  Recipes
@@ -273,6 +289,16 @@ public final class TestDataSet {
                 materialQty("Furniture_Kweebec_Bed", 1),
                 BenchType.Crafting, "Furniture_Bench");
 
+        // Hardwood Fence: single ResourceTypeId input — Builders bench
+        fenceHardwoodBreaking = new BlockBreakingDropType("Woods", 0, 1, "Wood_Hardwood_Fence", null);
+        fenceHardwood = blockType("Wood_Hardwood_Fence",
+                gathering(fenceHardwoodBreaking, null, null, null));
+        itemFenceHardwood = item("Wood_Hardwood_Fence", "Wood_Hardwood_Fence", true, 100);
+        recipeFenceHardwood = recipe("Wood_Hardwood_Fence",
+                new MaterialQuantity[]{materialQtyResource("Wood_Hardwood", 1)},
+                materialQty("Wood_Hardwood_Fence", 2),
+                BenchType.StructuralCrafting, "Builders");
+
         // Salvage recipe (should be filtered out)
         salvageSlab = recipe("Salvage_Slab_Oak",
                 new MaterialQuantity[]{materialQty("Wood_Slab_Oak", 1)},
@@ -314,6 +340,7 @@ public final class TestDataSet {
         blockTypes.put("Thatch_Block", thatchBlock);
         blockTypes.put("Furniture_Bed", furnitureBed);
         blockTypes.put("Furniture_Kweebec_Bed", kweebecBed);
+        blockTypes.put("Wood_Hardwood_Fence", fenceHardwood);
 
         // Items
         items.put("Rock_Stone", itemRockStone);
@@ -332,6 +359,7 @@ public final class TestDataSet {
         items.put("Furniture_Kweebec_Bed", itemKweebecBed);
         items.put("Ingredient_Fibre", itemIngredientFibre);
         items.put("Cloth_Wool_Red", itemClothWoolRed);
+        items.put("Wood_Hardwood_Fence", itemFenceHardwood);
 
         // Recipes (all of them, including salvage/processing for registry tests)
         recipes.put("Planks_Oak", recipePlanksOak);
@@ -343,16 +371,10 @@ public final class TestDataSet {
         recipes.put("Ingot_Iron", recipeIngotIron);
         recipes.put("Furniture_Bed", recipeFurnitureBed);
         recipes.put("Furniture_Kweebec_Bed", recipeKweebecBed);
+        recipes.put("Wood_Hardwood_Fence", recipeFenceHardwood);
 
         // Drop lists
         dropLists.put("DropList_Bush", dropListBush);
-
-        // Block groups: FullBlocks_Blackwood contains Wood_ blocks
-        // BlockGroup uses protected constructor; use reflection
-        blockGroups.put("FullBlocks_Blackwood", createBlockGroup("FullBlocks_Blackwood",
-                new String[]{"Wood_Blackwood_Planks", "Wood_Blackwood_Decorative", "Wood_Blackwood_Ornate"}));
-        blockGroups.put("FullBlocks_Hardwood", createBlockGroup("FullBlocks_Hardwood",
-                new String[]{"Wood_Hardwood_Planks", "Wood_Hardwood_Decorative", "Wood_Hardwood_Ornate"}));
 
         // ────────────────────────────────────────────────
         //  Registry data (what init() would compute)
@@ -381,6 +403,7 @@ public final class TestDataSet {
         buildersRecipesByBlockType.put("Door_Wood_Oak", recipeDoorWood);
         buildersRecipesByBlockType.put("Thatch_Block", recipeThatch);
         buildersRecipesByBlockType.put("Furniture_Bed", recipeFurnitureBed);
+        buildersRecipesByBlockType.put("Wood_Hardwood_Fence", recipeFenceHardwood);
 
         // Furniture_Bench recipes
         furnitureBenchRecipesByBlockType.put("Furniture_Kweebec_Bed", recipeKweebecBed);
@@ -391,6 +414,7 @@ public final class TestDataSet {
         buildersRecipesById.put("Door_Wood", recipeDoorWood);
         buildersRecipesById.put("Thatch_Block", recipeThatch);
         buildersRecipesById.put("Furniture_Bed", recipeFurnitureBed);
+        buildersRecipesById.put("Wood_Hardwood_Fence", recipeFenceHardwood);
         furnitureBenchRecipesById.put("Furniture_Kweebec_Bed", recipeKweebecBed);
 
         // Base block: Planks_Oak (all inputs natural: Wood_Log_Oak ∈ naturalItemIds)
@@ -403,7 +427,6 @@ public final class TestDataSet {
         installItems(items);
         installRecipes(recipes);
         installDropLists(dropLists);
-        installBlockGroups(blockGroups);
         setNaturalRegistry(naturalBlockIds, naturalItemIds);
         setBenchRecipeRegistries(
                 Map.of("Builders", buildersRecipesByBlockType,
@@ -412,12 +435,5 @@ public final class TestDataSet {
                        "Furniture_Bench", furnitureBenchRecipesById),
                 Map.of("Builders", baseBlockRecipeIds,
                        "Furniture_Bench", Set.of()));
-    }
-
-    private static BlockGroup createBlockGroup(String id, String[] blocks) {
-        BlockGroup bg = construct(BlockGroup.class);
-        setField(BlockGroup.class, bg, "id", id);
-        setField(BlockGroup.class, bg, "blocks", blocks);
-        return bg;
     }
 }

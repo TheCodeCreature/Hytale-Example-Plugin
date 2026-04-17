@@ -52,6 +52,14 @@ public final class BenchRecipeRegistries {
         return registries.values();
     }
 
+    @Nullable
+    public static BenchRecipeRegistry getRegistryForBlock(@Nonnull String blockTypeId) {
+        for (BenchRecipeRegistry reg : registries.values()) {
+            if (reg.hasRecipe(blockTypeId)) return reg;
+        }
+        return null;
+    }
+
     public static boolean hasRecipeAnywhere(@Nonnull String blockTypeId) {
         for (BenchRecipeRegistry reg : registries.values()) {
             if (reg.hasRecipe(blockTypeId)) return true;

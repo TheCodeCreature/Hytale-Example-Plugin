@@ -9,6 +9,7 @@ import com.hypixel.hytale.assetstore.map.JsonAssetWithMap;
 import com.hypixel.hytale.event.IEventBus;
 import com.hypixel.hytale.protocol.BenchRequirement;
 import com.hypixel.hytale.protocol.BenchType;
+import com.hypixel.hytale.protocol.ItemResourceType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockBreakingDropType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockGathering;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -64,6 +65,50 @@ public final class AssetTestHelper {
         setField(Item.class, it, "hasBlockType", hasBlockType);
         setField(Item.class, it, "maxStack", maxStack);
         return it;
+    }
+
+    /**
+     * Creates an Item with {@link ItemResourceType} declarations.
+     * Models the real game's {@code "ResourceTypes"} JSON array on items,
+     * which is how the engine resolves {@code ResourceTypeId}-based recipe inputs.
+     *
+     * @param resourceTypes the resource types this item satisfies
+     *                      (e.g. {@code "Wood_All"}, {@code "Rock"}, {@code "Fuel"})
+     */
+    public static Item item(String id, String blockId, boolean hasBlockType,
+                            int maxStack, ItemResourceType... resourceTypes) {
+        Item it = item(id, blockId, hasBlockType, maxStack);
+        if (resourceTypes != null && resourceTypes.length > 0) {
+            setField(Item.class, it, "resourceTypes", resourceTypes);
+        }
+        return it;
+    }
+
+    /**
+     * Creates an Item with a {@code Set} value and {@link ItemResourceType}
+     * declarations. Models the real game's item family grouping where the
+     * base item's {@code Set} equals its own ID, and derivatives point their
+     * {@code Set} to the base item's ID.
+     *
+     * @param setId         the item's Set value (e.g. the base item's ID)
+     * @param resourceTypes the resource types this item satisfies
+     */
+    public static Item item(String id, String blockId, boolean hasBlockType,
+                            int maxStack, String setId,
+                            ItemResourceType... resourceTypes) {
+        Item it = item(id, blockId, hasBlockType, maxStack, resourceTypes);
+        if (setId != null) {
+            setField(Item.class, it, "set", setId);
+        }
+        return it;
+    }
+
+    /**
+     * Helper to create an {@link ItemResourceType} with the given ID and
+     * quantity 1 (the common case for resource type declarations).
+     */
+    public static ItemResourceType resourceType(String id) {
+        return new ItemResourceType(id, 1);
     }
 
     /** Creates a CraftingRecipe via reflection. */

@@ -10,7 +10,6 @@ import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemDrop;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemDropList;
-import com.hypixel.hytale.server.core.asset.type.item.config.container.MultipleItemDropContainer;
 import com.hypixel.hytale.server.core.asset.type.item.config.container.SingleItemDropContainer;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
@@ -23,6 +22,9 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Single-pass asset modifier for the 12x resource economy.
@@ -68,39 +70,66 @@ public final class DropScaler {
         // ── Phase 1: Scale crafting costs for non-base recipes ───────
         int recipesScaled = scaleCraftingCosts(f, multiplier);
 
-        // ── Phase 2: Collect ingredient item IDs ─────────────────────
+        // ── Phase 2: Collect ingredient item IDs (bench-aware) ───────
         Set<String> ingredientItemIds = collectIngredientItemIds();
 
-        // ── Phase 3: Shared-instance tracking ────────────────────────
+        // ── Phase 3: Classify blocks by bench category ───────────────
+        BenchBlockClassifier classifier = new BenchBlockClassifier();
+        classifier.classify();
+
+        // ── Phase 4: Process blocks ──────────────────────────────────
+
+        // Phase 4a: Recipe blocks — parallel per category
+        List<BenchCategoryProcessor> processors = List.of(
+                new BuildersProcessor(),
+                new FurnitureProcessor(),
+                new OverlapProcessor()
+        );
+
+        List<BenchCategoryProcessor.ProcessResult> categoryResults = new ArrayList<>();
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<Future<BenchCategoryProcessor.ProcessResult>> futures = new ArrayList<>();
+            for (BenchCategoryProcessor proc : processors) {
+                Set<String> blocks = classifier.getNonBaseBlocksByCategory(proc.category());
+                if (!blocks.isEmpty()) {
+                    futures.add(executor.submit(() -> proc.process(blocks, f, ingredientItemIds)));
+                }
+            }
+            for (Future<BenchCategoryProcessor.ProcessResult> future : futures) {
+                categoryResults.add(future.get());
+            }
+        } catch (Exception e) {
+            log("ERROR in parallel category processing: " + e.getMessage());
+        }
+
+        // Merge results from category processors
+        List<ItemDropList> syntheticDropLists = new ArrayList<>();
+        int recipeModified = 0;
+        int recipeSkipped = 0;
+        for (BenchCategoryProcessor.ProcessResult r : categoryResults) {
+            syntheticDropLists.addAll(r.syntheticDropLists());
+            recipeModified += r.modified();
+            recipeSkipped += r.skipped();
+        }
+
+        // Phase 4b: Natural blocks — sequential (shared-instance tracking)
         Set<Object> processedConfigs = Collections.newSetFromMap(new IdentityHashMap<>());
         Set<ItemDrop> processedDrops = Collections.newSetFromMap(new IdentityHashMap<>());
         Set<String> processedDropListIds = new HashSet<>();
-        List<ItemDropList> syntheticDropLists = new ArrayList<>();
 
         int naturalModified = 0;
         int naturalSkipped = 0;
-        int recipeModified = 0;
-        int recipeSkipped = 0;
 
-        // ── Phase 4: Single pass over all block types ────────────────
         for (var entry : BlockType.getAssetMap().getAssetMap().entrySet()) {
             BlockType bt = entry.getValue();
             if (bt == null) continue;
             String btId = bt.getId();
             if ("Empty".equals(btId) || "Unknown".equals(btId)) continue;
 
-            boolean hasRecipe = BenchRecipeRegistries.hasRecipeAnywhere(btId);
             boolean isNatural = NaturalResourceRegistry.isNaturalBlock(btId);
+            boolean hasRecipe = classifier.getCategory(btId) != null;
 
-            if (hasRecipe && !BenchRecipeRegistries.isBaseBlockTypeAnywhere(btId)) {
-                // Non-base recipe block: replace breaking with ingredient drop
-                if (processRecipeBlock(bt, btId, f, syntheticDropLists)) {
-                    recipeModified++;
-                } else {
-                    recipeSkipped++;
-                }
-            } else if (isNatural && !hasRecipe) {
-                // Natural block: scale drops + flag player-placed
+            if (isNatural && !hasRecipe) {
                 if (processNaturalBlock(bt, f, multiplier, ingredientItemIds,
                         processedConfigs, processedDrops, processedDropListIds,
                         syntheticDropLists)) {
@@ -240,74 +269,6 @@ public final class DropScaler {
     }
 
     // ═════════════════════════════════════════════════════════════════
-    //  Phase 4b: Recipe Block Processing
-    // ═════════════════════════════════════════════════════════════════
-
-    private static boolean processRecipeBlock(BlockType bt, String btId, AssetFieldAccessor f,
-                                               List<ItemDropList> syntheticDropLists) {
-        CraftingRecipe recipe = BenchRecipeRegistries.getRecipeForBlock(btId);
-        if (recipe == null) return false;
-
-        BlockGathering gathering = bt.getGathering();
-        if (gathering == null) return false;
-
-        MaterialQuantity[] inputs = recipe.getInput();
-        if (inputs == null || inputs.length == 0) return false;
-
-        MaterialQuantity primaryOut = recipe.getPrimaryOutput();
-        int outputQty = (primaryOut != null && primaryOut.getQuantity() > 0)
-                ? primaryOut.getQuantity() : 1;
-
-        // Resolve ALL inputs to droppable item IDs with proportional quantities
-        record ResolvedIngredient(String itemId, int dropQty) {}
-        List<ResolvedIngredient> resolved = new ArrayList<>();
-        for (MaterialQuantity mq : inputs) {
-            if (mq == null) continue;
-            String itemId = BenchRecipeRegistry.resolveInputItemId(mq);
-            if (itemId == null) continue;
-            int inputQty = mq.getQuantity(); // already 12x scaled from Phase 1
-            int dropQty = Math.max(1, inputQty / outputQty);
-            resolved.add(new ResolvedIngredient(itemId, dropQty));
-        }
-        if (resolved.isEmpty()) return false;
-
-        // Preserve tool requirements from existing breaking config
-        BlockBreakingDropType existing = gathering.getBreaking();
-        String gatherType = existing != null ? existing.getGatherType() : null;
-        int quality = existing != null ? existing.getQuality() : 0;
-
-        try {
-            if (resolved.size() == 1) {
-                // Single ingredient: direct itemId on breaking (original behavior)
-                ResolvedIngredient ing = resolved.get(0);
-                BlockBreakingDropType newBreaking = new BlockBreakingDropType(
-                        gatherType, quality, ing.dropQty(), ing.itemId(), null);
-                f.gatheringBreaking.set(gathering, newBreaking);
-            } else {
-                // Multiple ingredients: create a synthetic drop list
-                String dlId = "Plugin_RecipeDrop_" + btId;
-                SingleItemDropContainer[] containers = new SingleItemDropContainer[resolved.size()];
-                for (int i = 0; i < resolved.size(); i++) {
-                    ResolvedIngredient ing = resolved.get(i);
-                    ItemDrop drop = new ItemDrop(ing.itemId(), null, ing.dropQty(), ing.dropQty());
-                    containers[i] = new SingleItemDropContainer(drop, 100.0);
-                }
-                MultipleItemDropContainer multi = new MultipleItemDropContainer(
-                        containers, 100.0, 1, 1);
-                syntheticDropLists.add(new ItemDropList(dlId, multi));
-
-                BlockBreakingDropType newBreaking = new BlockBreakingDropType(
-                        gatherType, quality, 1, null, dlId);
-                f.gatheringBreaking.set(gathering, newBreaking);
-            }
-            return true;
-        } catch (IllegalAccessException e) {
-            log("ERROR processing recipe block " + btId + ": " + e.getMessage());
-            return false;
-        }
-    }
-
-    // ═════════════════════════════════════════════════════════════════
     //  Ingredient scaling helpers
     // ═════════════════════════════════════════════════════════════════
 
@@ -403,12 +364,14 @@ public final class DropScaler {
     private static Set<String> collectIngredientItemIds() {
         Set<String> ids = new HashSet<>();
         for (BenchRecipeRegistry reg : BenchRecipeRegistries.getAllRegistries()) {
+            BenchCategory category = "Builders".equals(reg.getBenchId())
+                    ? BenchCategory.BUILDERS_ONLY : BenchCategory.FURNITURE_ONLY;
             for (CraftingRecipe recipe : reg.getAllRecipesById().values()) {
                 MaterialQuantity[] inputs = recipe.getInput();
                 if (inputs == null) continue;
                 for (MaterialQuantity mq : inputs) {
                     if (mq == null) continue;
-                    String resolved = BenchRecipeRegistry.resolveInputItemId(mq);
+                    String resolved = ResourceTypeResolver.resolveInputItemId(mq, category);
                     if (resolved != null) ids.add(resolved);
                 }
             }

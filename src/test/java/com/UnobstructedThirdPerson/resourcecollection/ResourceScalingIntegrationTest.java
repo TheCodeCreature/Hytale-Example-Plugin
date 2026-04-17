@@ -409,11 +409,10 @@ class ResourceScalingIntegrationTest {
         }
 
         @Test
-        void kweebecBedResolvesWoodAllToFirstMatchingWood() {
+        void kweebecBedResolvesWoodAllToNaturalItem() {
             applyFullPipeline();
-            // Wood_All should resolve to the first block in any BlockGroup
-            // that starts with "Wood_" — in our test data that's
-            // Wood_Blackwood_Planks from FullBlocks_Blackwood
+            // Wood_All should resolve to Wood_Log_Oak (natural) because the
+            // Furniture Bench uses natural preference in ResourceTypeResolver
             var breaking = readGatheringBreaking(data.kweebecBed.getGathering());
             String dropListId = readBreakingDropListId(breaking);
             assertNotNull(dropListId,
@@ -434,6 +433,40 @@ class ResourceScalingIntegrationTest {
             MaterialQuantity[] inputs = readRecipeInputs(data.recipeKweebecBed);
             assertEquals(36, inputs[0].getQuantity(), "3 * 12 = 36 (Wood_All via ResourceTypeId)");
             assertEquals(48, inputs[1].getQuantity(), "4 * 12 = 48 (Ingredient_Fibre)");
+        }
+
+        @Test
+        void fenceDropsIngredientNotItself() {
+            applyFullPipeline();
+            var breaking = readGatheringBreaking(data.fenceHardwood.getGathering());
+            assertNotEquals("Wood_Hardwood_Fence", readBreakingItemId(breaking),
+                    "Fence should drop its ingredient, not itself");
+        }
+
+        @Test
+        void fenceIsNotClassifiedAsBaseBlock() {
+            applyFullPipeline();
+            // Wood_Hardwood matches both Wood_Log_Oak (natural) and
+            // Wood_Hardwood_Planks (non-natural), so the fence is NOT a base block
+            assertFalse(BenchRecipeRegistries.isBaseBlockTypeAnywhere("Wood_Hardwood_Fence"),
+                    "Fence with ResourceTypeId input should NOT be a base block type");
+        }
+
+        @Test
+        void fenceDropQuantityIsCorrect() {
+            applyFullPipeline();
+            var breaking = readGatheringBreaking(data.fenceHardwood.getGathering());
+            // 1 input * 12 / 2 output = 6
+            assertEquals(6, breaking.getQuantity(),
+                    "Fence drop quantity should be (1*12)/2 = 6");
+        }
+
+        @Test
+        void fencePreservesGatherType() {
+            applyFullPipeline();
+            var breaking = readGatheringBreaking(data.fenceHardwood.getGathering());
+            assertEquals("Woods", breaking.getGatherType(),
+                    "GatherType should be preserved for fence");
         }
     }
 }
