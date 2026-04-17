@@ -1,0 +1,18 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.PortableBench_Builders.name",
+    "Description": "server.items.PortableBench_Builders.description"
+  },
+  "Icon": "Icons/ItemsGenerated/Bench_Architects.png",
+  "Categories": [
+    "Tool.PortableBench"
+  ],
+  "SubCategory": "CraftingTools",
+  "MaxStack": 1,
+  "Quality": "Tool",
+  "PlayerAnimationsId": "Item",
+  "Interactions": {
+    "Use": "Portable_Bench"
+  },
+  "Set": "PortableBench"
+}

@@ -7,6 +7,8 @@ import com.UnobstructedThirdPerson.command.debug.DebugCommand;
 import com.UnobstructedThirdPerson.command.PreviewCommand;
 import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
+import com.UnobstructedThirdPerson.portablebench.PortableBenchConfigLoader;
+import com.UnobstructedThirdPerson.portablebench.PortableBenchInteraction;
 import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
 import com.UnobstructedThirdPerson.resourcecollection.PlacementCostScaler;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
@@ -14,6 +16,7 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.modules.interaction.interaction.config.Interaction;
 import com.hypixel.hytale.server.core.asset.LoadAssetEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
@@ -46,6 +49,12 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         
         // Consume extra items when placing natural blocks (12x cost to match 12x drops)
         this.getEntityStoreRegistry().registerSystem(new PlacementCostScaler());
+
+        // Register portable bench interaction type and configs
+        this.getCodecRegistry(Interaction.CODEC)
+                .register("Portable_Bench", PortableBenchInteraction.class, PortableBenchInteraction.CODEC);
+
+        PortableBenchConfigLoader.loadAndRegister("/portable_benches.json");
 
         // Register server-side collision validation system
         // Now works because we declared dependency on EntityModule in MANIFEST
