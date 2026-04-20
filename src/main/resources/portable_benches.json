@@ -44,51 +44,6 @@
           "recipeCategoryIds": ["Sign", "VillageWall"]
         }
       ]
-    },
-    "Bench_Assignment": {
-      "benchId": "Assignment",
-      "benchName": "server.items.Bench_Assignment.name",
-      "categories": [
-        {
-          "id": "Blocks",
-          "name": "Blocks",
-          "icon": "",
-          "recipeCategoryIds": [
-            "WoodPlanks", "OrnatePlanks", "DecorativePlanks",
-            "Bricks", "Decorative", "Ornate", "Smooth"
-          ]
-        },
-        {
-          "id": "StairsSlabs",
-          "name": "Stairs & Slabs",
-          "icon": "",
-          "recipeCategoryIds": ["Stairs", "HalfSlab", "SmoothHalfSlab"]
-        },
-        {
-          "id": "Structural",
-          "name": "Structural",
-          "icon": "",
-          "recipeCategoryIds": ["Beam", "Platform", "Roof", "Pillar", "Wall"]
-        },
-        {
-          "id": "Openings",
-          "name": "Openings",
-          "icon": "",
-          "recipeCategoryIds": ["Gate", "Ladder", "Window", "Door", "Trapdoor", "Wardrobe"]
-        },
-        {
-          "id": "Furniture",
-          "name": "Furniture",
-          "icon": "",
-          "recipeCategoryIds": ["Table", "Chair", "Bench", "Stool", "Shelf"]
-        },
-        {
-          "id": "Misc",
-          "name": "Misc",
-          "icon": "",
-          "recipeCategoryIds": ["Sign", "VillageWall"]
-        }
-      ]
     }
   }
 }
