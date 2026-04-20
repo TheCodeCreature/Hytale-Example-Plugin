@@ -1,0 +1,6 @@
+{
+  "Id": "Assign_Bench",
+  "Interactions": [
+    "Assign_Bench_Interaction"
+  ]
+}
