@@ -137,7 +137,8 @@ public final class BenchBlockClassifier {
     private static boolean allInputsExclusivelyNatural(@Nonnull CraftingRecipe recipe) {
         MaterialQuantity[] inputs = recipe.getInput();
         if (inputs == null || inputs.length == 0) return false;
-        Set<String> naturalItems = NaturalResourceRegistry.getNaturalItemIds();
+        // Use CORE natural items (excludes Deco drops) for base classification.
+        Set<String> naturalItems = NaturalResourceRegistry.getCoreNaturalItemIds();
         for (MaterialQuantity mq : inputs) {
             if (mq == null) continue;
             String itemId = mq.getItemId();

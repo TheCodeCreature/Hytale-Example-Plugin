@@ -49,11 +49,11 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
             CraftingRecipe recipe = BenchRecipeRegistries.getRecipeForBlock(btId);
             if (recipe == null) { skipped++; continue; }
 
-            BlockGathering gathering = bt.getGathering();
-            if (gathering == null) { skipped++; continue; }
+            BlockGathering originalGathering = bt.getGathering();
+            if (originalGathering == null) { skipped++; continue; }
 
             MaterialQuantity[] inputs = recipe.getInput();
-            if (inputs == null || inputs.length == 0) { skipped++; continue; }
+            if (inputs == null || inputs.length ==  0) { skipped++; continue; }
 
             MaterialQuantity primaryOut = recipe.getPrimaryOutput();
             int outputQty = (primaryOut != null && primaryOut.getQuantity() > 0)
@@ -72,11 +72,17 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
             if (resolved.isEmpty()) { skipped++; continue; }
 
             // Preserve tool requirements from existing breaking config
-            BlockBreakingDropType existing = gathering.getBreaking();
+            BlockBreakingDropType existing = originalGathering.getBreaking();
             String gatherType = existing != null ? existing.getGatherType() : null;
             int quality = existing != null ? existing.getQuality() : 0;
 
             try {
+                // Clone gathering to avoid shared-instance contamination —
+                // child block types that inherit from a parent share the same
+                // BlockGathering Java object. Mutating it would affect all siblings.
+                BlockGathering gathering = DropScaler.cloneGathering(originalGathering);
+                f.blockTypeGathering.set(bt, gathering);
+
                 if (resolved.size() == 1) {
                     ResolvedIngredient ing = resolved.getFirst();
                     BlockBreakingDropType newBreaking = new BlockBreakingDropType(
@@ -99,7 +105,7 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
                     f.gatheringBreaking.set(gathering, newBreaking);
                 }
                 modified++;
-            } catch (IllegalAccessException e) {
+            } catch (Exception e) {
                 System.out.println("[" + category() + "Processor] ERROR processing " + btId + ": " + e.getMessage());
                 skipped++;
             }

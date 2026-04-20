@@ -79,9 +79,12 @@ public final class BenchRecipeRegistry {
 
         // Classify base block recipes: all inputs resolve to natural resource items
         Set<String> baseIds = new HashSet<>();
-        Set<String> naturalItems = NaturalResourceRegistry.getNaturalItemIds();
+        // Use CORE natural items (excludes Deco drops) for base classification.
+        // This prevents Deco-only drops (e.g. Ingredient_Fibre from decorative
+        // plants) from causing recipes like Deco_Rope to be misclassified as base.
+        Set<String> coreNaturalItems = NaturalResourceRegistry.getCoreNaturalItemIds();
         for (var e : byId.entrySet()) {
-            if (allInputsNatural(e.getValue(), naturalItems)) {
+            if (allInputsNatural(e.getValue(), coreNaturalItems)) {
                 baseIds.add(e.getKey());
             }
         }

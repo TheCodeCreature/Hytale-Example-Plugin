@@ -130,6 +130,10 @@ public final class DropScaler {
             boolean hasRecipe = classifier.getCategory(btId) != null;
 
             if (isNatural && !hasRecipe) {
+                // TODO: Skip Deco natural blocks (Blocks.Deco category) —
+                //       they should stay at vanilla drop rates. Check via
+                //       the block's Item using ResourceTypeResolver.isDeco().
+                //       Increment naturalSkipped and continue if Deco.
                 if (processNaturalBlock(bt, f, multiplier, ingredientItemIds,
                         processedConfigs, processedDrops, processedDropListIds,
                         syntheticDropLists)) {

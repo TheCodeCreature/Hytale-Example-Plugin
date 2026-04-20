@@ -169,8 +169,11 @@ public final class ResourceTypeResolver {
     /**
      * Returns {@code true} if the item belongs to the {@code Blocks.Deco}
      * category — decorative props not intended for crafting resolution.
+     *
+     * <p>Package-private so {@link NaturalResourceRegistry} can reuse it
+     * for the two-tier natural item set classification.
      */
-    private static boolean isDeco(@Nonnull Item item) {
+    static boolean isDeco(@Nonnull Item item) {
         String[] cats = item.getCategories();
         if (cats == null) return false;
         for (String cat : cats) {
