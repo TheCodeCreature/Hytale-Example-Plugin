@@ -1,0 +1,17 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Block_Placeholder.name",
+    "Description": "server.items.Block_Placeholder.description"
+  },
+  "Icon": "Icons/ItemsGenerated/Bench_Architects.png",
+  "Categories": [
+    "Tool.PlaceBlock"
+  ],
+  "SubCategory": "BuildingTools",
+  "MaxStack": 1,
+  "Quality": "Developer",
+  "PlayerAnimationsId": "Item",
+  "Interactions": {
+    "Use": "PlaceBlock_Menu"
+  }
+}

@@ -1,14 +1,14 @@
 # Product Board
 
-> Last updated: 2026-04-22 12:30
+> Last updated: 2026-04-22 13:30
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 22
-    "In Progress" : 0
-    "Done" : 0
+    "Backlog" : 18
+    "In Progress" : 3
+    "Done" : 1
 ```
 
 ## Board
@@ -16,7 +16,9 @@ pie title Backlog Distribution
 ### In Progress
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
-| — | — | — | — | — |
+| F2604221035 | Feature | Blueprint Bench Block Asset | E2604221030 | high |
+| S2604221105 | Story | Create Blueprint Bench Block Asset | E2604221030 | high |
+| S2604221210 | Story | Runtime BenchRequirement Mutation | E2604221030 | high |
 
 ### Backlog
 | ID | Type | Title | Epic | Priority |
@@ -27,9 +29,7 @@ pie title Backlog Distribution
 | F2604221045 | Feature | Block Preview & Placement | E2604221030 | high |
 | F2604221050 | Feature | Rarity-Based Availability Indicators | E2604221030 | high |
 | F2604221055 | Feature | Resource Consumption & Chest Scanning | E2604221030 | high |
-| S2604221100 | Story | Create Block_Placeholder Item Assets | E2604221030 | high |
-| S2604221105 | Story | Create Blueprint Bench Block Asset | E2604221030 | high |
-| S2604221210 | Story | Runtime BenchRequirement Mutation for Recipe Aggregation | E2604221030 | high |
+
 | S2604221215 | Story | CraftRecipeEvent Interceptor for Placeholder | E2604221030 | high |
 | S2604221110 | Story | Inventory & Chest Resource Scanner | E2604221030 | high |
 | S2604221120 | Story | Placeholder Arming via Metadata | E2604221030 | high |
@@ -46,7 +46,7 @@ pie title Backlog Distribution
 ### Done
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
-| — | — | — | — | — |
+| S2604221100 | Story | Create Block_Placeholder Item Assets | E2604221030 | high |
 
 ## Epics
 
@@ -76,9 +76,10 @@ Select-then-build workflow at the **Blueprint Bench** — a new dedicated workbe
 - R1 (metadata persistence) ✅ confirmed
 - R2 (icon transformation) ❌ denied — using 3-variant item swap
 - R3 (block type override) ✅ confirmed — cancel event + manual placeBlock
-- R9 (placeholder may not match recipes) ⚠️ investigate in Phase 1
+- R9 (placeholder may not match recipes) ✅ resolved — NOT Phase 1 blocker; Phase 2 fix: add comprehensive ResourceTypes to placeholder at LoadAssetEvent
 - R10 (CraftRecipeEvent.Pre cancellation clean?) ⚠️ investigate in Phase 2
 - R11 (return placeholder after interception) ⚠️ investigate in Phase 2
+- R12 (StructuralCrafting has NO category tabs) ℹ️ shows empty grid until valid input placed — this is expected engine behavior
 
 **Docs:**
 - [design-placeblock-building-tool.md](docs/Plans/design-placeblock-building-tool.md) — Updated system design

@@ -11,9 +11,11 @@ import com.UnobstructedThirdPerson.portablebench.PortableBenchConfigLoader;
 import com.UnobstructedThirdPerson.portablebench.PortableBenchInteraction;
 import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
 import com.UnobstructedThirdPerson.resourcecollection.PlacementCostScaler;
+import com.UnobstructedThirdPerson.placeblock.BlueprintBenchRecipeMutator;
+import com.UnobstructedThirdPerson.placeblock.PlaceBlockConfigLoader;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockMenuInteraction;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockPlacementSystem;
-import com.UnobstructedThirdPerson.assignbench.AssignBenchInteraction;
+// import com.UnobstructedThirdPerson.assignbench.AssignBenchInteraction;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
@@ -59,11 +61,13 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
         PortableBenchConfigLoader.loadAndRegister("/portable_benches.json");
 
+        PlaceBlockConfigLoader.loadAndStore("/placeblock_config.json");
+
         // Register PlaceBlock interaction types
         this.getCodecRegistry(Interaction.CODEC)
                 .register("PlaceBlock_Menu", PlaceBlockMenuInteraction.class, PlaceBlockMenuInteraction.CODEC);
-        this.getCodecRegistry(Interaction.CODEC)
-                .register("Assign_Bench", AssignBenchInteraction.class, AssignBenchInteraction.CODEC);
+        // this.getCodecRegistry(Interaction.CODEC)
+        //         .register("Assign_Bench", AssignBenchInteraction.class, AssignBenchInteraction.CODEC);
 
         // Register PlaceBlock placement system (intercepts PlaceBlockEvent for armed PlaceBlocks)
         this.getEntityStoreRegistry().registerSystem(new PlaceBlockPlacementSystem());
@@ -103,5 +107,6 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
     private static void onAssetsLoaded(LoadAssetEvent event) {
         DropScaler.apply();
+        BlueprintBenchRecipeMutator.mutate();
     }
 }

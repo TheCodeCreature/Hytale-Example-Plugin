@@ -16,8 +16,6 @@ import com.hypixel.hytale.server.core.modules.interaction.interaction.CooldownHa
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.SimpleInteraction;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.data.Collector;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.UnobstructedThirdPerson.placeblock.PlaceBlockMetadata;
-import com.UnobstructedThirdPerson.placeblock.PlaceBlockSelectorWindow;
 import javax.annotation.Nonnull;
 
 /**
@@ -81,17 +79,6 @@ public class PortableBenchInteraction extends SimpleInteraction {
             LOGGER.warning("No portable bench config for item: " + itemId);
             context.getState().state = InteractionState.Failed;
             return;
-        }
-
-        // Check if player has a PlaceBlock in their hotbar
-        for (byte i = 0; i < 9; i++) {
-            ItemStack hotbarItem = playerComponent.getInventory().getHotbar().getItemStack(i);
-            if (PlaceBlockMetadata.isPlaceBlock(hotbarItem)) {
-                PlaceBlockSelectorWindow selectorWindow = new PlaceBlockSelectorWindow(config, hotbarItem);
-                playerComponent.getPageManager().setPageWithWindows(ref, store, Page.Bench, true, selectorWindow);
-                context.getState().state = InteractionState.Finished;
-                return;
-            }
         }
 
         PortableBenchWindow window = new PortableBenchWindow(config);
