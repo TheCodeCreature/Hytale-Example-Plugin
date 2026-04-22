@@ -213,11 +213,11 @@ public class PlaceBlockEvent extends CancellableEcsEvent {
 **Not directly via PlaceBlockEvent.** The event has no `setBlockType()` method. The block type is derived from the held item's `getBlockKey()`.
 
 **Workaround:** If your `PlaceBlockEvent` handler needs to place a different block type:
-1. Cancel the original event
-2. Manually place the desired block using `world.setBlock()` or similar
-3. Manually consume resources
+1. Cancel the original event — this prevents both item consumption AND block placement
+2. Manually place the desired block using `WorldChunk.placeBlock()` (supports rotation and validation)
+3. Manually consume resources from the recipe
 
-This is the approach the PlaceBlock tool will need: cancel the vanilla PlaceBlockEvent, then place the armed recipe's target block type directly.
+This is the approach the PlaceBlock tool will need: cancel the vanilla PlaceBlockEvent, then place the armed recipe's target block type directly. See [Risk Investigation R3](./placeblock-risk-investigation.md#r3-placeblockevent-block-type-override) for the full implementation pattern, including the `BlockAccessor.placeBlock()` API and `SetBlockSettings` flags.
 
 ---
 
@@ -352,9 +352,19 @@ The engine uses metadata extensively:
 
 **Metadata is the correct mechanism for storing the armed recipe on a placeholder.**
 
+### Recommended Pattern: KeyedCodec for Typed Metadata
+
+The engine's own metadata classes (`AdventureMetadata`, `CapturedNPCMetadata`) use a `KeyedCodec` pattern that provides typed, structured metadata storage. This is the recommended approach for the PlaceBlock tool's armed recipe state. See [Risk Investigation R1](./placeblock-risk-investigation.md#r1-item-state-persistence-across-relog) for the full pattern and code example.
+
+Key findings from the risk investigation:
+- `withMetadata()` is immutable — always returns a new `ItemStack`
+- `isStackableWith()` checks metadata equality — armed/unarmed stacks won't merge
+- No documented size limits on `BsonDocument` metadata
+- The `KeyedCodec<T>` + `BuilderCodec<T>` pattern provides type-safe read/write
+
 ### getMetadata() is @Deprecated
 
-Note: `getMetadata()` is marked `@Deprecated` in the decompiled source. It returns a clone. The typed `withMetadata()` methods are the preferred API. However, the method still works and is used throughout the engine.
+Note: `getMetadata()` is marked `@Deprecated` in the decompiled source. It returns a clone. The typed `withMetadata()` / `getFromMetadataOrNull()` methods are the preferred API. However, the method still works and is used throughout the engine.
 
 ---
 
@@ -463,7 +473,7 @@ These limitations will affect system design:
 | 1 | **Quality is asset-level, not per-instance** | Cannot change a single ItemStack's rarity color | Define multiple item assets (Blue/Green/Red) and swap ItemStacks |
 | 2 | **Block preview is client-derived from item's BlockType** | Cannot show preview for a different block than what the item defines | Swap the entire item to match target block, OR use server-side fake blocks |
 | 3 | **PlaceBlockEvent has no setBlockType()** | Cannot change what block gets placed via the event | Cancel event + manually place the correct block type |
-| 4 | **No per-instance icon override** | Cannot change the placeholder's icon to show the target block | Must swap to an item whose icon matches, or accept a generic icon |
+| 4 | **No per-instance icon override** | Cannot change the placeholder's icon to show the target block | Accept a generic icon; use quality color as status indicator. See [R2 investigation](./placeblock-risk-investigation.md#r2-placeholder-icon-transformation) |
 | 5 | **No custom WindowAction types** | Cannot add custom buttons to bench UI | Use existing actions (category tabs, slot selection) creatively |
 | 6 | **No generic "blocks of type X in radius" API** | Can only spatially query ItemContainerState blocks specifically | Sufficient for chests; other block types need manual iteration |
 | 7 | **9 fixed WindowAction types** | Limited interaction vocabulary with bench UI | Repurpose category tabs or slot actions for custom behavior |

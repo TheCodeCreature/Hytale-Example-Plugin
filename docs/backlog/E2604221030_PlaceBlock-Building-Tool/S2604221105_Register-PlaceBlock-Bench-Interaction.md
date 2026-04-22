@@ -1,41 +1,44 @@
 ---
 id: S2604221105
 type: story
-title: "Register PlaceBlock Bench Interaction"
+title: "Create Blueprint Bench Block Asset"
 status: backlog
 priority: high
 feature: F2604221035
 epic: E2604221030
 created: 2026-04-22
+updated: 2026-04-22
 ---
 
-# Register PlaceBlock Bench Interaction
+# Create Blueprint Bench Block Asset
 
 ## User Story
-As a **player**, I want the **Builders Bench to recognize my Block_Placeholder** so that **it enters recipe-browsing mode instead of standard crafting when the placeholder is in the input slot**.
+As a **player**, I want a **Blueprint Bench block I can place in the world** so that **I can interact with it to browse and select recipes for my PlaceBlock tool**.
 
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] The Builders Bench detects when a `Block_Placeholder` is placed in the input slot
-- [ ] Standard crafting behavior is suppressed for the placeholder item
-- [ ] The bench opens or switches to a recipe-browsing UI instead of attempting to craft
-- [ ] The `PlaceBlock_Menu` or `Assign_Bench` interaction codec is wired up
-- [ ] Removing the placeholder reverts the bench to normal behavior
+- [ ] `Bench_Blueprint.json` item asset exists, cloned from `Bench_Builders.json`
+- [ ] Blueprint Bench has `Bench.Id: "Blueprint"` (distinct from `"Builders"`)
+- [ ] Blueprint Bench has `Bench.Type: "StructuralCrafting"`
+- [ ] Blueprint Bench has `BlockEntity.Components.BenchBlock: {}`
+- [ ] Blueprint Bench has combined categories from both Builders and Furniture benches
+- [ ] Blueprint Bench can be given via admin command, placed in the world, and right-clicked
+- [ ] Right-clicking opens a StructuralCrafting window with recipe categories
+- [ ] Blueprint Bench has distinct visual/icon from the Builders Bench (reuse or modify model/texture)
 
 ### Scenarios
-**Bench recognizes placeholder**
-- **Given** a `Block_Placeholder` is placed in the Builders Bench input slot
-- **When** the bench processes the input
-- **Then** it enters recipe-browsing mode, not standard crafting
+**Bench is placeable**
+- **Given** the player has a `Bench_Blueprint` item
+- **When** they place it in the world
+- **Then** a bench block appears with proper model and hitbox
 
-**Normal items still craft normally**
-- **Given** a normal crafting ingredient is in the input slot
-- **When** the bench processes the input
-- **Then** standard crafting behavior occurs as before
+**Bench opens on interaction**
+- **Given** a Blueprint Bench is placed in the world
+- **When** the player right-clicks it
+- **Then** a StructuralCrafting window opens
 
 ## Notes
-- The `PlaceBlock_Menu` interaction codec is already registered in the plugin setup but unimplemented.
-- The `Assign_Bench` interaction codec is also registered — determine which is appropriate here.
-- Risk: Intercepting the bench's input slot detection may require hooking into `CraftRecipeEvent` or the bench's window logic.
-- The Architect needs to determine the best hook point — window-level interception vs. event-level interception.
+- Clone the `Bench_Builders.json` asset and change `Bench.Id`, model references, and category list.
+- The bench window will initially be empty of recipes until `BenchRequirement` mutation is implemented (S2604221210).
+- For Phase 1 testing, just verify the bench exists and opens — recipes come next.
