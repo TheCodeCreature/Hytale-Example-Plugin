@@ -64,13 +64,16 @@ Key technical findings:
 timeline
     title PlaceBlock Building Tool
     section Phase 1 — Bench Asset
-        Blueprint Bench block JSON : backlog
-        Recipe BenchRequirement mutation : backlog
-        Verify bench opens and shows recipes : backlog
-    section Phase 2 — Recipe Interception
-        CraftRecipeEvent interceptor : backlog
-        Placeholder arming via metadata : backlog
-        Placeholder quality swap : backlog
+        Blueprint Bench block JSON : done
+        Shadow recipe creation : done
+        PlaceBlock ResourceType : done
+    section Phase 2a — Command Testing
+        /placeblock assign|clear|list|info : in-progress
+        Validate arming pipeline end-to-end : backlog
+    section Phase 2b — Custom UI
+        InteractiveCustomUIPage spike : backlog
+        BlueprintSelectionPage : backlog
+        Remove PlaceBlockBenchInterceptor : backlog
     section Phase 3 — Placement
         Block Preview : backlog
         Right-Click Placement : backlog

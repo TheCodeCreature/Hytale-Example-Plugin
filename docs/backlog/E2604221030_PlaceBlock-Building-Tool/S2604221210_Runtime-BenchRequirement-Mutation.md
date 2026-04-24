@@ -2,7 +2,7 @@
 id: S2604221210
 type: story
 title: "Runtime BenchRequirement Mutation for Recipe Aggregation"
-status: backlog
+status: done
 priority: high
 feature: F2604221035
 epic: E2604221030

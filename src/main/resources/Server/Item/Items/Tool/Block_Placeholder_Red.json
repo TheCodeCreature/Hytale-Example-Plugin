@@ -3,9 +3,14 @@
     "Name": "server.items.Block_Placeholder.name",
     "Description": "server.items.Block_Placeholder.description"
   },
-  "Icon": "Icons/ItemsGenerated/Bench_Architects.png",
+  "Icon": "Icons/ItemsGenerated/Debug_Block.png",
   "Categories": [
     "Tool.PlaceBlock"
+  ],
+  "ResourceTypes": [
+    {
+      "Id": "PlaceBlock"
+    }
   ],
   "SubCategory": "BuildingTools",
   "MaxStack": 1,

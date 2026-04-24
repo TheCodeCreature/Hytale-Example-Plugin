@@ -50,6 +50,9 @@
     ],
     "HitboxType": "Bench_Architect",
     "VariantRotation": "NESW",
+    "Tint": [
+      "#6699cc"
+    ],
     "Bench": {
       "Type": "StructuralCrafting",
       "Id": "Blueprint",

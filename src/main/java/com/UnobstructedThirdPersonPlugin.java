@@ -5,6 +5,7 @@ import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
 import com.UnobstructedThirdPerson.camera.v2.CameraTransparencyVolumeV2;
 import com.UnobstructedThirdPerson.command.debug.DebugCommand;
 import com.UnobstructedThirdPerson.command.PreviewCommand;
+import com.UnobstructedThirdPerson.command.placeblock.PlaceBlockCommand;
 import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
 import com.UnobstructedThirdPerson.portablebench.PortableBenchConfigLoader;
@@ -12,6 +13,7 @@ import com.UnobstructedThirdPerson.portablebench.PortableBenchInteraction;
 import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
 import com.UnobstructedThirdPerson.resourcecollection.PlacementCostScaler;
 import com.UnobstructedThirdPerson.placeblock.BlueprintBenchRecipeMutator;
+import com.UnobstructedThirdPerson.placeblock.PlaceBlockBenchInterceptor;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockConfigLoader;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockMenuInteraction;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockPlacementSystem;
@@ -45,6 +47,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         this.getCommandRegistry().registerCommand(new UnobstructedCameraCommand());
         this.getCommandRegistry().registerCommand(new DebugCommand());
         this.getCommandRegistry().registerCommand(new PreviewCommand());
+        this.getCommandRegistry().registerCommand(new PlaceBlockCommand());
 //        this.getCommandRegistry().registerCommand(new NewMovementCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, UnobstructedThirdPersonPlugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, UnobstructedThirdPersonPlugin::onPlayerDisconnect);
@@ -71,6 +74,9 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
         // Register PlaceBlock placement system (intercepts PlaceBlockEvent for armed PlaceBlocks)
         this.getEntityStoreRegistry().registerSystem(new PlaceBlockPlacementSystem());
+
+        // Register PlaceBlock bench interceptor (intercepts CraftRecipeEvent.Pre at Blueprint Bench)
+        this.getEntityStoreRegistry().registerSystem(new PlaceBlockBenchInterceptor());
 
         // Register server-side collision validation system
         // Now works because we declared dependency on EntityModule in MANIFEST

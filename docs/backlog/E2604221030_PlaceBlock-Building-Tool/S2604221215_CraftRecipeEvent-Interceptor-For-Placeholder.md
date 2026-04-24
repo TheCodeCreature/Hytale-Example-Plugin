@@ -2,11 +2,13 @@
 id: S2604221215
 type: story
 title: "CraftRecipeEvent Interceptor for Placeholder"
-status: backlog
+status: cancelled
 priority: high
 feature: F2604221040
 epic: E2604221030
 created: 2026-04-22
+cancelled: 2026-04-24
+cancellation-reason: "StructuralCraftingWindow client-side recipe dimming is unsolvable — shadow recipes with PlaceBlock input pass server-side but are dimmed client-side. Replaced by S2604240900 (command testing) and S2604240910 (custom UI)."
 ---
 
 # CraftRecipeEvent Interceptor for Placeholder

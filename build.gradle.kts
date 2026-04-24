@@ -198,7 +198,13 @@ afterEvaluate {
 
     if (targetTask != null) {
         targetTask.dependsOn(killExistingServers)
-        targetTask.finalizedBy(syncAssets)
+
+        // Only sync assets back on successful server shutdown, NOT on kill/failure.
+        // Using finalizedBy would run syncAssets even when the task is cancelled or
+        // the terminal is killed, overwriting source files with stale build output.
+        targetTask.doLast {
+            syncAssets.get().actions.forEach { it.execute(syncAssets.get()) }
+        }
 
         // Forward stdin so interactive server commands like /auth login work
         (targetTask as? JavaExec)?.standardInput = System.`in`

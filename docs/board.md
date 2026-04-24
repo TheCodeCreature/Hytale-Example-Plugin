@@ -1,14 +1,15 @@
 # Product Board
 
-> Last updated: 2026-04-22 13:30
+> Last updated: 2026-04-24 09:15
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 18
-    "In Progress" : 3
-    "Done" : 1
+    "Backlog" : 14
+    "In Progress" : 2
+    "Done" : 5
+    "Cancelled" : 2
 ```
 
 ## Board
@@ -16,23 +17,18 @@ pie title Backlog Distribution
 ### In Progress
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
-| F2604221035 | Feature | Blueprint Bench Block Asset | E2604221030 | high |
-| S2604221105 | Story | Create Blueprint Bench Block Asset | E2604221030 | high |
-| S2604221210 | Story | Runtime BenchRequirement Mutation | E2604221030 | high |
+| F2604221040 | Feature | Recipe Selection & Placeholder Transformation | E2604221030 | high |
+| S2604240900 | Story | PlaceBlock Command for Testing | E2604221030 | critical |
 
 ### Backlog
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
 | E2604221030 | Epic | PlaceBlock Building Tool | — | high |
-| F2604221035 | Feature | Blueprint Bench Block Asset | E2604221030 | high |
-| F2604221040 | Feature | Recipe Selection & Placeholder Transformation | E2604221030 | high |
 | F2604221045 | Feature | Block Preview & Placement | E2604221030 | high |
 | F2604221050 | Feature | Rarity-Based Availability Indicators | E2604221030 | high |
 | F2604221055 | Feature | Resource Consumption & Chest Scanning | E2604221030 | high |
-
-| S2604221215 | Story | CraftRecipeEvent Interceptor for Placeholder | E2604221030 | high |
-| S2604221110 | Story | Inventory & Chest Resource Scanner | E2604221030 | high |
-| S2604221120 | Story | Placeholder Arming via Metadata | E2604221030 | high |
+| S2604240920 | Story | Custom UI Feasibility Spike | E2604221030 | high |
+| S2604240910 | Story | Custom Blueprint Selection UI | E2604221030 | high |
 | S2604221125 | Story | Block Preview Integration with Armed Placeholder | E2604221030 | high |
 | S2604221130 | Story | Right-Click Placement Handler | E2604221030 | high |
 | S2604221135 | Story | Atomic Resource Consumption from Inventory & Chests | E2604221030 | high |
@@ -46,16 +42,31 @@ pie title Backlog Distribution
 ### Done
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
+| F2604221035 | Feature | Blueprint Bench Block Asset | E2604221030 | high |
 | S2604221100 | Story | Create Block_Placeholder Item Assets | E2604221030 | high |
+| S2604221105 | Story | Register PlaceBlock Bench Interaction | E2604221030 | high |
+| S2604221210 | Story | Runtime BenchRequirement Mutation (Shadow Recipes) | E2604221030 | high |
+| S2604230900 | Story | Expand Recipe Aggregation to All Benches | E2604221030 | critical |
+
+### Cancelled
+| ID | Type | Title | Epic | Reason |
+|----|------|-------|------|--------|
+| S2604221215 | Story | CraftRecipeEvent Interceptor for Placeholder | E2604221030 | StructuralCraftingWindow approach abandoned — client-side recipe dimming unsolvable |
+| S2604230905 | Story | Non-Block Recipe Feedback Message | E2604221030 | Depended on interceptor; replaced by command feedback |
+| S2604221115 | Story | Recipe Filtering By Available Resources | E2604221030 | Was tied to StructuralCraftingWindow; deferred to custom UI |
+| S2604221110 | Story | Inventory & Chest Resource Scanner | E2604221030 | Deferred to Phase 3 |
+| S2604221120 | Story | Placeholder Icon Transformation on Selection | E2604221030 | Depended on interceptor; arming via command now |
 
 ## Epics
 
 ### E2604221030 — PlaceBlock Building Tool
-**Status:** backlog (REALIGNED) | **Priority:** high
+**Status:** in-progress | **Priority:** high
 
 Select-then-build workflow at the **Blueprint Bench** — a new dedicated workbench block placed in the world. Player arms a placeholder tool with a recipe, previews placement, and right-clicks to place — consuming resources at placement time from inventory/nearby chests.
 
-**KEY CORRECTION:** The Portable Bench system is NOT involved. A new Blueprint Bench block is the interaction point.
+**UI PIVOT (2026-04-24):** StructuralCraftingWindow approach abandoned — client dims recipes because the placeholder doesn't match expected materials. Moving to:
+- **Phase 2a:** Command-based arming (`/placeblock assign|clear|list|info`) for pipeline testing
+- **Phase 2b:** Custom `InteractiveCustomUIPage` for production UI with "Select" button
 
 **Three Benches:**
 | Bench | Intent | Output |
@@ -65,26 +76,17 @@ Select-then-build workflow at the **Blueprint Bench** — a new dedicated workbe
 | **Blueprint Bench** | "I want to build in the world" | Armed placeholder → deferred placement |
 
 **Phases:**
-1. **Bench Asset** — Blueprint Bench block JSON + recipe aggregation via BenchRequirement mutation + Block_Placeholder assets
-2. **Recipe Interception** — CraftRecipeEvent interceptor + placeholder arming via metadata + quality swap
-3. **Placement** — Block preview + right-click handler + atomic resource consumption + PlacementCostScaler exclusion
-4. **Feedback** — Rarity indicators + inventory change events
+1. ~~Bench Asset~~ — **Done.** Blueprint Bench JSON, shadow recipes, PlaceBlock ResourceType
+2. **Recipe Selection** — In progress. Phase 2a (command testing) active. Phase 2b (custom UI) backlog.
+3. **Placement** — Backlog. Block preview, right-click handler, atomic resource consumption
+4. **Feedback** — Backlog. Rarity indicators, inventory change events
 
-**Contracts:** #10–#14 (unchanged), #15 (Blueprint Bench is separate block), #16 (aggregates all placeable recipes)
+**Contracts:** #10–#16 (unchanged by pivot)
 
-**Risk Investigation:**
-- R1 (metadata persistence) ✅ confirmed
-- R2 (icon transformation) ❌ denied — using 3-variant item swap
-- R3 (block type override) ✅ confirmed — cancel event + manual placeBlock
-- R9 (placeholder may not match recipes) ✅ resolved — NOT Phase 1 blocker; Phase 2 fix: add comprehensive ResourceTypes to placeholder at LoadAssetEvent
-- R10 (CraftRecipeEvent.Pre cancellation clean?) ⚠️ investigate in Phase 2
-- R11 (return placeholder after interception) ⚠️ investigate in Phase 2
-- R12 (StructuralCrafting has NO category tabs) ℹ️ shows empty grid until valid input placed — this is expected engine behavior
-
-**Docs:**
-- [design-placeblock-building-tool.md](docs/Plans/design-placeblock-building-tool.md) — Updated system design
-- [custom-bench-creation.md](docs/hytale/crafting/custom-bench-creation.md) — Hytale Expert research
-- [placeblock-risk-investigation.md](docs/hytale/items/placeblock-risk-investigation.md) — Risk investigation results
+**Key Docs:**
+- [design-blueprint-bench-custom-ui.md](docs/Plans/design-blueprint-bench-custom-ui.md) — Custom UI architecture
+- [custom-ui-options.md](docs/hytale/plugins/custom-ui-options.md) — Hytale Expert UI research
+- [structural-crafting-dimming.md](docs/hytale/crafting/structural-crafting-dimming.md) — Dimming root cause analysis
 
 ### E2604201200 — Resource Economy Scaling System
 **Status:** backlog (empty) | **Priority:** —
