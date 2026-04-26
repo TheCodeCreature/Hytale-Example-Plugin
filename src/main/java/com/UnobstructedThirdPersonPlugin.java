@@ -17,6 +17,7 @@ import com.UnobstructedThirdPerson.placeblock.PlaceBlockBenchInterceptor;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockConfigLoader;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockMenuInteraction;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockPlacementSystem;
+import com.UnobstructedThirdPerson.placeblock.ui.BlueprintBenchOpenUIInteraction;
 // import com.UnobstructedThirdPerson.assignbench.AssignBenchInteraction;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
 import com.hypixel.hytale.component.Ref;
@@ -72,11 +73,15 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         // this.getCodecRegistry(Interaction.CODEC)
         //         .register("Assign_Bench", AssignBenchInteraction.class, AssignBenchInteraction.CODEC);
 
+        // Register Blueprint Bench interaction type (opens custom UI page)
+        this.getCodecRegistry(Interaction.CODEC)
+                .register("BlueprintBench_OpenUI", BlueprintBenchOpenUIInteraction.class, BlueprintBenchOpenUIInteraction.CODEC);
+
         // Register PlaceBlock placement system (intercepts PlaceBlockEvent for armed PlaceBlocks)
         this.getEntityStoreRegistry().registerSystem(new PlaceBlockPlacementSystem());
 
-        // Register PlaceBlock bench interceptor (intercepts CraftRecipeEvent.Pre at Blueprint Bench)
-        this.getEntityStoreRegistry().registerSystem(new PlaceBlockBenchInterceptor());
+        // PlaceBlockBenchInterceptor — DISABLED: replaced by custom UI + /placeblock commands
+        // this.getEntityStoreRegistry().registerSystem(new PlaceBlockBenchInterceptor());
 
         // Register server-side collision validation system
         // Now works because we declared dependency on EntityModule in MANIFEST

@@ -1,0 +1,211 @@
+// Blueprint Bench — main page layout
+// Server populates #RecipeList dynamically via append() calls
+// Server populates #PlaceholderSlots with placeholder items from inventory
+
+// ── Styles ──
+
+@HeaderStyle = LabelStyle(
+    FontSize: 22, TextColor: #ffffff, RenderBold: true,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+@CountStyle = LabelStyle(
+    FontSize: 13, TextColor: #6e7da1,
+    HorizontalAlignment: End, VerticalAlignment: Center
+);
+
+@DetailLabelStyle = LabelStyle(
+    FontSize: 16, TextColor: #c8d6e5, RenderBold: true,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+@SubtextStyle = LabelStyle(
+    FontSize: 12, TextColor: #6e7da1,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+@SectionLabelStyle = LabelStyle(
+    FontSize: 13, TextColor: #6e7da1, RenderBold: true,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+@SlotLabelStyle = LabelStyle(
+    FontSize: 11, TextColor: #96a9be,
+    HorizontalAlignment: Center, VerticalAlignment: Center
+);
+
+@AssignButtonStyle = TextButtonStyle(
+    Default: (Background: #3a7bd5, LabelStyle: (FontSize: 14, TextColor: #ffffff,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: #4a8be5, LabelStyle: (FontSize: 14, TextColor: #ffffff,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: #2a6bc5, LabelStyle: (FontSize: 14, TextColor: #ffffff,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@DisabledAssignStyle = TextButtonStyle(
+    Default: (Background: #2b3542, LabelStyle: (FontSize: 14, TextColor: #4a5568,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: #2b3542, LabelStyle: (FontSize: 14, TextColor: #4a5568,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: #2b3542, LabelStyle: (FontSize: 14, TextColor: #4a5568,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@ConfirmButtonStyle = TextButtonStyle(
+    Default: (Background: #3a7bd5, LabelStyle: (FontSize: 15, TextColor: #ffffff,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: #4a8be5, LabelStyle: (FontSize: 15, TextColor: #ffffff,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: #2a6bc5, LabelStyle: (FontSize: 15, TextColor: #ffffff,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@DisabledConfirmStyle = TextButtonStyle(
+    Default: (Background: #2b3542, LabelStyle: (FontSize: 15, TextColor: #4a5568,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: #2b3542, LabelStyle: (FontSize: 15, TextColor: #4a5568,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: #2b3542, LabelStyle: (FontSize: 15, TextColor: #4a5568,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+// ── Page Root ──
+
+Group {
+    Anchor: (Width: 620, Height: 520);
+    Background: #141c26(0.98);
+    LayoutMode: Left;
+    Padding: (Top: 16, Bottom: 16, Left: 16, Right: 16);
+
+    // ══════════════════════════════
+    // LEFT COLUMN — Recipe browser
+    // ══════════════════════════════
+    Group {
+        Anchor: (Width: 340);
+        LayoutMode: Top;
+        Padding: (Right: 12);
+
+        // Header
+        Group {
+            Anchor: (Height: 36);
+            LayoutMode: Left;
+
+            Label #Title {
+                Text: "Blueprint Bench";
+                FlexWeight: 1;
+                Style: @HeaderStyle;
+            }
+
+            Label #CountLabel {
+                Text: "";
+                Anchor: (Width: 100);
+                Style: @CountStyle;
+            }
+        }
+
+        Group { Anchor: (Height: 1); Background: #2b3542; }
+        Group { Anchor: (Height: 6); }
+
+        // Search bar
+        TextField #SearchInput {
+            Anchor: (Height: 32);
+            PlaceholderText: "Search recipes...";
+        }
+
+        Group { Anchor: (Height: 6); }
+
+        // Scrollable recipe list
+        Group #RecipeList {
+            LayoutMode: TopScrolling;
+            FlexWeight: 1;
+        }
+    }
+
+    // Vertical divider
+    Group { Anchor: (Width: 1); Background: #2b3542; }
+
+    // ══════════════════════════════
+    // RIGHT COLUMN — Details + Assign
+    // ══════════════════════════════
+    Group {
+        FlexWeight: 1;
+        LayoutMode: Top;
+        Padding: (Left: 12);
+
+        // ── Selected Recipe Preview ──
+        Label {
+            Text: "SELECTED RECIPE";
+            Anchor: (Height: 20);
+            Style: @SectionLabelStyle;
+        }
+
+        Group { Anchor: (Height: 6); }
+
+        // Preview row: icon + name
+        Group {
+            Anchor: (Height: 52);
+            LayoutMode: Left;
+
+            // Item icon preview
+            Group {
+                Anchor: (Width: 48, Height: 48);
+                Background: #1a2332;
+
+                ItemIcon #OutputIcon {
+                    Anchor: (Full: 4);
+                }
+            }
+
+            Group { Anchor: (Width: 10); }
+
+            // Name + cost text
+            Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Label #OutputName {
+                    Text: "No recipe selected";
+                    Anchor: (Height: 22);
+                    Style: @DetailLabelStyle;
+                }
+
+                Label #CostSummary {
+                    Text: "";
+                    Anchor: (Height: 16);
+                    Style: @SubtextStyle;
+                }
+
+                Group { FlexWeight: 1; }
+            }
+        }
+
+        Group { Anchor: (Height: 12); }
+        Group { Anchor: (Height: 1); Background: #2b3542; }
+        Group { Anchor: (Height: 12); }
+
+        // ── Placeholder Slots ──
+        Label {
+            Text: "PLACEHOLDER BLOCKS";
+            Anchor: (Height: 20);
+            Style: @SectionLabelStyle;
+        }
+
+        Group { Anchor: (Height: 6); }
+
+        // Container for placeholder slot entries (server appends PlaceholderSlot.ui)
+        Group #PlaceholderSlots {
+            LayoutMode: Top;
+            FlexWeight: 1;
+        }
+
+        // ── Status message ──
+        Label #StatusMessage {
+            Text: "";
+            Anchor: (Height: 18);
+            Style: @SubtextStyle;
+        }
+
+        Group { Anchor: (Height: 8); }
+    }
+}

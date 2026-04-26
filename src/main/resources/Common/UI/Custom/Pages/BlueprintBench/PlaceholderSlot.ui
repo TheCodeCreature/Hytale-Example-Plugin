@@ -1,0 +1,44 @@
+// Blueprint Bench — placeholder slot row
+// Clicking assigns the selected recipe to this placeholder
+// Server sets TextSpans and Style on the root TextButton
+
+@DefaultLabelStyle = LabelStyle(
+    FontSize: 12, TextColor: #96a9be,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+@HoveredLabelStyle = LabelStyle(
+    FontSize: 12, TextColor: #ffffff,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+@SlotStyle = TextButtonStyle(
+    Default:  (Background: #141c26(0.0), LabelStyle: @DefaultLabelStyle),
+    Hovered:  (Background: #1e2a3a,      LabelStyle: @HoveredLabelStyle),
+    Pressed:  (Background: #1a2535,      LabelStyle: @HoveredLabelStyle)
+);
+
+@ArmedStyle = TextButtonStyle(
+    Default:  (Background: #1a2b1a, LabelStyle: (FontSize: 12, TextColor: #4ade80,
+              HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Hovered:  (Background: #243a24, LabelStyle: (FontSize: 12, TextColor: #6aee9a,
+              HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Pressed:  (Background: #1a2b1a, LabelStyle: (FontSize: 12, TextColor: #4ade80,
+              HorizontalAlignment: Start, VerticalAlignment: Center))
+);
+
+@DisabledSlotStyle = TextButtonStyle(
+    Default:  (Background: #141c26(0.0), LabelStyle: (FontSize: 12, TextColor: #4a5568,
+              HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Hovered:  (Background: #141c26(0.0), LabelStyle: (FontSize: 12, TextColor: #4a5568,
+              HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Pressed:  (Background: #141c26(0.0), LabelStyle: (FontSize: 12, TextColor: #4a5568,
+              HorizontalAlignment: Start, VerticalAlignment: Center))
+);
+
+TextButton {
+    Text: "";
+    Anchor: (Height: 32);
+    Style: @SlotStyle;
+    Padding: (Left: 12, Right: 12);
+}

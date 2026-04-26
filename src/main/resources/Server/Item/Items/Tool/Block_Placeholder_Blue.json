@@ -15,7 +15,21 @@
   "SubCategory": "BuildingTools",
   "MaxStack": 1,
   "Quality": "Tool",
-  "PlayerAnimationsId": "Item",
+  "PlayerAnimationsId": "Block",
+  "BlockType": {
+    "Material": "Solid",
+    "DrawType": "Cube",
+    "Opacity": "Transparent",
+    "Textures": [
+      {
+        "All": "BlockTextures/Editor_Empty.png",
+        "Weight": 1
+      }
+    ],
+    "Tint": ["#4488cc"],
+    "BlockParticleSetId": "Stone",
+    "BlockSoundSetId": "Stone"
+  },
   "Interactions": {
     "Use": "PlaceBlock_Menu"
   }

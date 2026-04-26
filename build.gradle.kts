@@ -138,6 +138,22 @@ val syncAssets = tasks.register<Copy>("syncAssets") {
     }
 }
 
+val deployCommonAssets = tasks.register<Copy>("deployCommonAssets") {
+    group = "hytale"
+    description = "Copies Common/ assets (UI files, etc.) to the deployed mod directory so the client can load them."
+
+    dependsOn("processResources")
+
+    from(layout.buildDirectory.dir("resources/main/Common"))
+    into("run/mods/CodeCreature.Development/Common")
+
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+    doLast {
+        println("✅ Common assets deployed to run/mods/CodeCreature.Development/Common/")
+    }
+}
+
 val killExistingServers = tasks.register("killExistingServers") {
     group = "hytale"
     description = "Kills any already-running HytaleServer processes to free the port."
@@ -198,6 +214,7 @@ afterEvaluate {
 
     if (targetTask != null) {
         targetTask.dependsOn(killExistingServers)
+        targetTask.dependsOn(deployCommonAssets)
 
         // Only sync assets back on successful server shutdown, NOT on kill/failure.
         // Using finalizedBy would run syncAssets even when the task is cancelled or

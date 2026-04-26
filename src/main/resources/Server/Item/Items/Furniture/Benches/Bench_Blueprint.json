@@ -53,50 +53,8 @@
     "Tint": [
       "#6699cc"
     ],
-    "Bench": {
-      "Type": "StructuralCrafting",
-      "Id": "Blueprint",
-      "AllowBlockGroupCycling": true,
-      "AlwaysShowInventoryHints": true,
-      "HeaderCategories": [
-        "WoodPlanks",
-        "OrnatePlanks",
-        "DecorativePlanks"
-      ],
-      "Categories": [
-        "WoodPlanks",
-        "OrnatePlanks",
-        "DecorativePlanks",
-        "Bricks",
-        "Decorative",
-        "Ornate",
-        "Smooth",
-        "Stairs",
-        "HalfSlab",
-        "SmoothHalfSlab",
-        "Beam",
-        "Platform",
-        "Roof",
-        "Pillar",
-        "Wall",
-        "Gate",
-        "Ladder",
-        "Window",
-        "Wardrobe",
-        "Door",
-        "Trapdoor",
-        "Table",
-        "Chair",
-        "Bench",
-        "Stool",
-        "Shelf",
-        "Sign",
-        "VillageWall"
-      ],
-      "LocalOpenSoundEventId": "SFX_Workbench_Open",
-      "LocalCloseSoundEventId": "SFX_Workbench_Close",
-      "CompletedSoundEventId": "SFX_Workbench_Craft",
-      "FailedSoundEventId": "SFX_Generic_Crafting_Failed"
+    "Interactions": {
+      "Use": "BlueprintBench_OpenUI"
     },
     "BlockEntity": {
       "Components": {

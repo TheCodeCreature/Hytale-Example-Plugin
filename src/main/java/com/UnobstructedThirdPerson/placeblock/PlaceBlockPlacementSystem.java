@@ -3,20 +3,24 @@ package com.UnobstructedThirdPerson.placeblock;
 import com.hypixel.hytale.component.Archetype;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
-import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.RotationTuple;
 import com.hypixel.hytale.server.core.event.events.ecs.PlaceBlockEvent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
-import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.math.util.ChunkUtil;
+import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.logging.Logger;
 
 /**
  * ECS event system that handles {@link PlaceBlockEvent} for armed PlaceBlock
@@ -54,30 +58,10 @@ import java.util.logging.Logger;
  */
 public class PlaceBlockPlacementSystem extends EntityEventSystem<EntityStore, PlaceBlockEvent> {
 
-    private static final Logger LOGGER = Logger.getLogger(PlaceBlockPlacementSystem.class.getSimpleName());
-
     public PlaceBlockPlacementSystem() {
         super(PlaceBlockEvent.class);
     }
 
-    /**
-     * Handles a {@code PlaceBlockEvent} for armed PlaceBlock items.
-     *
-     * <p>Execution within the placement flow:
-     * <ol>
-     *   <li>Engine creates PlaceBlockEvent</li>
-     *   <li>{@code PlacementCostScaler} runs — early-exits for PlaceBlock items</li>
-     *   <li>This handler runs — early-exits for non-PlaceBlock items</li>
-     *   <li>If armed and affordable: consume resources, override block type, allow placement</li>
-     *   <li>If unarmed or unaffordable: cancel the event</li>
-     * </ol>
-     *
-     * @param index          entity index within the archetype chunk
-     * @param archetypeChunk archetype chunk containing entity components
-     * @param store          entity store
-     * @param commandBuffer  ECS command buffer
-     * @param event          the placement event (cancellable)
-     */
     @Override
     public void handle(int index,
                        @Nonnull ArchetypeChunk<EntityStore> archetypeChunk,
@@ -93,33 +77,65 @@ public class PlaceBlockPlacementSystem extends EntityEventSystem<EntityStore, Pl
 
         // ── Guard: must be armed with a recipe ──
         if (!PlaceBlockMetadata.isArmed(itemInHand)) {
-            // Unarmed placeholder — deny placement
             event.setCancelled(true);
             return;
         }
 
-        // TODO Phase 3:
-        // 1. Get the armed recipe ID via PlaceBlockMetadata.getArmedRecipeId(itemInHand)
-        // 2. Look up the CraftingRecipe asset
-        // 3. Get the Player component from archetypeChunk
-        // 4. Get the World from the entity store
-        // 5. Read PlaceBlockConfig for chest radius
-        // 6. Scan resources via ResourceScanner.scanAvailableResources(player, world, hR, vR)
-        // 7. Attempt ResourceScanner.consumeAtomically(snapshot, recipe.getInput())
-        // 8. If consumption succeeds:
-        //    a. Override the placed block type to the recipe's output block (RISK R3)
-        //       - May need to cancel event and manually call World.setBlock()
-        //    b. Trigger PlaceBlockIndicatorListener.triggerUpdate(player)
-        // 9. If consumption fails:
-        //    a. Cancel the event: event.setCancelled(true)
-        //    b. Trigger PlaceBlockIndicatorListener.triggerUpdate(player)
+        // Cancel the event — we do NOT want the placeholder block placed in the world.
+        // We'll manually place the target block type instead.
+        event.setCancelled(true);
+
+        // Resolve the armed recipe's output block type
+        String recipeId = PlaceBlockMetadata.getArmedRecipeId(itemInHand);
+        String outputBlockTypeId = PlaceBlockMetadata.getOutputBlockTypeId(itemInHand);
+        if (outputBlockTypeId == null) {
+            log("WARNING: Armed placeholder has no output block type ID.");
+            return;
+        }
+
+        BlockType targetBlockType = BlockType.getAssetMap().getAsset(outputBlockTypeId);
+        if (targetBlockType == null) {
+            log("WARNING: Output block type '" + outputBlockTypeId + "' not found in asset map.");
+            return;
+        }
+
+        int targetBlockId = BlockType.getAssetMap().getIndex(outputBlockTypeId);
+
+        // Get placement position and rotation from the event
+        Vector3i pos = event.getTargetBlock();
+        RotationTuple rotation = event.getRotation();
+        int rotationIndex = rotation.index();
+
+        // Place the target block in the world
+        World world = store.getExternalData().getWorld();
+        long chunkIndex = ChunkUtil.indexChunkFromBlock(pos.x, pos.z);
+        WorldChunk worldChunk = world.getChunkIfInMemory(chunkIndex);
+        if (worldChunk == null) {
+            log("WARNING: Chunk not loaded at " + pos.x + ", " + pos.z);
+            return;
+        }
+
+        boolean placed = worldChunk.setBlock(pos.x, pos.y, pos.z, targetBlockId, targetBlockType, rotationIndex, 0, 6);
+
+        if (placed) {
+            // Send feedback
+            Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
+            PlayerRef playerRef = store.getComponent(ref, PlayerRef.getComponentType());
+            if (playerRef != null) {
+                playerRef.sendMessage(Message.raw("§a[PlaceBlock] Placed " + outputBlockTypeId + " (recipe: " + recipeId + ")"));
+            }
+        } else {
+            log("WARNING: setBlock returned false at " + pos.x + ", " + pos.y + ", " + pos.z);
+        }
     }
 
     @Nullable
     @Override
     public Query<EntityStore> getQuery() {
-        // Match all entities — PlaceBlockEvent only fires on the placing entity.
-        // Same pattern as PlacementCostScaler.
         return Archetype.empty();
+    }
+
+    private static void log(String msg) {
+        System.out.println("[PlaceBlockPlacement] " + msg);
     }
 }
