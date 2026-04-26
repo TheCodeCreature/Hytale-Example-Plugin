@@ -13,6 +13,8 @@ public final class PlaceBlockMetadata {
     public static final String PLACEHOLDER_BLUE = "Block_Placeholder_Blue";
     public static final String PLACEHOLDER_GREEN = "Block_Placeholder_Green";
     public static final String PLACEHOLDER_RED = "Block_Placeholder_Red";
+    public static final String GREEN_VARIANT_PREFIX = "Block_Placeholder_Green_";
+    public static final int HOTBAR_SIZE = 9;
 
     private static final String RECIPE_ID_KEY = "RecipeId";
     private static final String TARGET_BLOCK_KEY = "TargetBlockId";
@@ -22,7 +24,32 @@ public final class PlaceBlockMetadata {
     public static boolean isPlaceBlock(@Nullable ItemStack stack) {
         if (stack == null) return false;
         String id = stack.getItemId();
-        return PLACEHOLDER_BLUE.equals(id) || PLACEHOLDER_GREEN.equals(id) || PLACEHOLDER_RED.equals(id);
+        return PLACEHOLDER_BLUE.equals(id) || PLACEHOLDER_GREEN.equals(id) || PLACEHOLDER_RED.equals(id)
+                || id.startsWith(GREEN_VARIANT_PREFIX);
+    }
+
+    public static boolean isGreenVariant(@Nullable ItemStack stack) {
+        if (stack == null) return false;
+        String id = stack.getItemId();
+        return PLACEHOLDER_GREEN.equals(id) || id.startsWith(GREEN_VARIANT_PREFIX);
+    }
+
+    @Nonnull
+    public static String getVariantItemId(int hotbarSlot) {
+        return GREEN_VARIANT_PREFIX + hotbarSlot;
+    }
+
+    @Nonnull
+    public static ItemStack toVariant(@Nonnull ItemStack stack, int hotbarSlot) {
+        String variantId = getVariantItemId(hotbarSlot);
+        if (variantId.equals(stack.getItemId())) return stack;
+        return new ItemStack(variantId, stack.getQuantity(), stack.getMetadata());
+    }
+
+    @Nonnull
+    public static ItemStack toBaseGreen(@Nonnull ItemStack stack) {
+        if (PLACEHOLDER_GREEN.equals(stack.getItemId())) return stack;
+        return new ItemStack(PLACEHOLDER_GREEN, stack.getQuantity(), stack.getMetadata());
     }
 
     public static boolean isArmed(@Nullable ItemStack stack) {

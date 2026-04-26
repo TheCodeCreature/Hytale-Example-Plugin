@@ -12,12 +12,15 @@ import com.UnobstructedThirdPerson.portablebench.PortableBenchConfigLoader;
 import com.UnobstructedThirdPerson.portablebench.PortableBenchInteraction;
 import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
 import com.UnobstructedThirdPerson.resourcecollection.PlacementCostScaler;
+import com.UnobstructedThirdPerson.placeblock.BlockPreviewReskinManager;
 import com.UnobstructedThirdPerson.placeblock.BlueprintBenchRecipeMutator;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockBenchInterceptor;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockConfigLoader;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockMenuInteraction;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockPlacementSystem;
+import com.UnobstructedThirdPerson.placeblock.PlaceholderSyncSystem;
 import com.UnobstructedThirdPerson.placeblock.ui.BlueprintBenchOpenUIInteraction;
+import com.hypixel.hytale.server.core.entity.entities.Player;
 // import com.UnobstructedThirdPerson.assignbench.AssignBenchInteraction;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
 import com.hypixel.hytale.component.Ref;
@@ -103,6 +106,12 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
         playerRef.sendMessage(Message.raw("§a[Plugin] Resource scaling active."));
 
+        // Register per-player inventory change listeners for placeholder variant sync
+        Player player = store.getComponent(ref, Player.getComponentType());
+        if (player != null) {
+            PlaceholderSyncSystem.register(playerRef, player);
+        }
+
         CameraTransparencyVolumeV2.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresetsV2()
                       .DefaultViewField()
         );
@@ -113,6 +122,8 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         CameraTransparencyVolume.remove(playerRef.getUuid());
         CameraTransparencyVolumeV2.remove(playerRef.getUuid());
         PreviewBlockManager.remove(playerRef.getUuid());
+        PlaceholderSyncSystem.unregister(playerRef.getUuid());
+        BlockPreviewReskinManager.cleanup(playerRef.getUuid());
         NewMovementSystem.disableMoonGravity(playerRef.getUuid());
     }
 
