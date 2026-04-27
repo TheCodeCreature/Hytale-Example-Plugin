@@ -1,6 +1,10 @@
 package com.UnobstructedThirdPerson.placeblock.ui;
 
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockMetadata;
+import com.UnobstructedThirdPerson.resourcecollection.BenchCategory;
+import com.UnobstructedThirdPerson.resourcecollection.FilteredRecipeEntry;
+import com.UnobstructedThirdPerson.resourcecollection.RecipeFilterRegistry;
+import com.UnobstructedThirdPerson.resourcecollection.ResourceTypeResolver;
 import com.hypixel.hytale.builtin.crafting.component.CraftingManager;
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
@@ -9,11 +13,8 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
-import com.hypixel.hytale.protocol.BenchRequirement;
-import com.hypixel.hytale.protocol.ItemResourceType;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
 import com.hypixel.hytale.server.core.inventory.Inventory;
@@ -21,7 +22,6 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.SimpleItemContainer;
-import com.hypixel.hytale.server.core.ui.ItemGridSlot;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
@@ -31,7 +31,6 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Field;
 import java.util.*;
 
 public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSelectionPage.EventPayload> {
@@ -59,24 +58,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static final String ALL_TAB = "All";
     private static final String ALL_FILTER = "All";
 
-    /** Bench IDs to include. Only recipes requiring one of these benches are shown. */
-    public static final List<String> ALLOWED_BENCHES = new ArrayList<>(List.of(
-            "Builders", "Furniture_Bench"
-    ));
-
-    // Reflection field for Item.set (protected, no getter)
-    private static final Field ITEM_SET_FIELD;
-    static {
-        Field f = null;
-        try {
-            f = Item.class.getDeclaredField("set");
-            f.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            System.err.println("[BlueprintUI] Could not access Item.set field: " + e.getMessage());
-        }
-        ITEM_SET_FIELD = f;
-    }
-
     private final List<RecipeEntry> allRecipes = new ArrayList<>();
     private final List<RecipeEntry> filteredRecipes = new ArrayList<>();
     private final List<String> benchIds = new ArrayList<>();  // sorted bench IDs
@@ -98,52 +79,15 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         allRecipes.clear();
         Set<String> benchSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
-        for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()) {
-            if (recipe == null) continue;
-            String id = recipe.getId();
-            if (id.startsWith("Blueprint_")) continue;
+        for (FilteredRecipeEntry fe : RecipeFilterRegistry.getAllEntries()) {
+            // Use primary bench ID for tab display (first alphabetically)
+            String primaryBench = fe.benchIds().stream()
+                    .min(String.CASE_INSENSITIVE_ORDER)
+                    .orElse(null);
+            benchSet.addAll(fe.benchIds());
 
-            MaterialQuantity output = recipe.getPrimaryOutput();
-            if (output == null) continue;
-            String outputItemId = output.getItemId();
-            if (outputItemId == null) continue;
-
-            Item outputItem = Item.getAssetMap().getAsset(outputItemId);
-            if (outputItem == null || outputItem.getBlockId() == null) continue;
-
-            // Skip recipes with no valid inputs
-            MaterialQuantity[] inputs = recipe.getInput();
-            if (inputs == null || inputs.length == 0) continue;
-            boolean hasValidInput = false;
-            for (MaterialQuantity mat : inputs) {
-                if (mat != null && (mat.getItemId() != null || mat.getResourceTypeId() != null)) {
-                    hasValidInput = true;
-                    break;
-                }
-            }
-            if (!hasValidInput) continue;
-
-            // Extract bench ID from first BenchRequirement
-            String benchId = null;
-            BenchRequirement[] reqs = recipe.getBenchRequirement();
-            if (reqs != null && reqs.length > 0 && reqs[0].id != null) {
-                benchId = reqs[0].id;
-            }
-
-            // Skip recipes not from an allowed bench
-            if (benchId == null || !ALLOWED_BENCHES.contains(benchId)) continue;
-            benchSet.add(benchId);
-
-            // Extract set from Item via reflection
-            String itemSet = null;
-            if (ITEM_SET_FIELD != null) {
-                try {
-                    itemSet = (String) ITEM_SET_FIELD.get(outputItem);
-                } catch (IllegalAccessException ignored) {}
-            }
-
-            allRecipes.add(new RecipeEntry(id, outputItemId, outputItem.getBlockId(),
-                    benchId, itemSet, true));
+            allRecipes.add(new RecipeEntry(fe.recipeId(), fe.outputItemId(), fe.blockTypeId(),
+                    primaryBench, fe.set(), true));
         }
         allRecipes.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.recipeId, b.recipeId));
 
@@ -588,10 +532,12 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                     if (recipe != null) {
                         MaterialQuantity[] inputs = recipe.getInput();
                         if (inputs != null) {
-                            System.out.println("[BlueprintUI] Populating cost grid: " + inputs.length + " ingredients for " + entry.recipeId);
+                            FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(entry.recipeId);
+                            BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
                             int slot = 0;
                             for (int i = 0; i < inputs.length; i++) {
-                                String itemId = resolveIngredientItemId(inputs[i]);
+                                if (inputs[i] == null) continue;
+                                String itemId = ResourceTypeResolver.resolveInputItemId(inputs[i], category);
                                 if (itemId == null || itemId.isEmpty()) continue;
                                 cmd.append("#CostGrid", "Pages/BlueprintBench/CostIconCell.ui");
                                 String base = "#CostGrid[" + slot + "]";
@@ -682,33 +628,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private RecipeEntry findEntry(String recipeId) {
         for (RecipeEntry entry : allRecipes) {
             if (entry.recipeId.equals(recipeId)) return entry;
-        }
-        return null;
-    }
-
-    /**
-     * Resolves a MaterialQuantity to a displayable item ID.
-     * If the input specifies a direct ItemId, returns it.
-     * If it specifies a ResourceTypeId, scans the item registry for a representative item.
-     */
-    @Nullable
-    private static String resolveIngredientItemId(MaterialQuantity mat) {
-        if (mat.getItemId() != null && !mat.getItemId().isEmpty()) {
-            return mat.getItemId();
-        }
-        String resourceTypeId = mat.getResourceTypeId();
-        if (resourceTypeId != null) {
-            // Find the first item in the registry that has this resource type
-            for (Item item : Item.getAssetMap().getAssetMap().values()) {
-                if (item == null) continue;
-                ItemResourceType[] types = item.getResourceTypes();
-                if (types == null) continue;
-                for (ItemResourceType rt : types) {
-                    if (resourceTypeId.equals(rt.id)) {
-                        return item.getId();
-                    }
-                }
-            }
         }
         return null;
     }

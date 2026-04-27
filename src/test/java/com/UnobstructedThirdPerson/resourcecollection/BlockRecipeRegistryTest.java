@@ -33,6 +33,7 @@ class BlockRecipeRegistryTest {
         // Pre-populate NaturalResourceRegistry (BenchRecipeRegistry.init needs it
         // for base block classification)
         setNaturalRegistry(data.naturalBlockIds, data.naturalItemIds);
+        RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
     }
 
     @AfterEach
@@ -42,7 +43,7 @@ class BlockRecipeRegistryTest {
 
     @Test
     void initFindsBuildersRecipes() {
-        BenchRecipeRegistries.init("Builders");
+        BenchRecipeRegistries.init();
 
         BenchRecipeRegistry reg = BenchRecipeRegistries.getRegistry("Builders");
         assertNotNull(reg);
@@ -55,7 +56,7 @@ class BlockRecipeRegistryTest {
 
     @Test
     void initExcludesSalvageRecipes() {
-        BenchRecipeRegistries.init("Builders");
+        BenchRecipeRegistries.init();
 
         BenchRecipeRegistry reg = BenchRecipeRegistries.getRegistry("Builders");
         Map<String, CraftingRecipe> byId = reg.getAllRecipesById();
@@ -65,7 +66,7 @@ class BlockRecipeRegistryTest {
 
     @Test
     void initExcludesNonMatchingBenchIds() {
-        BenchRecipeRegistries.init("Builders");
+        BenchRecipeRegistries.init();
 
         BenchRecipeRegistry reg = BenchRecipeRegistries.getRegistry("Builders");
         Map<String, CraftingRecipe> byId = reg.getAllRecipesById();
@@ -75,7 +76,7 @@ class BlockRecipeRegistryTest {
 
     @Test
     void hasRecipeReturnsTrueForRecipeBlocks() {
-        BenchRecipeRegistries.init("Builders");
+        BenchRecipeRegistries.init();
 
         assertTrue(BenchRecipeRegistries.hasRecipeAnywhere("Wood_Planks_Oak"));
         assertTrue(BenchRecipeRegistries.hasRecipeAnywhere("Wood_Slab_Oak"));
@@ -85,7 +86,7 @@ class BlockRecipeRegistryTest {
 
     @Test
     void hasRecipeReturnsFalseForNaturalBlocks() {
-        BenchRecipeRegistries.init("Builders");
+        BenchRecipeRegistries.init();
 
         assertFalse(BenchRecipeRegistries.hasRecipeAnywhere("Rock_Stone"));
         assertFalse(BenchRecipeRegistries.hasRecipeAnywhere("Wood_Log_Oak"));
@@ -94,14 +95,14 @@ class BlockRecipeRegistryTest {
 
     @Test
     void hasRecipeReturnsFalseForUnknownBlocks() {
-        BenchRecipeRegistries.init("Builders");
+        BenchRecipeRegistries.init();
 
         assertFalse(BenchRecipeRegistries.hasRecipeAnywhere("Nonexistent_Block"));
     }
 
     @Test
     void baseBlockRecipeIdentified() {
-        BenchRecipeRegistries.init("Builders");
+        BenchRecipeRegistries.init();
 
         // Planks_Oak: input is Wood_Log_Oak which IS a natural item
         assertTrue(BenchRecipeRegistries.isBaseBlockRecipeAnywhere("Planks_Oak"),
@@ -110,7 +111,7 @@ class BlockRecipeRegistryTest {
 
     @Test
     void nonBaseBlockRecipeIdentified() {
-        BenchRecipeRegistries.init("Builders");
+        BenchRecipeRegistries.init();
 
         // Slab_Oak: input is Wood_Planks_Oak which is NOT a natural item
         assertFalse(BenchRecipeRegistries.isBaseBlockRecipeAnywhere("Slab_Oak"),
@@ -121,7 +122,7 @@ class BlockRecipeRegistryTest {
 
     @Test
     void isBaseBlockTypeWorks() {
-        BenchRecipeRegistries.init("Builders");
+        BenchRecipeRegistries.init();
 
         assertTrue(BenchRecipeRegistries.isBaseBlockTypeAnywhere("Wood_Planks_Oak"),
                 "Wood_Planks_Oak should be a base block type");
@@ -131,7 +132,7 @@ class BlockRecipeRegistryTest {
 
     @Test
     void getRecipeForBlockReturnsCorrectRecipe() {
-        BenchRecipeRegistries.init("Builders");
+        BenchRecipeRegistries.init();
 
         CraftingRecipe planks = BenchRecipeRegistries.getRecipeForBlock("Wood_Planks_Oak");
         assertNotNull(planks);
@@ -140,7 +141,7 @@ class BlockRecipeRegistryTest {
 
     @Test
     void getRecipeForBlockReturnsNullForNaturalBlock() {
-        BenchRecipeRegistries.init("Builders");
+        BenchRecipeRegistries.init();
 
         assertNull(BenchRecipeRegistries.getRecipeForBlock("Rock_Stone"));
     }
@@ -154,7 +155,8 @@ class BlockRecipeRegistryTest {
         data.recipes.put("NullOutput", nullOutput);
         installRecipes(data.recipes);
 
-        BenchRecipeRegistries.init("Builders");
+        RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
+        BenchRecipeRegistries.init();
 
         BenchRecipeRegistry reg = BenchRecipeRegistries.getRegistry("Builders");
         assertFalse(reg.getAllRecipesById().containsKey("NullOutput"),
@@ -171,7 +173,8 @@ class BlockRecipeRegistryTest {
         data.recipes.put("NonBlock_Output", nonBlockRecipe);
         installRecipes(data.recipes);
 
-        BenchRecipeRegistries.init("Builders");
+        RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
+        BenchRecipeRegistries.init();
 
         BenchRecipeRegistry reg = BenchRecipeRegistries.getRegistry("Builders");
         assertFalse(reg.getAllRecipesById().containsKey("NonBlock_Output"),
@@ -187,7 +190,8 @@ class BlockRecipeRegistryTest {
         data.recipes.put("NoBench", noBench);
         installRecipes(data.recipes);
 
-        BenchRecipeRegistries.init("Builders");
+        RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
+        BenchRecipeRegistries.init();
 
         BenchRecipeRegistry reg = BenchRecipeRegistries.getRegistry("Builders");
         assertFalse(reg.getAllRecipesById().containsKey("NoBench"),
@@ -196,7 +200,7 @@ class BlockRecipeRegistryTest {
 
     @Test
     void allRecipesByBlockTypeKeyedCorrectly() {
-        BenchRecipeRegistries.init("Builders");
+        BenchRecipeRegistries.init();
 
         BenchRecipeRegistry reg = BenchRecipeRegistries.getRegistry("Builders");
         Map<String, CraftingRecipe> byBlock = reg.getAllRecipesByBlockType();
@@ -211,7 +215,7 @@ class BlockRecipeRegistryTest {
 
     @Test
     void returnsUnmodifiableMaps() {
-        BenchRecipeRegistries.init("Builders");
+        BenchRecipeRegistries.init();
 
         BenchRecipeRegistry reg = BenchRecipeRegistries.getRegistry("Builders");
         assertThrows(UnsupportedOperationException.class,

@@ -130,7 +130,8 @@ class DropBehaviorScenarioTest {
         installDropLists(Map.of());
 
         NaturalResourceRegistry.init();
-        BenchRecipeRegistries.init("Builders", "Furniture_Bench");
+        RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
+        BenchRecipeRegistries.init();
     }
 
     @AfterEach

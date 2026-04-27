@@ -4,6 +4,9 @@ import com.hypixel.hytale.protocol.BenchRequirement;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 
 import javax.annotation.Nonnull;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -62,6 +65,24 @@ public enum BenchCategory {
      */
     public Set<String> benchIds() {
         return benchIds;
+    }
+
+    /**
+     * Returns the union of all bench IDs across all enum constants.
+     * This is the <strong>single source of truth</strong> for which bench
+     * IDs are recognized system-wide.
+     *
+     * <p>Used by {@link RecipeFilterRegistry} to determine which
+     * {@link BenchRequirement} IDs qualify a recipe for inclusion.
+     *
+     * @return unmodifiable set of all known bench IDs
+     */
+    public static Set<String> allBenchIds() {
+        Set<String> result = new LinkedHashSet<>();
+        for (BenchCategory c : EnumSet.allOf(BenchCategory.class)) {
+            result.addAll(c.benchIds());
+        }
+        return Collections.unmodifiableSet(result);
     }
 
     /**

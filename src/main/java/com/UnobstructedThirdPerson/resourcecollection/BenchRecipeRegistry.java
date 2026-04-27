@@ -1,8 +1,6 @@
 package com.UnobstructedThirdPerson.resourcecollection;
 
-import com.hypixel.hytale.protocol.BenchRequirement;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
 import javax.annotation.Nonnull;
@@ -57,21 +55,9 @@ public final class BenchRecipeRegistry {
         Map<String, CraftingRecipe> byBlock = new HashMap<>();
         Map<String, CraftingRecipe> byId = new HashMap<>();
 
-        for (var entry : CraftingRecipe.getAssetMap().getAssetMap().entrySet()) {
-            CraftingRecipe recipe = entry.getValue();
-            if (recipe == null) continue;
-            if (recipe.getId().startsWith("Salvage")) continue;
-            if (!hasBenchId(recipe, this.benchId)) continue;
-            if (recipe.getPrimaryOutput() == null) continue;
-            String outputItemId = recipe.getPrimaryOutput().getItemId();
-            if (outputItemId == null) continue;
-
-            Item item = Item.getAssetMap().getAsset(outputItemId);
-            if (item == null) continue;
-            String blockTypeId = item.getBlockId();
-            if (blockTypeId == null || blockTypeId.isEmpty()) continue;
-            byBlock.putIfAbsent(blockTypeId, recipe);
-            byId.put(recipe.getId(), recipe);
+        for (FilteredRecipeEntry entry : RecipeFilterRegistry.getEntriesForBench(this.benchId)) {
+            byBlock.putIfAbsent(entry.blockTypeId(), entry.recipe());
+            byId.put(entry.recipeId(), entry.recipe());
         }
 
         recipesByBlockType = Collections.unmodifiableMap(byBlock);
@@ -79,9 +65,6 @@ public final class BenchRecipeRegistry {
 
         // Classify base block recipes: all inputs resolve to natural resource items
         Set<String> baseIds = new HashSet<>();
-        // Use CORE natural items (excludes Deco drops) for base classification.
-        // This prevents Deco-only drops (e.g. Ingredient_Fibre from decorative
-        // plants) from causing recipes like Deco_Rope to be misclassified as base.
         Set<String> coreNaturalItems = NaturalResourceRegistry.getCoreNaturalItemIds();
         for (var e : byId.entrySet()) {
             if (allInputsNatural(e.getValue(), coreNaturalItems)) {
@@ -118,21 +101,6 @@ public final class BenchRecipeRegistry {
     public boolean isBaseBlockType(@Nonnull String blockTypeId) {
         CraftingRecipe recipe = recipesByBlockType.get(blockTypeId);
         return recipe != null && baseBlockRecipeIds.contains(recipe.getId());
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    //  Bench matching
-    // ═══════════════════════════════════════════════════════════════
-
-    private static boolean hasBenchId(@Nonnull CraftingRecipe recipe, @Nonnull String benchId) {
-        BenchRequirement[] reqs = recipe.getBenchRequirement();
-        if (reqs == null) return false;
-        for (BenchRequirement req : reqs) {
-            if (req != null && benchId.equals(req.id)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     // ═══════════════════════════════════════════════════════════════

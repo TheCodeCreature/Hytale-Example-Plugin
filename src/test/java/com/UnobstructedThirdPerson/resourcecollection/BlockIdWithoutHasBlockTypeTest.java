@@ -159,7 +159,8 @@ class BlockIdWithoutHasBlockTypeTest {
         @Test
         void railWithBlockIdDetectedByRecipeRegistry() {
             NaturalResourceRegistry.init();
-            BenchRecipeRegistries.init("Builders");
+            RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
+            BenchRecipeRegistries.init();
 
             assertTrue(BenchRecipeRegistries.hasRecipeAnywhere("Rail_Iron"),
                     "Rail_Iron should be in BenchRecipeRegistries "
@@ -169,7 +170,8 @@ class BlockIdWithoutHasBlockTypeTest {
         @Test
         void doorWithBlockIdDetectedByRecipeRegistry() {
             NaturalResourceRegistry.init();
-            BenchRecipeRegistries.init("Builders");
+            RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
+            BenchRecipeRegistries.init();
 
             assertTrue(BenchRecipeRegistries.hasRecipeAnywhere("Door_Wood"),
                     "Door_Wood should be in BenchRecipeRegistries "
@@ -179,7 +181,8 @@ class BlockIdWithoutHasBlockTypeTest {
         @Test
         void recipeForRailResolvesCorrectly() {
             NaturalResourceRegistry.init();
-            BenchRecipeRegistries.init("Builders");
+            RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
+            BenchRecipeRegistries.init();
 
             CraftingRecipe recipe = BenchRecipeRegistries.getRecipeForBlock("Rail_Iron");
             assertNotNull(recipe);
@@ -288,7 +291,8 @@ class BlockIdWithoutHasBlockTypeTest {
             installRecipes(recipes);
 
             NaturalResourceRegistry.init();
-            BenchRecipeRegistries.init("Builders");
+            RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
+            BenchRecipeRegistries.init();
 
             assertFalse(BenchRecipeRegistries.hasRecipeAnywhere("Metal_Ingot_Iron"),
                     "Non-block item should not create a block recipe entry");
@@ -308,7 +312,8 @@ class BlockIdWithoutHasBlockTypeTest {
             installRecipes(recipes);
 
             NaturalResourceRegistry.init();
-            BenchRecipeRegistries.init("Builders");
+            RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
+            BenchRecipeRegistries.init();
 
             assertFalse(BenchRecipeRegistries.hasRecipeAnywhere(""),
                     "Item with empty blockId should not create block recipe entry");

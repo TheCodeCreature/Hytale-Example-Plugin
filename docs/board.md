@@ -1,6 +1,6 @@
 # Product Board
 
-> Last updated: 2026-04-27 13:00
+> Last updated: 2026-04-27 18:00
 
 ## Status Overview
 
@@ -8,7 +8,7 @@
 pie title Backlog Distribution
     "Backlog" : 17
     "In Progress" : 1
-    "Done" : 13
+    "Done" : 18
     "Cancelled" : 8
 ```
 
@@ -43,6 +43,11 @@ pie title Backlog Distribution
 ### Done
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
+| F2604271700 | Feature | Unified Recipe Filter Registry | E2604201200 | high |
+| S2604271710 | Story | Extract Shared Recipe Predicate Pipeline | E2604201200 | high |
+| S2604271720 | Story | Migrate BlueprintSelectionPage to Shared Registry | E2604201200 | high |
+| S2604271730 | Story | Migrate BenchRecipeRegistry to Shared Registry | E2604201200 | high |
+| S2604271740 | Story | Unify Bench ID Definitions | E2604201200 | high |
 | F2604221035 | Feature | Blueprint Bench Block Asset | E2604221030 | high |
 | F2604221040 | Feature | Recipe Selection & Placeholder Transformation | E2604221030 | high |
 | F2604221045 | Feature | Block Preview & Placement | E2604221030 | high |

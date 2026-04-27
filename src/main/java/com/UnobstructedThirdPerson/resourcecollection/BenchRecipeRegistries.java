@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Static coordinator that manages all {@link BenchRecipeRegistry} instances.
@@ -29,7 +30,8 @@ public final class BenchRecipeRegistries {
 
     private BenchRecipeRegistries() {}
 
-    public static void init(@Nonnull String... benchIds) {
+    public static void init() {
+        Set<String> benchIds = BenchCategory.allBenchIds();
         Map<String, BenchRecipeRegistry> map = new LinkedHashMap<>();
         int totalRecipes = 0;
         for (String benchId : benchIds) {
