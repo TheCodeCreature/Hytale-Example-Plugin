@@ -1,0 +1,11 @@
+// Blueprint Bench — single ingredient cost cell
+// ItemSlotButton provides auto item tooltips
+// Server sets #CostIcon.ItemId and #CostQty.Text
+
+ItemSlotButton {
+    Anchor: (Width: 56, Height: 56);
+
+    ItemIcon #CostIcon {
+        Anchor: (Full: 4);
+    }
+}

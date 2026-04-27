@@ -71,20 +71,20 @@
 );
 
 @TabActiveStyle = TextButtonStyle(
-    Default: (Background: #3a7bd5, LabelStyle: (FontSize: 12, TextColor: #ffffff,
+    Default: (Background: #141c26, LabelStyle: (FontSize: 13, TextColor: #ffffff,
               RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Hovered: (Background: #4a8be5, LabelStyle: (FontSize: 12, TextColor: #ffffff,
+    Hovered: (Background: #1a2536, LabelStyle: (FontSize: 13, TextColor: #ffffff,
               RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Pressed: (Background: #2a6bc5, LabelStyle: (FontSize: 12, TextColor: #ffffff,
+    Pressed: (Background: #141c26, LabelStyle: (FontSize: 13, TextColor: #ffffff,
               RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
 );
 
 @TabInactiveStyle = TextButtonStyle(
-    Default: (Background: #1e2a3a, LabelStyle: (FontSize: 12, TextColor: #6e7da1,
+    Default: (Background: #0c1219, LabelStyle: (FontSize: 13, TextColor: #6e7da1,
               HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Hovered: (Background: #2b3a4e, LabelStyle: (FontSize: 12, TextColor: #96a9be,
+    Hovered: (Background: #111a24, LabelStyle: (FontSize: 13, TextColor: #96a9be,
               HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Pressed: (Background: #1a2535, LabelStyle: (FontSize: 12, TextColor: #96a9be,
+    Pressed: (Background: #0c1219, LabelStyle: (FontSize: 13, TextColor: #96a9be,
               HorizontalAlignment: Center, VerticalAlignment: Center))
 );
 
@@ -109,7 +109,19 @@
 // ── Page Root ──
 
 Group {
-    Anchor: (Width: 1620, Height: 620);
+    Anchor: (Width: 980, Height: 660);
+    LayoutMode: Top;
+
+    // Bench tabs row — sits above the panel like creative inventory tabs
+    Group #BenchTabs {
+        Anchor: (Height: 34);
+        LayoutMode: Left;
+        Padding: (Left: 16, Bottom: 2);
+    }
+
+    // Main panel
+    Group {
+    Anchor: (Height: 626);
     Background: #141c26(0.98);
     LayoutMode: Left;
     Padding: (Top: 16, Bottom: 16, Left: 16, Right: 16);
@@ -143,22 +155,9 @@ Group {
         Group { Anchor: (Height: 1); Background: #2b3542; }
         Group { Anchor: (Height: 6); }
 
-        // Bench tabs (server appends TextButtons dynamically)
-        Group #BenchTabs {
-            Anchor: (Height: 28);
-            LayoutMode: Left;
-        }
-
-        Group { Anchor: (Height: 4); }
-
         // Set filter buttons (server appends TextButtons dynamically)
-        Group {
-            Anchor: (Height: 24);
-            LayoutMode: LeftScrolling;
-
-            Group #SetFilters {
-                LayoutMode: Left;
-            }
+        Group #SetFilters {
+            LayoutMode: LeftCenterWrap;
         }
 
         Group { Anchor: (Height: 4); }
@@ -219,7 +218,7 @@ Group {
 
             Group { Anchor: (Width: 10); }
 
-            // Name + cost text
+            // Name
             Group {
                 FlexWeight: 1;
                 LayoutMode: Top;
@@ -230,19 +229,34 @@ Group {
                     Style: @DetailLabelStyle;
                 }
 
-                Label #CostSummary {
-                    Text: "";
-                    Anchor: (Height: 16);
-                    Style: @SubtextStyle;
-                }
-
                 Group { FlexWeight: 1; }
             }
         }
 
-        Group { Anchor: (Height: 12); }
+        Group { Anchor: (Height: 8); }
+
+        // ── Ingredients ──
+        Label {
+            Text: "INGREDIENTS";
+            Anchor: (Height: 18);
+            Style: @SectionLabelStyle;
+        }
+
+        Group { Anchor: (Height: 4); }
+
+        // Scrollable ingredient icon grid
+        Group {
+            LayoutMode: TopScrolling;
+            FlexWeight: 1;
+
+            Group #CostGrid {
+                LayoutMode: LeftCenterWrap;
+            }
+        }
+
+        Group { Anchor: (Height: 8); }
         Group { Anchor: (Height: 1); Background: #2b3542; }
-        Group { Anchor: (Height: 12); }
+        Group { Anchor: (Height: 8); }
 
         // ── Placeholder Slots ──
         Label {
@@ -294,4 +308,5 @@ Group {
             Style: @ConfirmButtonStyle;
         }
     }
+}
 }

@@ -10,6 +10,7 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
 import com.hypixel.hytale.protocol.BenchRequirement;
+import com.hypixel.hytale.protocol.ItemResourceType;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
@@ -91,10 +92,10 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
     public BlueprintSelectionPage(@NonNull PlayerRef playerRef) {
         super(playerRef, CustomPageLifetime.CanDismissOrCloseThroughInteraction, EventPayload.CODEC);
-        loadRecipes();
     }
 
     private void loadRecipes() {
+        allRecipes.clear();
         Set<String> benchSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
         for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()) {
@@ -109,6 +110,18 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
             Item outputItem = Item.getAssetMap().getAsset(outputItemId);
             if (outputItem == null || outputItem.getBlockId() == null) continue;
+
+            // Skip recipes with no valid inputs
+            MaterialQuantity[] inputs = recipe.getInput();
+            if (inputs == null || inputs.length == 0) continue;
+            boolean hasValidInput = false;
+            for (MaterialQuantity mat : inputs) {
+                if (mat != null && (mat.getItemId() != null || mat.getResourceTypeId() != null)) {
+                    hasValidInput = true;
+                    break;
+                }
+            }
+            if (!hasValidInput) continue;
 
             // Extract bench ID from first BenchRequirement
             String benchId = null;
@@ -166,13 +179,32 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             filteredRecipes.add(entry);
         }
 
-        // Rebuild current sets for the active tab
+        // Rebuild current sets for the active tab — only sets where the player has at least one ingredient
+        Player filterPlayer = playerStore != null
+                ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
+        var filterContainer = filterPlayer != null
+                ? filterPlayer.getInventory().getCombinedBackpackStorageHotbar() : null;
+
         Set<String> sets = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (RecipeEntry entry : allRecipes) {
             if (!ALL_TAB.equals(activeTab)) {
                 if (entry.benchId == null || !entry.benchId.equals(activeTab)) continue;
             }
-            if (entry.set != null && !entry.set.isEmpty()) {
+            if (entry.set == null || entry.set.isEmpty()) continue;
+            if (sets.contains(entry.set)) continue; // already qualified
+
+            if (filterContainer != null) {
+                CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
+                if (recipe != null) {
+                    List<MaterialQuantity> materials = CraftingManager.getInputMaterials(recipe, 1);
+                    // Include set if the player can afford at least one ingredient individually
+                    boolean hasAny = materials.stream()
+                            .anyMatch(mat -> filterContainer.canRemoveMaterials(List.of(mat)));
+                    if (hasAny) {
+                        sets.add(entry.set);
+                    }
+                }
+            } else {
                 sets.add(entry.set);
             }
         }
@@ -187,6 +219,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         this.playerRef_ref = ref;
         this.playerStore = store;
+
+        loadRecipes();
 
         // Load custom .ui template — no appendInline()
         cmd.append("Pages/BlueprintBench/BlueprintBenchPage.ui");
@@ -420,7 +454,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         // "All" tab
         cmd.appendInline("#BenchTabs",
-                "TextButton #TabAll { Text: \"All\"; Anchor: (Width: 50, Height: 26); Padding: (Left: 6, Right: 6); }");
+                "TextButton #TabAll { Text: \"All\"; Anchor: (Width: 60, Height: 30); Padding: (Left: 8, Right: 8); }");
         cmd.set("#TabAll.Style", ALL_TAB.equals(activeTab) ? TAB_ACTIVE : TAB_INACTIVE);
         evt.addEventBinding(
                 CustomUIEventBindingType.Activating, "#TabAll",
@@ -431,11 +465,11 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         for (int i = 0; i < benchIds.size(); i++) {
             String benchId = benchIds.get(i);
             String tabId = "Tab" + i;
-            // Shorten bench ID for display (e.g. "Furniture_Bench" -> "Furniture")
-            String label = benchId.contains("_") ? benchId.substring(0, benchId.indexOf('_')) : benchId;
+            // Clean bench ID for display (e.g. "Furniture_Bench" -> "Furniture Bench")
+            String label = benchId.replace('_', ' ');
 
             cmd.appendInline("#BenchTabs",
-                    "TextButton #" + tabId + " { Text: \"" + label + "\"; Anchor: (Height: 26); Padding: (Left: 8, Right: 8); }");
+                    "TextButton #" + tabId + " { Text: \"" + label + "\"; Anchor: (Height: 30); Padding: (Left: 10, Right: 10); }");
             cmd.set("#" + tabId + ".Style", benchId.equals(activeTab) ? TAB_ACTIVE : TAB_INACTIVE);
             evt.addEventBinding(
                     CustomUIEventBindingType.Activating, "#" + tabId,
@@ -539,19 +573,42 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     }
 
     private void updateDetailPanel(UICommandBuilder cmd) {
+        cmd.clear("#CostGrid");
+
         if (selectedRecipeId != null) {
             RecipeEntry entry = findEntry(selectedRecipeId);
             if (entry != null) {
                 cmd.set("#OutputIcon.ItemId", entry.outputItemId);
                 cmd.set("#OutputName.Text", entry.blockTypeId);
-                cmd.set("#CostSummary.Text", buildCostString(entry.recipeId));
                 cmd.set("#StatusMessage.Text", "");
+
+                // Populate ingredient icons
+                try {
+                    CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
+                    if (recipe != null) {
+                        MaterialQuantity[] inputs = recipe.getInput();
+                        if (inputs != null) {
+                            System.out.println("[BlueprintUI] Populating cost grid: " + inputs.length + " ingredients for " + entry.recipeId);
+                            int slot = 0;
+                            for (int i = 0; i < inputs.length; i++) {
+                                String itemId = resolveIngredientItemId(inputs[i]);
+                                if (itemId == null || itemId.isEmpty()) continue;
+                                cmd.append("#CostGrid", "Pages/BlueprintBench/CostIconCell.ui");
+                                String base = "#CostGrid[" + slot + "]";
+                                cmd.set(base + " #CostIcon.ItemId", itemId);
+                                slot++;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("[BlueprintUI] Error populating cost grid: " + e.getMessage());
+                    e.printStackTrace();
+                }
                 return;
             }
         }
         cmd.set("#OutputIcon.ItemId", "");
         cmd.set("#OutputName.Text", "No recipe selected");
-        cmd.set("#CostSummary.Text", "");
         cmd.set("#StatusMessage.Text", "");
     }
 
@@ -621,25 +678,37 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         }
     }
 
-    private String buildCostString(String recipeId) {
-        CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(recipeId);
-        if (recipe == null) return "";
-
-        MaterialQuantity[] inputs = recipe.getInput();
-        if (inputs == null || inputs.length == 0) return "Free";
-
-        StringBuilder sb = new StringBuilder("Cost: ");
-        for (int i = 0; i < inputs.length; i++) {
-            if (i > 0) sb.append(", ");
-            sb.append(inputs[i].getQuantity()).append("× ").append(inputs[i].getItemId());
-        }
-        return sb.toString();
-    }
-
     @Nullable
     private RecipeEntry findEntry(String recipeId) {
         for (RecipeEntry entry : allRecipes) {
             if (entry.recipeId.equals(recipeId)) return entry;
+        }
+        return null;
+    }
+
+    /**
+     * Resolves a MaterialQuantity to a displayable item ID.
+     * If the input specifies a direct ItemId, returns it.
+     * If it specifies a ResourceTypeId, scans the item registry for a representative item.
+     */
+    @Nullable
+    private static String resolveIngredientItemId(MaterialQuantity mat) {
+        if (mat.getItemId() != null && !mat.getItemId().isEmpty()) {
+            return mat.getItemId();
+        }
+        String resourceTypeId = mat.getResourceTypeId();
+        if (resourceTypeId != null) {
+            // Find the first item in the registry that has this resource type
+            for (Item item : Item.getAssetMap().getAssetMap().values()) {
+                if (item == null) continue;
+                ItemResourceType[] types = item.getResourceTypes();
+                if (types == null) continue;
+                for (ItemResourceType rt : types) {
+                    if (resourceTypeId.equals(rt.id)) {
+                        return item.getId();
+                    }
+                }
+            }
         }
         return null;
     }
