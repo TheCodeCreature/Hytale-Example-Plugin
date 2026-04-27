@@ -9,6 +9,7 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
+import com.hypixel.hytale.protocol.BenchRequirement;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
@@ -29,9 +30,8 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.lang.reflect.Field;
+import java.util.*;
 
 public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSelectionPage.EventPayload> {
 
@@ -42,15 +42,49 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static final Value<String> SLOT_STYLE_DISABLED =
             Value.ref("Pages/BlueprintBench/PlaceholderSlot.ui", "DisabledSlotStyle");
 
+    private static final Value<String> TAB_ACTIVE =
+            Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "TabActiveStyle");
+    private static final Value<String> TAB_INACTIVE =
+            Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "TabInactiveStyle");
+    private static final Value<String> FILTER_ACTIVE =
+            Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "FilterActiveStyle");
+    private static final Value<String> FILTER_INACTIVE =
+            Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "FilterInactiveStyle");
+
     private static final String LIFE_ESSENCE_ITEM_ID = "Ingredient_Life_Essence";
     private static final String PLACEHOLDER_ITEM_ID = "Block_Placeholder";
     private static final int ACQUIRE_COST = 1;
 
+    private static final String ALL_TAB = "All";
+    private static final String ALL_FILTER = "All";
+
+    /** Bench IDs to include. Only recipes requiring one of these benches are shown. */
+    public static final List<String> ALLOWED_BENCHES = new ArrayList<>(List.of(
+            "Builders", "Furniture_Bench"
+    ));
+
+    // Reflection field for Item.set (protected, no getter)
+    private static final Field ITEM_SET_FIELD;
+    static {
+        Field f = null;
+        try {
+            f = Item.class.getDeclaredField("set");
+            f.setAccessible(true);
+        } catch (NoSuchFieldException e) {
+            System.err.println("[BlueprintUI] Could not access Item.set field: " + e.getMessage());
+        }
+        ITEM_SET_FIELD = f;
+    }
+
     private final List<RecipeEntry> allRecipes = new ArrayList<>();
     private final List<RecipeEntry> filteredRecipes = new ArrayList<>();
+    private final List<String> benchIds = new ArrayList<>();  // sorted bench IDs
     private String searchQuery = "";
     private String selectedRecipeId;
+    private String activeTab = ALL_TAB;
+    private String activeSetFilter = ALL_FILTER;
     private List<RecipeEntry> displayedRecipes = new ArrayList<>();
+    private List<String> currentSets = new ArrayList<>();  // sets for active tab
 
     private Ref<EntityStore> playerRef_ref;
     private Store<EntityStore> playerStore;
@@ -61,6 +95,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     }
 
     private void loadRecipes() {
+        Set<String> benchSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+
         for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()) {
             if (recipe == null) continue;
             String id = recipe.getId();
@@ -74,22 +110,73 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             Item outputItem = Item.getAssetMap().getAsset(outputItemId);
             if (outputItem == null || outputItem.getBlockId() == null) continue;
 
-            allRecipes.add(new RecipeEntry(id, outputItemId, outputItem.getBlockId(), true));
+            // Extract bench ID from first BenchRequirement
+            String benchId = null;
+            BenchRequirement[] reqs = recipe.getBenchRequirement();
+            if (reqs != null && reqs.length > 0 && reqs[0].id != null) {
+                benchId = reqs[0].id;
+            }
+
+            // Skip recipes not from an allowed bench
+            if (benchId == null || !ALLOWED_BENCHES.contains(benchId)) continue;
+            benchSet.add(benchId);
+
+            // Extract set from Item via reflection
+            String itemSet = null;
+            if (ITEM_SET_FIELD != null) {
+                try {
+                    itemSet = (String) ITEM_SET_FIELD.get(outputItem);
+                } catch (IllegalAccessException ignored) {}
+            }
+
+            allRecipes.add(new RecipeEntry(id, outputItemId, outputItem.getBlockId(),
+                    benchId, itemSet, true));
         }
         allRecipes.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.recipeId, b.recipeId));
+
+        benchIds.clear();
+        benchIds.addAll(benchSet);
+
         applyFilter();
     }
 
     private void applyFilter() {
         filteredRecipes.clear();
         String query = searchQuery.toLowerCase();
+
         for (RecipeEntry entry : allRecipes) {
-            if (query.isEmpty()
-                    || entry.recipeId.toLowerCase().contains(query)
-                    || entry.blockTypeId.toLowerCase().contains(query)) {
-                filteredRecipes.add(entry);
+            // Tab filter
+            if (!ALL_TAB.equals(activeTab)) {
+                if (entry.benchId == null || !entry.benchId.equals(activeTab)) continue;
+            }
+
+            // Set filter
+            if (!ALL_FILTER.equals(activeSetFilter)) {
+                if (entry.set == null || !entry.set.equals(activeSetFilter)) continue;
+            }
+
+            // Search filter
+            if (!query.isEmpty()
+                    && !entry.recipeId.toLowerCase().contains(query)
+                    && !entry.blockTypeId.toLowerCase().contains(query)
+                    && (entry.set == null || !entry.set.toLowerCase().contains(query))) {
+                continue;
+            }
+
+            filteredRecipes.add(entry);
+        }
+
+        // Rebuild current sets for the active tab
+        Set<String> sets = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (RecipeEntry entry : allRecipes) {
+            if (!ALL_TAB.equals(activeTab)) {
+                if (entry.benchId == null || !entry.benchId.equals(activeTab)) continue;
+            }
+            if (entry.set != null && !entry.set.isEmpty()) {
+                sets.add(entry.set);
             }
         }
+        currentSets = new ArrayList<>(sets);
     }
 
     @Override
@@ -112,7 +199,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 false
         );
 
-        // Populate recipe list, detail panel, and placeholder slots
+        // Build tabs, filters, recipe list, detail panel, and placeholder slots
+        buildBenchTabs(cmd, evt);
+        buildSetFilters(cmd, evt);
         buildRecipeList(cmd, evt, store, ref);
         updateDetailPanel(cmd);
         buildPlaceholderSlots(cmd, evt, store, ref);
@@ -137,10 +226,56 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         UICommandBuilder cmd = new UICommandBuilder();
         UIEventBuilder evt = new UIEventBuilder();
 
-        if (data.searchQuery != null) {
+        if (data.action != null && data.action.startsWith("Tab:")) {
+            // Tab switch
+            String tab = data.action.substring("Tab:".length());
+            if (!tab.equals(this.activeTab)) {
+                this.activeTab = tab;
+                this.activeSetFilter = ALL_FILTER;
+                this.searchQuery = "";
+                this.selectedRecipeId = null;
+                applyFilter();
+                cmd.set("#SearchInput.Value", "");
+                buildBenchTabs(cmd, evt);
+                buildSetFilters(cmd, evt);
+                buildRecipeList(cmd, evt, store, ref);
+                updateDetailPanel(cmd);
+                buildPlaceholderSlots(cmd, evt, store, ref);
+                updateAcquireButton(cmd, store, ref);
+                evt.addEventBinding(
+                        CustomUIEventBindingType.Activating,
+                        "#AcquireButton",
+                        EventData.of("Action", "GetPlaceholder")
+                );
+                sendUpdate(cmd, evt, false);
+            }
+
+        } else if (data.action != null && data.action.startsWith("SetFilter:")) {
+            // Set filter switch
+            String setFilter = data.action.substring("SetFilter:".length());
+            if (!setFilter.equals(this.activeSetFilter)) {
+                this.activeSetFilter = setFilter;
+                this.selectedRecipeId = null;
+                applyFilter();
+                buildSetFilters(cmd, evt);
+                buildRecipeList(cmd, evt, store, ref);
+                updateDetailPanel(cmd);
+                buildPlaceholderSlots(cmd, evt, store, ref);
+                updateAcquireButton(cmd, store, ref);
+                evt.addEventBinding(
+                        CustomUIEventBindingType.Activating,
+                        "#AcquireButton",
+                        EventData.of("Action", "GetPlaceholder")
+                );
+                sendUpdate(cmd, evt, false);
+            }
+
+        } else if (data.searchQuery != null) {
             this.searchQuery = data.searchQuery.trim();
             applyFilter();
             this.selectedRecipeId = null;
+            buildBenchTabs(cmd, evt);
+            buildSetFilters(cmd, evt);
             buildRecipeList(cmd, evt, store, ref);
             updateDetailPanel(cmd);
             buildPlaceholderSlots(cmd, evt, store, ref);
@@ -280,6 +415,70 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         }
     }
 
+    private void buildBenchTabs(UICommandBuilder cmd, UIEventBuilder evt) {
+        cmd.clear("#BenchTabs");
+
+        // "All" tab
+        cmd.appendInline("#BenchTabs",
+                "TextButton #TabAll { Text: \"All\"; Anchor: (Width: 50, Height: 26); Padding: (Left: 6, Right: 6); }");
+        cmd.set("#TabAll.Style", ALL_TAB.equals(activeTab) ? TAB_ACTIVE : TAB_INACTIVE);
+        evt.addEventBinding(
+                CustomUIEventBindingType.Activating, "#TabAll",
+                EventData.of("Action", "Tab:" + ALL_TAB)
+        );
+
+        // One tab per bench ID
+        for (int i = 0; i < benchIds.size(); i++) {
+            String benchId = benchIds.get(i);
+            String tabId = "Tab" + i;
+            // Shorten bench ID for display (e.g. "Furniture_Bench" -> "Furniture")
+            String label = benchId.contains("_") ? benchId.substring(0, benchId.indexOf('_')) : benchId;
+
+            cmd.appendInline("#BenchTabs",
+                    "TextButton #" + tabId + " { Text: \"" + label + "\"; Anchor: (Height: 26); Padding: (Left: 8, Right: 8); }");
+            cmd.set("#" + tabId + ".Style", benchId.equals(activeTab) ? TAB_ACTIVE : TAB_INACTIVE);
+            evt.addEventBinding(
+                    CustomUIEventBindingType.Activating, "#" + tabId,
+                    EventData.of("Action", "Tab:" + benchId)
+            );
+        }
+    }
+
+    private void buildSetFilters(UICommandBuilder cmd, UIEventBuilder evt) {
+        cmd.clear("#SetFilters");
+
+        if (currentSets.isEmpty()) return;
+
+        // "All" filter
+        cmd.appendInline("#SetFilters",
+                "TextButton #FilterAll { Text: \"All\"; Anchor: (Width: 40, Height: 22); Padding: (Left: 4, Right: 4); }");
+        cmd.set("#FilterAll.Style", ALL_FILTER.equals(activeSetFilter) ? FILTER_ACTIVE : FILTER_INACTIVE);
+        evt.addEventBinding(
+                CustomUIEventBindingType.Activating, "#FilterAll",
+                EventData.of("Action", "SetFilter:" + ALL_FILTER)
+        );
+
+        // One filter per set
+        for (int i = 0; i < currentSets.size(); i++) {
+            String setName = currentSets.get(i);
+            String filterId = "Filter" + i;
+            // Shorten set name for display (e.g. "Wood_Hardwood_Planks" -> "Hardwood Planks")
+            String label = setName;
+            if (label.contains("_")) {
+                // Drop first segment (usually material category), replace underscores with spaces
+                label = label.substring(label.indexOf('_') + 1).replace('_', ' ');
+            }
+
+            cmd.appendInline("#SetFilters",
+                    "TextButton #" + filterId + " { Text: \"" + label + "\"; Anchor: (Height: 22); Padding: (Left: 6, Right: 6); }");
+            cmd.set("#" + filterId + ".Style", setName.equals(activeSetFilter) ? FILTER_ACTIVE : FILTER_INACTIVE);
+            evt.addEventBinding(
+                    CustomUIEventBindingType.Activating, "#" + filterId,
+                    EventData.of("Action", "SetFilter:" + setName)
+            );
+        }
+    }
+
     private void buildRecipeList(UICommandBuilder cmd, UIEventBuilder evt,
                                  Store<EntityStore> store, Ref<EntityStore> ref) {
         cmd.clear("#RecipeGrid");
@@ -298,7 +497,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                     affordable = container.canRemoveMaterials(materials);
                 }
             }
-            withAffordability.add(new RecipeEntry(entry.recipeId, entry.outputItemId, entry.blockTypeId, affordable));
+            withAffordability.add(new RecipeEntry(entry.recipeId, entry.outputItemId, entry.blockTypeId,
+                    entry.benchId, entry.set, affordable));
         }
 
         // Sort affordable above unaffordable, preserving alphabetical within each group
@@ -444,7 +644,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         return null;
     }
 
-    private record RecipeEntry(String recipeId, String outputItemId, String blockTypeId, boolean affordable) {}
+    private record RecipeEntry(String recipeId, String outputItemId, String blockTypeId,
+                               String benchId, String set, boolean affordable) {}
 
     public static class EventPayload {
         public static final BuilderCodec<EventPayload> CODEC = BuilderCodec.builder(EventPayload.class, EventPayload::new)

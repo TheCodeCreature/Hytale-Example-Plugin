@@ -70,6 +70,42 @@
               RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
 );
 
+@TabActiveStyle = TextButtonStyle(
+    Default: (Background: #3a7bd5, LabelStyle: (FontSize: 12, TextColor: #ffffff,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: #4a8be5, LabelStyle: (FontSize: 12, TextColor: #ffffff,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: #2a6bc5, LabelStyle: (FontSize: 12, TextColor: #ffffff,
+              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@TabInactiveStyle = TextButtonStyle(
+    Default: (Background: #1e2a3a, LabelStyle: (FontSize: 12, TextColor: #6e7da1,
+              HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: #2b3a4e, LabelStyle: (FontSize: 12, TextColor: #96a9be,
+              HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: #1a2535, LabelStyle: (FontSize: 12, TextColor: #96a9be,
+              HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@FilterActiveStyle = TextButtonStyle(
+    Default: (Background: #2a4a6a, LabelStyle: (FontSize: 11, TextColor: #ffffff,
+              HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: #3a5a7a, LabelStyle: (FontSize: 11, TextColor: #ffffff,
+              HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: #1a3a5a, LabelStyle: (FontSize: 11, TextColor: #ffffff,
+              HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@FilterInactiveStyle = TextButtonStyle(
+    Default: (Background: #141c26(0.0), LabelStyle: (FontSize: 11, TextColor: #6e7da1,
+              HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: #1e2a3a, LabelStyle: (FontSize: 11, TextColor: #96a9be,
+              HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: #1a2535, LabelStyle: (FontSize: 11, TextColor: #96a9be,
+              HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
 // ── Page Root ──
 
 Group {
@@ -106,6 +142,26 @@ Group {
 
         Group { Anchor: (Height: 1); Background: #2b3542; }
         Group { Anchor: (Height: 6); }
+
+        // Bench tabs (server appends TextButtons dynamically)
+        Group #BenchTabs {
+            Anchor: (Height: 28);
+            LayoutMode: Left;
+        }
+
+        Group { Anchor: (Height: 4); }
+
+        // Set filter buttons (server appends TextButtons dynamically)
+        Group {
+            Anchor: (Height: 24);
+            LayoutMode: LeftScrolling;
+
+            Group #SetFilters {
+                LayoutMode: Left;
+            }
+        }
+
+        Group { Anchor: (Height: 4); }
 
         // Search bar
         TextField #SearchInput {
