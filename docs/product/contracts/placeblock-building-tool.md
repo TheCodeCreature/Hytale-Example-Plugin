@@ -1,6 +1,6 @@
 ---
 area: "PlaceBlock Building Tool"
-updated: 2026-04-22
+updated: 2026-04-26
 ---
 
 # PlaceBlock Building Tool — Behavioral Contract
@@ -21,7 +21,7 @@ Selecting a recipe at the Blueprint Bench (via the Block_Placeholder input slot)
 
 When the player right-clicks to place a block:
 1. The system identifies the armed recipe and its (already-scaled) input requirements
-2. It checks the player's inventory AND nearby chests (within the configurable bench radius)
+2. It checks the player's inventory (hotbar, storage, and backpack)
 3. If ALL required inputs are available: deduct atomically, place the block
 4. If ANY required input is missing: deny placement, consume nothing, show red indicator
 
@@ -34,7 +34,7 @@ Each `PlaceBlockEvent` is handled by exactly ONE cost system:
 | Placed Item | Cost System | Cost |
 |-------------|-------------|------|
 | Natural block item (stone, wood, dirt) | PlacementCostScaler | 12× of the item (11 extra consumed) |
-| Armed Block_Placeholder (PlaceBlock tool) | PlaceBlock resource consumption | Recipe's scaled inputs from inventory/chests |
+| Armed Block_Placeholder (PlaceBlock tool) | PlaceBlock resource consumption | Recipe's scaled inputs from inventory |
 | Unarmed Block_Placeholder | Neither — placement denied | N/A |
 | Crafted block item from inventory | Neither — standard 1:1 placement | 1× of the item (vanilla behavior) |
 
@@ -52,11 +52,11 @@ The placeholder's rarity/quality indicator is a **promise to the player**:
 
 The indicator updates on:
 - Recipe selection/change at the bench
-- Inventory change events (item pickup, chest interaction, crafting)
+- Inventory change events (item pickup, crafting)
 - Successful placement (resources decreased — may transition green→red)
 - Failed placement (indicator stays red)
 
-**The green indicator must never lie.** If a player sees green and right-clicks, placement should succeed unless another system (e.g., concurrent chest access) consumed the resources between the indicator update and the click. In that case, placement fails cleanly (Contract #11) and the indicator transitions to red.
+**The green indicator must never lie.** If a player sees green and right-clicks, placement should succeed unless another system (e.g., concurrent resource consumption) consumed the resources between the indicator update and the click. In that case, placement fails cleanly (Contract #11) and the indicator transitions to red.
 
 ### Contract #14: Placed Blocks Are Indistinguishable
 
@@ -85,10 +85,9 @@ The Blueprint Bench displays placeable block and furniture recipes from **all re
 
 | Scenario | Decision | Rationale |
 |----------|----------|-----------|
-| Player selects recipe, walks far from chests, tries to place | Check only inventory (no chests in range) | Chest radius is relative to player position at placement time, not bench position |
 | Player arms placeholder, logs out, logs back in | Placeholder retains armed recipe | Recipe selection is item state, not session state |
 | Player dies while holding armed placeholder | Placeholder drops with armed recipe intact | Same as any tool — drops on death with its state |
-| Two players arm placeholders with same recipe, share a chest | Each placement is an independent atomic transaction — first to place gets the resources, second sees red if insufficient | No reservation system; real-time availability only |
+| Two players deplete the same resource simultaneously | Each placement is an independent atomic transaction — first to place gets the resources, second sees red if insufficient | No reservation system; real-time availability only |
 | Player tries to arm placeholder with a base block recipe | Allowed — cost is the unscaled recipe input quantity | Base recipes participate in the PlaceBlock flow; their inputs are already implicitly scaled by natural drop rates |
 | Player tries to arm placeholder with a non-block recipe (e.g., Rope) | Denied — PlaceBlock tool only works with block-output recipes | Non-block items can't be "placed" — they go through the normal crafting flow |
 | Player right-clicks in an invalid location (water, occupied block) | Standard engine placement validation applies — no resources consumed | The PlaceBlock tool defers to the engine's `PlaceBlockSettings` validation |

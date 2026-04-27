@@ -23,7 +23,7 @@ import java.util.logging.Logger;
  * {@link UpdateBlockTypes} packets so each hotbar slot can independently show its
  * armed recipe's target block in the client's native block preview.
  *
- * <p><strong>Usage:</strong> Call {@link #syncHotbar} from {@link PlaceholderSyncSystem}
+ * <p><strong>Usage:</strong> Call {@link #syncPlaceholder} from {@link PlaceholderSyncSystem}
  * on every inventory change. Call {@link #cleanup} on player disconnect.
  */
 public final class BlockPreviewReskinManager {
@@ -59,7 +59,7 @@ public final class BlockPreviewReskinManager {
      * </ol>
      * Also scans storage and reverts any Green variants back to base Green.
      */
-    public static void syncHotbar(@Nonnull PlayerRef playerRef, @Nonnull Inventory inventory) {
+    public static void syncPlaceholder(@Nonnull PlayerRef playerRef, @Nonnull Inventory inventory) {
         captureOriginalPackets();
         if (originalVariantPackets == null) return;
 
@@ -70,9 +70,9 @@ public final class BlockPreviewReskinManager {
 
             if (stack != null && PlaceBlockMetadata.isGreenVariant(stack) && PlaceBlockMetadata.isArmed(stack)) {
                 // Ensure correct variant ID for this slot
-                String expectedId = PlaceBlockMetadata.getVariantItemId(slot);
+                String expectedId = PlaceBlockMetadata.getGreenStateItemId(slot);
                 if (!expectedId.equals(stack.getItemId())) {
-                    ItemStack converted = PlaceBlockMetadata.toVariant(stack, slot);
+                    ItemStack converted = PlaceBlockMetadata.toArmedGreen(stack, slot);
                     hotbar.setItemStackForSlot((short) slot, converted);
                 }
 
@@ -85,13 +85,12 @@ public final class BlockPreviewReskinManager {
             }
         }
 
-        // Scan storage: revert any Green variants back to base Green
+        // Scan storage: revert any Green variants back to base
         ItemContainer storage = inventory.getStorage();
         for (short i = 0; i < storage.getCapacity(); i++) {
             ItemStack stack = storage.getItemStack(i);
-            if (stack != null && PlaceBlockMetadata.isGreenVariant(stack)
-                    && stack.getItemId().startsWith(PlaceBlockMetadata.GREEN_VARIANT_PREFIX)) {
-                ItemStack base = PlaceBlockMetadata.toBaseGreen(stack);
+            if (stack != null && PlaceBlockMetadata.isGreenVariant(stack)) {
+                ItemStack base = PlaceBlockMetadata.disarm(stack);
                 storage.setItemStackForSlot(i, base);
             }
         }
@@ -148,7 +147,7 @@ public final class BlockPreviewReskinManager {
 
     private static void sendBlockTypeUpdate(@Nonnull PlayerRef playerRef, int variantIndex,
                                    @Nonnull com.hypixel.hytale.protocol.BlockType packet) {
-        String variantId = PlaceBlockMetadata.getVariantItemId(variantIndex);
+        String variantId = PlaceBlockMetadata.getGreenStateItemId(variantIndex);
         int numericId = BlockType.getAssetMap().getIndex(variantId);
 
         UpdateBlockTypes update = new UpdateBlockTypes();
@@ -171,7 +170,7 @@ public final class BlockPreviewReskinManager {
         Item targetItem = Item.getAssetMap().getAsset(targetBlockTypeId);
         if (targetItem == null) return;
 
-        String variantId = PlaceBlockMetadata.getVariantItemId(variantIndex);
+        String variantId = PlaceBlockMetadata.getGreenStateItemId(variantIndex);
         ItemBase targetPacket = new ItemBase(targetItem.toPacket());
         targetPacket.id = variantId;
 
@@ -192,7 +191,7 @@ public final class BlockPreviewReskinManager {
     }
 
     private static void sendItemRestore(@Nonnull PlayerRef playerRef, int variantIndex) {
-        String variantId = PlaceBlockMetadata.getVariantItemId(variantIndex);
+        String variantId = PlaceBlockMetadata.getGreenStateItemId(variantIndex);
         ItemBase originalPacket = originalVariantItemPackets[variantIndex];
         if (originalPacket == null) return;
 
@@ -213,7 +212,7 @@ public final class BlockPreviewReskinManager {
         com.hypixel.hytale.protocol.BlockType[] blockPackets = new com.hypixel.hytale.protocol.BlockType[PlaceBlockMetadata.HOTBAR_SIZE];
         ItemBase[] itemPackets = new ItemBase[PlaceBlockMetadata.HOTBAR_SIZE];
         for (int i = 0; i < PlaceBlockMetadata.HOTBAR_SIZE; i++) {
-            String variantId = PlaceBlockMetadata.getVariantItemId(i);
+            String variantId = PlaceBlockMetadata.getGreenStateItemId(i);
             BlockType variantType = BlockType.getAssetMap().getAsset(variantId);
             if (variantType == null) {
                 LOGGER.severe("[BlockPreviewReskin] Variant block type not found: " + variantId);

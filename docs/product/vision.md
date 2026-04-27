@@ -1,6 +1,6 @@
 ---
 area: "Resource Economy"
-updated: 2026-04-22
+updated: 2026-04-26
 ---
 
 # Resource Economy — Product Vision
@@ -81,7 +81,7 @@ When a player crafts at a bench, recipe costs are scaled to match the generous g
 When a player places blocks into the world, the economy enforces costs:
 
 - **Natural blocks** (stone, wood, dirt): PlacementCostScaler consumes 11 extra items at placement time, making each placement cost 12× total. This ensures the gather→place loop is symmetric.
-- **Crafted blocks** (walls, fences, decorations): The **PlaceBlock Building Tool** enables a deferred-consumption workflow. Instead of crafting a block into inventory and then placing it, the player selects a recipe at the **Blueprint Bench** — a dedicated workbench block placed in the world — arms a placeholder tool with that recipe, and places the block directly into the world. Resources are consumed from inventory and nearby chests **at placement time**, not at recipe selection time.
+- **Crafted blocks** (walls, fences, decorations): The **PlaceBlock Building Tool** enables a deferred-consumption workflow. Instead of crafting a block into inventory and then placing it, the player selects a recipe at the **Blueprint Bench** — a dedicated workbench block placed in the world — arms a placeholder tool with that recipe, and places the block directly into the world. Resources are consumed from the player's inventory **at placement time**, not at recipe selection time.
 
 The Build phase is the **output** side of the economy — how resources leave the player's inventory and enter the world. Both placement systems ensure that `gather → build → break` is a closed loop: whatever was consumed to place a block is returned when it's broken.
 
@@ -104,14 +104,14 @@ The Blueprint Bench is a **new block**, cloned from the Builders Bench asset (`B
 
 The PlaceBlock tool transforms the building experience from a craft-then-place workflow into a **select-then-build** workflow:
 
-1. **At the Blueprint Bench**: The player walks up to a placed Blueprint Bench block in the world and interacts with it while holding a `Block_Placeholder` item. The bench displays all placeable recipes from every registered bench, filtered by what the player can afford (checking inventory and nearby chests within a configurable radius). Selecting a recipe transforms the placeholder to show the selected block's icon — **no resources are consumed yet**.
+1. **At the Blueprint Bench**: The player walks up to a placed Blueprint Bench block in the world and interacts with it while holding a `Block_Placeholder` item. The bench displays all placeable recipes from every registered bench, filtered by what the player can afford (checking inventory). Selecting a recipe transforms the placeholder to show the selected block's icon — **no resources are consumed yet**.
 
 2. **In the world**: The armed placeholder integrates with the engine's block preview system, showing a ghost of the selected block at valid placement positions. The player sees real-time feedback via rarity-based color indicators:
    - **Blue** (Tool quality): No recipe selected — placeholder is unarmed
    - **Green** (Uncommon quality): Recipe selected, resources available — ready to place
    - **Red** (Developer quality): Recipe selected, resources insufficient — cannot place
 
-3. **On placement**: Right-clicking a valid location consumes the scaled recipe inputs from inventory and nearby chests, then places the actual crafted block. The placeholder remains armed — the player can keep placing without returning to the bench.
+3. **On placement**: Right-clicking a valid location consumes the scaled recipe inputs from inventory, then places the actual crafted block. The placeholder remains armed — the player can keep placing without returning to the bench.
 
 4. **On break**: The placed block behaves identically to any other crafted block (Contract #4). It drops its recipe ingredients at the scaled quantity. The player cannot distinguish between a block placed via the PlaceBlock tool and one placed from inventory.
 
@@ -119,7 +119,7 @@ The PlaceBlock tool transforms the building experience from a craft-then-place w
 flowchart LR
     A["Player opens Blueprint Bench\nwith Block_Placeholder"] --> B["Selects 'Cobble Wall' recipe\n(no resources consumed)"]
     B --> C["Placeholder shows Cobble Wall icon\n(Green = 48 cobblestone available)"]
-    C --> D["Right-click to place\n(48 cobblestone consumed\nfrom inventory/chests)"]
+    C --> D["Right-click to place\n(48 cobblestone consumed\nfrom inventory)"]
     D --> E["Cobble Wall block exists in world"]
     E --> F["Player breaks Cobble Wall"]
     F --> G["Receives 48 cobblestone back\n(Contract #4)"]
@@ -130,7 +130,7 @@ flowchart LR
 
 10. **Recipe selection does NOT consume resources.** Selecting a recipe at the bench only transforms the placeholder's visual state and armed recipe reference. Resources are consumed exclusively at placement time. This ensures the player can freely browse and change their selection without economic penalty.
 
-11. **Resource consumption occurs atomically at placement time.** When the player right-clicks to place, the system checks inventory and nearby chests for the recipe's (already-scaled) inputs. If sufficient resources exist, they are deducted in a single atomic operation and the crafted block is placed. If insufficient, placement is denied and no resources are consumed. Partial consumption must never occur.
+11. **Resource consumption occurs atomically at placement time.** When the player right-clicks to place, the system checks the player's inventory for the recipe's (already-scaled) inputs. If sufficient resources exist, they are deducted in a single atomic operation and the crafted block is placed. If insufficient, placement is denied and no resources are consumed. Partial consumption must never occur.
 
 12. **The PlaceBlock tool and PlacementCostScaler are mutually exclusive per placement event.** A `PlaceBlockEvent` is handled by exactly one system: PlacementCostScaler for natural blocks (Contract #5), or the PlaceBlock tool for armed-placeholder placements. They must never both fire on the same event.
 

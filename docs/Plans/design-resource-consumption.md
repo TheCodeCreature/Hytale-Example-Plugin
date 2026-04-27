@@ -1,3 +1,139 @@
+# Resource Consumption at Placement Time — Design
+
+> **Stories:** S2604221200 (Inventory Availability Check), S2604221135 (Atomic Consumption), S2604221140 (Mutual Exclusion Verification)
+
+## 1. Overview
+
+This design adds resource consumption logic to `PlaceBlockPlacementSystem.handle()` so that placing an armed PlaceBlock placeholder deducts the recipe's material cost from the player's inventory before placing the output block. The consumption is atomic (all-or-nothing) and the costs are already 12× scaled by `BlueprintBenchRecipeMutator` at recipe mutation time. Mutual exclusion with `PlacementCostScaler` is inherent and requires no code changes.
+
+## 2. Design Priorities
+
+1. **Correctness** — Atomic consumption: either all materials are consumed and the block is placed, or nothing happens.
+2. **Simplicity** — Linear flow in one method, no new classes or helpers.
+3. **Engine-native patterns** — Uses the same `canRemoveMaterials` → `removeMaterials` pattern as `PortableBenchWindow`.
+4. **Safety** — Belt-and-suspenders: even after `canRemoveMaterials` passes, the transaction result is checked.
+
+## 3. Responsibility Map
+
+```mermaid
+graph TB
+    subgraph PlaceBlockEvent Dispatch
+        EVT[PlaceBlockEvent fired by Engine]
+    end
+
+    EVT -->|itemInHand| PCS{PlacementCostScaler}
+    EVT -->|itemInHand| PBPS{PlaceBlockPlacementSystem}
+
+    PCS -->|getBlockKey| NRR[NaturalResourceRegistry.isNaturalBlock]
+    NRR -->|true| COST[Consume EXTRA_COST via removeItemStack]
+    NRR -->|false / null| SKIP1[Return - not our event]
+
+    PBPS -->|isPlaceBlock?| PMD[PlaceBlockMetadata.isPlaceBlock]
+    PMD -->|true| ARM{isArmed?}
+    PMD -->|false| SKIP2[Return - not our event]
+
+    ARM -->|true| RESOLVE[Resolve recipe + output block]
+    ARM -->|false| CANCEL1[Cancel event - unarmed]
+
+    RESOLVE --> LOOKUP[CraftingRecipe.getAssetMap + CraftingManager.getInputMaterials]
+    LOOKUP --> CHECK[canRemoveMaterials?]
+    CHECK -->|false| DENY[Cancel + red feedback]
+    CHECK -->|true| CONSUME[removeMaterials atomically]
+    CONSUME --> PLACE[setBlock in world]
+    PLACE --> FEEDBACK[Green feedback with cost]
+```
+
+## 4. Sequence Diagram — Placement Flow
+
+```mermaid
+sequenceDiagram
+    participant E as Engine
+    participant PB as PlaceBlockPlacementSystem
+    participant PM as PlaceBlockMetadata
+    participant CR as CraftingRecipe
+    participant CM as CraftingManager
+    participant P as Player
+    participant IC as ItemContainer
+    participant W as World
+
+    E->>PB: PlaceBlockEvent(itemInHand)
+    PB->>PM: isPlaceBlock(itemInHand)
+    alt not a PlaceBlock item
+        PB-->>E: return (ignore event)
+    end
+    PB->>PM: isArmed(itemInHand)
+    alt not armed
+        PB->>E: setCancelled(true)
+        PB-->>E: return
+    end
+    PB->>E: setCancelled(true)
+    Note over PB: Prevent placeholder placement
+
+    PB->>PM: getArmedRecipeId(itemInHand)
+    PB->>PM: getOutputBlockTypeId(itemInHand)
+    PB->>CR: getAssetMap().getAsset(recipeId)
+    PB->>CM: getInputMaterials(recipe, 1)
+    CM-->>PB: materials (already 12x scaled)
+
+    PB->>P: getInventory().getCombinedBackpackStorageHotbar()
+    P-->>PB: container
+    PB->>IC: canRemoveMaterials(materials)
+    alt cannot afford
+        PB->>E: sendMessage(red feedback)
+        PB-->>E: return (no placement)
+    end
+    PB->>IC: removeMaterials(materials, true, true, true)
+    IC-->>PB: transaction
+    alt transaction failed
+        PB-->>E: log warning, return
+    end
+
+    PB->>W: setBlock(pos, targetBlockId, rotation)
+    W-->>PB: placed = true/false
+    alt placed
+        PB->>E: sendMessage(green feedback with cost)
+    end
+```
+
+## 5. Insertion Point
+
+The new consumption logic is inserted **after** resolving the target block type (the `BlockType targetBlockType` lookup) and **before** the `Vector3i pos = event.getTargetBlock()` line. Specifically:
+
+```
+  EXISTING: BlockType targetBlockType = BlockType.getAssetMap().getAsset(outputBlockTypeId);
+  EXISTING: ... null check ...
+  EXISTING: int targetBlockId = BlockType.getAssetMap().getIndex(outputBlockTypeId);
+  
+  ──── NEW: Recipe lookup ────
+  ──── NEW: Get player + container ────
+  ──── NEW: canRemoveMaterials check (return on failure) ────
+  ──── NEW: removeMaterials atomic call (return on failure) ────
+  
+  EXISTING: Vector3i pos = event.getTargetBlock();
+  EXISTING: ... placement logic ...
+```
+
+This ensures we only consume resources after all validation has passed (item is PlaceBlock, is armed, recipe is valid, output block type exists) but before any world mutation occurs.
+
+## 6. Mutual Exclusion Verification (S2604221140)
+
+**No code change is needed.** The two systems are inherently mutually exclusive:
+
+| Check | PlacementCostScaler | PlaceBlockPlacementSystem |
+|-------|---------------------|---------------------------|
+| Guard | `itemInHand.getBlockKey()` → `NaturalResourceRegistry.isNaturalBlock(blockTypeId)` | `PlaceBlockMetadata.isPlaceBlock(itemInHand)` |
+| Handles | Natural resource blocks (stone, wood, dirt, etc.) | Armed PlaceBlock placeholder items |
+| Early-exit | Returns immediately if `getBlockKey()` is null or block is not in `NaturalResourceRegistry` | Returns immediately if item is not a PlaceBlock |
+
+**Why no overlap is possible:**
+- PlaceBlock placeholder items are custom items with NBT metadata. They do **not** have a `blockKey` that exists in `NaturalResourceRegistry`.
+- `NaturalResourceRegistry` only contains vanilla natural blocks (stone, wood, sand, etc.). Placeholder items are synthetic crafting tools.
+- Even if a placeholder item somehow had a `blockKey`, `NaturalResourceRegistry.isNaturalBlock()` would return `false` because placeholders are not registered there.
+- Both systems run on the same ECS event dispatch thread, so there are no race conditions — each system processes the event independently and the guards ensure only one system takes action.
+
+## 7. Complete Updated File
+
+```java
 package com.UnobstructedThirdPerson.placeblock;
 
 import com.hypixel.hytale.component.Archetype;
@@ -21,9 +157,8 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 // ── New imports for resource consumption ──
 import com.hypixel.hytale.builtin.crafting.component.CraftingManager;
-import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
+import com.hypixel.hytale.builtin.crafting.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.inventory.transaction.ListTransaction;
@@ -135,8 +270,7 @@ public class PlaceBlockPlacementSystem extends EntityEventSystem<EntityStore, Pl
             return;
         }
 
-        Inventory inventory = player.getInventory();
-        ItemContainer container = inventory.getCombinedBackpackStorageHotbar();
+        ItemContainer container = player.getInventory().getCombinedBackpackStorageHotbar();
 
         // ── Affordability check ──
         if (!container.canRemoveMaterials(materials)) {
@@ -148,12 +282,16 @@ public class PlaceBlockPlacementSystem extends EntityEventSystem<EntityStore, Pl
             return;
         }
 
-        // ── Atomic consumption ──
+        // ── Atomic consumption (belt-and-suspenders) ──
         ListTransaction<MaterialTransaction> txn = container.removeMaterials(materials, true, true, true);
         if (!txn.succeeded()) {
             log("WARNING: removeMaterials failed after canRemoveMaterials passed for recipe '" + recipeId + "'");
             return;
         }
+
+        // ──────────────────────────────────────────────────────────────
+        // Place the target block in the world (existing logic, unchanged)
+        // ──────────────────────────────────────────────────────────────
 
         // Get placement position and rotation from the event
         Vector3i pos = event.getTargetBlock();
@@ -194,3 +332,32 @@ public class PlaceBlockPlacementSystem extends EntityEventSystem<EntityStore, Pl
         System.out.println("[PlaceBlockPlacement] " + msg);
     }
 }
+```
+
+## 8. Integration Changes Required
+
+| File | Change | Reason |
+|------|--------|--------|
+| `PlaceBlockPlacementSystem.java` | Add 7 imports, insert ~30 lines of consumption logic, update Javadoc | Stories S2604221200, S2604221135, S2604221140 |
+
+No other files need modification.
+
+## 9. Open Questions
+
+| # | Question | Impact |
+|---|----------|--------|
+| 1 | Should the feedback message list each material and quantity consumed, or just the count of material types? | UX polish only — current design shows material type count. Can be enhanced later by iterating `materials` list. |
+| 2 | If `removeMaterials` fails after `canRemoveMaterials` passed (race condition in theory, impossible in single-thread ECS), should we attempt a rollback or just log? | Current design logs and returns. No rollback needed because `allOrNothing=true` means the transaction itself rolls back internally. |
+
+## Handoff Checklist
+
+- [x] Component diagram included (responsibility map)
+- [x] Responsibility map included
+- [x] Sequence diagram included
+- [x] Complete updated file content provided
+- [x] Insertion point documented
+- [x] Mutual exclusion verification documented
+- [x] Integration Changes Required section populated
+- [x] Open Questions section populated
+
+→ @Engineer implement `docs/Plans/design-resource-consumption.md`

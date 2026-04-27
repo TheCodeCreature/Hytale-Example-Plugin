@@ -79,10 +79,10 @@ public class AssignSubCommand extends AbstractPlayerCommand {
         }
 
         // Arm the placeholder
-        ItemStack armed = PlaceBlockMetadata.setArmedRecipeId(heldItem, recipeId, blockTypeId);
+        byte activeSlot = inventory.getActiveHotbarSlot();
+        ItemStack armed = PlaceBlockMetadata.arm(heldItem, recipeId, blockTypeId, activeSlot);
 
         // Replace held item in inventory
-        byte activeSlot = inventory.getActiveHotbarSlot();
         if (activeSlot >= 0) {
             inventory.getHotbar().setItemStackForSlot(activeSlot, armed);
         }

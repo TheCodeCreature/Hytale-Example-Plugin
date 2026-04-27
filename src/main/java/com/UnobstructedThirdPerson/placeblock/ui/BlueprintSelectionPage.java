@@ -178,8 +178,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 return;
             }
 
-            // Arm the placeholder
-            ItemStack armed = PlaceBlockMetadata.setArmedRecipeId(stack, entry.recipeId, entry.blockTypeId);
+            // Arm the placeholder — slotIndex is the combined container index (hotbar-first)
+            ItemStack armed = PlaceBlockMetadata.arm(stack, entry.recipeId, entry.blockTypeId, (int) slotIndex);
             combined.setItemStackForSlot(slotIndex, armed);
 
             cmd.set("#StatusMessage.Text", "§aAssigned " + entry.blockTypeId + " to placeholder.");
@@ -278,7 +278,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
             String prefix = "#PlaceholderSlots[" + slotIndex + "]";
 
-            // Build display text: "Block_Placeholder_Blue → Oak_Planks" or "Block_Placeholder_Blue [click to assign]"
+            // Build display text: "Block_Placeholder → Oak_Planks" or "Block_Placeholder [click to assign]"
             String armedRecipeId = PlaceBlockMetadata.getArmedRecipeId(stack);
             String displayText;
             if (armedRecipeId != null) {

@@ -2,7 +2,7 @@
 id: S2604221205
 type: story
 title: "Atomic Multi-Source Resource Consumption"
-status: backlog
+status: cancelled
 priority: high
 feature: F2604221055
 epic: E2604221030

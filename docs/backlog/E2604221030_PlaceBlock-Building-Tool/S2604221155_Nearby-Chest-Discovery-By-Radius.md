@@ -2,7 +2,7 @@
 id: S2604221155
 type: story
 title: "Nearby Chest Discovery by Radius"
-status: backlog
+status: cancelled
 priority: high
 feature: F2604221055
 epic: E2604221030

@@ -1,15 +1,15 @@
 # Product Board
 
-> Last updated: 2026-04-24 14:30
+> Last updated: 2026-04-26 16:00
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 10
+    "Backlog" : 5
     "In Progress" : 1
-    "Done" : 10
-    "Cancelled" : 5
+    "Done" : 12
+    "Cancelled" : 8
 ```
 
 ## Board
@@ -24,54 +24,46 @@ pie title Backlog Distribution
 |----|------|-------|------|----------|
 | E2604221030 | Epic | PlaceBlock Building Tool | — | high |
 | F2604221050 | Feature | Rarity-Based Availability Indicators | E2604221030 | high |
-| F2604221055 | Feature | Resource Consumption & Chest Scanning | E2604221030 | high |
-| S2604221125 | Story | Block Preview Integration with Armed Placeholder | E2604221030 | high |
-| S2604221135 | Story | Atomic Resource Consumption from Inventory & Chests | E2604221030 | high |
+| F2604221055 | Feature | Resource Consumption (Inventory Only) | E2604221030 | high |
+| S2604221135 | Story | Atomic Resource Consumption from Inventory | E2604221030 | high |
 | S2604221140 | Story | PlacementCostScaler Mutual Exclusion | E2604221030 | high |
-| S2604221145 | Story | Quality State Machine for Placeholder | E2604221030 | high |
-| S2604221150 | Story | Inventory Change Event Listener for Rarity Updates | E2604221030 | high |
-| S2604221155 | Story | Nearby Chest Discovery by Radius | E2604221030 | high |
-| S2604221200 | Story | Aggregate Resource Availability Check | E2604221030 | high |
-| S2604221205 | Story | Atomic Multi-Source Resource Consumption | E2604221030 | high |
+| S2604221200 | Story | Inventory Resource Availability Check | E2604221030 | high |
 
 ### Done
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
 | F2604221035 | Feature | Blueprint Bench Block Asset | E2604221030 | high |
 | F2604221040 | Feature | Recipe Selection & Placeholder Transformation | E2604221030 | high |
+| F2604221045 | Feature | Block Preview & Placement | E2604221030 | high |
 | S2604221100 | Story | Create Block_Placeholder Item Assets | E2604221030 | high |
 | S2604221105 | Story | Register PlaceBlock Bench Interaction | E2604221030 | high |
+| S2604221125 | Story | Block Preview Integration with Armed Placeholder | E2604221030 | high |
+| S2604221130 | Story | Right-Click Placement Handler | E2604221030 | high |
+| S2604221145 | Story | Quality State Machine for Placeholder | E2604221030 | high |
+| S2604221150 | Story | Inventory Change Event Listener for Rarity Updates | E2604221030 | high |
 | S2604221210 | Story | Runtime BenchRequirement Mutation (Shadow Recipes) | E2604221030 | high |
 | S2604230900 | Story | Expand Recipe Aggregation to All Benches | E2604221030 | critical |
 | S2604240900 | Story | PlaceBlock Command for Testing | E2604221030 | critical |
 | S2604240920 | Story | Custom UI Feasibility Spike | E2604221030 | high |
 | S2604240910 | Story | Custom Blueprint Selection UI | E2604221030 | high |
-| S2604221130 | Story | Right-Click Placement Handler | E2604221030 | high |
 
 ### Cancelled
 | ID | Type | Title | Epic | Reason |
 |----|------|-------|------|--------|
+| S2604221155 | Story | Nearby Chest Discovery by Radius | E2604221030 | Scope reduced — inventory only |
+| S2604221205 | Story | Atomic Multi-Source Resource Consumption | E2604221030 | Scope reduced — inventory only |
 | S2604221215 | Story | CraftRecipeEvent Interceptor for Placeholder | E2604221030 | StructuralCraftingWindow dimming unsolvable |
 | S2604230905 | Story | Non-Block Recipe Feedback Message | E2604221030 | Replaced by command feedback |
 | S2604221115 | Story | Recipe Filtering By Available Resources | E2604221030 | Deferred to custom UI |
-| S2604221110 | Story | Inventory & Chest Resource Scanner | E2604221030 | Deferred to Phase 3 |
+| S2604221110 | Story | Inventory & Chest Resource Scanner | E2604221030 | Scope reduced — inventory only |
 | S2604221120 | Story | Placeholder Icon Transformation on Selection | E2604221030 | Arming via command/UI now |
-
-### Cancelled
-| ID | Type | Title | Epic | Reason |
-|----|------|-------|------|--------|
-| S2604221215 | Story | CraftRecipeEvent Interceptor for Placeholder | E2604221030 | StructuralCraftingWindow approach abandoned — client-side recipe dimming unsolvable |
-| S2604230905 | Story | Non-Block Recipe Feedback Message | E2604221030 | Depended on interceptor; replaced by command feedback |
-| S2604221115 | Story | Recipe Filtering By Available Resources | E2604221030 | Was tied to StructuralCraftingWindow; deferred to custom UI |
-| S2604221110 | Story | Inventory & Chest Resource Scanner | E2604221030 | Deferred to Phase 3 |
-| S2604221120 | Story | Placeholder Icon Transformation on Selection | E2604221030 | Depended on interceptor; arming via command now |
 
 ## Epics
 
 ### E2604221030 — PlaceBlock Building Tool
 **Status:** in-progress | **Priority:** high
 
-Select-then-build workflow at the **Blueprint Bench** — a new dedicated workbench block placed in the world. Player arms a placeholder tool with a recipe, previews placement, and right-clicks to place — consuming resources at placement time from inventory/nearby chests.
+Select-then-build workflow at the **Blueprint Bench**. Player arms a placeholder tool with a recipe, sees a ghost block preview, and right-clicks to place — consuming resources at placement time from inventory.
 
 **UI PIVOT (2026-04-24):** StructuralCraftingWindow approach abandoned — client dims recipes because the placeholder doesn't match expected materials. Moving to:
 - **Phase 2a:** Command-based arming (`/placeblock assign|clear|list|info`) for pipeline testing

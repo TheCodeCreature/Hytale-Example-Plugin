@@ -262,7 +262,8 @@ public class PlaceBlockBenchInterceptor extends EntityEventSystem<EntityStore, C
             return;
         }
 
-        ItemStack armed = PlaceBlockMetadata.setArmedRecipeId(inputItem, originalRecipeId, outputBlockTypeId);
+        // TODO: resolve actual hotbar slot when this interceptor is re-enabled
+        ItemStack armed = PlaceBlockMetadata.arm(inputItem, originalRecipeId, outputBlockTypeId, 0);
 
         // 10. Replace the item in the input slot
         inputContainer.replaceItemStackInSlot((short) 0, inputItem, armed);

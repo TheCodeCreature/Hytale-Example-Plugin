@@ -51,7 +51,7 @@ public class ClearSubCommand extends AbstractPlayerCommand {
             return;
         }
 
-        ItemStack cleared = PlaceBlockMetadata.clearArmedRecipe(heldItem);
+        ItemStack cleared = PlaceBlockMetadata.disarm(heldItem);
 
         byte activeSlot = inventory.getActiveHotbarSlot();
         if (activeSlot >= 0) {
