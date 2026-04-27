@@ -1,12 +1,12 @@
 # Product Board
 
-> Last updated: 2026-04-26 16:00
+> Last updated: 2026-04-26 16:30
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 5
+    "Backlog" : 12
     "In Progress" : 1
     "Done" : 12
     "Cancelled" : 8
@@ -23,6 +23,13 @@ pie title Backlog Distribution
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
 | E2604221030 | Epic | PlaceBlock Building Tool | — | high |
+| F2604261630 | Feature | Placeholder State Consolidation | E2604221030 | critical |
+| S2604261635 | Story | Unified Block_Placeholder JSON with 11 States | E2604221030 | critical |
+| S2604261640 | Story | State-Based Arming and Disarming API | E2604221030 | critical |
+| S2604261645 | Story | State-Based Block Preview Reskinning | E2604221030 | critical |
+| S2604261650 | Story | Affordability State Transitions (Green ↔ Red) | E2604221030 | high |
+| S2604261655 | Story | Remove SlotFilter.DENY Workaround | E2604221030 | high |
+| S2604261660 | Story | Delete PlaceBlockIndicatorListener Stub | E2604221030 | medium |
 | F2604221050 | Feature | Rarity-Based Availability Indicators | E2604221030 | high |
 | F2604221055 | Feature | Resource Consumption (Inventory Only) | E2604221030 | high |
 | S2604221135 | Story | Atomic Resource Consumption from Inventory | E2604221030 | high |

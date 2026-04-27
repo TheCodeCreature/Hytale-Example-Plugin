@@ -90,6 +90,20 @@ public class PlaceBlockPlacementSystem extends EntityEventSystem<EntityStore, Pl
         // ── Guard: only handle PlaceBlock items ──
         if (!PlaceBlockMetadata.isPlaceBlock(itemInHand)) return;
 
+        // Resolve Player/Inventory early — needed for restoration in all exit paths.
+        // The engine consumes the placeholder from the slot before this handler runs
+        // (despite RemoveItemInHand: false), so we must put it back in finally.
+        Player player = archetypeChunk.getComponent(index, Player.getComponentType());
+        if (player == null) {
+            log("WARNING: Could not resolve Player component.");
+            event.setCancelled(true);
+            return;
+        }
+        Inventory inventory = player.getInventory();
+        short activeSlot = inventory.getActiveHotbarSlot();
+
+        try {
+
         // ── Guard: must be armed with a recipe ──
         if (!PlaceBlockMetadata.isArmed(itemInHand)) {
             event.setCancelled(true);
@@ -99,6 +113,16 @@ public class PlaceBlockPlacementSystem extends EntityEventSystem<EntityStore, Pl
         // Cancel the event — we do NOT want the placeholder block placed in the world.
         // We'll manually place the target block type instead.
         event.setCancelled(true);
+
+        log("DIAG: PlaceBlockEvent fired. itemInHand=" + itemInHand.getItemId()
+                + " qty=" + itemInHand.getQuantity() + " cancelled=true");
+
+        // Snapshot active slot BEFORE any consumption
+        {
+            ItemStack diagStack = inventory.getHotbar().getItemStack(activeSlot);
+            log("DIAG: PRE-consume activeSlot=" + activeSlot
+                    + " slotItem=" + (diagStack != null ? diagStack.getItemId() + " qty=" + diagStack.getQuantity() : "NULL"));
+        }
 
         // Resolve the armed recipe's output block type
         String recipeId = PlaceBlockMetadata.getArmedRecipeId(itemInHand);
@@ -129,13 +153,6 @@ public class PlaceBlockPlacementSystem extends EntityEventSystem<EntityStore, Pl
 
         List<MaterialQuantity> materials = CraftingManager.getInputMaterials(recipe, 1);
 
-        Player player = archetypeChunk.getComponent(index, Player.getComponentType());
-        if (player == null) {
-            log("WARNING: Could not resolve Player component.");
-            return;
-        }
-
-        Inventory inventory = player.getInventory();
         ItemContainer container = inventory.getCombinedBackpackStorageHotbar();
 
         // ── Affordability check ──
@@ -149,10 +166,20 @@ public class PlaceBlockPlacementSystem extends EntityEventSystem<EntityStore, Pl
         }
 
         // ── Atomic consumption ──
+        log("DIAG: About to call removeMaterials for " + materials.size() + " material types");
         ListTransaction<MaterialTransaction> txn = container.removeMaterials(materials, true, true, true);
         if (!txn.succeeded()) {
             log("WARNING: removeMaterials failed after canRemoveMaterials passed for recipe '" + recipeId + "'");
             return;
+        }
+        log("DIAG: removeMaterials succeeded");
+
+        // POST-consume slot check
+        {
+            short diagSlot2 = inventory.getActiveHotbarSlot();
+            ItemStack diagStack2 = inventory.getHotbar().getItemStack(diagSlot2);
+            log("DIAG: POST-consume activeSlot=" + diagSlot2
+                    + " slotItem=" + (diagStack2 != null ? diagStack2.getItemId() + " qty=" + diagStack2.getQuantity() : "NULL"));
         }
 
         // Get placement position and rotation from the event
@@ -171,6 +198,15 @@ public class PlaceBlockPlacementSystem extends EntityEventSystem<EntityStore, Pl
 
         boolean placed = worldChunk.setBlock(pos.x, pos.y, pos.z, targetBlockId, targetBlockType, rotationIndex, 0, 6);
 
+        // POST-setBlock slot check
+        {
+            short diagSlot3 = inventory.getActiveHotbarSlot();
+            ItemStack diagStack3 = inventory.getHotbar().getItemStack(diagSlot3);
+            log("DIAG: POST-setBlock activeSlot=" + diagSlot3
+                    + " slotItem=" + (diagStack3 != null ? diagStack3.getItemId() + " qty=" + diagStack3.getQuantity() : "NULL")
+                    + " placed=" + placed);
+        }
+
         if (placed) {
             // Send feedback
             Ref<EntityStore> ref = archetypeChunk.getReferenceTo(index);
@@ -181,6 +217,17 @@ public class PlaceBlockPlacementSystem extends EntityEventSystem<EntityStore, Pl
             }
         } else {
             log("WARNING: setBlock returned false at " + pos.x + ", " + pos.y + ", " + pos.z);
+        }
+
+        } finally {
+            // ── Restore the placeholder to the slot ──
+            // The engine consumed it from the active slot before this handler ran
+            // (PRE-consume shows NULL). We put the original item back; the
+            // inventory-change event will trigger syncPlaceholder + checkAffordability
+            // to handle Green/Red transitions and reskinning.
+            inventory.getHotbar().setItemStackForSlot(activeSlot, itemInHand);
+            log("DIAG: RESTORED placeholder to slot=" + activeSlot
+                    + " item=" + itemInHand.getItemId());
         }
     }
 

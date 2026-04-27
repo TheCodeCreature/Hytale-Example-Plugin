@@ -72,6 +72,8 @@ public final class BlockPreviewReskinManager {
                 // Ensure correct variant ID for this slot
                 String expectedId = PlaceBlockMetadata.getGreenStateItemId(slot);
                 if (!expectedId.equals(stack.getItemId())) {
+                    LOGGER.info("[BlockPreviewReskin] DIAG: syncPlaceholder slot=" + slot
+                            + " CONVERTING " + stack.getItemId() + " → " + expectedId);
                     ItemStack converted = PlaceBlockMetadata.toArmedGreen(stack, slot);
                     hotbar.setItemStackForSlot((short) slot, converted);
                 }
@@ -81,6 +83,11 @@ public final class BlockPreviewReskinManager {
                     reskinVariant(playerRef, slot, targetBlockTypeId);
                 }
             } else {
+                // Log when a slot that previously had a green variant loses it
+                if (stack != null && PlaceBlockMetadata.isPlaceBlock(stack)) {
+                    LOGGER.info("[BlockPreviewReskin] DIAG: syncPlaceholder slot=" + slot
+                            + " NOT-GREEN item=" + stack.getItemId() + " → restoreVariant");
+                }
                 restoreVariant(playerRef, slot);
             }
         }
@@ -137,6 +144,9 @@ public final class BlockPreviewReskinManager {
         String removed = playerMap.remove(variantIndex);
         if (removed == null) return;
 
+        LOGGER.info("[BlockPreviewReskin] DIAG: restoreVariant slot=" + variantIndex
+                + " wasReskinTo=" + removed + " → sending original packets");
+
         sendBlockTypeUpdate(playerRef, variantIndex, originalVariantPackets[variantIndex]);
         sendItemRestore(playerRef, variantIndex);
 
@@ -174,9 +184,18 @@ public final class BlockPreviewReskinManager {
         ItemBase targetPacket = new ItemBase(targetItem.toPacket());
         targetPacket.id = variantId;
 
-        // Preserve the variant's original rarity so the item highlight is maintained
+        // Preserve the variant's original interactions and rarity.
+        // The target item's interactions include RemoveItemInHand: true which would
+        // overwrite the client's definition of our placeholder state, causing the
+        // client to predictively consume the item on right-click.
         if (originalVariantItemPackets[variantIndex] != null) {
             targetPacket.qualityIndex = originalVariantItemPackets[variantIndex].qualityIndex;
+            targetPacket.interactions = originalVariantItemPackets[variantIndex].interactions;
+            LOGGER.info("[BlockPreviewReskin] DIAG: sendItemUpdate slot=" + variantIndex
+                    + " target=" + targetBlockTypeId + " preserved interactions from original");
+        } else {
+            LOGGER.warning("[BlockPreviewReskin] DIAG: sendItemUpdate slot=" + variantIndex
+                    + " target=" + targetBlockTypeId + " NO original packet — interactions NOT preserved!");
         }
 
         UpdateItems update = new UpdateItems();

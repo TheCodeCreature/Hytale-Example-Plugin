@@ -21,11 +21,13 @@ Selecting a recipe at the Blueprint Bench (via the Block_Placeholder input slot)
 
 When the player right-clicks to place a block:
 1. The system identifies the armed recipe and its (already-scaled) input requirements
-2. It checks the player's inventory (hotbar, storage, and backpack)
+2. It checks the player's storage, backpack, and non-active hotbar slots for available resources. The active hotbar slot (holding the placeholder tool) is excluded from both availability checks and resource consumption to ensure visual continuity of the held tool.
 3. If ALL required inputs are available: deduct atomically, place the block
 4. If ANY required input is missing: deny placement, consume nothing, show red indicator
 
 **Partial consumption must never occur.** If a recipe requires 48 stone and 12 fibre, and the player has 48 stone but only 6 fibre, NOTHING is consumed and NO block is placed.
+
+**The active hotbar slot is always protected.** The placeholder tool consumes from the player's material stores — storage, backpack, and non-active hotbar slots — never from the slot the player is holding. This ensures the tool's icon, block preview, and rarity indicator remain visually stable during rapid placement.
 
 ### Contract #12: Mutual Exclusion with PlacementCostScaler
 

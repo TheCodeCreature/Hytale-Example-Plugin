@@ -109,10 +109,15 @@ public final class PlaceholderSyncSystem {
             if (affordable && !currentlyGreen) {
                 // Red → Green: recover the slot-specific Green state
                 ItemStack green = PlaceBlockMetadata.toArmedGreen(stack, slot);
+                LOGGER.info("[PlaceholderSync] DIAG: checkAffordability slot=" + slot
+                        + " RED→GREEN from=" + stack.getItemId() + " to=" + green.getItemId());
                 hotbar.setItemStackForSlot(slot, green);
             } else if (!affordable && currentlyGreen) {
                 // Green → Red
                 ItemStack red = PlaceBlockMetadata.toArmedRed(stack);
+                LOGGER.info("[PlaceholderSync] DIAG: checkAffordability slot=" + slot
+                        + " GREEN→RED from=" + stack.getItemId() + " to=" + red.getItemId()
+                        + " redIsNull=" + (red == null));
                 hotbar.setItemStackForSlot(slot, red);
             }
         }
