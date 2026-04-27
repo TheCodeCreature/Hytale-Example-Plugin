@@ -17,7 +17,7 @@ import com.UnobstructedThirdPerson.placeblock.BlueprintBenchRecipeMutator;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockBenchInterceptor;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockConfigLoader;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockMenuInteraction;
-import com.UnobstructedThirdPerson.placeblock.PlaceBlockPlacementSystem;
+import com.UnobstructedThirdPerson.placeblock.PlaceBlockToolInteraction;
 import com.UnobstructedThirdPerson.placeblock.PlaceholderSyncSystem;
 import com.UnobstructedThirdPerson.placeblock.ui.BlueprintBenchOpenUIInteraction;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -76,12 +76,16 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         // this.getCodecRegistry(Interaction.CODEC)
         //         .register("Assign_Bench", AssignBenchInteraction.class, AssignBenchInteraction.CODEC);
 
+        // Register PlaceBlockTool interaction type (direct placement, replaces PlaceBlockPlacementSystem)
+        this.getCodecRegistry(Interaction.CODEC)
+                .register("PlaceBlockTool", PlaceBlockToolInteraction.class, PlaceBlockToolInteraction.CODEC);
+
         // Register Blueprint Bench interaction type (opens custom UI page)
         this.getCodecRegistry(Interaction.CODEC)
                 .register("BlueprintBench_OpenUI", BlueprintBenchOpenUIInteraction.class, BlueprintBenchOpenUIInteraction.CODEC);
 
-        // Register PlaceBlock placement system (intercepts PlaceBlockEvent for armed PlaceBlocks)
-        this.getEntityStoreRegistry().registerSystem(new PlaceBlockPlacementSystem());
+        // PlaceBlockPlacementSystem — DISABLED: replaced by PlaceBlockToolInteraction (direct dispatch)
+        // this.getEntityStoreRegistry().registerSystem(new PlaceBlockPlacementSystem());
 
         // PlaceBlockBenchInterceptor — DISABLED: replaced by custom UI + /placeblock commands
         // this.getEntityStoreRegistry().registerSystem(new PlaceBlockBenchInterceptor());

@@ -72,8 +72,6 @@ public final class BlockPreviewReskinManager {
                 // Ensure correct variant ID for this slot
                 String expectedId = PlaceBlockMetadata.getGreenStateItemId(slot);
                 if (!expectedId.equals(stack.getItemId())) {
-                    LOGGER.info("[BlockPreviewReskin] DIAG: syncPlaceholder slot=" + slot
-                            + " CONVERTING " + stack.getItemId() + " → " + expectedId);
                     ItemStack converted = PlaceBlockMetadata.toArmedGreen(stack, slot);
                     hotbar.setItemStackForSlot((short) slot, converted);
                 }
@@ -83,11 +81,6 @@ public final class BlockPreviewReskinManager {
                     reskinVariant(playerRef, slot, targetBlockTypeId);
                 }
             } else {
-                // Log when a slot that previously had a green variant loses it
-                if (stack != null && PlaceBlockMetadata.isPlaceBlock(stack)) {
-                    LOGGER.info("[BlockPreviewReskin] DIAG: syncPlaceholder slot=" + slot
-                            + " NOT-GREEN item=" + stack.getItemId() + " → restoreVariant");
-                }
                 restoreVariant(playerRef, slot);
             }
         }
@@ -131,6 +124,14 @@ public final class BlockPreviewReskinManager {
         com.hypixel.hytale.protocol.BlockType targetPacket =
                 new com.hypixel.hytale.protocol.BlockType(targetType.toPacket());
 
+        // Preserve the original variant's PlacementSettings (RotationMode: Default,
+        // AllowRotationKey: true). The target block may have RotationMode: FacingPlayer
+        // which auto-rotates the ghost preview every tick, overriding R-key input.
+        if (originalVariantPackets[variantIndex] != null
+                && originalVariantPackets[variantIndex].placementSettings != null) {
+            targetPacket.placementSettings = originalVariantPackets[variantIndex].placementSettings;
+        }
+
         sendBlockTypeUpdate(playerRef, variantIndex, targetPacket);
         sendItemUpdate(playerRef, variantIndex, targetBlockTypeId);
         playerMap.put(variantIndex, targetBlockTypeId);
@@ -143,9 +144,6 @@ public final class BlockPreviewReskinManager {
 
         String removed = playerMap.remove(variantIndex);
         if (removed == null) return;
-
-        LOGGER.info("[BlockPreviewReskin] DIAG: restoreVariant slot=" + variantIndex
-                + " wasReskinTo=" + removed + " → sending original packets");
 
         sendBlockTypeUpdate(playerRef, variantIndex, originalVariantPackets[variantIndex]);
         sendItemRestore(playerRef, variantIndex);
@@ -191,11 +189,6 @@ public final class BlockPreviewReskinManager {
         if (originalVariantItemPackets[variantIndex] != null) {
             targetPacket.qualityIndex = originalVariantItemPackets[variantIndex].qualityIndex;
             targetPacket.interactions = originalVariantItemPackets[variantIndex].interactions;
-            LOGGER.info("[BlockPreviewReskin] DIAG: sendItemUpdate slot=" + variantIndex
-                    + " target=" + targetBlockTypeId + " preserved interactions from original");
-        } else {
-            LOGGER.warning("[BlockPreviewReskin] DIAG: sendItemUpdate slot=" + variantIndex
-                    + " target=" + targetBlockTypeId + " NO original packet — interactions NOT preserved!");
         }
 
         UpdateItems update = new UpdateItems();

@@ -43,8 +43,7 @@
         "Use": "PlaceBlock_Menu",
         "Secondary": {
           "Interactions": [{
-            "Type": "PlaceBlock",
-            "RemoveItemInHand": false
+            "Type": "PlaceBlockTool"
           }]
         }
       }
@@ -69,8 +68,7 @@
         "Use": "PlaceBlock_Menu",
         "Secondary": {
           "Interactions": [{
-            "Type": "PlaceBlock",
-            "RemoveItemInHand": false
+            "Type": "PlaceBlockTool"
           }]
         }
       }
@@ -95,8 +93,7 @@
         "Use": "PlaceBlock_Menu",
         "Secondary": {
           "Interactions": [{
-            "Type": "PlaceBlock",
-            "RemoveItemInHand": false
+            "Type": "PlaceBlockTool"
           }]
         }
       }
@@ -121,8 +118,7 @@
         "Use": "PlaceBlock_Menu",
         "Secondary": {
           "Interactions": [{
-            "Type": "PlaceBlock",
-            "RemoveItemInHand": false
+            "Type": "PlaceBlockTool"
           }]
         }
       }
@@ -147,8 +143,7 @@
         "Use": "PlaceBlock_Menu",
         "Secondary": {
           "Interactions": [{
-            "Type": "PlaceBlock",
-            "RemoveItemInHand": false
+            "Type": "PlaceBlockTool"
           }]
         }
       }
@@ -173,8 +168,7 @@
         "Use": "PlaceBlock_Menu",
         "Secondary": {
           "Interactions": [{
-            "Type": "PlaceBlock",
-            "RemoveItemInHand": false
+            "Type": "PlaceBlockTool"
           }]
         }
       }
@@ -199,8 +193,7 @@
         "Use": "PlaceBlock_Menu",
         "Secondary": {
           "Interactions": [{
-            "Type": "PlaceBlock",
-            "RemoveItemInHand": false
+            "Type": "PlaceBlockTool"
           }]
         }
       }
@@ -225,8 +218,7 @@
         "Use": "PlaceBlock_Menu",
         "Secondary": {
           "Interactions": [{
-            "Type": "PlaceBlock",
-            "RemoveItemInHand": false
+            "Type": "PlaceBlockTool"
           }]
         }
       }
@@ -251,8 +243,7 @@
         "Use": "PlaceBlock_Menu",
         "Secondary": {
           "Interactions": [{
-            "Type": "PlaceBlock",
-            "RemoveItemInHand": false
+            "Type": "PlaceBlockTool"
           }]
         }
       }
@@ -277,8 +268,7 @@
         "Use": "PlaceBlock_Menu",
         "Secondary": {
           "Interactions": [{
-            "Type": "PlaceBlock",
-            "RemoveItemInHand": false
+            "Type": "PlaceBlockTool"
           }]
         }
       }

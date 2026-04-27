@@ -1,12 +1,12 @@
 # Product Board
 
-> Last updated: 2026-04-26 16:30
+> Last updated: 2026-04-26 23:00
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 12
+    "Backlog" : 17
     "In Progress" : 1
     "Done" : 12
     "Cancelled" : 8
@@ -17,12 +17,16 @@ pie title Backlog Distribution
 ### In Progress
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
-| F2604221045 | Feature | Block Preview & Placement | E2604221030 | high |
+| F2604262300 | Feature | Custom Interaction Placement | E2604221030 | critical |
 
 ### Backlog
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
 | E2604221030 | Epic | PlaceBlock Building Tool | — | high |
+| S2604262305 | Story | Register Custom PlaceBlock Interaction Type | E2604221030 | critical |
+| S2604262310 | Story | Implement Placement Logic in Custom Interaction | E2604221030 | critical |
+| S2604262315 | Story | Update Block_Placeholder JSON to Custom Interaction | E2604221030 | critical |
+| S2604262320 | Story | Delete PlaceBlockPlacementSystem and Suppress/Resume | E2604221030 | high |
 | F2604261630 | Feature | Placeholder State Consolidation | E2604221030 | critical |
 | S2604261635 | Story | Unified Block_Placeholder JSON with 11 States | E2604221030 | critical |
 | S2604261640 | Story | State-Based Arming and Disarming API | E2604221030 | critical |
