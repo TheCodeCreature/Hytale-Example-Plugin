@@ -17,6 +17,8 @@ import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCu
 import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
+import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
+import com.hypixel.hytale.server.core.inventory.container.SimpleItemContainer;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
@@ -42,6 +44,10 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             Value.ref("Pages/BlueprintBench/PlaceholderSlot.ui", "ArmedStyle");
     private static final Value<String> SLOT_STYLE_DISABLED =
             Value.ref("Pages/BlueprintBench/PlaceholderSlot.ui", "DisabledSlotStyle");
+
+    private static final String LIFE_ESSENCE_ITEM_ID = "Ingredient_Life_Essence";
+    private static final String PLACEHOLDER_ITEM_ID = "Block_Placeholder";
+    private static final int ACQUIRE_COST = 1;
 
     private final List<RecipeEntry> allRecipes = new ArrayList<>();
     private final List<RecipeEntry> filteredRecipes = new ArrayList<>();
@@ -112,6 +118,14 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         buildRecipeList(cmd, evt, store, ref);
         updateDetailPanel(cmd);
         buildPlaceholderSlots(cmd, evt, store, ref);
+
+        // Bind "Get Placeholder" button
+        evt.addEventBinding(
+                CustomUIEventBindingType.Activating,
+                "#AcquireButton",
+                EventData.of("Action", "GetPlaceholder")
+        );
+        updateAcquireButton(cmd, store, ref);
     }
 
     @Override
@@ -132,6 +146,12 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             buildRecipeList(cmd, evt, store, ref);
             updateDetailPanel(cmd);
             buildPlaceholderSlots(cmd, evt, store, ref);
+            updateAcquireButton(cmd, store, ref);
+            evt.addEventBinding(
+                    CustomUIEventBindingType.Activating,
+                    "#AcquireButton",
+                    EventData.of("Action", "GetPlaceholder")
+            );
             sendUpdate(cmd, evt, false);
 
         } else if (data.recipeId != null) {
@@ -139,6 +159,12 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             buildRecipeList(cmd, evt, store, ref);
             updateDetailPanel(cmd);
             buildPlaceholderSlots(cmd, evt, store, ref);
+            updateAcquireButton(cmd, store, ref);
+            evt.addEventBinding(
+                    CustomUIEventBindingType.Activating,
+                    "#AcquireButton",
+                    EventData.of("Action", "GetPlaceholder")
+            );
             sendUpdate(cmd, evt, false);
 
         } else if (data.action != null && data.action.startsWith("Assign:")) {
@@ -186,6 +212,50 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
             // Refresh placeholder slots to show updated status — stay open
             buildPlaceholderSlots(cmd, evt, store, ref);
+            updateAcquireButton(cmd, store, ref);
+            evt.addEventBinding(
+                    CustomUIEventBindingType.Activating,
+                    "#AcquireButton",
+                    EventData.of("Action", "GetPlaceholder")
+            );
+            sendUpdate(cmd, evt, false);
+
+        } else if (data.action != null && data.action.equals("GetPlaceholder")) {
+            Player player = store.getComponent(ref, Player.getComponentType());
+            if (player == null) return;
+
+            ItemContainer combined = player.getInventory().getCombinedHotbarFirst();
+            ItemStack costStack = new ItemStack(LIFE_ESSENCE_ITEM_ID, ACQUIRE_COST);
+
+            if (!combined.canRemoveItemStack(costStack)) {
+                cmd.set("#StatusMessage.Text", "§cNot enough Ingredient_Life_Essence.");
+                updateAcquireButton(cmd, store, ref);
+                evt.addEventBinding(
+                        CustomUIEventBindingType.Activating,
+                        "#AcquireButton",
+                        EventData.of("Action", "GetPlaceholder")
+                );
+                sendUpdate(cmd, evt, false);
+                return;
+            }
+
+            combined.removeItemStack(costStack);
+
+            SimpleItemContainer.addOrDropItemStacks(
+                    store, ref, combined,
+                    List.of(new ItemStack(PLACEHOLDER_ITEM_ID, 1))
+            );
+
+            cmd.set("#StatusMessage.Text", "§aPlaceholder acquired!");
+
+            // Refresh placeholder slots and acquire button
+            buildPlaceholderSlots(cmd, evt, store, ref);
+            updateAcquireButton(cmd, store, ref);
+            evt.addEventBinding(
+                    CustomUIEventBindingType.Activating,
+                    "#AcquireButton",
+                    EventData.of("Action", "GetPlaceholder")
+            );
             sendUpdate(cmd, evt, false);
         }
     }
@@ -258,6 +328,24 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         cmd.set("#OutputName.Text", "No recipe selected");
         cmd.set("#CostSummary.Text", "");
         cmd.set("#StatusMessage.Text", "");
+    }
+
+    private void updateAcquireButton(UICommandBuilder cmd,
+                                     Store<EntityStore> store, Ref<EntityStore> ref) {
+        Player player = store.getComponent(ref, Player.getComponentType());
+        if (player == null) return;
+
+        ItemContainer combined = player.getInventory().getCombinedHotbarFirst();
+        boolean canAfford = combined.canRemoveItemStack(
+                new ItemStack(LIFE_ESSENCE_ITEM_ID, ACQUIRE_COST));
+
+        if (canAfford) {
+            cmd.set("#AcquireButton.Style",
+                    Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "ConfirmButtonStyle"));
+        } else {
+            cmd.set("#AcquireButton.Style",
+                    Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "DisabledConfirmStyle"));
+        }
     }
 
     private void buildPlaceholderSlots(UICommandBuilder cmd, UIEventBuilder evt,

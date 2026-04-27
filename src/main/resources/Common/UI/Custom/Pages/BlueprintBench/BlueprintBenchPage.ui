@@ -207,5 +207,31 @@ Group {
         }
 
         Group { Anchor: (Height: 8); }
+
+        Group { Anchor: (Height: 1); Background: #2b3542; }
+        Group { Anchor: (Height: 8); }
+
+        // ── Get Placeholder ──
+        Label {
+            Text: "GET PLACEHOLDER";
+            Anchor: (Height: 20);
+            Style: @SectionLabelStyle;
+        }
+
+        Group { Anchor: (Height: 4); }
+
+        Label #AcquireCostLabel {
+            Text: "Cost: 1× Ingredient_Life_Essence";
+            Anchor: (Height: 16);
+            Style: @SubtextStyle;
+        }
+
+        Group { Anchor: (Height: 6); }
+
+        TextButton #AcquireButton {
+            Text: "Get Placeholder";
+            Anchor: (Height: 36);
+            Style: @ConfirmButtonStyle;
+        }
     }
 }

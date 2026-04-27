@@ -71,7 +71,7 @@ Once a block is placed via the PlaceBlock tool, it is identical to the same bloc
 
 ### Contract #15: The Blueprint Bench Is a Separate Block
 
-The Blueprint Bench is a **new workbench block**, distinct from the existing Builders Bench (`Bench_Builders`). It does not modify, replace, or extend the Builders Bench's configuration or asset. The Builders Bench continues to function as a standard crafting station (craft → inventory). The Blueprint Bench exclusively serves the PlaceBlock arming workflow — it does not produce inventory items.
+The Blueprint Bench is a **new workbench block**, distinct from the existing Builders Bench (`Bench_Builders`). It does not modify, replace, or extend the Builders Bench's configuration or asset. The Builders Bench continues to function as a standard crafting station (craft → inventory). The Blueprint Bench does not produce crafted recipe outputs. It may dispense the Block_Placeholder tool itself as a utility acquisition (see Contract #17).
 
 The Blueprint Bench block is cloned from the Builders Bench asset but has its own block type identity (`Bench_Blueprint` or equivalent). The existing Builders Bench must remain unchanged.
 
@@ -82,6 +82,20 @@ The Blueprint Bench block is cloned from the Builders Bench asset but has its ow
 The Blueprint Bench displays placeable block and furniture recipes from **all registered benches** — not just the Builders Bench categories. Any recipe whose output is a placeable block or furniture item is available at the Blueprint Bench for the PlaceBlock arming workflow, regardless of which bench originally defines that recipe.
 
 **Why this matters:** The Blueprint Bench is the universal "I want to build" station. Limiting it to Builders Bench categories would force players to arm different tools at different benches. A single point of access for all placeable recipes matches the tool's identity: "select what you want to build, then go build it."
+
+### Contract #17: Placeholder Acquisition at the Blueprint Bench
+
+The Blueprint Bench provides a "Get Placeholder" button that lets a player acquire a Block_Placeholder tool for 1× `Ingredient_Life_Essence`. This is a **flat-rate utility cost**, exempt from 12× recipe scaling — it is a tool access fee, not a crafting recipe.
+
+| Aspect | Behavior |
+|--------|----------|
+| Cost | 1× `Ingredient_Life_Essence` per placeholder |
+| Output | 1× `Block_Placeholder` (unarmed, Blue/Tool quality) |
+| Repeatable | Yes — player can acquire as many as they want |
+| Economy participation | None — exempt from 12× scaling |
+| Inventory full | Placeholder drops at player's feet |
+
+**Why this matters:** Without a survival acquisition path, the Block_Placeholder is only obtainable via commands. The Blueprint Bench is the natural discovery point — the player encounters the tool exactly where they'll use it. The cheap cost (1× Life Essence) gates initial access without creating an economic burden, since the placeholder is a durable tool that persists across sessions and survives death.
 
 ## Edge Cases & Decisions
 

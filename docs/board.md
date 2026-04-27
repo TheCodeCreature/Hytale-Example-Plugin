@@ -1,6 +1,6 @@
 # Product Board
 
-> Last updated: 2026-04-26 23:00
+> Last updated: 2026-04-27 13:00
 
 ## Status Overview
 
@@ -8,7 +8,7 @@
 pie title Backlog Distribution
     "Backlog" : 17
     "In Progress" : 1
-    "Done" : 12
+    "Done" : 13
     "Cancelled" : 8
 ```
 
@@ -57,6 +57,7 @@ pie title Backlog Distribution
 | S2604240900 | Story | PlaceBlock Command for Testing | E2604221030 | critical |
 | S2604240920 | Story | Custom UI Feasibility Spike | E2604221030 | high |
 | S2604240910 | Story | Custom Blueprint Selection UI | E2604221030 | high |
+| S2604271300 | Story | Placeholder Acquisition Button (Life Essence) | E2604221030 | high |
 
 ### Cancelled
 | ID | Type | Title | Epic | Reason |
