@@ -34,12 +34,12 @@ import java.util.List;
 
 public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSelectionPage.EventPayload> {
 
-    private static final int PAGE_SIZE = 30;
+    private static final int PAGE_SIZE = 64;
 
-    private static final Value<String> ENTRY_STYLE_SELECTED =
-            Value.ref("Pages/BlueprintBench/RecipeEntry.ui", "SelectedStyle");
-    private static final Value<String> ENTRY_STYLE_UNAFFORDABLE =
-            Value.ref("Pages/BlueprintBench/RecipeEntry.ui", "UnaffordableStyle");
+    private static final Value<String> CELL_STYLE_SELECTED =
+            Value.ref("Pages/BlueprintBench/RecipeIconCell.ui", "SelectedCellStyle");
+    private static final Value<String> CELL_STYLE_UNAFFORDABLE =
+            Value.ref("Pages/BlueprintBench/RecipeIconCell.ui", "UnaffordableCellStyle");
     private static final Value<String> SLOT_STYLE_ARMED =
             Value.ref("Pages/BlueprintBench/PlaceholderSlot.ui", "ArmedStyle");
     private static final Value<String> SLOT_STYLE_DISABLED =
@@ -262,7 +262,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
     private void buildRecipeList(UICommandBuilder cmd, UIEventBuilder evt,
                                  Store<EntityStore> store, Ref<EntityStore> ref) {
-        cmd.clear("#RecipeList");
+        cmd.clear("#RecipeGrid");
 
         // Compute affordability for each filtered recipe
         Player player = store.getComponent(ref, Player.getComponentType());
@@ -289,18 +289,18 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         for (int i = 0; i < showing; i++) {
             RecipeEntry entry = withAffordability.get(i);
 
-            cmd.append("#RecipeList", "Pages/BlueprintBench/RecipeEntry.ui");
-            cmd.set("#RecipeList[" + i + "].TextSpans", Message.raw(entry.blockTypeId));
+            cmd.append("#RecipeGrid", "Pages/BlueprintBench/RecipeIconCell.ui");
+            cmd.set("#RecipeGrid[" + i + "].#Icon.ItemId", entry.outputItemId);
 
             if (entry.recipeId.equals(this.selectedRecipeId)) {
-                cmd.set("#RecipeList[" + i + "].Style", ENTRY_STYLE_SELECTED);
+                cmd.set("#RecipeGrid[" + i + "].Style", CELL_STYLE_SELECTED);
             } else if (!entry.affordable) {
-                cmd.set("#RecipeList[" + i + "].Style", ENTRY_STYLE_UNAFFORDABLE);
+                cmd.set("#RecipeGrid[" + i + "].Style", CELL_STYLE_UNAFFORDABLE);
             }
 
             evt.addEventBinding(
                     CustomUIEventBindingType.Activating,
-                    "#RecipeList[" + i + "]",
+                    "#RecipeGrid[" + i + "]",
                     EventData.of("RecipeId", entry.recipeId)
             );
         }

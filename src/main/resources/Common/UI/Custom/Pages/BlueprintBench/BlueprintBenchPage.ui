@@ -115,10 +115,14 @@ Group {
 
         Group { Anchor: (Height: 6); }
 
-        // Scrollable recipe list
-        Group #RecipeList {
+        // Scrollable icon grid
+        Group {
             LayoutMode: TopScrolling;
             FlexWeight: 1;
+
+            Group #RecipeGrid {
+                LayoutMode: LeftCenterWrap;
+            }
         }
     }
 
