@@ -19,6 +19,7 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.SimpleItemContainer;
+import com.hypixel.hytale.server.core.ui.ItemGridSlot;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
@@ -36,10 +37,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
     private static final int PAGE_SIZE = 64;
 
-    private static final Value<String> CELL_STYLE_SELECTED =
-            Value.ref("Pages/BlueprintBench/RecipeIconCell.ui", "SelectedCellStyle");
-    private static final Value<String> CELL_STYLE_UNAFFORDABLE =
-            Value.ref("Pages/BlueprintBench/RecipeIconCell.ui", "UnaffordableCellStyle");
     private static final Value<String> SLOT_STYLE_ARMED =
             Value.ref("Pages/BlueprintBench/PlaceholderSlot.ui", "ArmedStyle");
     private static final Value<String> SLOT_STYLE_DISABLED =
@@ -53,6 +50,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private final List<RecipeEntry> filteredRecipes = new ArrayList<>();
     private String searchQuery = "";
     private String selectedRecipeId;
+    private List<RecipeEntry> displayedRecipes = new ArrayList<>();
 
     private Ref<EntityStore> playerRef_ref;
     private Store<EntityStore> playerStore;
@@ -220,6 +218,28 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             );
             sendUpdate(cmd, evt, false);
 
+        } else if (data.action != null && data.action.equals("SelectSlot")) {
+            // SlotClicking on ItemGrid — slotIndex from engine event data
+            int idx = data.slotIndex;
+            System.out.println("[BlueprintUI] SlotClicking fired, slotIndex=" + idx
+                    + ", displayedRecipes.size=" + displayedRecipes.size());
+            if (idx >= 0 && idx < displayedRecipes.size()) {
+                this.selectedRecipeId = displayedRecipes.get(idx).recipeId;
+                System.out.println("[BlueprintUI] Selected recipe: " + this.selectedRecipeId);
+            } else {
+                System.out.println("[BlueprintUI] SlotIndex out of range, ignoring");
+            }
+            buildRecipeList(cmd, evt, store, ref);
+            updateDetailPanel(cmd);
+            buildPlaceholderSlots(cmd, evt, store, ref);
+            updateAcquireButton(cmd, store, ref);
+            evt.addEventBinding(
+                    CustomUIEventBindingType.Activating,
+                    "#AcquireButton",
+                    EventData.of("Action", "GetPlaceholder")
+            );
+            sendUpdate(cmd, evt, false);
+
         } else if (data.action != null && data.action.equals("GetPlaceholder")) {
             Player player = store.getComponent(ref, Player.getComponentType());
             if (player == null) return;
@@ -286,24 +306,29 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 .thenComparing(e -> e.recipeId, String.CASE_INSENSITIVE_ORDER));
 
         int showing = Math.min(withAffordability.size(), PAGE_SIZE);
+        displayedRecipes = new ArrayList<>(withAffordability.subList(0, showing));
+
+        System.out.println("[BlueprintUI] Building recipe grid: " + showing + " / " + withAffordability.size() + " items");
+
         for (int i = 0; i < showing; i++) {
-            RecipeEntry entry = withAffordability.get(i);
+            RecipeEntry entry = displayedRecipes.get(i);
 
+            // Append minimal cell template (Group + ItemIcon)
             cmd.append("#RecipeGrid", "Pages/BlueprintBench/RecipeIconCell.ui");
-            cmd.set("#RecipeGrid[" + i + "].#Icon.ItemId", entry.outputItemId);
+            String base = "#RecipeGrid[" + i + "]";
 
-            if (entry.recipeId.equals(this.selectedRecipeId)) {
-                cmd.set("#RecipeGrid[" + i + "].Style", CELL_STYLE_SELECTED);
-            } else if (!entry.affordable) {
-                cmd.set("#RecipeGrid[" + i + "].Style", CELL_STYLE_UNAFFORDABLE);
-            }
+            // Set item icon via space-separated child selector
+            cmd.set(base + " #CellIcon.ItemId", entry.outputItemId);
 
+            // Bind click event on cell
             evt.addEventBinding(
                     CustomUIEventBindingType.Activating,
-                    "#RecipeGrid[" + i + "]",
+                    base,
                     EventData.of("RecipeId", entry.recipeId)
             );
         }
+
+        System.out.println("[BlueprintUI] Grid build complete: " + showing + " cells");
 
         // Update count label
         String countText = filteredRecipes.size() + " recipes";
@@ -426,10 +451,12 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 .append(new KeyedCodec<>("@SearchQuery", Codec.STRING), (e, s) -> e.searchQuery = s, e -> e.searchQuery).add()
                 .append(new KeyedCodec<>("RecipeId", Codec.STRING), (e, s) -> e.recipeId = s, e -> e.recipeId).add()
                 .append(new KeyedCodec<>("Action", Codec.STRING), (e, s) -> e.action = s, e -> e.action).add()
+                .append(new KeyedCodec<>("SlotIndex", Codec.INTEGER), (e, s) -> e.slotIndex = s, e -> e.slotIndex).add()
                 .build();
 
         String searchQuery;
         String recipeId;
         String action;
+        int slotIndex = -1;
     }
 }

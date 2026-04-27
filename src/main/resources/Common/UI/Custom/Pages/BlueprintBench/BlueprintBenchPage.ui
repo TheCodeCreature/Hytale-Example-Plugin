@@ -73,7 +73,7 @@
 // ── Page Root ──
 
 Group {
-    Anchor: (Width: 620, Height: 520);
+    Anchor: (Width: 1620, Height: 620);
     Background: #141c26(0.98);
     LayoutMode: Left;
     Padding: (Top: 16, Bottom: 16, Left: 16, Right: 16);
@@ -82,7 +82,7 @@ Group {
     // LEFT COLUMN — Recipe browser
     // ══════════════════════════════
     Group {
-        Anchor: (Width: 340);
+        FlexWeight: 1;
         LayoutMode: Top;
         Padding: (Right: 12);
 
@@ -115,7 +115,7 @@ Group {
 
         Group { Anchor: (Height: 6); }
 
-        // Scrollable icon grid
+        // Scrollable wrapping recipe icon grid
         Group {
             LayoutMode: TopScrolling;
             FlexWeight: 1;
@@ -133,7 +133,7 @@ Group {
     // RIGHT COLUMN — Details + Assign
     // ══════════════════════════════
     Group {
-        FlexWeight: 1;
+        Anchor: (Width: 340);
         LayoutMode: Top;
         Padding: (Left: 12);
 

@@ -1,30 +1,11 @@
-// Blueprint Bench — single recipe icon cell for the grid
-// Server sets #Icon.ItemId and applies style for selected/unaffordable states
-
-@CellStyle = ItemSlotButtonStyle(
-    Default:  (Background: #1a2332),
-    Hovered:  (Background: #2a3a4a),
-    Pressed:  (Background: #1a2535)
-);
-
-@SelectedCellStyle = ItemSlotButtonStyle(
-    Default:  (Background: #2a4a6a),
-    Hovered:  (Background: #3a5a7a),
-    Pressed:  (Background: #1a3a5a)
-);
-
-@UnaffordableCellStyle = ItemSlotButtonStyle(
-    Default:  (Background: #1a1f2e(0.5)),
-    Hovered:  (Background: #1a1f2e(0.7)),
-    Pressed:  (Background: #1a1f2e(0.7))
-);
+// Blueprint Bench — single recipe icon cell
+// ItemSlotButton provides Activating events + auto item tooltips
+// Server sets #CellIcon.ItemId via: #RecipeGrid[i] #CellIcon.ItemId
 
 ItemSlotButton {
-    Anchor: (Width: 40, Height: 40);
-    Style: @CellStyle;
-    Padding: (Full: 4);
+    Anchor: (Width: 80, Height: 80);
 
-    ItemIcon #Icon {
-        Anchor: (Full: 0);
+    ItemIcon #CellIcon {
+        Anchor: (Full: 4);
     }
 }
