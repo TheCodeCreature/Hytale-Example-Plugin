@@ -35,15 +35,13 @@ import java.util.*;
 
 public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSelectionPage.EventPayload> {
 
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("BlueprintSelectionPage");
+
     private static final Value<String> SLOT_STYLE_ARMED =
             Value.ref("Pages/BlueprintBench/PlaceholderSlot.ui", "ArmedStyle");
     private static final Value<String> SLOT_STYLE_DISABLED =
             Value.ref("Pages/BlueprintBench/PlaceholderSlot.ui", "DisabledSlotStyle");
 
-    private static final Value<String> TAB_ACTIVE =
-            Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "TabActiveStyle");
-    private static final Value<String> TAB_INACTIVE =
-            Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "TabInactiveStyle");
     private static final Value<String> FILTER_ACTIVE =
             Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "FilterActiveStyle");
     private static final Value<String> FILTER_INACTIVE =
@@ -56,14 +54,28 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static final String ALL_TAB = "All";
     private static final String ALL_FILTER = "All";
 
+    /** Controls how inventory contents gate recipe/set visibility. */
+    private enum CraftableFilter {
+        /** Show all recipes regardless of inventory. */
+        NONE("No Filter"),
+        /** Show recipes where the player has at least one ingredient. */
+        PARTIAL("Has Partial"),
+        /** Show only recipes the player can fully craft. */
+        FULL("Can Craft");
+
+        final String label;
+        CraftableFilter(String label) { this.label = label; }
+        CraftableFilter next() { return values()[(ordinal() + 1) % values().length]; }
+    }
+
     private final List<RecipeEntry> allRecipes = new ArrayList<>();
     private final List<RecipeEntry> filteredRecipes = new ArrayList<>();
     private final List<String> benchIds = new ArrayList<>();  // sorted bench IDs
     private String searchQuery = "";
     private String selectedRecipeId;
     private String activeTab = ALL_TAB;
-    private String activeSetFilter = ALL_FILTER;
-    private boolean affordabilityGateEnabled = true;
+    private final Set<String> activeSetFilters = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    private CraftableFilter craftableFilter = CraftableFilter.FULL;
     private List<RecipeEntry> displayedRecipes = new ArrayList<>();
     private List<String> currentSets = new ArrayList<>();  // sets for active tab
 
@@ -92,6 +104,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         benchIds.clear();
         benchIds.addAll(benchSet);
+        LOGGER.info("[BlueprintBench] Loaded bench IDs: " + benchIds);
 
         applyFilter();
     }
@@ -106,9 +119,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 if (entry.benchId == null || !entry.benchId.equals(activeTab)) continue;
             }
 
-            // Set filter
-            if (!ALL_FILTER.equals(activeSetFilter)) {
-                if (entry.set == null || !entry.set.equals(activeSetFilter)) continue;
+            // Set filter — empty means "All"
+            if (!activeSetFilters.isEmpty()) {
+                if (entry.set == null || !activeSetFilters.contains(entry.set)) continue;
             }
 
             // Search filter
@@ -136,16 +149,20 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             if (entry.set == null || entry.set.isEmpty()) continue;
             if (sets.contains(entry.set)) continue; // already qualified
 
-            if (affordabilityGateEnabled && filterContainer != null) {
+            if (craftableFilter != CraftableFilter.NONE && filterContainer != null) {
                 CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
                 if (recipe != null) {
                     List<MaterialQuantity> materials = CraftingManager.getInputMaterials(recipe, 1);
-                    // Include set if the player can afford at least one ingredient individually
-                    boolean hasAny = materials.stream()
-                            .anyMatch(mat -> filterContainer.canRemoveMaterials(List.of(mat)));
-                    if (hasAny) {
-                        sets.add(entry.set);
+                    if (craftableFilter == CraftableFilter.FULL) {
+                        // Include set only if at least one recipe in it is fully affordable
+                        if (!filterContainer.canRemoveMaterials(materials)) continue;
+                    } else {
+                        // PARTIAL: include set if the player has at least one ingredient
+                        boolean hasAny = materials.stream()
+                                .anyMatch(mat -> filterContainer.canRemoveMaterials(List.of(mat)));
+                        if (!hasAny) continue;
                     }
+                    sets.add(entry.set);
                 }
             } else {
                 sets.add(entry.set);
@@ -176,8 +193,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 false
         );
 
+        // Set craftable filter dropdown value
+        cmd.set("#CraftableDropdown.Value", craftableFilter.name());
+        evt.addEventBinding(
+                CustomUIEventBindingType.ValueChanged,
+                "#CraftableDropdown",
+                EventData.of("@CraftableFilter", "#CraftableDropdown.Value"),
+                false
+        );
+
         // Build tabs, filters, recipe list, detail panel, and placeholder slots
-        buildBenchTabs(cmd, evt);
+        bindBenchTabs(cmd, evt);
         buildSetFilters(cmd, evt);
         buildRecipeList(cmd, evt, store, ref);
         updateDetailPanel(cmd);
@@ -203,17 +229,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         UICommandBuilder cmd = new UICommandBuilder();
         UIEventBuilder evt = new UIEventBuilder();
 
-        if (data.action != null && data.action.startsWith("Tab:")) {
+        if (data.selectedTab != null) {
             // Tab switch
-            String tab = data.action.substring("Tab:".length());
+            String tab = data.selectedTab;
             if (!tab.equals(this.activeTab)) {
                 this.activeTab = tab;
-                this.activeSetFilter = ALL_FILTER;
+                this.activeSetFilters.clear();
                 this.searchQuery = "";
                 this.selectedRecipeId = null;
                 applyFilter();
                 cmd.set("#SearchInput.Value", "");
-                buildBenchTabs(cmd, evt);
+                bindBenchTabs(cmd, evt);
                 buildSetFilters(cmd, evt);
                 buildRecipeList(cmd, evt, store, ref);
                 updateDetailPanel(cmd);
@@ -228,27 +254,39 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             }
 
         } else if (data.action != null && data.action.startsWith("SetFilter:")) {
-            // Set filter switch
+            // Set filter toggle — multi-select
             String setFilter = data.action.substring("SetFilter:".length());
-            if (!setFilter.equals(this.activeSetFilter)) {
-                this.activeSetFilter = setFilter;
-                this.selectedRecipeId = null;
-                applyFilter();
-                buildSetFilters(cmd, evt);
-                buildRecipeList(cmd, evt, store, ref);
-                updateDetailPanel(cmd);
-                buildPlaceholderSlots(cmd, evt, store, ref);
-                updateAcquireButton(cmd, store, ref);
-                evt.addEventBinding(
-                        CustomUIEventBindingType.Activating,
-                        "#AcquireButton",
-                        EventData.of("Action", "GetPlaceholder")
-                );
-                sendUpdate(cmd, evt, false);
+            if (ALL_FILTER.equals(setFilter)) {
+                // "All" clears all individual selections
+                activeSetFilters.clear();
+            } else {
+                // Toggle individual set
+                if (activeSetFilters.contains(setFilter)) {
+                    activeSetFilters.remove(setFilter);
+                } else {
+                    activeSetFilters.add(setFilter);
+                }
             }
+            this.selectedRecipeId = null;
+            applyFilter();
+            buildSetFilters(cmd, evt);
+            buildRecipeList(cmd, evt, store, ref);
+            updateDetailPanel(cmd);
+            buildPlaceholderSlots(cmd, evt, store, ref);
+            updateAcquireButton(cmd, store, ref);
+            evt.addEventBinding(
+                    CustomUIEventBindingType.Activating,
+                    "#AcquireButton",
+                    EventData.of("Action", "GetPlaceholder")
+            );
+            sendUpdate(cmd, evt, false);
 
-        } else if (data.action != null && data.action.equals("ToggleAffordability")) {
-            this.affordabilityGateEnabled = !this.affordabilityGateEnabled;
+        } else if (data.craftableFilter != null) {
+            try {
+                this.craftableFilter = CraftableFilter.valueOf(data.craftableFilter);
+            } catch (IllegalArgumentException e) {
+                return;
+            }
             applyFilter();
             buildSetFilters(cmd, evt);
             buildRecipeList(cmd, evt, store, ref);
@@ -266,7 +304,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             this.searchQuery = data.searchQuery.trim();
             applyFilter();
             this.selectedRecipeId = null;
-            buildBenchTabs(cmd, evt);
+            bindBenchTabs(cmd, evt);
             buildSetFilters(cmd, evt);
             buildRecipeList(cmd, evt, store, ref);
             updateDetailPanel(cmd);
@@ -407,64 +445,33 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         }
     }
 
-    private void buildBenchTabs(UICommandBuilder cmd, UIEventBuilder evt) {
-        cmd.clear("#BenchTabs");
+    private void bindBenchTabs(UICommandBuilder cmd, UIEventBuilder evt) {
+        // Set the active tab (tabs are static in .ui)
+        cmd.set("#BenchTabs.SelectedTab", activeTab);
 
-        // "All" tab
-        cmd.appendInline("#BenchTabs",
-                "TextButton #TabAll { Text: \"All\"; Anchor: (Width: 60, Height: 30); Padding: (Left: 8, Right: 8); }");
-        cmd.set("#TabAll.Style", ALL_TAB.equals(activeTab) ? TAB_ACTIVE : TAB_INACTIVE);
+        // Bind tab change event
         evt.addEventBinding(
-                CustomUIEventBindingType.Activating, "#TabAll",
-                EventData.of("Action", "Tab:" + ALL_TAB)
+                CustomUIEventBindingType.SelectedTabChanged, "#BenchTabs",
+                EventData.of("@SelectedTab", "#BenchTabs.SelectedTab"),
+                false
         );
-
-        // One tab per bench ID
-        for (int i = 0; i < benchIds.size(); i++) {
-            String benchId = benchIds.get(i);
-            String tabId = "Tab" + i;
-            // Clean bench ID for display (e.g. "Furniture_Bench" -> "Furniture Bench")
-            String label = benchId.replace('_', ' ');
-
-            cmd.appendInline("#BenchTabs",
-                    "TextButton #" + tabId + " { Text: \"" + label + "\"; Anchor: (Height: 30); Padding: (Left: 10, Right: 10); }");
-            cmd.set("#" + tabId + ".Style", benchId.equals(activeTab) ? TAB_ACTIVE : TAB_INACTIVE);
-            evt.addEventBinding(
-                    CustomUIEventBindingType.Activating, "#" + tabId,
-                    EventData.of("Action", "Tab:" + benchId)
-            );
-        }
     }
 
     private void buildSetFilters(UICommandBuilder cmd, UIEventBuilder evt) {
         cmd.clear("#SetFilters");
 
-        // Affordability gate toggle — always visible
-        String toggleLabel = affordabilityGateEnabled ? "☑ Craftable" : "☐ Craftable";
-        cmd.appendInline("#SetFilters",
-                "TextButton #AffordToggle { Text: \"" + toggleLabel + "\"; Anchor: (Height: 22); Padding: (Left: 6, Right: 6); }");
-        cmd.set("#AffordToggle.Style", affordabilityGateEnabled ? FILTER_ACTIVE : FILTER_INACTIVE);
-        evt.addEventBinding(
-                CustomUIEventBindingType.Activating, "#AffordToggle",
-                EventData.of("Action", "ToggleAffordability")
-        );
-
         if (currentSets.isEmpty()) return;
-
-        // Separator
-        cmd.appendInline("#SetFilters",
-                "Label #FilterSep { Text: \"|\"; Anchor: (Width: 10, Height: 22); }");
 
         // "All" filter
         cmd.appendInline("#SetFilters",
-                "TextButton #FilterAll { Text: \"All\"; Anchor: (Width: 40, Height: 22); Padding: (Left: 4, Right: 4); }");
-        cmd.set("#FilterAll.Style", ALL_FILTER.equals(activeSetFilter) ? FILTER_ACTIVE : FILTER_INACTIVE);
+                "TextButton #FilterAll { Text: \"All\"; Anchor: (Height: 24); Padding: (Left: 6, Right: 6); }");
+        cmd.set("#FilterAll.Style", activeSetFilters.isEmpty() ? FILTER_ACTIVE : FILTER_INACTIVE);
         evt.addEventBinding(
                 CustomUIEventBindingType.Activating, "#FilterAll",
                 EventData.of("Action", "SetFilter:" + ALL_FILTER)
         );
 
-        // One filter per set
+        // One filter per set — vertical list, multi-select
         for (int i = 0; i < currentSets.size(); i++) {
             String setName = currentSets.get(i);
             String filterId = "Filter" + i;
@@ -476,8 +483,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             }
 
             cmd.appendInline("#SetFilters",
-                    "TextButton #" + filterId + " { Text: \"" + label + "\"; Anchor: (Height: 22); Padding: (Left: 6, Right: 6); }");
-            cmd.set("#" + filterId + ".Style", setName.equals(activeSetFilter) ? FILTER_ACTIVE : FILTER_INACTIVE);
+                    "TextButton #" + filterId + " { Text: \"" + label + "\"; Anchor: (Height: 24); Padding: (Left: 6, Right: 6); }");
+            cmd.set("#" + filterId + ".Style", activeSetFilters.contains(setName) ? FILTER_ACTIVE : FILTER_INACTIVE);
             evt.addEventBinding(
                     CustomUIEventBindingType.Activating, "#" + filterId,
                     EventData.of("Action", "SetFilter:" + setName)
@@ -503,8 +510,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                     affordable = container.canRemoveMaterials(materials);
                 }
             }
-            // When affordability gate is on, skip recipes the player can't craft
-            if (affordabilityGateEnabled && !affordable) continue;
+            // When craftable filter is active, skip recipes that don't meet the threshold
+            if (craftableFilter == CraftableFilter.FULL && !affordable) continue;
+            if (craftableFilter == CraftableFilter.PARTIAL && container != null) {
+                CraftingRecipe partialRecipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
+                if (partialRecipe != null) {
+                    List<MaterialQuantity> mats = CraftingManager.getInputMaterials(partialRecipe, 1);
+                    boolean hasAny = mats.stream()
+                            .anyMatch(mat -> container.canRemoveMaterials(List.of(mat)));
+                    if (!hasAny) continue;
+                }
+            }
 
             withAffordability.add(new RecipeEntry(entry.recipeId, entry.outputItemId, entry.blockTypeId,
                     entry.benchId, entry.set, affordable));
@@ -537,12 +553,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                     EventData.of("RecipeId", entry.recipeId)
             );
         }
-
-        System.out.println("[BlueprintUI] Grid build complete: " + displayedRecipes.size() + " cells");
-
-        // Update count label
-        String countText = filteredRecipes.size() + " recipes";
-        cmd.set("#CountLabel.Text", countText);
     }
 
     private void updateDetailPanel(UICommandBuilder cmd) {
@@ -667,12 +677,16 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     public static class EventPayload {
         public static final BuilderCodec<EventPayload> CODEC = BuilderCodec.builder(EventPayload.class, EventPayload::new)
                 .append(new KeyedCodec<>("@SearchQuery", Codec.STRING), (e, s) -> e.searchQuery = s, e -> e.searchQuery).add()
+                .append(new KeyedCodec<>("@CraftableFilter", Codec.STRING), (e, s) -> e.craftableFilter = s, e -> e.craftableFilter).add()
+                .append(new KeyedCodec<>("@SelectedTab", Codec.STRING), (e, s) -> e.selectedTab = s, e -> e.selectedTab).add()
                 .append(new KeyedCodec<>("RecipeId", Codec.STRING), (e, s) -> e.recipeId = s, e -> e.recipeId).add()
                 .append(new KeyedCodec<>("Action", Codec.STRING), (e, s) -> e.action = s, e -> e.action).add()
                 .append(new KeyedCodec<>("SlotIndex", Codec.INTEGER), (e, s) -> e.slotIndex = s, e -> e.slotIndex).add()
                 .build();
 
         String searchQuery;
+        String craftableFilter;
+        String selectedTab;
         String recipeId;
         String action;
         int slotIndex = -1;

@@ -1,0 +1,32 @@
+$C = "../../Common.ui";
+
+// Collapsible code block template
+// Usage: Wrap in a Group with unique ID (e.g., #Code0) and set @Code parameter
+
+@CodeBlock = Group {
+  @Code = "";
+
+  LayoutMode: Top;
+  Anchor: (Top: 8, Bottom: 8);
+
+  $C.@SmallTertiaryTextButton #ToggleCode {
+    @Anchor = (Width: 140, Left: 0);
+    Text: %server.customUI.uiGallery.showCode;
+  }
+
+  Group #CodeContainer {
+    Visible: false;
+    LayoutMode: Top;
+    Anchor: (Top: 6, Height: 150);
+    Background: (Color: $C.@ColorBackgroundCode);
+
+    CodeEditor {
+      FlexWeight: 1;
+      Style: (TextColor: $C.@ColorCodeText, FontSize: 11);
+      ContentPadding: 10;
+      Value: @Code;
+      IsReadOnly: true;
+      ScrollbarStyle: $C.@DefaultScrollbarStyle;
+    }
+  }
+};

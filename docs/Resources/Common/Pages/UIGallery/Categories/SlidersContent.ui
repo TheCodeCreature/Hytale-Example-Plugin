@@ -1,0 +1,144 @@
+$C = "../../../Common.ui";
+$CV = "../CodeViewer.ui";
+
+// Sliders Category Content
+Group {
+  LayoutMode: Top;
+
+  // Standard Slider Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.sliders.section.slider;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12);
+
+      $C.@Slider #Slider1 {
+        @Anchor = (Width: 300, Right: 20);
+        Value: 50;
+        Min: 0;
+        Max: 100;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.sliders.integerSliderDesc;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+      }
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12);
+
+      $C.@Slider #Slider2 {
+        @Anchor = (Width: 300, Right: 20);
+        Value: 25;
+        Min: 0;
+        Max: 100;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.sliders.value25;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+      }
+    }
+
+    Group #Code0 {
+      $CV.@CodeBlock {
+        @Code = "$C.@Slider {
+  @Anchor = (Width: 300);
+  Value: 50;
+  Min: 0;
+  Max: 100;
+}";
+      }
+    }
+  }
+
+  // Float Slider Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.sliders.section.floatSlider;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12);
+
+      $C.@FloatSlider #FloatSlider1 {
+        @Anchor = (Width: 300, Right: 20);
+        Value: 0.5;
+        Min: 0.0;
+        Max: 1.0;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.sliders.floatSliderDesc;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+      }
+    }
+
+    Group #Code1 {
+      $CV.@CodeBlock {
+        @Code = "$C.@FloatSlider {
+  @Anchor = (Width: 300);
+  Value: 0.5;
+  Min: 0.0;
+  Max: 1.0;
+}";
+      }
+    }
+  }
+
+  // Slider with Number Field Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.sliders.section.sliderWithNumberField;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12, Height: 40);
+
+      Group {
+        Anchor: (Height: 40);
+
+        $C.@SliderNumberField #SliderNumber1 {
+          @Anchor = (Width: 380, Right: 20);
+          Value: 50;
+          Min: 0;
+          Max: 100;
+          NumberFieldStyle: $C.@DefaultInputFieldStyle;
+        }
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.sliders.combinedControl;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+      }
+    }
+
+    Group #Code2 {
+      $CV.@CodeBlock {
+        @Code = "$C.@SliderNumberField {
+  @Anchor = (Width: 380);
+  Value: 50;
+  Min: 0;
+  Max: 100;
+  NumberFieldContainerAnchor: (Width: 60);
+}";
+      }
+    }
+  }
+}

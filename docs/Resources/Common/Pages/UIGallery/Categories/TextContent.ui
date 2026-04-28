@@ -1,0 +1,163 @@
+$C = "../../../Common.ui";
+$CV = "../CodeViewer.ui";
+
+// Text & Labels Category Content
+Group {
+  LayoutMode: Top;
+
+  // Title Styles Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.text.section.titleStyles;
+      Anchor: (Bottom: 15);
+    }
+
+    // Title (Header style)
+    Group {
+      Anchor: (Bottom: 12);
+      LayoutMode: Top;
+
+      $C.@Title {
+        @Text = %server.customUI.uiGallery.text.section.headerTitle;
+        Anchor: (Bottom: 3);
+      }
+
+      Label {
+        Text: "@Title";
+        Style: (FontSize: 11, TextColor: $C.@ColorCaptionLight);
+      }
+    }
+
+    // Subtitle
+    Group {
+      Anchor: (Bottom: 12);
+      LayoutMode: Top;
+
+      $C.@Subtitle {
+        @Text = %server.customUI.uiGallery.text.section.subtitle;
+        Anchor: (Bottom: 3);
+      }
+
+      Label {
+        Text: "@Subtitle";
+        Style: (FontSize: 11, TextColor: $C.@ColorCaptionLight);
+      }
+    }
+
+    Group #Code0 {
+      $CV.@CodeBlock {
+        @Code = "$C.@Title { @Text = \"Header\"; }
+$C.@Subtitle { @Text = \"Subtitle\"; }";
+      }
+    }
+  }
+
+  // Text Colors Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.text.section.commonColors;
+    }
+
+    Label {
+      Text: %server.customUI.uiGallery.text.colorDefault;
+      Style: (FontSize: 14, TextColor: $C.@ColorDefault);
+      Anchor: (Bottom: 4);
+    }
+
+    Label {
+      Text: %server.customUI.uiGallery.text.colorDefaultLabel;
+      Style: (FontSize: 14, TextColor: $C.@ColorDefaultLabel);
+      Anchor: (Bottom: 4);
+    }
+
+    Label {
+      Text: %server.customUI.uiGallery.text.colorBlueAccent;
+      Style: (FontSize: 14, TextColor: $C.@ColorBlueAccent);
+      Anchor: (Bottom: 4);
+    }
+
+    Label {
+      Text: %server.customUI.uiGallery.text.colorBlueAccentHovered;
+      Style: (FontSize: 14, TextColor: $C.@ColorBlueAccentHovered);
+      Anchor: (Bottom: 4);
+    }
+
+    Label {
+      Text: %server.customUI.uiGallery.text.colorBlueAccentPressed;
+      Style: (FontSize: 14, TextColor: $C.@ColorBlueAccentPressed);
+      Anchor: (Bottom: 4);
+    }
+
+    Label {
+      Text: %server.customUI.uiGallery.text.colorGoldHighlight;
+      Style: (FontSize: 14, TextColor: $C.@ColorGoldHighlight);
+      Anchor: (Bottom: 4);
+    }
+
+    Label {
+      Text: %server.customUI.uiGallery.text.colorGrayCaption;
+      Style: (FontSize: 14, TextColor: $C.@ColorGrayCaption);
+      Anchor: (Bottom: 4);
+    }
+
+    Label {
+      Text: %server.customUI.uiGallery.text.colorButtonText;
+      Style: (FontSize: 14, TextColor: $C.@ColorButtonText);
+      Anchor: (Bottom: 8);
+    }
+
+    Group #Code1 {
+      $CV.@CodeBlock {
+        @Code = "Style: (TextColor: $C.@ColorDefaultLabel)";
+      }
+    }
+  }
+
+  // Text Gradient Mask Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.text.section.gradientMask;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 4);
+
+      Label {
+        Text: %server.customUI.uiGallery.text.highlightedGradientText;
+        Style: (FontSize: 24, TextColor: $C.@ColorDefault, RenderBold: true);
+        MaskTexturePath: $C.@TextHighlightGradientMask;
+      }
+    }
+
+    Label {
+      Text: %server.customUI.uiGallery.text.gradientMaskDesc;
+      Style: (FontSize: 11, TextColor: $C.@ColorCaptionLight);
+      Anchor: (Bottom: 8);
+    }
+
+    Group #Code2 {
+      $CV.@CodeBlock {
+        @Code = "// Wrap in Group with LayoutMode: Left to fit text bounds
+Group {
+  LayoutMode: Left;
+
+  Label {
+    Text: \"Gradient Text\";
+    Style: (FontSize: 24, TextColor: $C.@ColorDefault, RenderBold: true);
+    MaskTexturePath: $C.@TextHighlightGradientMask;
+  }
+}";
+      }
+    }
+  }
+}

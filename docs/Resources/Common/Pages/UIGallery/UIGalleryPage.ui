@@ -1,0 +1,71 @@
+$C = "../../Common.ui";
+
+$C.@PageOverlay {}
+
+$C.@DecoratedContainer {
+  Anchor: (Width: 1100, Height: 720);
+
+  #Title {
+    Group {
+      LayoutMode: Center;
+      Anchor: (Full: 0);
+
+      $C.@Title {
+        @Text = %server.customUI.uiGallery.title;
+      }
+    }
+  }
+
+  #Content {
+    LayoutMode: Left;
+
+    // Left sidebar - category list
+    Group #CategoryList {
+      Anchor: (Width: 200);
+      LayoutMode: TopScrolling;
+      ScrollbarStyle: $C.@DefaultScrollbarStyle;
+      Padding: (Right: 10);
+    }
+
+    // Main content area
+    Group #ContentArea {
+      FlexWeight: 1;
+      LayoutMode: TopScrolling;
+      ScrollbarStyle: $C.@DefaultScrollbarStyle;
+      Padding: (Left: 15, Right: 5);
+
+      // Category title
+      Group {
+        LayoutMode: Left;
+
+        Label #CategoryTitle {
+          Style: (
+            RenderUppercase: true,
+            RenderBold: true,
+            FontSize: 20,
+            TextColor: $C.@ColorDefault
+          );
+          MaskTexturePath: $C.@TextHighlightGradientMask;
+          Anchor: (Bottom: 15);
+        }
+      }
+
+      // Category description
+      Label #CategoryDescription {
+        Style: (
+          FontSize: 13,
+          TextColor: $C.@ColorDefaultLabel,
+          Wrap: true
+        );
+        Anchor: (Bottom: 20);
+      }
+
+      // Dynamic content for each category
+      Group #CategoryContent {
+        LayoutMode: Top;
+      }
+    }
+  }
+}
+
+$C.@BackButton {}

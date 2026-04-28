@@ -2,29 +2,30 @@
 // Server populates #RecipeList dynamically via append() calls
 // Server populates #PlaceholderSlots with placeholder items from inventory
 
+$C = "../../Common.ui";
+
 // ── Styles ──
 
 @HeaderStyle = LabelStyle(
-    FontSize: 22, TextColor: #ffffff, RenderBold: true,
+    ...$C.@DefaultLabelStyle,
+    FontSize: 22, RenderBold: true,
     HorizontalAlignment: Start, VerticalAlignment: Center
 );
 
-@CountStyle = LabelStyle(
-    FontSize: 13, TextColor: #6e7da1,
-    HorizontalAlignment: End, VerticalAlignment: Center
-);
-
 @DetailLabelStyle = LabelStyle(
-    FontSize: 16, TextColor: #c8d6e5, RenderBold: true,
+    ...$C.@DefaultLabelStyle,
+    FontSize: 16, RenderBold: true,
     HorizontalAlignment: Start, VerticalAlignment: Center
 );
 
 @SubtextStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
     FontSize: 12, TextColor: #6e7da1,
     HorizontalAlignment: Start, VerticalAlignment: Center
 );
 
 @SectionLabelStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
     FontSize: 13, TextColor: #6e7da1, RenderBold: true,
     HorizontalAlignment: Start, VerticalAlignment: Center
 );
@@ -70,23 +71,7 @@
               RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
 );
 
-@TabActiveStyle = TextButtonStyle(
-    Default: (Background: #141c26, LabelStyle: (FontSize: 13, TextColor: #ffffff,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Hovered: (Background: #1a2536, LabelStyle: (FontSize: 13, TextColor: #ffffff,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Pressed: (Background: #141c26, LabelStyle: (FontSize: 13, TextColor: #ffffff,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-);
 
-@TabInactiveStyle = TextButtonStyle(
-    Default: (Background: #0c1219, LabelStyle: (FontSize: 13, TextColor: #6e7da1,
-              HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Hovered: (Background: #111a24, LabelStyle: (FontSize: 13, TextColor: #96a9be,
-              HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Pressed: (Background: #0c1219, LabelStyle: (FontSize: 13, TextColor: #96a9be,
-              HorizontalAlignment: Center, VerticalAlignment: Center))
-);
 
 @FilterActiveStyle = TextButtonStyle(
     Default: (Background: #2a4a6a, LabelStyle: (FontSize: 11, TextColor: #ffffff,
@@ -109,22 +94,57 @@
 // ── Page Root ──
 
 Group {
-    Anchor: (Width: 980, Height: 660);
+    Anchor: (Width: 1600, Height: 720);
     LayoutMode: Top;
 
-    // Bench tabs row — sits above the panel like creative inventory tabs
-    Group #BenchTabs {
-        Anchor: (Height: 34);
-        LayoutMode: Left;
-        Padding: (Left: 16, Bottom: 2);
+    // Bench tabs above the container
+    TabNavigation #BenchTabs {
+        Style: $C.@TopTabsStyle;
+        SelectedTab: "All";
+        Anchor: (Height: 66, Left: 2, Right: 0);
+
+        TabButton {
+            Icon: "../../Common/RecipesIcon.png";
+            TooltipText: "All";
+            Id: "All";
+        }
+
+        TabButton {
+            Icon: "../../Common/RecipesIcon.png";
+            TooltipText: "Builders";
+            Id: "Builders";
+        }
+
+        TabButton {
+            Icon: "../../Common/RecipesIcon.png";
+            TooltipText: "Furniture Bench";
+            Id: "Furniture_Bench";
+        }
     }
 
-    // Main panel
+    // Main container
+    $C.@Container {
+
+    #Title {
+        Group {
+            LayoutMode: Left;
+
+            Label #Title {
+                Text: "Blueprint Bench";
+                FlexWeight: 1;
+                Style: @HeaderStyle;
+            }
+
+            $C.@HeaderSearch {}
+        }
+    }
+
+    #Content {
+
+    // Two-column layout
     Group {
-    Anchor: (Height: 626);
-    Background: #141c26(0.98);
-    LayoutMode: Left;
-    Padding: (Top: 16, Bottom: 16, Left: 16, Right: 16);
+        FlexWeight: 1;
+        LayoutMode: Left;
 
     // ══════════════════════════════
     // LEFT COLUMN — Recipe browser
@@ -134,49 +154,59 @@ Group {
         LayoutMode: Top;
         Padding: (Right: 12);
 
-        // Header
+        // Content area: set filters on left, recipe grid on right
         Group {
-            Anchor: (Height: 36);
+            FlexWeight: 1;
             LayoutMode: Left;
 
-            Label #Title {
-                Text: "Blueprint Bench";
+            // Set filter sidebar — single scrollable column
+            Group {
+                Anchor: (Width: 164);
+                LayoutMode: TopScrolling;
+                ScrollbarStyle: $C.@DefaultScrollbarStyle;
+
+                // Craftable filter dropdown
+                $C.@DropdownBox #CraftableDropdown {
+                    @Anchor = (Height: 24, Left: 0, Right: 0);
+                    Value: "FULL";
+
+                    DropdownEntry {
+                        Value: "NONE";
+                        Text: "No Filter";
+                    }
+
+                    DropdownEntry {
+                        Value: "PARTIAL";
+                        Text: "Has Partial";
+                    }
+
+                    DropdownEntry {
+                        Value: "FULL";
+                        Text: "Can Craft";
+                    }
+                }
+
+                Group { Anchor: (Height: 2); }
+
+                // Set filter buttons (server-populated)
+                Group #SetFilters {
+                    LayoutMode: Top;
+                }
+            }
+
+            // Vertical divider between filters and grid
+            Group { Anchor: (Width: 1); Background: #2b3542; }
+
+            // Scrollable wrapping recipe icon grid
+            Group {
                 FlexWeight: 1;
-                Style: @HeaderStyle;
-            }
+                LayoutMode: TopScrolling;
+                ScrollbarStyle: $C.@DefaultScrollbarStyle;
+                Padding: (Left: 6);
 
-            Label #CountLabel {
-                Text: "";
-                Anchor: (Width: 100);
-                Style: @CountStyle;
-            }
-        }
-
-        Group { Anchor: (Height: 1); Background: #2b3542; }
-        Group { Anchor: (Height: 6); }
-
-        // Set filter buttons (server appends TextButtons dynamically)
-        Group #SetFilters {
-            LayoutMode: LeftCenterWrap;
-        }
-
-        Group { Anchor: (Height: 4); }
-
-        // Search bar
-        TextField #SearchInput {
-            Anchor: (Height: 32);
-            PlaceholderText: "Search recipes...";
-        }
-
-        Group { Anchor: (Height: 6); }
-
-        // Scrollable wrapping recipe icon grid
-        Group {
-            LayoutMode: TopScrolling;
-            FlexWeight: 1;
-
-            Group #RecipeGrid {
-                LayoutMode: LeftCenterWrap;
+                Group #RecipeGrid {
+                    LayoutMode: LeftCenterWrap;
+                }
             }
         }
     }
@@ -188,7 +218,7 @@ Group {
     // RIGHT COLUMN — Details + Assign
     // ══════════════════════════════
     Group {
-        Anchor: (Width: 340);
+        Anchor: (Width: 240);
         LayoutMode: Top;
         Padding: (Left: 12);
 
@@ -247,6 +277,7 @@ Group {
         // Scrollable ingredient icon grid
         Group {
             LayoutMode: TopScrolling;
+            ScrollbarStyle: $C.@DefaultScrollbarStyle;
             FlexWeight: 1;
 
             Group #CostGrid {
@@ -255,7 +286,7 @@ Group {
         }
 
         Group { Anchor: (Height: 8); }
-        Group { Anchor: (Height: 1); Background: #2b3542; }
+        $C.@PanelSeparatorFancy {}
         Group { Anchor: (Height: 8); }
 
         // ── Placeholder Slots ──
@@ -281,8 +312,7 @@ Group {
         }
 
         Group { Anchor: (Height: 8); }
-
-        Group { Anchor: (Height: 1); Background: #2b3542; }
+        $C.@PanelSeparatorFancy {}
         Group { Anchor: (Height: 8); }
 
         // ── Get Placeholder ──
@@ -308,5 +338,8 @@ Group {
             Style: @ConfirmButtonStyle;
         }
     }
-}
-}
+
+    } // two-column layout
+    } // #Content
+    } // $C.@Container
+} // Page Root

@@ -1,0 +1,22 @@
+$C = "../../Common.ui";
+
+Group {
+  Anchor: (Bottom: 12);
+  LayoutMode: Left;
+
+  // Label describing the element
+  Label #ElementLabel {
+    Style: (
+      FontSize: 13,
+      TextColor: $C.@ColorGrayCaption,
+      VerticalAlignment: Center
+    );
+    Anchor: (Width: 180, Right: 15);
+  }
+
+  // Container for the actual element
+  Group #ElementContainer {
+    FlexWeight: 1;
+    LayoutMode: Left;
+  }
+}

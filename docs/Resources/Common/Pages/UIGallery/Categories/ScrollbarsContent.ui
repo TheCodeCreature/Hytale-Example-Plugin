@@ -1,0 +1,94 @@
+$C = "../../../Common.ui";
+$CV = "../CodeViewer.ui";
+
+// Scrollbars Category Content
+Group {
+  LayoutMode: Top;
+
+  // Default Scrollbar Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.scrollbars.section.default;
+    }
+
+    $C.@SimpleContainer {
+      Anchor: (Width: 400, Height: 120, Bottom: 10, Left: 0);
+      LayoutMode: TopScrolling;
+      ScrollbarStyle: $C.@DefaultScrollbarStyle;
+
+      Label {
+        Text: %server.customUI.uiGallery.scrollbars.defaultContent;
+        Style: (FontSize: 13, TextColor: $C.@ColorDefaultLabel, Wrap: true);
+      }
+    }
+
+    Group #Code0 {
+      $CV.@CodeBlock {
+        @Code = "Group {
+  LayoutMode: TopScrolling;
+  ScrollbarStyle: $C.@DefaultScrollbarStyle;
+  // content here
+}";
+      }
+    }
+  }
+
+  // Extra Spacing Scrollbar Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.scrollbars.section.extraSpacing;
+    }
+
+    $C.@SimpleContainer {
+      Anchor: (Width: 400, Height: 100, Bottom: 10, Left: 0);
+      LayoutMode: TopScrolling;
+      ScrollbarStyle: $C.@DefaultExtraSpacingScrollbarStyle;
+
+      Label {
+        Text: %server.customUI.uiGallery.scrollbars.extraSpacingContent;
+        Style: (FontSize: 13, TextColor: $C.@ColorDefaultLabel, Wrap: true);
+      }
+    }
+
+    Group #Code1 {
+      $CV.@CodeBlock {
+        @Code = "ScrollbarStyle: $C.@DefaultExtraSpacingScrollbarStyle;
+// 12px spacing from content edge";
+      }
+    }
+  }
+
+  // Translucent Scrollbar Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.scrollbars.section.translucent;
+    }
+
+    $C.@SimpleContainer {
+      Anchor: (Width: 400, Height: 100, Bottom: 10, Left: 0);
+      LayoutMode: TopScrolling;
+      ScrollbarStyle: $C.@TranslucentScrollbarStyle;
+
+      Label {
+        Text: %server.customUI.uiGallery.scrollbars.translucentContent;
+        Style: (FontSize: 13, TextColor: $C.@ColorDefaultLabel, Wrap: true);
+      }
+    }
+
+    Group #Code2 {
+      $CV.@CodeBlock {
+        @Code = "ScrollbarStyle: $C.@TranslucentScrollbarStyle;
+// OnlyVisibleWhenHovered: true";
+      }
+    }
+  }
+}

@@ -1,0 +1,193 @@
+$C = "../../../Common.ui";
+$CV = "../CodeViewer.ui";
+
+// Selection Elements Category Content
+Group {
+  LayoutMode: Top;
+
+  // CheckBox Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.selection.section.checkBox;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12);
+
+      $C.@CheckBox #CheckBox1 {}
+
+      Label {
+        Text: %server.customUI.uiGallery.selection.uncheckedCheckbox;
+        Style: (FontSize: 13, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+        Anchor: (Left: 10);
+      }
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12);
+
+      $C.@CheckBox #CheckBox2 {
+        Value: true;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.selection.checkedCheckbox;
+        Style: (FontSize: 13, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+        Anchor: (Left: 10);
+      }
+    }
+
+    Group #Code0 {
+      $CV.@CodeBlock {
+        @Code = "$C.@CheckBox {
+  Value: true;  // or false
+}";
+      }
+    }
+  }
+
+  // CheckBox with Label
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.selection.section.checkBoxWithLabel;
+    }
+
+    $C.@CheckBoxWithLabel #LabeledCheckBox1 {
+      @Text = %server.customUI.uiGallery.selection.enableFeature;
+      @Checked = false;
+      Anchor: (Bottom: 8);
+    }
+
+    $C.@CheckBoxWithLabel #LabeledCheckBox2 {
+      @Text = %server.customUI.uiGallery.selection.showAdvancedOptions;
+      @Checked = true;
+      Anchor: (Bottom: 8);
+    }
+
+    Group #Code1 {
+      $CV.@CodeBlock {
+        @Code = "$C.@CheckBoxWithLabel {
+  @Text = \"Enable feature\";
+  @Checked = true;
+}";
+      }
+    }
+  }
+
+  // DropdownBox Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.selection.section.dropdownBox;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12);
+
+      $C.@DropdownBox #Dropdown1 {
+        @Anchor = (Width: 250, Right: 20);
+        Value: "Option_2";
+
+        DropdownEntry {
+          Value: "Option_1";
+          Text: %server.customUI.uiGallery.selection.option1;
+        }
+
+        DropdownEntry {
+          Value: "Option_2";
+          Text: %server.customUI.uiGallery.selection.option2;
+        }
+
+        DropdownEntry {
+          Value: "Option_3";
+          Text: %server.customUI.uiGallery.selection.option3;
+        }
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.selection.standardDropdown;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+      }
+    }
+
+    Group #Code2 {
+      $CV.@CodeBlock {
+        @Code = "$C.@DropdownBox {
+  @Anchor = (Width: 250);
+  Value: \"Option_2\";
+
+  DropdownEntry {
+    Value: \"Option_1\";
+    Text: \"Option 1\";
+  }
+  // ... more entries
+}";
+      }
+    }
+  }
+
+  // Color Picker Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.selection.section.colorPicker;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12);
+
+      ColorPickerDropdownBox #ColorPicker1 {
+        Anchor: (Width: 32, Height: 32, Right: 15);
+        Style: $C.@DefaultColorPickerDropdownBoxStyle;
+        Color: #ff5555;
+      }
+
+      ColorPickerDropdownBox #ColorPicker2 {
+        Anchor: (Width: 32, Height: 32, Right: 15);
+        Style: $C.@DefaultColorPickerDropdownBoxStyle;
+        Color: #55ff55;
+      }
+
+      ColorPickerDropdownBox #ColorPicker3 {
+        Anchor: (Width: 32, Height: 32, Right: 15);
+        Style: $C.@DefaultColorPickerDropdownBoxStyle;
+        Color: #5555ff;
+      }
+
+      ColorPickerDropdownBox #ColorPicker4 {
+        Anchor: (Width: 32, Height: 32, Right: 20);
+        Style: $C.@DefaultColorPickerDropdownBoxStyle;
+        Color: #ffff55;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.selection.clickToOpenColorPicker;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+      }
+    }
+
+    Group #Code3 {
+      $CV.@CodeBlock {
+        @Code = "ColorPickerDropdownBox {
+  Anchor: (Width: 32, Height: 32);
+  Style: $C.@DefaultColorPickerDropdownBoxStyle;
+  Color: #ff5555;
+}";
+      }
+    }
+  }
+}
