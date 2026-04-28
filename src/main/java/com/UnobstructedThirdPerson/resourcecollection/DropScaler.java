@@ -328,8 +328,8 @@ public final class DropScaler {
 
     private static int scaleStackSizes(AssetFieldAccessor f, int multiplier) {
         int boosted = 0;
-        for (String itemId : NaturalResourceRegistry.getNaturalItemIds()) {
-            Item item = Item.getAssetMap().getAsset(itemId);
+        for (var entry : Item.getAssetMap().getAssetMap().entrySet()) {
+            Item item = entry.getValue();
             if (item == null) continue;
             try {
                 int current = f.itemMaxStack.getInt(item);
@@ -338,7 +338,7 @@ public final class DropScaler {
                     boosted++;
                 }
             } catch (IllegalAccessException e) {
-                log("ERROR scaling stack size for " + itemId + ": " + e.getMessage());
+                log("ERROR scaling stack size for " + entry.getKey() + ": " + e.getMessage());
             }
         }
         return boosted;

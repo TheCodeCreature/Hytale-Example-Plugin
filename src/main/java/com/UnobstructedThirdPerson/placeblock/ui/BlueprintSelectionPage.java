@@ -35,8 +35,6 @@ import java.util.*;
 
 public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSelectionPage.EventPayload> {
 
-    private static final int PAGE_SIZE = 64;
-
     private static final Value<String> SLOT_STYLE_ARMED =
             Value.ref("Pages/BlueprintBench/PlaceholderSlot.ui", "ArmedStyle");
     private static final Value<String> SLOT_STYLE_DISABLED =
@@ -65,6 +63,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private String selectedRecipeId;
     private String activeTab = ALL_TAB;
     private String activeSetFilter = ALL_FILTER;
+    private boolean affordabilityGateEnabled = true;
     private List<RecipeEntry> displayedRecipes = new ArrayList<>();
     private List<String> currentSets = new ArrayList<>();  // sets for active tab
 
@@ -123,7 +122,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             filteredRecipes.add(entry);
         }
 
-        // Rebuild current sets for the active tab — only sets where the player has at least one ingredient
+        // Rebuild current sets for the active tab
         Player filterPlayer = playerStore != null
                 ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
         var filterContainer = filterPlayer != null
@@ -137,7 +136,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             if (entry.set == null || entry.set.isEmpty()) continue;
             if (sets.contains(entry.set)) continue; // already qualified
 
-            if (filterContainer != null) {
+            if (affordabilityGateEnabled && filterContainer != null) {
                 CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
                 if (recipe != null) {
                     List<MaterialQuantity> materials = CraftingManager.getInputMaterials(recipe, 1);
@@ -247,6 +246,21 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 );
                 sendUpdate(cmd, evt, false);
             }
+
+        } else if (data.action != null && data.action.equals("ToggleAffordability")) {
+            this.affordabilityGateEnabled = !this.affordabilityGateEnabled;
+            applyFilter();
+            buildSetFilters(cmd, evt);
+            buildRecipeList(cmd, evt, store, ref);
+            updateDetailPanel(cmd);
+            buildPlaceholderSlots(cmd, evt, store, ref);
+            updateAcquireButton(cmd, store, ref);
+            evt.addEventBinding(
+                    CustomUIEventBindingType.Activating,
+                    "#AcquireButton",
+                    EventData.of("Action", "GetPlaceholder")
+            );
+            sendUpdate(cmd, evt, false);
 
         } else if (data.searchQuery != null) {
             this.searchQuery = data.searchQuery.trim();
@@ -425,7 +439,21 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private void buildSetFilters(UICommandBuilder cmd, UIEventBuilder evt) {
         cmd.clear("#SetFilters");
 
+        // Affordability gate toggle — always visible
+        String toggleLabel = affordabilityGateEnabled ? "☑ Craftable" : "☐ Craftable";
+        cmd.appendInline("#SetFilters",
+                "TextButton #AffordToggle { Text: \"" + toggleLabel + "\"; Anchor: (Height: 22); Padding: (Left: 6, Right: 6); }");
+        cmd.set("#AffordToggle.Style", affordabilityGateEnabled ? FILTER_ACTIVE : FILTER_INACTIVE);
+        evt.addEventBinding(
+                CustomUIEventBindingType.Activating, "#AffordToggle",
+                EventData.of("Action", "ToggleAffordability")
+        );
+
         if (currentSets.isEmpty()) return;
+
+        // Separator
+        cmd.appendInline("#SetFilters",
+                "Label #FilterSep { Text: \"|\"; Anchor: (Width: 10, Height: 22); }");
 
         // "All" filter
         cmd.appendInline("#SetFilters",
@@ -475,20 +503,24 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                     affordable = container.canRemoveMaterials(materials);
                 }
             }
+            // When affordability gate is on, skip recipes the player can't craft
+            if (affordabilityGateEnabled && !affordable) continue;
+
             withAffordability.add(new RecipeEntry(entry.recipeId, entry.outputItemId, entry.blockTypeId,
                     entry.benchId, entry.set, affordable));
         }
 
-        // Sort affordable above unaffordable, preserving alphabetical within each group
-        withAffordability.sort(Comparator.comparing((RecipeEntry e) -> !e.affordable)
+        // Sort: group by set (alphabetical), then affordable first, then recipe ID within each set
+        withAffordability.sort(Comparator
+                .comparing((RecipeEntry e) -> e.set != null ? e.set : "", String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(e -> !e.affordable)
                 .thenComparing(e -> e.recipeId, String.CASE_INSENSITIVE_ORDER));
 
-        int showing = Math.min(withAffordability.size(), PAGE_SIZE);
-        displayedRecipes = new ArrayList<>(withAffordability.subList(0, showing));
+        displayedRecipes = new ArrayList<>(withAffordability);
 
-        System.out.println("[BlueprintUI] Building recipe grid: " + showing + " / " + withAffordability.size() + " items");
+        System.out.println("[BlueprintUI] Building recipe grid: " + displayedRecipes.size() + " items");
 
-        for (int i = 0; i < showing; i++) {
+        for (int i = 0; i < displayedRecipes.size(); i++) {
             RecipeEntry entry = displayedRecipes.get(i);
 
             // Append minimal cell template (Group + ItemIcon)
@@ -506,13 +538,10 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             );
         }
 
-        System.out.println("[BlueprintUI] Grid build complete: " + showing + " cells");
+        System.out.println("[BlueprintUI] Grid build complete: " + displayedRecipes.size() + " cells");
 
         // Update count label
         String countText = filteredRecipes.size() + " recipes";
-        if (showing < filteredRecipes.size()) {
-            countText = showing + " / " + filteredRecipes.size() + " recipes";
-        }
         cmd.set("#CountLabel.Text", countText);
     }
 
