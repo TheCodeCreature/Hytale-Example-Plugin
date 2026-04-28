@@ -31,20 +31,7 @@ import java.util.Set;
 public final class NaturalResourceRegistry {
 
     private static Set<String> naturalBlockTypes = Collections.emptySet();
-
-    /**
-     * Items dropped by non-Deco natural blocks. Used for base-recipe
-     * classification — only items from core natural blocks count toward
-     * determining whether a recipe's inputs are "all natural."
-     */
-    private static Set<String> coreNaturalItemIds = Collections.emptySet();
-
-    /**
-     * Items dropped by ANY natural block (including Deco). Used for
-     * stack size scaling and ingredient detection where Deco drops should
-     * still participate in the economy.
-     */
-    private static Set<String> allNaturalItemIds = Collections.emptySet();
+    private static Set<String> naturalItemIds = Collections.emptySet();
 
     private NaturalResourceRegistry() {}
 
@@ -82,33 +69,22 @@ public final class NaturalResourceRegistry {
         }
 
         // Iterate all block types; those not in craftableBlockIds are natural
-        Set<String> coreItems = new HashSet<>();
-        Set<String> allItems = new HashSet<>();
-
         for (var entry : BlockType.getAssetMap().getAssetMap().entrySet()) {
             BlockType bt = entry.getValue();
             if (bt == null) continue;
             String btId = bt.getId();
             if ("Empty".equals(btId) || "Unknown".equals(btId)) continue;
+            if (btId.startsWith("*") || btId.startsWith("Block_Placeholder")) continue;
             if (craftableBlockIds.contains(btId)) continue;
 
             blockTypes.add(btId);
-
-            // TODO: Determine if this block is a Deco block using isDecoBlock(bt).
-            //       If Deco: collect drops into allItems ONLY.
-            //       If non-Deco: collect drops into BOTH coreItems AND allItems.
-            //       This prevents Deco-only drops (e.g. Ingredient_Fibre from
-            //       decorative plants) from polluting the core set used for
-            //       base-recipe classification.
             collectDropItems(bt, itemIds);
         }
 
         naturalBlockTypes = Collections.unmodifiableSet(blockTypes);
-        coreNaturalItemIds = Collections.unmodifiableSet(coreItems);
-        allNaturalItemIds = Collections.unmodifiableSet(allItems);
+        naturalItemIds = Collections.unmodifiableSet(itemIds);
         log("Initialized: " + blockTypes.size() + " natural block types, "
-                + coreItems.size() + " core natural items, "
-                + allItems.size() + " total natural items (incl. Deco)");
+                + itemIds.size() + " natural items");
     }
 
     /**
@@ -201,18 +177,9 @@ public final class NaturalResourceRegistry {
         return naturalBlockTypes.contains(blockTypeId);
     }
 
-    /** Returns true if the item ID is dropped by any natural block (including Deco). */
+    /** Returns true if the item ID is dropped by any natural block. */
     public static boolean isNaturalItem(@Nonnull String itemId) {
-        return allNaturalItemIds.contains(itemId);
-    }
-
-    /**
-     * Returns true if the item ID is dropped by a non-Deco natural block.
-     * Use this for base-recipe classification where Deco drops should not
-     * count as "natural" inputs.
-     */
-    public static boolean isCoreNaturalItem(@Nonnull String itemId) {
-        return coreNaturalItemIds.contains(itemId);
+        return naturalItemIds.contains(itemId);
     }
 
     /** Returns the full set of natural block type IDs (read-only). */
@@ -220,31 +187,9 @@ public final class NaturalResourceRegistry {
         return naturalBlockTypes;
     }
 
-    /** Returns the full set of natural resource item IDs including Deco drops (read-only). */
+    /** Returns the full set of natural resource item IDs (read-only). */
     public static Set<String> getNaturalItemIds() {
-        return allNaturalItemIds;
-    }
-
-    /**
-     * Returns the set of natural item IDs from non-Deco blocks only (read-only).
-     * Used by base-recipe classification in BenchRecipeRegistry and BenchBlockClassifier.
-     */
-    public static Set<String> getCoreNaturalItemIds() {
-        return coreNaturalItemIds;
-    }
-
-    /**
-     * Returns true if the given block type is a Deco block (its item has
-     * the {@code Blocks.Deco} category). Delegates to
-     * {@link ResourceTypeResolver#isDeco(Item)}.
-     *
-     * @param bt the block type to check
-     * @return true if Deco
-     */
-    // TODO: Implement — get the block's Item via bt.getItem(), then call
-    //       ResourceTypeResolver.isDeco(item). Return false if item is null.
-    private static boolean isDecoBlock(@Nonnull BlockType bt) {
-        throw new UnsupportedOperationException("TODO: implement isDecoBlock");
+        return naturalItemIds;
     }
 
     /**

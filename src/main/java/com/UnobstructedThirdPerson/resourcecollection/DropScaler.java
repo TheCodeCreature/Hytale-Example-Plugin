@@ -68,19 +68,16 @@ public final class DropScaler {
         int multiplier = ResourceConstants.RESOURCE_MULTIPLIER;
         AssetFieldAccessor f = new AssetFieldAccessor();
 
-        // ── Phase 1: Scale crafting costs for non-base recipes ───────
+        // ── Phase 1: Scale all crafting costs ────────────────────────
         int recipesScaled = scaleCraftingCosts(f, multiplier);
 
-        // ── Phase 2: Collect ingredient item IDs (bench-aware) ───────
-        Set<String> ingredientItemIds = collectIngredientItemIds();
-
-        // ── Phase 3: Classify blocks by bench category ───────────────
+        // ── Phase 2: Classify blocks by bench category ───────────────
         BenchBlockClassifier classifier = new BenchBlockClassifier();
         classifier.classify();
 
-        // ── Phase 4: Process blocks ──────────────────────────────────
+        // ── Phase 3: Process blocks ──────────────────────────────────
 
-        // Phase 4a: Recipe blocks — parallel per category
+        // Phase 3a: Recipe blocks — parallel per category
         List<BenchCategoryProcessor> processors = List.of(
                 new BuildersProcessor(),
                 new FurnitureProcessor(),
@@ -91,9 +88,9 @@ public final class DropScaler {
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             List<Future<BenchCategoryProcessor.ProcessResult>> futures = new ArrayList<>();
             for (BenchCategoryProcessor proc : processors) {
-                Set<String> blocks = classifier.getNonBaseBlocksByCategory(proc.category());
+                Set<String> blocks = classifier.getBlocksByCategory(proc.category());
                 if (!blocks.isEmpty()) {
-                    futures.add(executor.submit(() -> proc.process(blocks, f, ingredientItemIds)));
+                    futures.add(executor.submit(() -> proc.process(blocks, f)));
                 }
             }
             for (Future<BenchCategoryProcessor.ProcessResult> future : futures) {
@@ -113,7 +110,7 @@ public final class DropScaler {
             recipeSkipped += r.skipped();
         }
 
-        // Phase 4b: Natural blocks — sequential (shared-instance tracking)
+        // Phase 3b: Natural blocks — sequential (shared-instance tracking)
         Set<Object> processedConfigs = Collections.newSetFromMap(new IdentityHashMap<>());
         Set<ItemDrop> processedDrops = Collections.newSetFromMap(new IdentityHashMap<>());
         Set<String> processedDropListIds = new HashSet<>();
@@ -126,16 +123,13 @@ public final class DropScaler {
             if (bt == null) continue;
             String btId = bt.getId();
             if ("Empty".equals(btId) || "Unknown".equals(btId)) continue;
+            if (btId.startsWith("*") || btId.startsWith("Block_Placeholder")) continue;
 
             boolean isNatural = NaturalResourceRegistry.isNaturalBlock(btId);
             boolean hasRecipe = classifier.getCategory(btId) != null;
 
             if (isNatural && !hasRecipe) {
-                // TODO: Skip Deco natural blocks (Blocks.Deco category) —
-                //       they should stay at vanilla drop rates. Check via
-                //       the block's Item using ResourceTypeResolver.isDeco().
-                //       Increment naturalSkipped and continue if Deco.
-                if (processNaturalBlock(bt, f, multiplier, ingredientItemIds,
+                if (processNaturalBlock(bt, f, multiplier,
                         processedConfigs, processedDrops, processedDropListIds,
                         syntheticDropLists)) {
                     naturalModified++;
@@ -145,7 +139,7 @@ public final class DropScaler {
             }
         }
 
-        // ── Phase 5: Register synthetic drop lists ───────────────────
+        // ── Phase 4: Register synthetic drop lists ───────────────────
         if (!syntheticDropLists.isEmpty()) {
             try {
                 ItemDropList.getAssetStore().loadAssets(
@@ -156,7 +150,7 @@ public final class DropScaler {
             }
         }
 
-        // ── Phase 6: Scale natural item stack sizes ──────────────────
+        // ── Phase 5: Scale natural item stack sizes ──────────────────
         int stacksBoosted = scaleStackSizes(f, multiplier);
 
         log("Pipeline complete: " + recipesScaled + " recipes scaled, "
@@ -176,8 +170,6 @@ public final class DropScaler {
         for (var entry : reg.getAllRecipesById().entrySet()) {
             String recipeId = entry.getKey();
             CraftingRecipe recipe = entry.getValue();
-
-            if (reg.isBaseBlockRecipe(recipeId)) continue;
 
             MaterialQuantity[] inputs = recipe.getInput();
             if (inputs == null || inputs.length == 0) continue;
@@ -200,12 +192,11 @@ public final class DropScaler {
     }
 
     // ═════════════════════════════════════════════════════════════════
-    //  Phase 4a: Natural Block Processing
+    //  Phase 3b: Natural Block Processing
     // ═════════════════════════════════════════════════════════════════
 
     private static boolean processNaturalBlock(
             BlockType bt, AssetFieldAccessor f, int multiplier,
-            Set<String> ingredientItemIds,
             Set<Object> processedConfigs, Set<ItemDrop> processedDrops,
             Set<String> processedDropListIds, List<ItemDropList> syntheticDropLists) {
 
@@ -221,12 +212,9 @@ public final class DropScaler {
             BlockBreakingDropType breaking = gathering.getBreaking();
             if (breaking != null) {
                 if (breaking.getDropListId() != null) {
-                    // Drop list: scale ingredient items inside the list
-                    scaleDropListIngredients(breaking.getDropListId(),
-                            ingredientItemIds, multiplier,
+                    scaleAllDropListItems(breaking.getDropListId(), multiplier,
                             processedDrops, processedDropListIds, f);
                 } else if (breaking.getQuantity() > 0) {
-                    // Direct itemId (or null fallback): multiply quantity
                     BlockBreakingDropType newBreaking = new BlockBreakingDropType(
                             breaking.getGatherType(), breaking.getQuality(),
                             breaking.getQuantity() * multiplier,
@@ -235,30 +223,27 @@ public final class DropScaler {
                 }
             }
 
-            // ── Scale ingredient drops in soft/harvest/physics ──
+            // ── Scale soft/harvest/physics drops ──
             SoftBlockDropType soft = gathering.getSoft();
             if (soft != null && !processedConfigs.contains(soft)) {
-                processIngredientConfig(soft, soft.getItemId(), soft.getDropListId(),
-                        ingredientItemIds, multiplier,
-                        f.softItemId, f.softDropListId,
+                scaleDropConfig(soft, soft.getItemId(), soft.getDropListId(),
+                        multiplier, f.softItemId, f.softDropListId,
                         processedDrops, processedDropListIds, f, syntheticDropLists);
                 processedConfigs.add(soft);
             }
 
             HarvestingDropType harvest = gathering.getHarvest();
             if (harvest != null && !processedConfigs.contains(harvest)) {
-                processIngredientConfig(harvest, harvest.getItemId(), harvest.getDropListId(),
-                        ingredientItemIds, multiplier,
-                        f.harvestItemId, f.harvestDropListId,
+                scaleDropConfig(harvest, harvest.getItemId(), harvest.getDropListId(),
+                        multiplier, f.harvestItemId, f.harvestDropListId,
                         processedDrops, processedDropListIds, f, syntheticDropLists);
                 processedConfigs.add(harvest);
             }
 
             PhysicsDropType physics = gathering.getPhysics();
             if (physics != null && !processedConfigs.contains(physics)) {
-                processIngredientConfig(physics, physics.getItemId(), physics.getDropListId(),
-                        ingredientItemIds, multiplier,
-                        f.physicsItemId, f.physicsDropListId,
+                scaleDropConfig(physics, physics.getItemId(), physics.getDropListId(),
+                        multiplier, f.physicsItemId, f.physicsDropListId,
                         processedDrops, processedDropListIds, f, syntheticDropLists);
                 processedConfigs.add(physics);
             }
@@ -274,18 +259,17 @@ public final class DropScaler {
     }
 
     // ═════════════════════════════════════════════════════════════════
-    //  Ingredient scaling helpers
+    //  Drop scaling helpers
     // ═════════════════════════════════════════════════════════════════
 
-    private static void processIngredientConfig(
+    private static void scaleDropConfig(
             Object config, String itemId, String dropListId,
-            Set<String> ingredientItemIds, int multiplier,
-            Field itemIdField, Field dropListIdField,
+            int multiplier, Field itemIdField, Field dropListIdField,
             Set<ItemDrop> processedDrops, Set<String> processedDropListIds,
             AssetFieldAccessor f, List<ItemDropList> syntheticDropLists) {
 
-        // Case A: direct itemId that is a recipe ingredient — swap to synthetic drop list
-        if (itemId != null && !"Empty".equals(itemId) && ingredientItemIds.contains(itemId)) {
+        // Case A: direct itemId — swap to synthetic drop list with scaled quantity
+        if (itemId != null && !"Empty".equals(itemId)) {
             String newDlId = DROPLIST_PREFIX + itemId;
             boolean alreadyCreated = syntheticDropLists.stream()
                     .anyMatch(dl -> newDlId.equals(dl.getId()));
@@ -298,20 +282,20 @@ public final class DropScaler {
                 itemIdField.set(config, null);
                 dropListIdField.set(config, newDlId);
             } catch (IllegalAccessException e) {
-                log("ERROR swapping ingredient item " + itemId + ": " + e.getMessage());
+                log("ERROR swapping item " + itemId + ": " + e.getMessage());
             }
             return;
         }
 
-        // Case B: dropListId — scale matching ingredient ItemDrop quantities
+        // Case B: dropListId — scale ALL ItemDrop quantities in the list
         if (dropListId != null) {
-            scaleDropListIngredients(dropListId, ingredientItemIds, multiplier,
+            scaleAllDropListItems(dropListId, multiplier,
                     processedDrops, processedDropListIds, f);
         }
     }
 
-    private static void scaleDropListIngredients(
-            String dropListId, Set<String> ingredientItemIds, int multiplier,
+    private static void scaleAllDropListItems(
+            String dropListId, int multiplier,
             Set<ItemDrop> processedDrops, Set<String> processedDropListIds,
             AssetFieldAccessor f) {
 
@@ -323,25 +307,23 @@ public final class DropScaler {
         List<ItemDrop> allDrops = list.getContainer().getAllDrops(new ArrayList<>());
         for (ItemDrop drop : allDrops) {
             if (drop == null || processedDrops.contains(drop)) continue;
-            String dItemId = drop.getItemId();
-            if (dItemId != null && ingredientItemIds.contains(dItemId)) {
-                try {
-                    int curMin = f.dropQuantityMin.getInt(drop);
-                    int curMax = f.dropQuantityMax.getInt(drop);
-                    f.dropQuantityMin.setInt(drop, curMin * multiplier);
-                    f.dropQuantityMax.setInt(drop, curMax * multiplier);
-                    processedDrops.add(drop);
-                } catch (IllegalAccessException e) {
-                    log("ERROR scaling drop " + dItemId
-                            + " in " + dropListId + ": " + e.getMessage());
-                }
+            try {
+                int curMin = f.dropQuantityMin.getInt(drop);
+                int curMax = f.dropQuantityMax.getInt(drop);
+                f.dropQuantityMin.setInt(drop, curMin * multiplier);
+                f.dropQuantityMax.setInt(drop, curMax * multiplier);
+                processedDrops.add(drop);
+            } catch (IllegalAccessException e) {
+                String dItemId = drop.getItemId();
+                log("ERROR scaling drop " + dItemId
+                        + " in " + dropListId + ": " + e.getMessage());
             }
         }
         processedDropListIds.add(dropListId);
     }
 
     // ═════════════════════════════════════════════════════════════════
-    //  Phase 6: Stack Size Scaling
+    //  Phase 5: Stack Size Scaling
     // ═════════════════════════════════════════════════════════════════
 
     private static int scaleStackSizes(AssetFieldAccessor f, int multiplier) {
@@ -366,24 +348,6 @@ public final class DropScaler {
     //  Utility
     // ═════════════════════════════════════════════════════════════════
 
-    private static Set<String> collectIngredientItemIds() {
-        Set<String> ids = new HashSet<>();
-        for (BenchRecipeRegistry reg : BenchRecipeRegistries.getAllRegistries()) {
-            BenchCategory category = "Builders".equals(reg.getBenchId())
-                    ? BenchCategory.BUILDERS_ONLY : BenchCategory.FURNITURE_ONLY;
-            for (CraftingRecipe recipe : reg.getAllRecipesById().values()) {
-                MaterialQuantity[] inputs = recipe.getInput();
-                if (inputs == null) continue;
-                for (MaterialQuantity mq : inputs) {
-                    if (mq == null) continue;
-                    String resolved = ResourceTypeResolver.resolveInputItemId(mq, category);
-                    if (resolved != null) ids.add(resolved);
-                }
-            }
-        }
-        return ids;
-    }
-
     static BlockGathering cloneGathering(BlockGathering original) throws Exception {
         Constructor<BlockGathering> ctor = BlockGathering.class.getDeclaredConstructor();
         ctor.setAccessible(true);
@@ -394,5 +358,17 @@ public final class DropScaler {
             field.set(clone, field.get(original));
         }
         return clone;
+    }
+
+    static BlockGathering createEmptyGathering() throws Exception {
+        Constructor<BlockGathering> ctor = BlockGathering.class.getDeclaredConstructor();
+        ctor.setAccessible(true);
+        return ctor.newInstance();
+    }
+
+    static SoftBlockDropType createEmptySoftDrop() throws Exception {
+        Constructor<SoftBlockDropType> ctor = SoftBlockDropType.class.getDeclaredConstructor();
+        ctor.setAccessible(true);
+        return ctor.newInstance();
     }
 }

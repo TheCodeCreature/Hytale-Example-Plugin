@@ -21,6 +21,7 @@ final class AssetFieldAccessor {
 
     // BlockGathering / BlockType
     final Field gatheringBreaking;
+    final Field gatheringSoft;
     final Field blockTypeGathering;
     final Field gatheringUseDefaultDrop;
 
@@ -49,6 +50,7 @@ final class AssetFieldAccessor {
     AssetFieldAccessor() {
         try {
             gatheringBreaking     = resolve(BlockGathering.class, "breaking");
+            gatheringSoft         = resolve(BlockGathering.class, "soft");
             blockTypeGathering    = resolve(BlockType.class, "gathering");
             gatheringUseDefaultDrop = resolve(BlockGathering.class, "useDefaultDropWhenPlaced");
 

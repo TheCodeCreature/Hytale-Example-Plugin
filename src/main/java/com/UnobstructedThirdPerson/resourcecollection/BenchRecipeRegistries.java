@@ -78,20 +78,6 @@ public final class BenchRecipeRegistries {
         return null;
     }
 
-    public static boolean isBaseBlockTypeAnywhere(@Nonnull String blockTypeId) {
-        for (BenchRecipeRegistry reg : registries.values()) {
-            if (reg.isBaseBlockType(blockTypeId)) return true;
-        }
-        return false;
-    }
-
-    public static boolean isBaseBlockRecipeAnywhere(@Nonnull String recipeId) {
-        for (BenchRecipeRegistry reg : registries.values()) {
-            if (reg.isBaseBlockRecipe(recipeId)) return true;
-        }
-        return false;
-    }
-
     private static void log(String msg) {
         System.out.println("[BenchRecipeRegs] " + msg);
     }

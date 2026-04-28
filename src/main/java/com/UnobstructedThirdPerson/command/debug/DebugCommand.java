@@ -1,5 +1,6 @@
 package com.UnobstructedThirdPerson.command.debug;
 
+import com.UnobstructedThirdPerson.command.debug.SubCommands.BreakLogSubCommand;
 import com.UnobstructedThirdPerson.command.debug.SubCommands.DebugCubeShapeSubCommand;
 import com.UnobstructedThirdPerson.command.debug.SubCommands.DebugTexturedCubeSubCommand;
 import com.UnobstructedThirdPerson.command.debug.SubCommands.ListHitboxTypesSubCommand;
@@ -15,6 +16,7 @@ public class DebugCommand extends AbstractCommandCollection {
 
     public DebugCommand() {
         super("Debug", "Debug utilities for development");
+        this.addSubCommand(new BreakLogSubCommand());
         this.addSubCommand(new ListHitboxTypesSubCommand());
         this.addSubCommand(new PreviewBlockSubCommand());
         this.addSubCommand(new DebugCubeShapeSubCommand());

@@ -10,7 +10,6 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -36,10 +35,6 @@ import java.util.stream.Stream;
  *
  * <p>This class is <strong>thread-safe</strong> — it holds no mutable state.
  * Each call scans the (read-only, post-init) item asset map.
- *
- * <p>Also provides {@link #isResourceTypeExclusivelyNatural(String, Set)} for
- * base-block classification, which is independent of bench preference and
- * checks whether ALL items matching a ResourceTypeId are natural.
  */
 public final class ResourceTypeResolver {
 
@@ -114,20 +109,6 @@ public final class ResourceTypeResolver {
                                          @Nonnull BenchCategory category) {
         boolean preferNatural = category.preferNatural();
 
-        // TEMP DEBUG: log all candidates for Wood_Hardwood
-        if ("Wood_Hardwood".equals(resId)) {
-            System.out.println("[RTR-DEBUG] Resolving '" + resId + "' category=" + category
-                    + " preferNatural=" + preferNatural);
-            itemsWithResourceType(resId).forEach(e -> {
-                Item it = e.getValue();
-                System.out.println("[RTR-DEBUG]   candidate: " + e.getKey()
-                        + " | set=" + getSetId(it)
-                        + " | setRoot=" + isSetRoot(e.getKey(), it)
-                        + " | blockId=" + it.getBlockId()
-                        + " | natural=" + NaturalResourceRegistry.isNaturalItem(e.getKey()));
-            });
-        }
-
         // Pass 1: preferred items (natural for Furniture, non-natural for Builders),
         // sorted so set-root items (e.g. Planks) come before derivatives (Decorative/Ornate)
         var preferred = itemsWithResourceType(resId)
@@ -136,8 +117,6 @@ public final class ResourceTypeResolver {
                 .map(Map.Entry::getKey)
                 .findFirst();
         if (preferred.isPresent()) {
-            if ("Wood_Hardwood".equals(resId))
-                System.out.println("[RTR-DEBUG]   Pass 1 selected: " + preferred.get());
             return preferred.get();
         }
 
@@ -147,8 +126,6 @@ public final class ResourceTypeResolver {
                 .map(Map.Entry::getKey)
                 .findFirst()
                 .orElse(null);
-        if ("Wood_Hardwood".equals(resId))
-            System.out.println("[RTR-DEBUG]   Pass 2 selected: " + fallback);
         return fallback;
     }
 
@@ -207,27 +184,4 @@ public final class ResourceTypeResolver {
         }
     }
 
-    /**
-     * Returns {@code true} only if <strong>every</strong> item in the asset
-     * map that declares the given ResourceTypeId is a natural item.
-     * Returns {@code false} if any non-natural item matches, or if no item
-     * matches at all.
-     *
-     * <p>Used exclusively for base-block classification in
-     * {@link BenchRecipeRegistry#init()}. This is intentionally independent
-     * of bench preference — classification must be deterministic regardless
-     * of which bench a recipe belongs to.
-     *
-     * @param resId        the resource type ID to check
-     * @param naturalItems the set of known natural item IDs
-     * @return {@code true} if all matching items are natural
-     */
-    public static boolean isResourceTypeExclusivelyNatural(
-            @Nonnull String resId, @Nonnull Set<String> naturalItems) {
-        var matchingItemIds = itemsWithResourceType(resId)
-                .map(Map.Entry::getKey)
-                .toList();
-        return !matchingItemIds.isEmpty()
-                && matchingItemIds.stream().allMatch(naturalItems::contains);
-    }
 }

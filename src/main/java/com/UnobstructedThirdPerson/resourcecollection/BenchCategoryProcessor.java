@@ -44,17 +44,13 @@ public interface BenchCategoryProcessor {
      *   <li>Set the block's breaking config to drop the resolved items</li>
      * </ol>
      *
-     * @param blockTypeIds      the block type IDs to process (non-base blocks
-     *                          for this category)
-     * @param f                 shared (immutable) field accessor for reflection
-     * @param ingredientItemIds merged set of all ingredient item IDs (for
-     *                          cross-reference; may not be needed by all impls)
+     * @param blockTypeIds the block type IDs to process for this category
+     * @param f            shared (immutable) field accessor for reflection
      * @return the result containing modification counts and synthetic drop lists
      */
     @Nonnull
     ProcessResult process(@Nonnull Set<String> blockTypeIds,
-                          @Nonnull AssetFieldAccessor f,
-                          @Nonnull Set<String> ingredientItemIds);
+                          @Nonnull AssetFieldAccessor f);
 
     /**
      * Immutable result of processing a category's blocks.

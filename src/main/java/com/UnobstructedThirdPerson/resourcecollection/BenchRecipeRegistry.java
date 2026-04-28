@@ -1,15 +1,12 @@
 package com.UnobstructedThirdPerson.resourcecollection;
 
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Registry of crafting recipes for a single workbench, identified by its
@@ -38,9 +35,6 @@ public final class BenchRecipeRegistry {
     /** recipe ID → CraftingRecipe (all matching recipes for this bench) */
     private Map<String, CraftingRecipe> recipesById = Collections.emptyMap();
 
-    /** recipe IDs whose inputs are all natural resources ("base block" recipes) */
-    private Set<String> baseBlockRecipeIds = Collections.emptySet();
-
     public BenchRecipeRegistry(@Nonnull String benchId) {
         if (benchId == null) throw new NullPointerException("benchId must not be null");
         this.benchId = benchId;
@@ -63,18 +57,8 @@ public final class BenchRecipeRegistry {
         recipesByBlockType = Collections.unmodifiableMap(byBlock);
         recipesById = Collections.unmodifiableMap(byId);
 
-        // Classify base block recipes: all inputs resolve to natural resource items
-        Set<String> baseIds = new HashSet<>();
-        Set<String> coreNaturalItems = NaturalResourceRegistry.getCoreNaturalItemIds();
-        for (var e : byId.entrySet()) {
-            if (allInputsNatural(e.getValue(), coreNaturalItems)) {
-                baseIds.add(e.getKey());
-            }
-        }
-        baseBlockRecipeIds = Collections.unmodifiableSet(baseIds);
-
         log("[" + benchId + "] Initialized: " + byBlock.size() + " block recipes, "
-                + byId.size() + " total, " + baseIds.size() + " base block recipes");
+                + byId.size() + " total");
     }
 
     @Nullable
@@ -92,38 +76,6 @@ public final class BenchRecipeRegistry {
 
     public Map<String, CraftingRecipe> getAllRecipesByBlockType() {
         return recipesByBlockType;
-    }
-
-    public boolean isBaseBlockRecipe(@Nonnull String recipeId) {
-        return baseBlockRecipeIds.contains(recipeId);
-    }
-
-    public boolean isBaseBlockType(@Nonnull String blockTypeId) {
-        CraftingRecipe recipe = recipesByBlockType.get(blockTypeId);
-        return recipe != null && baseBlockRecipeIds.contains(recipe.getId());
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    //  Base-block classification
-    // ═══════════════════════════════════════════════════════════════
-
-    private static boolean allInputsNatural(@Nonnull CraftingRecipe recipe,
-                                            @Nonnull Set<String> naturalItems) {
-        MaterialQuantity[] inputs = recipe.getInput();
-        if (inputs == null || inputs.length == 0) return false;
-        for (MaterialQuantity mq : inputs) {
-            if (mq == null) continue;
-            String itemId = mq.getItemId();
-            if (itemId != null && !"Empty".equals(itemId)) {
-                if (!naturalItems.contains(itemId)) return false;
-            } else {
-                String resId = mq.getResourceTypeId();
-                if (resId == null) return false;
-                if (!ResourceTypeResolver.isResourceTypeExclusivelyNatural(resId, naturalItems))
-                    return false;
-            }
-        }
-        return true;
     }
 
     private static void log(String msg) {

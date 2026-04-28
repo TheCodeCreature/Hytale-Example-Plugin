@@ -10,6 +10,7 @@ import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
 import com.UnobstructedThirdPerson.portablebench.PortableBenchConfigLoader;
 import com.UnobstructedThirdPerson.portablebench.PortableBenchInteraction;
+import com.UnobstructedThirdPerson.resourcecollection.BreakBlockDiagnostic;
 import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
 import com.UnobstructedThirdPerson.resourcecollection.PlacementCostScaler;
 import com.UnobstructedThirdPerson.placeblock.BlockPreviewReskinManager;
@@ -61,6 +62,9 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         
         // Consume extra items when placing natural blocks (12x cost to match 12x drops)
         this.getEntityStoreRegistry().registerSystem(new PlacementCostScaler());
+
+        // Diagnostic: log block drop config on break (toggle via /Debug BreakLog)
+        this.getEntityStoreRegistry().registerSystem(new BreakBlockDiagnostic());
 
         // Register portable bench interaction type and configs
         this.getCodecRegistry(Interaction.CODEC)

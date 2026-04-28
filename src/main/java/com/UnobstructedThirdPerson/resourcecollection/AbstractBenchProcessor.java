@@ -3,6 +3,7 @@ package com.UnobstructedThirdPerson.resourcecollection;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockBreakingDropType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockGathering;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.SoftBlockDropType;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemDrop;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemDropList;
@@ -36,8 +37,7 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
     @Override
     @Nonnull
     public ProcessResult process(@Nonnull Set<String> blockTypeIds,
-                                  @Nonnull AssetFieldAccessor f,
-                                  @Nonnull Set<String> ingredientItemIds) {
+                                  @Nonnull AssetFieldAccessor f) {
         int modified = 0;
         int skipped = 0;
         List<ItemDropList> localSyntheticDropLists = new ArrayList<>();
@@ -50,7 +50,6 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
             if (recipe == null) { skipped++; continue; }
 
             BlockGathering originalGathering = bt.getGathering();
-            if (originalGathering == null) { skipped++; continue; }
 
             MaterialQuantity[] inputs = recipe.getInput();
             if (inputs == null || inputs.length ==  0) { skipped++; continue; }
@@ -71,8 +70,16 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
             }
             if (resolved.isEmpty()) { skipped++; continue; }
 
+            // Determine if this block uses the soft drop path.
+            // A block is "soft" if its gathering has a non-null SoftBlockDropType.
+            // Blocks with no original gathering (e.g. decorative blocks like Deco_Rope)
+            // also need the soft path since they're breakable without tools.
+            boolean isSoftBlock = originalGathering == null
+                    || originalGathering.isSoft();
+
             // Preserve tool requirements from existing breaking config
-            BlockBreakingDropType existing = originalGathering.getBreaking();
+            BlockBreakingDropType existing = originalGathering != null
+                    ? originalGathering.getBreaking() : null;
             String gatherType = existing != null ? existing.getGatherType() : null;
             int quality = existing != null ? existing.getQuality() : 0;
 
@@ -80,30 +87,45 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
                 // Clone gathering to avoid shared-instance contamination —
                 // child block types that inherit from a parent share the same
                 // BlockGathering Java object. Mutating it would affect all siblings.
-                BlockGathering gathering = DropScaler.cloneGathering(originalGathering);
+                // If no gathering exists (e.g. decorative blocks), create a new one.
+                BlockGathering gathering;
+                if (originalGathering != null) {
+                    gathering = DropScaler.cloneGathering(originalGathering);
+                } else {
+                    gathering = DropScaler.createEmptyGathering();
+                }
                 f.blockTypeGathering.set(bt, gathering);
 
+                // Always build a synthetic drop list — this is the single source
+                // of truth for what drops and how many. Both breaking and soft
+                // configs reference it by ID, so quantities are defined once.
+                String dlId = "Plugin_RecipeDrop_" + btId;
+                SingleItemDropContainer[] containers = new SingleItemDropContainer[resolved.size()];
+                for (int i = 0; i < resolved.size(); i++) {
+                    ResolvedIngredient ing = resolved.get(i);
+                    ItemDrop drop = new ItemDrop(ing.itemId(), null, ing.dropQty(), ing.dropQty());
+                    containers[i] = new SingleItemDropContainer(drop, 100.0);
+                }
                 if (resolved.size() == 1) {
-                    ResolvedIngredient ing = resolved.getFirst();
-                    BlockBreakingDropType newBreaking = new BlockBreakingDropType(
-                            gatherType, quality, ing.dropQty(), ing.itemId(), null);
-                    f.gatheringBreaking.set(gathering, newBreaking);
+                    localSyntheticDropLists.add(new ItemDropList(dlId, containers[0]));
                 } else {
-                    String dlId = "Plugin_RecipeDrop_" + btId;
-                    SingleItemDropContainer[] containers = new SingleItemDropContainer[resolved.size()];
-                    for (int i = 0; i < resolved.size(); i++) {
-                        ResolvedIngredient ing = resolved.get(i);
-                        ItemDrop drop = new ItemDrop(ing.itemId(), null, ing.dropQty(), ing.dropQty());
-                        containers[i] = new SingleItemDropContainer(drop, 100.0);
-                    }
                     MultipleItemDropContainer multi = new MultipleItemDropContainer(
                             containers, 100.0, 1, 1);
                     localSyntheticDropLists.add(new ItemDropList(dlId, multi));
-
-                    BlockBreakingDropType newBreaking = new BlockBreakingDropType(
-                            gatherType, quality, 1, null, dlId);
-                    f.gatheringBreaking.set(gathering, newBreaking);
                 }
+
+                // Point breaking config at the drop list
+                BlockBreakingDropType newBreaking = new BlockBreakingDropType(
+                        gatherType, quality, 1, null, dlId);
+                f.gatheringBreaking.set(gathering, newBreaking);
+
+                // For soft blocks, also point soft config at the same drop list
+                if (isSoftBlock) {
+                    SoftBlockDropType softDrop = DropScaler.createEmptySoftDrop();
+                    f.softDropListId.set(softDrop, dlId);
+                    f.gatheringSoft.set(gathering, softDrop);
+                }
+
                 modified++;
             } catch (Exception e) {
                 System.out.println("[" + category() + "Processor] ERROR processing " + btId + ": " + e.getMessage());

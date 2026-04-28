@@ -1,12 +1,12 @@
 # Product Board
 
-> Last updated: 2026-04-27 18:00
+> Last updated: 2026-04-27 21:30
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 17
+    "Backlog" : 22
     "In Progress" : 1
     "Done" : 18
     "Cancelled" : 8
@@ -22,6 +22,11 @@ pie title Backlog Distribution
 ### Backlog
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
+| F2604272100 | Feature | Simplified Economy Pipeline | E2604201200 | critical |
+| S2604272105 | Story | Fix NaturalResourceRegistry Init and Simplify | E2604201200 | critical |
+| S2604272110 | Story | Remove Base-Block Classification | E2604201200 | critical |
+| S2604272115 | Story | Simplify DropScaler Pipeline Phases | E2604201200 | critical |
+| S2604272120 | Story | Update Tests for Uniform Scaling | E2604201200 | high |
 | E2604221030 | Epic | PlaceBlock Building Tool | — | high |
 | S2604262305 | Story | Register Custom PlaceBlock Interaction Type | E2604221030 | critical |
 | S2604262310 | Story | Implement Placement Logic in Custom Interaction | E2604221030 | critical |
