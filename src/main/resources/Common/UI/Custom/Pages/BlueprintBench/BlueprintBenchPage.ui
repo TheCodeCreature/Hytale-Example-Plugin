@@ -30,49 +30,6 @@ $C = "../../Common.ui";
     HorizontalAlignment: Start, VerticalAlignment: Center
 );
 
-@SlotLabelStyle = LabelStyle(
-    FontSize: 11, TextColor: #96a9be,
-    HorizontalAlignment: Center, VerticalAlignment: Center
-);
-
-@AssignButtonStyle = TextButtonStyle(
-    Default: (Background: #3a7bd5, LabelStyle: (FontSize: 14, TextColor: #ffffff,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Hovered: (Background: #4a8be5, LabelStyle: (FontSize: 14, TextColor: #ffffff,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Pressed: (Background: #2a6bc5, LabelStyle: (FontSize: 14, TextColor: #ffffff,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-);
-
-@DisabledAssignStyle = TextButtonStyle(
-    Default: (Background: #2b3542, LabelStyle: (FontSize: 14, TextColor: #4a5568,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Hovered: (Background: #2b3542, LabelStyle: (FontSize: 14, TextColor: #4a5568,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Pressed: (Background: #2b3542, LabelStyle: (FontSize: 14, TextColor: #4a5568,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-);
-
-@ConfirmButtonStyle = TextButtonStyle(
-    Default: (Background: #3a7bd5, LabelStyle: (FontSize: 15, TextColor: #ffffff,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Hovered: (Background: #4a8be5, LabelStyle: (FontSize: 15, TextColor: #ffffff,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Pressed: (Background: #2a6bc5, LabelStyle: (FontSize: 15, TextColor: #ffffff,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-);
-
-@DisabledConfirmStyle = TextButtonStyle(
-    Default: (Background: #2b3542, LabelStyle: (FontSize: 15, TextColor: #4a5568,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Hovered: (Background: #2b3542, LabelStyle: (FontSize: 15, TextColor: #4a5568,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Pressed: (Background: #2b3542, LabelStyle: (FontSize: 15, TextColor: #4a5568,
-              RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-);
-
-
-
 @FilterActiveStyle = TextButtonStyle(
     Default: (Background: #2a4a6a, LabelStyle: (FontSize: 11, TextColor: #ffffff,
               HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -94,7 +51,7 @@ $C = "../../Common.ui";
 // ── Page Root ──
 
 Group {
-    Anchor: (Width: 1600, Height: 720);
+    Anchor: (Width: 1080, Height: 720);
     LayoutMode: Top;
 
     // Bench tabs above the container
@@ -111,7 +68,7 @@ Group {
 
         TabButton {
             Icon: "../../Common/RecipesIcon.png";
-            TooltipText: "Builders";
+            TooltipText: "Builders Bench";
             Id: "Builders";
         }
 
@@ -129,10 +86,16 @@ Group {
         Group {
             LayoutMode: Left;
 
-            Label #Title {
-                Text: "Blueprint Bench";
+            Group {
                 FlexWeight: 1;
-                Style: @HeaderStyle;
+                LayoutMode: Left;
+                $C.@Title {
+                    @Text = "Blueprint Bench:";
+                }
+
+                $C.@Title #ActiveBenchLabel {
+                    Text: "All";
+                }
             }
 
             $C.@HeaderSearch {}
@@ -197,12 +160,11 @@ Group {
             // Vertical divider between filters and grid
             Group { Anchor: (Width: 1); Background: #2b3542; }
 
-            // Scrollable wrapping recipe icon grid
+            // Scrollable recipe icon grid (append-based ItemSlotButton cells)
             Group {
                 FlexWeight: 1;
                 LayoutMode: TopScrolling;
                 ScrollbarStyle: $C.@DefaultScrollbarStyle;
-                Padding: (Left: 6);
 
                 Group #RecipeGrid {
                     LayoutMode: LeftCenterWrap;
@@ -215,127 +177,48 @@ Group {
     Group { Anchor: (Width: 1); Background: #2b3542; }
 
     // ══════════════════════════════
-    // RIGHT COLUMN — Details + Assign
+    // RIGHT COLUMN — Recipe Details
     // ══════════════════════════════
     Group {
         Anchor: (Width: 240);
         LayoutMode: Top;
         Padding: (Left: 12);
 
-        // ── Selected Recipe Preview ──
-        Label {
-            Text: "SELECTED RECIPE";
-            Anchor: (Height: 20);
-            Style: @SectionLabelStyle;
-        }
-
-        Group { Anchor: (Height: 6); }
-
-        // Preview row: icon + name
+        // ── Output Icon (centered) ──
         Group {
-            Anchor: (Height: 52);
-            LayoutMode: Left;
+            Anchor: (Height: 72);
+            LayoutMode: Center;
 
-            // Item icon preview
             Group {
-                Anchor: (Width: 48, Height: 48);
+                Anchor: (Width: 64, Height: 64);
                 Background: #1a2332;
 
                 ItemIcon #OutputIcon {
                     Anchor: (Full: 4);
                 }
             }
-
-            Group { Anchor: (Width: 10); }
-
-            // Name
-            Group {
-                FlexWeight: 1;
-                LayoutMode: Top;
-
-                Label #OutputName {
-                    Text: "No recipe selected";
-                    Anchor: (Height: 22);
-                    Style: @DetailLabelStyle;
-                }
-
-                Group { FlexWeight: 1; }
-            }
         }
 
-        Group { Anchor: (Height: 8); }
-
-        // ── Ingredients ──
-        Label {
-            Text: "INGREDIENTS";
-            Anchor: (Height: 18);
-            Style: @SectionLabelStyle;
-        }
-
-        Group { Anchor: (Height: 4); }
-
-        // Scrollable ingredient icon grid
-        Group {
-            LayoutMode: TopScrolling;
-            ScrollbarStyle: $C.@DefaultScrollbarStyle;
-            FlexWeight: 1;
-
-            Group #CostGrid {
-                LayoutMode: LeftCenterWrap;
-            }
+        // ── Output Name ──
+        Label #OutputName {
+            Text: "No recipe selected";
+            Anchor: (Height: 24);
+            // Style: @DetailLabelStyle;
         }
 
         Group { Anchor: (Height: 8); }
         $C.@PanelSeparatorFancy {}
         Group { Anchor: (Height: 8); }
 
-        // ── Placeholder Slots ──
-        Label {
-            Text: "PLACEHOLDER BLOCKS";
-            Anchor: (Height: 20);
-            Style: @SectionLabelStyle;
-        }
-
-        Group { Anchor: (Height: 6); }
-
-        // Container for placeholder slot entries (server appends PlaceholderSlot.ui)
-        Group #PlaceholderSlots {
-            LayoutMode: Top;
-            FlexWeight: 1;
-        }
-
-        // ── Status message ──
-        Label #StatusMessage {
-            Text: "";
-            Anchor: (Height: 18);
-            Style: @SubtextStyle;
-        }
-
-        Group { Anchor: (Height: 8); }
-        $C.@PanelSeparatorFancy {}
-        Group { Anchor: (Height: 8); }
-
-        // ── Get Placeholder ──
-        Label {
-            Text: "GET PLACEHOLDER";
-            Anchor: (Height: 20);
-            Style: @SectionLabelStyle;
-        }
-
         Group { Anchor: (Height: 4); }
 
-        Label #AcquireCostLabel {
-            Text: "Cost: 1× Ingredient_Life_Essence";
-            Anchor: (Height: 16);
-            Style: @SubtextStyle;
-        }
-
-        Group { Anchor: (Height: 6); }
-
-        TextButton #AcquireButton {
-            Text: "Get Placeholder";
-            Anchor: (Height: 36);
-            Style: @ConfirmButtonStyle;
+        // Ingredient grid with quantities shown
+        ItemGrid #CostGrid {
+            FlexWeight: 1;
+            SlotsPerRow: 4;
+            DisplayItemQuantity: true;
+            RenderItemQualityBackground: false;
+            Style: (SlotSize: 48, SlotSpacing: 4);
         }
     }
 

@@ -1,6 +1,5 @@
 package com.UnobstructedThirdPerson.placeblock.ui;
 
-import com.UnobstructedThirdPerson.placeblock.PlaceBlockMetadata;
 import com.UnobstructedThirdPerson.resourcecollection.BenchCategory;
 import com.UnobstructedThirdPerson.resourcecollection.FilteredRecipeEntry;
 import com.UnobstructedThirdPerson.resourcecollection.RecipeFilterRegistry;
@@ -13,15 +12,12 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
-import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
-import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
-import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
-import com.hypixel.hytale.server.core.inventory.container.SimpleItemContainer;
+import com.hypixel.hytale.server.core.ui.ItemGridSlot;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
@@ -37,19 +33,10 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("BlueprintSelectionPage");
 
-    private static final Value<String> SLOT_STYLE_ARMED =
-            Value.ref("Pages/BlueprintBench/PlaceholderSlot.ui", "ArmedStyle");
-    private static final Value<String> SLOT_STYLE_DISABLED =
-            Value.ref("Pages/BlueprintBench/PlaceholderSlot.ui", "DisabledSlotStyle");
-
     private static final Value<String> FILTER_ACTIVE =
             Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "FilterActiveStyle");
     private static final Value<String> FILTER_INACTIVE =
             Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "FilterInactiveStyle");
-
-    private static final String LIFE_ESSENCE_ITEM_ID = "Ingredient_Life_Essence";
-    private static final String PLACEHOLDER_ITEM_ID = "Block_Placeholder";
-    private static final int ACQUIRE_COST = 1;
 
     private static final String ALL_TAB = "All";
     private static final String ALL_FILTER = "All";
@@ -202,20 +189,11 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 false
         );
 
-        // Build tabs, filters, recipe list, detail panel, and placeholder slots
+        // Build tabs, filters, recipe list, and detail panel
         bindBenchTabs(cmd, evt);
         buildSetFilters(cmd, evt);
         buildRecipeList(cmd, evt, store, ref);
         updateDetailPanel(cmd);
-        buildPlaceholderSlots(cmd, evt, store, ref);
-
-        // Bind "Get Placeholder" button
-        evt.addEventBinding(
-                CustomUIEventBindingType.Activating,
-                "#AcquireButton",
-                EventData.of("Action", "GetPlaceholder")
-        );
-        updateAcquireButton(cmd, store, ref);
     }
 
     @Override
@@ -243,13 +221,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 buildSetFilters(cmd, evt);
                 buildRecipeList(cmd, evt, store, ref);
                 updateDetailPanel(cmd);
-                buildPlaceholderSlots(cmd, evt, store, ref);
-                updateAcquireButton(cmd, store, ref);
-                evt.addEventBinding(
-                        CustomUIEventBindingType.Activating,
-                        "#AcquireButton",
-                        EventData.of("Action", "GetPlaceholder")
-                );
                 sendUpdate(cmd, evt, false);
             }
 
@@ -257,10 +228,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             // Set filter toggle — multi-select
             String setFilter = data.action.substring("SetFilter:".length());
             if (ALL_FILTER.equals(setFilter)) {
-                // "All" clears all individual selections
                 activeSetFilters.clear();
             } else {
-                // Toggle individual set
                 if (activeSetFilters.contains(setFilter)) {
                     activeSetFilters.remove(setFilter);
                 } else {
@@ -272,13 +241,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             buildSetFilters(cmd, evt);
             buildRecipeList(cmd, evt, store, ref);
             updateDetailPanel(cmd);
-            buildPlaceholderSlots(cmd, evt, store, ref);
-            updateAcquireButton(cmd, store, ref);
-            evt.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    "#AcquireButton",
-                    EventData.of("Action", "GetPlaceholder")
-            );
             sendUpdate(cmd, evt, false);
 
         } else if (data.craftableFilter != null) {
@@ -291,13 +253,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             buildSetFilters(cmd, evt);
             buildRecipeList(cmd, evt, store, ref);
             updateDetailPanel(cmd);
-            buildPlaceholderSlots(cmd, evt, store, ref);
-            updateAcquireButton(cmd, store, ref);
-            evt.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    "#AcquireButton",
-                    EventData.of("Action", "GetPlaceholder")
-            );
             sendUpdate(cmd, evt, false);
 
         } else if (data.searchQuery != null) {
@@ -308,139 +263,12 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             buildSetFilters(cmd, evt);
             buildRecipeList(cmd, evt, store, ref);
             updateDetailPanel(cmd);
-            buildPlaceholderSlots(cmd, evt, store, ref);
-            updateAcquireButton(cmd, store, ref);
-            evt.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    "#AcquireButton",
-                    EventData.of("Action", "GetPlaceholder")
-            );
             sendUpdate(cmd, evt, false);
 
         } else if (data.recipeId != null) {
             this.selectedRecipeId = data.recipeId;
             buildRecipeList(cmd, evt, store, ref);
             updateDetailPanel(cmd);
-            buildPlaceholderSlots(cmd, evt, store, ref);
-            updateAcquireButton(cmd, store, ref);
-            evt.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    "#AcquireButton",
-                    EventData.of("Action", "GetPlaceholder")
-            );
-            sendUpdate(cmd, evt, false);
-
-        } else if (data.action != null && data.action.startsWith("Assign:")) {
-            // Action format: "Assign:<slotIndex>"
-            String slotIndexStr = data.action.substring("Assign:".length());
-            short slotIndex;
-            try {
-                slotIndex = Short.parseShort(slotIndexStr);
-            } catch (NumberFormatException e) {
-                return;
-            }
-
-            if (this.selectedRecipeId == null) {
-                cmd.set("#StatusMessage.Text", "§eSelect a recipe first.");
-                sendUpdate(cmd, evt, false);
-                return;
-            }
-
-            Player player = store.getComponent(ref, Player.getComponentType());
-            if (player == null) return;
-
-            Inventory inventory = player.getInventory();
-            var combined = inventory.getCombinedHotbarFirst();
-
-            ItemStack stack = combined.getItemStack(slotIndex);
-            if (stack == null || !PlaceBlockMetadata.isPlaceBlock(stack)) {
-                cmd.set("#StatusMessage.Text", "§cSlot no longer contains a placeholder.");
-                buildPlaceholderSlots(cmd, evt, store, ref);
-                sendUpdate(cmd, evt, false);
-                return;
-            }
-
-            RecipeEntry entry = findEntry(this.selectedRecipeId);
-            if (entry == null) {
-                cmd.set("#StatusMessage.Text", "§cRecipe not found.");
-                sendUpdate(cmd, evt, false);
-                return;
-            }
-
-            // Arm the placeholder — slotIndex is the combined container index (hotbar-first)
-            ItemStack armed = PlaceBlockMetadata.arm(stack, entry.recipeId, entry.blockTypeId, (int) slotIndex);
-            combined.setItemStackForSlot(slotIndex, armed);
-
-            cmd.set("#StatusMessage.Text", "§aAssigned " + entry.blockTypeId + " to placeholder.");
-
-            // Refresh placeholder slots to show updated status — stay open
-            buildPlaceholderSlots(cmd, evt, store, ref);
-            updateAcquireButton(cmd, store, ref);
-            evt.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    "#AcquireButton",
-                    EventData.of("Action", "GetPlaceholder")
-            );
-            sendUpdate(cmd, evt, false);
-
-        } else if (data.action != null && data.action.equals("SelectSlot")) {
-            // SlotClicking on ItemGrid — slotIndex from engine event data
-            int idx = data.slotIndex;
-            System.out.println("[BlueprintUI] SlotClicking fired, slotIndex=" + idx
-                    + ", displayedRecipes.size=" + displayedRecipes.size());
-            if (idx >= 0 && idx < displayedRecipes.size()) {
-                this.selectedRecipeId = displayedRecipes.get(idx).recipeId;
-                System.out.println("[BlueprintUI] Selected recipe: " + this.selectedRecipeId);
-            } else {
-                System.out.println("[BlueprintUI] SlotIndex out of range, ignoring");
-            }
-            buildRecipeList(cmd, evt, store, ref);
-            updateDetailPanel(cmd);
-            buildPlaceholderSlots(cmd, evt, store, ref);
-            updateAcquireButton(cmd, store, ref);
-            evt.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    "#AcquireButton",
-                    EventData.of("Action", "GetPlaceholder")
-            );
-            sendUpdate(cmd, evt, false);
-
-        } else if (data.action != null && data.action.equals("GetPlaceholder")) {
-            Player player = store.getComponent(ref, Player.getComponentType());
-            if (player == null) return;
-
-            ItemContainer combined = player.getInventory().getCombinedHotbarFirst();
-            ItemStack costStack = new ItemStack(LIFE_ESSENCE_ITEM_ID, ACQUIRE_COST);
-
-            if (!combined.canRemoveItemStack(costStack)) {
-                cmd.set("#StatusMessage.Text", "§cNot enough Ingredient_Life_Essence.");
-                updateAcquireButton(cmd, store, ref);
-                evt.addEventBinding(
-                        CustomUIEventBindingType.Activating,
-                        "#AcquireButton",
-                        EventData.of("Action", "GetPlaceholder")
-                );
-                sendUpdate(cmd, evt, false);
-                return;
-            }
-
-            combined.removeItemStack(costStack);
-
-            SimpleItemContainer.addOrDropItemStacks(
-                    store, ref, combined,
-                    List.of(new ItemStack(PLACEHOLDER_ITEM_ID, 1))
-            );
-
-            cmd.set("#StatusMessage.Text", "§aPlaceholder acquired!");
-
-            // Refresh placeholder slots and acquire button
-            buildPlaceholderSlots(cmd, evt, store, ref);
-            updateAcquireButton(cmd, store, ref);
-            evt.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    "#AcquireButton",
-                    EventData.of("Action", "GetPlaceholder")
-            );
             sendUpdate(cmd, evt, false);
         }
     }
@@ -448,6 +276,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private void bindBenchTabs(UICommandBuilder cmd, UIEventBuilder evt) {
         // Set the active tab (tabs are static in .ui)
         cmd.set("#BenchTabs.SelectedTab", activeTab);
+        cmd.set("#ActiveBenchLabel.Text", tabDisplayName(activeTab));
 
         // Bind tab change event
         evt.addEventBinding(
@@ -455,6 +284,11 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 EventData.of("@SelectedTab", "#BenchTabs.SelectedTab"),
                 false
         );
+    }
+
+    private static String tabDisplayName(String tabId) {
+        if (tabId == null) return "";
+        return tabId.replace('_', ' ');
     }
 
     private void buildSetFilters(UICommandBuilder cmd, UIEventBuilder evt) {
@@ -534,38 +368,29 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         displayedRecipes = new ArrayList<>(withAffordability);
 
-        System.out.println("[BlueprintUI] Building recipe grid: " + displayedRecipes.size() + " items");
-
+        // Append individual ItemSlotButton cells with per-cell Activating events
         for (int i = 0; i < displayedRecipes.size(); i++) {
             RecipeEntry entry = displayedRecipes.get(i);
-
-            // Append minimal cell template (Group + ItemIcon)
             cmd.append("#RecipeGrid", "Pages/BlueprintBench/RecipeIconCell.ui");
-            String base = "#RecipeGrid[" + i + "]";
+            cmd.set("#RecipeGrid[" + i + "] #CellIcon.ItemId", entry.outputItemId);
 
-            // Set item icon via space-separated child selector
-            cmd.set(base + " #CellIcon.ItemId", entry.outputItemId);
-
-            // Bind click event on cell
             evt.addEventBinding(
                     CustomUIEventBindingType.Activating,
-                    base,
+                    "#RecipeGrid[" + i + "]",
                     EventData.of("RecipeId", entry.recipeId)
             );
         }
     }
 
     private void updateDetailPanel(UICommandBuilder cmd) {
-        cmd.clear("#CostGrid");
-
         if (selectedRecipeId != null) {
             RecipeEntry entry = findEntry(selectedRecipeId);
             if (entry != null) {
                 cmd.set("#OutputIcon.ItemId", entry.outputItemId);
-                cmd.set("#OutputName.Text", entry.blockTypeId);
-                cmd.set("#StatusMessage.Text", "");
+                cmd.set("#OutputName.Text", entry.blockTypeId != null
+                        ? entry.blockTypeId.replace('_', ' ') : entry.outputItemId);
 
-                // Populate ingredient icons
+                // Populate ingredient grid with quantities
                 try {
                     CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
                     if (recipe != null) {
@@ -573,94 +398,36 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                         if (inputs != null) {
                             FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(entry.recipeId);
                             BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
-                            int slot = 0;
-                            for (int i = 0; i < inputs.length; i++) {
-                                if (inputs[i] == null) continue;
-                                String itemId = ResourceTypeResolver.resolveInputItemId(inputs[i], category);
+
+                            // Aggregate quantities by item ID
+                            Map<String, Integer> ingredientMap = new LinkedHashMap<>();
+                            for (MaterialQuantity mq : inputs) {
+                                if (mq == null) continue;
+                                String itemId = ResourceTypeResolver.resolveInputItemId(mq, category);
                                 if (itemId == null || itemId.isEmpty()) continue;
-                                cmd.append("#CostGrid", "Pages/BlueprintBench/CostIconCell.ui");
-                                String base = "#CostGrid[" + slot + "]";
-                                cmd.set(base + " #CostIcon.ItemId", itemId);
-                                slot++;
+                                ingredientMap.merge(itemId, mq.getQuantity(), Integer::sum);
                             }
+
+                            ItemGridSlot[] costSlots = new ItemGridSlot[ingredientMap.size()];
+                            int idx = 0;
+                            for (var e : ingredientMap.entrySet()) {
+                                costSlots[idx++] = new ItemGridSlot(new ItemStack(e.getKey(), e.getValue()))
+                                        .setName(e.getKey().replace('_', ' '));
+                            }
+                            cmd.set("#CostGrid.Slots", costSlots);
+                        } else {
+                            cmd.set("#CostGrid.Slots", new ItemGridSlot[0]);
                         }
                     }
                 } catch (Exception e) {
-                    System.err.println("[BlueprintUI] Error populating cost grid: " + e.getMessage());
-                    e.printStackTrace();
+                    LOGGER.warning("[BlueprintUI] Error populating cost grid: " + e.getMessage());
                 }
                 return;
             }
         }
         cmd.set("#OutputIcon.ItemId", "");
         cmd.set("#OutputName.Text", "No recipe selected");
-        cmd.set("#StatusMessage.Text", "");
-    }
-
-    private void updateAcquireButton(UICommandBuilder cmd,
-                                     Store<EntityStore> store, Ref<EntityStore> ref) {
-        Player player = store.getComponent(ref, Player.getComponentType());
-        if (player == null) return;
-
-        ItemContainer combined = player.getInventory().getCombinedHotbarFirst();
-        boolean canAfford = combined.canRemoveItemStack(
-                new ItemStack(LIFE_ESSENCE_ITEM_ID, ACQUIRE_COST));
-
-        if (canAfford) {
-            cmd.set("#AcquireButton.Style",
-                    Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "ConfirmButtonStyle"));
-        } else {
-            cmd.set("#AcquireButton.Style",
-                    Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "DisabledConfirmStyle"));
-        }
-    }
-
-    private void buildPlaceholderSlots(UICommandBuilder cmd, UIEventBuilder evt,
-                                       Store<EntityStore> store, Ref<EntityStore> ref) {
-        cmd.clear("#PlaceholderSlots");
-
-        Player player = store.getComponent(ref, Player.getComponentType());
-        if (player == null) return;
-
-        var combined = player.getInventory().getCombinedHotbarFirst();
-        int slotIndex = 0;
-
-        for (short i = 0; i < combined.getCapacity(); i++) {
-            ItemStack stack = combined.getItemStack(i);
-            if (stack == null || !PlaceBlockMetadata.isPlaceBlock(stack)) continue;
-
-            cmd.append("#PlaceholderSlots", "Pages/BlueprintBench/PlaceholderSlot.ui");
-
-            String prefix = "#PlaceholderSlots[" + slotIndex + "]";
-
-            // Build display text: "Block_Placeholder → Oak_Planks" or "Block_Placeholder [click to assign]"
-            String armedRecipeId = PlaceBlockMetadata.getArmedRecipeId(stack);
-            String displayText;
-            if (armedRecipeId != null) {
-                String blockTypeId = PlaceBlockMetadata.getOutputBlockTypeId(stack);
-                displayText = stack.getItemId() + " → " + (blockTypeId != null ? blockTypeId : armedRecipeId);
-                cmd.set(prefix + ".Style", SLOT_STYLE_ARMED);
-            } else if (this.selectedRecipeId != null) {
-                displayText = stack.getItemId() + " [click to assign]";
-            } else {
-                displayText = stack.getItemId() + " [select a recipe first]";
-                cmd.set(prefix + ".Style", SLOT_STYLE_DISABLED);
-            }
-            cmd.set(prefix + ".TextSpans", Message.raw(displayText));
-
-            // Clicking the row assigns the selected recipe
-            evt.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    prefix,
-                    EventData.of("Action", "Assign:" + i)
-            );
-
-            slotIndex++;
-        }
-
-        if (slotIndex == 0) {
-            cmd.set("#StatusMessage.Text", "§eNo placeholder blocks in inventory.");
-        }
+        cmd.set("#CostGrid.Slots", new ItemGridSlot[0]);
     }
 
     @Nullable
@@ -681,7 +448,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 .append(new KeyedCodec<>("@SelectedTab", Codec.STRING), (e, s) -> e.selectedTab = s, e -> e.selectedTab).add()
                 .append(new KeyedCodec<>("RecipeId", Codec.STRING), (e, s) -> e.recipeId = s, e -> e.recipeId).add()
                 .append(new KeyedCodec<>("Action", Codec.STRING), (e, s) -> e.action = s, e -> e.action).add()
-                .append(new KeyedCodec<>("SlotIndex", Codec.INTEGER), (e, s) -> e.slotIndex = s, e -> e.slotIndex).add()
                 .build();
 
         String searchQuery;
@@ -689,6 +455,5 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         String selectedTab;
         String recipeId;
         String action;
-        int slotIndex = -1;
     }
 }
