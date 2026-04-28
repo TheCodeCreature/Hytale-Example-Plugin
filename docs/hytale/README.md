@@ -53,6 +53,13 @@ A comprehensive local reference for understanding how Hytale runs, its internal 
   - [Crafting Recipe Format](./assets/formats/crafting-recipe.md) — Recipe JSON structure
   - [Drop List Format](./assets/formats/drop-list.md) — ItemDropList JSON structure
 
+### Custom UI
+- [Custom UI Documentation Index](./ui/README.md) — All UI docs in one place
+- [Custom UI Overview](./ui/custom-ui-overview.md) — Architecture, `.ui` DSL, lifecycle, project structure
+- [UI Element Reference](./ui/ui-element-reference.md) — All element types and properties
+- [CommonUI Library](./ui/ui-commonui-library.md) — Reusable components from `Common.ui`
+- [UI Data Binding](./ui/ui-data-binding.md) — Events, value capture, codec patterns
+
 ### Plugin API
 - [Plugin Lifecycle](./plugins/lifecycle.md) — JavaPlugin, JavaPluginInit, setup(), events
 - [Manifest](./plugins/manifest.md) — manifest.json structure, dependencies, asset packs
