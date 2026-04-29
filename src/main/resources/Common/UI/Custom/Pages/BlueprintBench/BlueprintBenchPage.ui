@@ -51,7 +51,7 @@ $C = "../../Common.ui";
 // ── Page Root ──
 
 Group {
-    Anchor: (Width: 1120, Height: 720);
+    Anchor: (Width: 1160, Height: 720);
     LayoutMode: Top;
 
     // Bench tabs above the container
@@ -179,7 +179,7 @@ Group {
     // RIGHT COLUMN — Recipe Details
     // ══════════════════════════════
     Group {
-        Anchor: (Width: 240);
+        Anchor: (Width: 260);
         LayoutMode: Top;
         Padding: (Left: 12);
 
@@ -191,12 +191,12 @@ Group {
 
         // ── Output Icon (centered) ──
         Group {
-            Anchor: (Height: 72);
+            Anchor: (Height: 94);
             LayoutMode: Center;
 
             Group {
-                Anchor: (Width: 64, Height: 64);
-                FlexWeight: 1;
+                Anchor: (Width: 96, Height: 96);
+                FlexWeight: 2;
 
                 ItemIcon #OutputIcon {
                     Anchor: (Full: 4);
@@ -206,16 +206,10 @@ Group {
 
             // Ingredient list (server-populated via append)
             Group #CostGrid {
-                LayoutMode: Center;
-                FlexWeight: 2;
+                LayoutMode: LeftCenterWrap;
+                FlexWeight: 4;
             }
         }
-
-        Group { Anchor: (Height: 8); }
-        $C.@PanelSeparatorFancy {}
-        Group { Anchor: (Height: 8); }
-
-        Group { Anchor: (Height: 4); }
 
         Group { Anchor: (Height: 8); }
         $C.@PanelSeparatorFancy {}
