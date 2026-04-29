@@ -51,7 +51,7 @@ $C = "../../Common.ui";
 // ── Page Root ──
 
 Group {
-    Anchor: (Width: 1080, Height: 720);
+    Anchor: (Width: 1120, Height: 720);
     LayoutMode: Top;
 
     // Bench tabs above the container
@@ -160,14 +160,19 @@ Group {
             // Vertical divider between filters and grid
             Group { Anchor: (Width: 1); Background: #2b3542; }
 
-            // Scrollable recipe icon grid (append-based ItemSlotButton cells)
+            // Scrollable recipe item grid — ItemGrid for drag support
             Group {
                 FlexWeight: 1;
                 LayoutMode: TopScrolling;
                 ScrollbarStyle: $C.@DefaultScrollbarStyle;
+                Padding: (Left: 8);
 
-                Group #RecipeGrid {
-                    LayoutMode: LeftCenterWrap;
+                ItemGrid #RecipeGrid {
+                    FlexWeight: 1;
+                    SlotsPerRow: 9;
+                    DisplayItemQuantity: false;
+                    RenderItemQualityBackground: false;
+                    Style: (SlotSize: 64, SlotIconSize: 64, SlotSpacing: 8);
                 }
             }
         }
@@ -191,10 +196,10 @@ Group {
 
             Group {
                 Anchor: (Width: 64, Height: 64);
-                Background: #1a2332;
 
                 ItemIcon #OutputIcon {
                     Anchor: (Full: 4);
+                    ShowItemTooltip: true;
                 }
             }
         }
@@ -212,13 +217,59 @@ Group {
 
         Group { Anchor: (Height: 4); }
 
-        // Ingredient grid with quantities shown
-        ItemGrid #CostGrid {
-            FlexWeight: 1;
-            SlotsPerRow: 4;
-            DisplayItemQuantity: true;
-            RenderItemQualityBackground: false;
-            Style: (SlotSize: 48, SlotIconSize: 48, SlotSpacing: 4);
+        // Ingredient list (server-populated via append)
+        Group #CostGrid {
+            LayoutMode: LeftCenterWrap;
+        }
+
+        Group { Anchor: (Height: 8); }
+        $C.@PanelSeparatorFancy {}
+        Group { Anchor: (Height: 8); }
+
+        // ── Placeholder Input Slot ──
+        Label #InputSlotLabel {
+            Text: "Set Placeholder";
+            Anchor: (Height: 20);
+            Style: @SectionLabelStyle;
+        }
+
+        Group { Anchor: (Height: 4); }
+
+        Group {
+            Anchor: (Height: 48);
+            LayoutMode: Center;
+
+            Group {
+                Anchor: (Width: 48, Height: 48);
+
+                Group {
+                    Anchor: (Width: 48);
+                    LayoutMode: Top;
+
+                    ItemGrid #PlaceholderInputSlot {
+                        FlexWeight: 1;
+                        SlotsPerRow: 1;
+                        DisplayItemQuantity: false;
+                        RenderItemQualityBackground: false;
+                        Style: (SlotSize: 48, SlotIconSize: 48, SlotSpacing: 0);
+                    }
+                }
+
+                Group #PlaceholderDropIndicator {
+                    Anchor: (Width: 24, Height: 24, Horizontal: 0, Vertical: 0);
+                    Background: "../../Common/BlockSelectorSlotDropIcon.png";
+                    HitTestVisible: false;
+                }
+            }
+        }
+
+        Group { Anchor: (Height: 4); }
+
+        // Clear button for the placeholder input
+        $C.@SecondaryTextButton #ClearPlaceholder {
+            Text: "Clear";
+            Anchor: (Height: 28);
+            Visible: false;
         }
     }
 

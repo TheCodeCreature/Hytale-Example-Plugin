@@ -60,6 +60,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private final List<String> benchIds = new ArrayList<>();  // sorted bench IDs
     private String searchQuery = "";
     private String selectedRecipeId;
+    private String placeholderItemId;  // item ID set in the placeholder input slot
     private String activeTab = ALL_TAB;
     private final Set<String> activeSetFilters = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     private CraftableFilter craftableFilter = CraftableFilter.FULL;
@@ -194,6 +195,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         buildSetFilters(cmd, evt);
         buildRecipeList(cmd, evt, store, ref);
         updateDetailPanel(cmd);
+
+        // Initialize placeholder input slot
+        initPlaceholderInputSlot(cmd, evt);
     }
 
     @Override
@@ -270,6 +274,38 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             buildRecipeList(cmd, evt, store, ref);
             updateDetailPanel(cmd);
             sendUpdate(cmd, evt, false);
+
+        } else if ("ClearPlaceholder".equals(data.action)) {
+            this.placeholderItemId = null;
+            updatePlaceholderSlot(cmd, evt);
+            sendUpdate(cmd, evt, false);
+
+        } else if ("PlaceholderDrop".equals(data.action)) {
+            // Dropped event — engine auto-provides ItemStackId from the dragged slot
+            if (data.itemStackId != null && !data.itemStackId.isEmpty()) {
+                this.placeholderItemId = data.itemStackId;
+                updatePlaceholderSlot(cmd, evt);
+                LOGGER.info("[BlueprintUI] Placeholder set via drop: " + data.itemStackId);
+            }
+            sendUpdate(cmd, evt, false);
+
+        } else if ("RecipeHover".equals(data.action)) {
+            // Hover over a recipe slot — preview details using slotIndex
+            if (data.slotIndex != null && data.slotIndex >= 0 && data.slotIndex < displayedRecipes.size()) {
+                RecipeEntry entry = displayedRecipes.get(data.slotIndex);
+                this.selectedRecipeId = entry.recipeId;
+                updateDetailPanel(cmd);
+            }
+            sendUpdate(cmd, evt, false);
+
+        } else if ("RecipeSelect".equals(data.action)) {
+            // Click-release on a recipe slot — confirm selection
+            if (data.slotIndex != null && data.slotIndex >= 0 && data.slotIndex < displayedRecipes.size()) {
+                RecipeEntry entry = displayedRecipes.get(data.slotIndex);
+                this.selectedRecipeId = entry.recipeId;
+                updateDetailPanel(cmd);
+            }
+            sendUpdate(cmd, evt, false);
         }
     }
 
@@ -328,7 +364,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
     private void buildRecipeList(UICommandBuilder cmd, UIEventBuilder evt,
                                  Store<EntityStore> store, Ref<EntityStore> ref) {
-        cmd.clear("#RecipeGrid");
 
         // Compute affordability for each filtered recipe
         Player player = store.getComponent(ref, Player.getComponentType());
@@ -368,21 +403,30 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         displayedRecipes = new ArrayList<>(withAffordability);
 
-        // Append individual ItemSlotButton cells with per-cell Activating events
+        // Build ItemGridSlot array for the recipe grid
+        ItemGridSlot[] recipeSlots = new ItemGridSlot[displayedRecipes.size()];
         for (int i = 0; i < displayedRecipes.size(); i++) {
             RecipeEntry entry = displayedRecipes.get(i);
-            cmd.append("#RecipeGrid", "Pages/BlueprintBench/RecipeIconCell.ui");
-            cmd.set("#RecipeGrid[" + i + "] #CellIcon.ItemId", entry.outputItemId);
-
-            evt.addEventBinding(
-                    CustomUIEventBindingType.Activating,
-                    "#RecipeGrid[" + i + "]",
-                    EventData.of("RecipeId", entry.recipeId)
-            );
+            ItemGridSlot slot = new ItemGridSlot(new ItemStack(entry.outputItemId, 1));
+            slot.setActivatable(true);
+            slot.setName(entry.blockTypeId != null
+                    ? entry.blockTypeId.replace('_', ' ') : entry.outputItemId.replace('_', ' '));
+            recipeSlots[i] = slot;
         }
+        cmd.set("#RecipeGrid.Slots", recipeSlots);
+
+        // Bind hover to preview recipe details
+        evt.addEventBinding(CustomUIEventBindingType.SlotMouseEntered, "#RecipeGrid",
+                EventData.of("Action", "RecipeHover"), false);
+
+        // Bind click-release to confirm recipe selection
+        evt.addEventBinding(CustomUIEventBindingType.SlotClicking, "#RecipeGrid",
+                EventData.of("Action", "RecipeSelect"), false);
     }
 
     private void updateDetailPanel(UICommandBuilder cmd) {
+        cmd.clear("#CostGrid");
+
         if (selectedRecipeId != null) {
             RecipeEntry entry = findEntry(selectedRecipeId);
             if (entry != null) {
@@ -408,15 +452,13 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                                 ingredientMap.merge(itemId, mq.getQuantity(), Integer::sum);
                             }
 
-                            ItemGridSlot[] costSlots = new ItemGridSlot[ingredientMap.size()];
                             int idx = 0;
                             for (var e : ingredientMap.entrySet()) {
-                                costSlots[idx++] = new ItemGridSlot(new ItemStack(e.getKey(), e.getValue()))
-                                        .setName(e.getKey().replace('_', ' '));
+                                cmd.append("#CostGrid", "Pages/BlueprintBench/CostCell.ui");
+                                cmd.set("#CostGrid[" + idx + "] #CostIcon.ItemId", e.getKey());
+                                cmd.set("#CostGrid[" + idx + "] #CostQty.Text", "x" + e.getValue());
+                                idx++;
                             }
-                            cmd.set("#CostGrid.Slots", costSlots);
-                        } else {
-                            cmd.set("#CostGrid.Slots", new ItemGridSlot[0]);
                         }
                     }
                 } catch (Exception e) {
@@ -427,7 +469,36 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         }
         cmd.set("#OutputIcon.ItemId", "");
         cmd.set("#OutputName.Text", "No recipe selected");
-        cmd.set("#CostGrid.Slots", new ItemGridSlot[0]);
+    }
+
+    private void initPlaceholderInputSlot(UICommandBuilder cmd, UIEventBuilder evt) {
+        this.placeholderItemId = null;
+        updatePlaceholderSlot(cmd, evt);
+    }
+
+    private void updatePlaceholderSlot(UICommandBuilder cmd, UIEventBuilder evt) {
+        if (placeholderItemId != null) {
+            ItemGridSlot slot = new ItemGridSlot(new ItemStack(placeholderItemId, 1));
+            slot.setActivatable(true);
+            slot.setName(placeholderItemId.replace('_', ' '));
+            cmd.set("#PlaceholderInputSlot.Slots", new ItemGridSlot[] { slot });
+            cmd.set("#PlaceholderDropIndicator.Visible", false);
+            cmd.set("#ClearPlaceholder.Visible", true);
+        } else {
+            ItemGridSlot emptySlot = new ItemGridSlot();
+            emptySlot.setActivatable(true);
+            cmd.set("#PlaceholderInputSlot.Slots", new ItemGridSlot[] { emptySlot });
+            cmd.set("#PlaceholderDropIndicator.Visible", true);
+            cmd.set("#ClearPlaceholder.Visible", false);
+        }
+
+        // Bind Dropped event on the input slot
+        evt.addEventBinding(CustomUIEventBindingType.Dropped, "#PlaceholderInputSlot",
+                EventData.of("Action", "PlaceholderDrop"), false);
+
+        // Bind clear button
+        evt.addEventBinding(CustomUIEventBindingType.Activating, "#ClearPlaceholder",
+                EventData.of("Action", "ClearPlaceholder"), false);
     }
 
     @Nullable
@@ -448,6 +519,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 .append(new KeyedCodec<>("@SelectedTab", Codec.STRING), (e, s) -> e.selectedTab = s, e -> e.selectedTab).add()
                 .append(new KeyedCodec<>("RecipeId", Codec.STRING), (e, s) -> e.recipeId = s, e -> e.recipeId).add()
                 .append(new KeyedCodec<>("Action", Codec.STRING), (e, s) -> e.action = s, e -> e.action).add()
+                .append(new KeyedCodec<>("ItemStackId", Codec.STRING), (e, s) -> e.itemStackId = s, e -> e.itemStackId).add()
+                .append(new KeyedCodec<>("SlotIndex", Codec.INTEGER), (e, i) -> e.slotIndex = i, e -> e.slotIndex).add()
                 .build();
 
         String searchQuery;
@@ -455,5 +528,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         String selectedTab;
         String recipeId;
         String action;
+        String itemStackId;
+        Integer slotIndex;
     }
 }

@@ -1,0 +1,21 @@
+// Cost cell — single ingredient icon with quantity overlay
+$C = "../../Common.ui";
+
+Group {
+    Anchor: (Width: 52, Height: 52);
+
+    ItemIcon #CostIcon {
+        Anchor: (Full: 2);
+        ShowItemTooltip: true;
+    }
+
+    Label #CostQty {
+        Text: "";
+        Anchor: (Height: 14, Bottom: 0, Right: 2);
+        Style: LabelStyle(
+            ...$C.@DefaultLabelStyle,
+            FontSize: 11, TextColor: #ffffff,
+            HorizontalAlignment: End, VerticalAlignment: End
+        );
+    }
+}
