@@ -159,9 +159,11 @@ val killExistingServers = tasks.register("killExistingServers") {
     description = "Kills any already-running HytaleServer processes to free the port."
 
     doLast {
+        val serverPort = "5520"
         val os = System.getProperty("os.name").lowercase()
         if (os.contains("win")) {
-            val result = providers.exec {
+            // Strategy 1: Find by command line (original approach)
+            val cmdLineResult = providers.exec {
                 isIgnoreExitValue = true
                 commandLine("powershell", "-NoProfile", "-Command",
                     """
@@ -172,12 +174,33 @@ val killExistingServers = tasks.register("killExistingServers") {
                 )
             }.standardOutput.asText.get()
 
-            val pids = result.lines().map { it.trim() }.filter { it.isNotEmpty() }
+            // Strategy 2: Find by port (catches processes the command-line filter misses)
+            val portResult = providers.exec {
+                isIgnoreExitValue = true
+                commandLine("cmd", "/c", "netstat -ano | findstr :$serverPort")
+            }.standardOutput.asText.get()
 
-            if (pids.isEmpty()) {
-                logger.lifecycle("✅ No existing HytaleServer processes found.")
+            val portPids = portResult.lines()
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .mapNotNull { line -> line.split("\\s+".toRegex()).lastOrNull()?.trim() }
+                .filter { it.all(Char::isDigit) && it != "0" }
+                .toSet()
+
+            val cmdLinePids = cmdLineResult.lines().map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+
+            val allPids = (cmdLinePids + portPids).toSet()
+
+            if (allPids.isEmpty()) {
+                logger.lifecycle("✅ No existing HytaleServer processes found (checked command line and port $serverPort).")
             } else {
-                pids.forEach { pid ->
+                if (cmdLinePids.isNotEmpty()) {
+                    logger.lifecycle("Found PIDs by command line match: $cmdLinePids")
+                }
+                if (portPids.isNotEmpty()) {
+                    logger.lifecycle("Found PIDs on port $serverPort: $portPids")
+                }
+                allPids.forEach { pid ->
                     logger.lifecycle("⚠️ Killing existing HytaleServer process (PID $pid)...")
                     providers.exec {
                         commandLine("taskkill", "/F", "/PID", pid)
@@ -185,25 +208,97 @@ val killExistingServers = tasks.register("killExistingServers") {
                     }
                 }
                 Thread.sleep(1000)
-                logger.lifecycle("✅ Killed ${pids.size} existing server process(es).")
+                logger.lifecycle("✅ Killed ${allPids.size} existing server process(es).")
             }
         } else {
-            val result = providers.exec {
+            // Strategy 1: Find by command line
+            val cmdLineResult = providers.exec {
                 commandLine("sh", "-c", "pgrep -f 'com.hypixel.hytale.Main' || true")
             }.standardOutput.asText.get()
 
-            val pids = result.lines().map { it.trim() }.filter { it.isNotEmpty() }
+            // Strategy 2: Find by port
+            val portResult = providers.exec {
+                isIgnoreExitValue = true
+                commandLine("sh", "-c", "ss -ulnp sport = :$serverPort 2>/dev/null | awk 'NR>1{print \$NF}' | grep -oP 'pid=\\K[0-9]+' || true")
+            }.standardOutput.asText.get()
 
-            if (pids.isEmpty()) {
-                logger.lifecycle("✅ No existing HytaleServer processes found.")
+            val cmdLinePids = cmdLineResult.lines().map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+            val portPids = portResult.lines().map { it.trim() }.filter { it.isNotEmpty() && it.all(Char::isDigit) }.toSet()
+            val allPids = (cmdLinePids + portPids).toSet()
+
+            if (allPids.isEmpty()) {
+                logger.lifecycle("✅ No existing HytaleServer processes found (checked command line and port $serverPort).")
             } else {
-                pids.forEach { pid ->
+                allPids.forEach { pid ->
                     logger.lifecycle("⚠️ Killing existing HytaleServer process (PID $pid)...")
                     providers.exec { commandLine("kill", "-9", pid) }
                 }
                 Thread.sleep(1000)
-                logger.lifecycle("✅ Killed ${pids.size} existing server process(es).")
+                logger.lifecycle("✅ Killed ${allPids.size} existing server process(es).")
             }
+        }
+    }
+}
+
+val checkNoExistingServers = tasks.register("checkNoExistingServers") {
+    group = "hytale"
+    description = "Fails the build if a HytaleServer is already running. Run 'killExistingServers' to stop it."
+
+    doLast {
+        val serverPort = "5520"
+        val os = System.getProperty("os.name").lowercase()
+        val pids = mutableSetOf<String>()
+
+        if (os.contains("win")) {
+            val cmdLineResult = providers.exec {
+                isIgnoreExitValue = true
+                commandLine("powershell", "-NoProfile", "-Command",
+                    """
+                    Get-CimInstance Win32_Process -Filter "Name='java.exe'" |
+                        Where-Object { ${'$'}_.CommandLine -like '*com.hypixel.hytale.Main*' } |
+                        ForEach-Object { ${'$'}_.ProcessId }
+                    """.trimIndent()
+                )
+            }.standardOutput.asText.get()
+
+            val portResult = providers.exec {
+                isIgnoreExitValue = true
+                commandLine("cmd", "/c", "netstat -ano | findstr :$serverPort")
+            }.standardOutput.asText.get()
+
+            pids += cmdLineResult.lines().map { it.trim() }.filter { it.isNotEmpty() }
+            pids += portResult.lines()
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .mapNotNull { line -> line.split("\\s+".toRegex()).lastOrNull()?.trim() }
+                .filter { it.all(Char::isDigit) && it != "0" }
+        } else {
+            val cmdLineResult = providers.exec {
+                commandLine("sh", "-c", "pgrep -f 'com.hypixel.hytale.Main' || true")
+            }.standardOutput.asText.get()
+
+            val portResult = providers.exec {
+                isIgnoreExitValue = true
+                commandLine("sh", "-c", "ss -ulnp sport = :$serverPort 2>/dev/null | awk 'NR>1{print \$NF}' | grep -oP 'pid=\\K[0-9]+' || true")
+            }.standardOutput.asText.get()
+
+            pids += cmdLineResult.lines().map { it.trim() }.filter { it.isNotEmpty() }
+            pids += portResult.lines().map { it.trim() }.filter { it.isNotEmpty() && it.all(Char::isDigit) }
+        }
+
+        if (pids.isNotEmpty()) {
+            throw GradleException(
+                """
+                |
+                |⚠️  Existing HytaleServer detected! (PIDs: ${pids.joinToString(", ")})
+                |    Cannot start a new server while one is already running.
+                |
+                |    Run:  ./gradlew killExistingServers
+                |    Then retry your command.
+                """.trimMargin()
+            )
+        } else {
+            logger.lifecycle("✅ No existing HytaleServer processes found — safe to start.")
         }
     }
 }
@@ -213,7 +308,7 @@ afterEvaluate {
     val targetTask = tasks.findByName("runServer") ?: tasks.findByName("server")
 
     if (targetTask != null) {
-        targetTask.dependsOn(killExistingServers)
+        targetTask.dependsOn(checkNoExistingServers)
         targetTask.dependsOn(deployCommonAssets)
 
         // Only sync assets back on successful server shutdown, NOT on kill/failure.
