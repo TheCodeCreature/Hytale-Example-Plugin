@@ -1,5 +1,7 @@
 package com.UnobstructedThirdPerson.placeblock.ui;
 
+import com.UnobstructedThirdPerson.placeblock.BlockPreviewReskinManager;
+import com.UnobstructedThirdPerson.placeblock.PlaceBlockMetadata;
 import com.UnobstructedThirdPerson.resourcecollection.BenchCategory;
 import com.UnobstructedThirdPerson.resourcecollection.FilteredRecipeEntry;
 import com.UnobstructedThirdPerson.resourcecollection.RecipeFilterRegistry;
@@ -12,13 +14,16 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.item.config.BlockGroup;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
+import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
+import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.ui.ItemGridSlot;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
@@ -50,13 +55,13 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private final List<String> benchIds = new ArrayList<>();  // sorted bench IDs
     private String searchQuery = "";
     private String selectedRecipeId;
-    private String placeholderItemId;  // item ID set in the placeholder input slot
     private String activeTab = ALL_TAB;
     private final Set<String> activeSetFilters = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     private boolean affordabilityEnabled = true;
     private boolean showUncategorized = false;
     private List<RecipeFilterPipeline.TaggedRecipe> displayedRecipes = new ArrayList<>();
     private List<String> currentSets = new ArrayList<>();  // sets for active tab
+    private List<PlaceholderSlotInfo> placeholderSlots = new ArrayList<>();  // hotbar placeholders
 
     private Ref<EntityStore> playerRef_ref;
     private Store<EntityStore> playerStore;
@@ -164,8 +169,14 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         buildRecipeList(cmd, evt, store, ref);
         updateDetailPanel(cmd);
 
-        // Initialize placeholder input slot
-        initPlaceholderInputSlot(cmd, evt);
+        // Build placeholder list from hotbar
+        buildPlaceholderList(cmd, evt, store, ref);
+
+        // Bind "Get Placeholder" button
+        evt.addEventBinding(
+                CustomUIEventBindingType.Activating, "#GetPlaceholderBtn",
+                EventData.of("Action", "GetPlaceholder")
+        );
     }
 
     @Override
@@ -249,17 +260,32 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             updateDetailPanel(cmd);
             sendUpdate(cmd, evt, false);
 
-        } else if ("ClearPlaceholder".equals(data.action)) {
-            this.placeholderItemId = null;
-            updatePlaceholderSlot(cmd, evt);
+        } else if (data.action != null && data.action.startsWith("PlaceholderDrop:")) {
+            // Drag recipe from grid into a specific placeholder row
+            int hotbarSlot = -1;
+            try {
+                hotbarSlot = Integer.parseInt(data.action.substring("PlaceholderDrop:".length()));
+            } catch (NumberFormatException ignored) {}
+
+            if (hotbarSlot >= 0 && hotbarSlot < PlaceBlockMetadata.HOTBAR_SIZE
+                    && data.itemStackId != null && !data.itemStackId.isEmpty()) {
+                armPlaceholder(store, ref, hotbarSlot, data.itemStackId);
+                buildPlaceholderList(cmd, evt, store, ref);
+                LOGGER.info("[BlueprintUI] Armed slot " + hotbarSlot + " with " + data.itemStackId);
+            }
             sendUpdate(cmd, evt, false);
 
-        } else if ("PlaceholderDrop".equals(data.action)) {
-            // Dropped event — engine auto-provides ItemStackId from the dragged slot
-            if (data.itemStackId != null && !data.itemStackId.isEmpty()) {
-                this.placeholderItemId = data.itemStackId;
-                updatePlaceholderSlot(cmd, evt);
-                LOGGER.info("[BlueprintUI] Placeholder set via drop: " + data.itemStackId);
+        } else if (data.action != null && data.action.startsWith("PlaceholderClear:")) {
+            // Drag out of placeholder row — disarm
+            int hotbarSlot = -1;
+            try {
+                hotbarSlot = Integer.parseInt(data.action.substring("PlaceholderClear:".length()));
+            } catch (NumberFormatException ignored) {}
+
+            if (hotbarSlot >= 0 && hotbarSlot < PlaceBlockMetadata.HOTBAR_SIZE) {
+                disarmPlaceholder(store, ref, hotbarSlot);
+                buildPlaceholderList(cmd, evt, store, ref);
+                LOGGER.info("[BlueprintUI] Disarmed slot " + hotbarSlot);
             }
             sendUpdate(cmd, evt, false);
 
@@ -279,6 +305,11 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 this.selectedRecipeId = entry.recipeId();
                 updateDetailPanel(cmd);
             }
+            sendUpdate(cmd, evt, false);
+
+        } else if ("GetPlaceholder".equals(data.action)) {
+            craftPlaceholder(store, ref, cmd);
+            buildPlaceholderList(cmd, evt, store, ref);
             sendUpdate(cmd, evt, false);
         }
     }
@@ -410,34 +441,176 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         cmd.set("#OutputName.Text", "No recipe selected");
     }
 
-    private void initPlaceholderInputSlot(UICommandBuilder cmd, UIEventBuilder evt) {
-        this.placeholderItemId = null;
-        updatePlaceholderSlot(cmd, evt);
+    // ─── Placeholder list ─────────────────────────────────────
+
+    private record PlaceholderSlotInfo(int hotbarSlot, boolean armed,
+                                       @Nullable String outputItemId,
+                                       @Nullable String blockName) {}
+
+    private List<PlaceholderSlotInfo> scanHotbarPlaceholders(Store<EntityStore> store, Ref<EntityStore> ref) {
+        List<PlaceholderSlotInfo> result = new ArrayList<>();
+        Player player = store.getComponent(ref, Player.getComponentType());
+        if (player == null) return result;
+
+        ItemContainer hotbar = player.getInventory().getHotbar();
+        for (short slot = 0; slot < PlaceBlockMetadata.HOTBAR_SIZE; slot++) {
+            ItemStack stack = hotbar.getItemStack(slot);
+            if (!PlaceBlockMetadata.isPlaceBlock(stack)) continue;
+
+            boolean armed = PlaceBlockMetadata.isArmed(stack);
+            String outputItemId = null;
+            String blockName = null;
+
+            if (armed) {
+                String blockTypeId = PlaceBlockMetadata.getOutputBlockTypeId(stack);
+                if (blockTypeId != null) {
+                    blockName = blockTypeId.replace('_', ' ');
+                    // Find the output item ID from our recipe registry using the blockTypeId
+                    for (RecipeEntry entry : allRecipes) {
+                        if (blockTypeId.equals(entry.blockTypeId())) {
+                            outputItemId = entry.outputItemId();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            result.add(new PlaceholderSlotInfo(slot, armed, outputItemId, blockName));
+        }
+        return result;
     }
 
-    private void updatePlaceholderSlot(UICommandBuilder cmd, UIEventBuilder evt) {
-        if (placeholderItemId != null) {
-            ItemGridSlot slot = new ItemGridSlot(new ItemStack(placeholderItemId, 1));
-            slot.setActivatable(true);
-            slot.setName(placeholderItemId.replace('_', ' '));
-            cmd.set("#PlaceholderInputSlot.Slots", new ItemGridSlot[] { slot });
-            cmd.set("#PlaceholderDropIndicator.Visible", false);
-            cmd.set("#ClearPlaceholder.Visible", true);
-        } else {
-            ItemGridSlot emptySlot = new ItemGridSlot();
-            emptySlot.setActivatable(true);
-            cmd.set("#PlaceholderInputSlot.Slots", new ItemGridSlot[] { emptySlot });
-            cmd.set("#PlaceholderDropIndicator.Visible", true);
-            cmd.set("#ClearPlaceholder.Visible", false);
+    private void buildPlaceholderList(UICommandBuilder cmd, UIEventBuilder evt,
+                                      Store<EntityStore> store, Ref<EntityStore> ref) {
+        cmd.clear("#PlaceholderList");
+        this.placeholderSlots = scanHotbarPlaceholders(store, ref);
+
+        for (int i = 0; i < placeholderSlots.size(); i++) {
+            PlaceholderSlotInfo info = placeholderSlots.get(i);
+            String rowSel = "#PlaceholderList[" + i + "]";
+
+            // Append row template
+            cmd.append("#PlaceholderList", "Pages/BlueprintBench/PlaceholderRow.ui");
+
+            // Set slot number label
+            cmd.set(rowSel + " #RowSlotLabel.Text", String.valueOf(info.hotbarSlot + 1));
+
+            // Set input slot contents
+            if (info.armed && info.outputItemId != null) {
+                ItemGridSlot slot = new ItemGridSlot(new ItemStack(info.outputItemId, 1));
+                slot.setActivatable(true);
+                slot.setName(info.blockName != null ? info.blockName : "");
+                cmd.set(rowSel + " #RowInputSlot.Slots", new ItemGridSlot[]{slot});
+                cmd.set(rowSel + " #RowBlockName.Text", info.blockName != null ? info.blockName : "");
+            } else {
+                ItemGridSlot emptySlot = new ItemGridSlot();
+                emptySlot.setActivatable(true);
+                cmd.set(rowSel + " #RowInputSlot.Slots", new ItemGridSlot[]{emptySlot});
+                cmd.set(rowSel + " #RowBlockName.Text", "Empty");
+            }
+
+            // Bind drop event — arm on drop (uses hotbar slot, not row index)
+            evt.addEventBinding(CustomUIEventBindingType.Dropped,
+                    rowSel + " #RowInputSlot",
+                    EventData.of("Action", "PlaceholderDrop:" + info.hotbarSlot), false);
+
+            // Show clear button and bind it only if armed
+            if (info.armed) {
+                cmd.set(rowSel + " #RowClearBtn.Visible", true);
+                evt.addEventBinding(CustomUIEventBindingType.Activating,
+                        rowSel + " #RowClearBtn",
+                        EventData.of("Action", "PlaceholderClear:" + info.hotbarSlot));
+            }
         }
 
-        // Bind Dropped event on the input slot
-        evt.addEventBinding(CustomUIEventBindingType.Dropped, "#PlaceholderInputSlot",
-                EventData.of("Action", "PlaceholderDrop"), false);
+        if (placeholderSlots.isEmpty()) {
+            cmd.appendInline("#PlaceholderList",
+                    "Label { Text: \"No placeholders in hotbar\"; Anchor: (Height: 32); " +
+                    "Style: LabelStyle(FontSize: 11, TextColor: #6e7da1, " +
+                    "HorizontalAlignment: Center, VerticalAlignment: Center); }");
+        }
+    }
 
-        // Bind clear button
-        evt.addEventBinding(CustomUIEventBindingType.Activating, "#ClearPlaceholder",
-                EventData.of("Action", "ClearPlaceholder"), false);
+    private void armPlaceholder(Store<EntityStore> store, Ref<EntityStore> ref,
+                                int hotbarSlot, String droppedItemId) {
+        Player player = store.getComponent(ref, Player.getComponentType());
+        if (player == null) return;
+
+        // Find the recipe and block type for the dropped item
+        String recipeId = null;
+        String blockTypeId = null;
+        for (RecipeEntry entry : allRecipes) {
+            if (droppedItemId.equals(entry.outputItemId())) {
+                recipeId = entry.recipeId();
+                blockTypeId = entry.blockTypeId();
+                break;
+            }
+        }
+        if (recipeId == null || blockTypeId == null) {
+            LOGGER.warning("[BlueprintUI] No recipe found for dropped item: " + droppedItemId);
+            return;
+        }
+
+        Inventory inventory = player.getInventory();
+        ItemContainer hotbar = inventory.getHotbar();
+        ItemStack stack = hotbar.getItemStack((short) hotbarSlot);
+        if (!PlaceBlockMetadata.isPlaceBlock(stack)) return;
+
+        ItemStack armed = PlaceBlockMetadata.arm(stack, recipeId, blockTypeId, hotbarSlot);
+        hotbar.setItemStackForSlot((short) hotbarSlot, armed);
+
+        // Sync ghost preview for the updated slot
+        BlockPreviewReskinManager.syncPlaceholder(this.playerRef, inventory);
+    }
+
+    private void disarmPlaceholder(Store<EntityStore> store, Ref<EntityStore> ref,
+                                   int hotbarSlot) {
+        Player player = store.getComponent(ref, Player.getComponentType());
+        if (player == null) return;
+
+        Inventory inventory = player.getInventory();
+        ItemContainer hotbar = inventory.getHotbar();
+        ItemStack stack = hotbar.getItemStack((short) hotbarSlot);
+        if (!PlaceBlockMetadata.isPlaceBlock(stack)) return;
+
+        ItemStack disarmed = PlaceBlockMetadata.disarm(stack);
+        hotbar.setItemStackForSlot((short) hotbarSlot, disarmed);
+
+        // Sync ghost preview
+        BlockPreviewReskinManager.syncPlaceholder(this.playerRef, inventory);
+    }
+
+    private static final String LIFE_ESSENCE_ID = "Ingredient_Life_Essence";
+
+    private void craftPlaceholder(Store<EntityStore> store, Ref<EntityStore> ref,
+                                  UICommandBuilder cmd) {
+        Player player = store.getComponent(ref, Player.getComponentType());
+        if (player == null) return;
+
+        Inventory inventory = player.getInventory();
+        ItemContainer container = inventory.getCombinedBackpackStorageHotbar();
+
+        // Check for 1x Life Essence
+        List<MaterialQuantity> cost = List.of(
+                new MaterialQuantity(LIFE_ESSENCE_ID, null, null, 1, null));
+
+        if (!container.canRemoveMaterials(cost)) {
+            this.playerRef.sendMessage(
+                    Message.raw("\u00a7c[BlueprintBench] Not enough Life Essence."));
+            return;
+        }
+
+        // Consume 1x Life Essence
+        var txn = container.removeMaterials(cost, true, true, true);
+        if (!txn.succeeded()) return;
+
+        // Give 1x Block_Placeholder to hotbar-first
+        ItemStack placeholder = new ItemStack(PlaceBlockMetadata.PLACEHOLDER_ID, 1);
+        inventory.getCombinedHotbarFirst().addItemStack(placeholder);
+
+        this.playerRef.sendMessage(
+                Message.raw("\u00a7a[BlueprintBench] Acquired Block Placeholder."));
+        LOGGER.info("[BlueprintUI] Player crafted placeholder from Life Essence");
     }
 
     @Nullable

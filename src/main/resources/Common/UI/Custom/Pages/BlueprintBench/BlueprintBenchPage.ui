@@ -9,7 +9,8 @@ $C = "../../Common.ui";
 @HeaderStyle = LabelStyle(
     ...$C.@DefaultLabelStyle,
     FontSize: 22, RenderBold: true,
-    HorizontalAlignment: Start, VerticalAlignment: Center
+    HorizontalAlignment: Start, VerticalAlignment: Center,
+    Wrap:true
 );
 
 @DetailLabelStyle = LabelStyle(
@@ -93,8 +94,11 @@ Group {
                     @Text = "Blueprint Bench:";
                 }
 
-                $C.@Title #ActiveBenchLabel {
+                // $C.@Title #ActiveBenchLabel {
+                Label #ActiveBenchLabel {
                     Text: "All";
+                    Style: (FontSize: 18, TextColor: $C.@ColorDefault, RenderBold: true);
+                    MaskTexturePath: $C.@TextHighlightGradientMask;
                 }
             }
 
@@ -186,7 +190,8 @@ Group {
         // ── Output Name ──
         Label #OutputName {
             Text: "No recipe selected";
-            Anchor: (Height: 24);
+            Anchor: (Height: 48);
+            Style: @HeaderStyle;
         }
 
         // ── Output Icon (centered) ──
@@ -215,50 +220,35 @@ Group {
         $C.@PanelSeparatorFancy {}
         Group { Anchor: (Height: 8); }
 
-        // ── Placeholder Input Slot ──
+        // ── Placeholder List ──
         Label #InputSlotLabel {
-            Text: "Set Placeholder";
+            Text: "Placeholders";
             Anchor: (Height: 20);
             Style: @SectionLabelStyle;
         }
 
         Group { Anchor: (Height: 4); }
 
+        // Scrollable list of placeholder rows (server-populated via append)
         Group {
-            Anchor: (Height: 48);
-            LayoutMode: Center;
+            FlexWeight: 1;
+            LayoutMode: TopScrolling;
+            ScrollbarStyle: $C.@DefaultScrollbarStyle;
 
-            Group {
-                Anchor: (Width: 48, Height: 48);
-
-                Group {
-                    Anchor: (Width: 48);
-                    LayoutMode: Top;
-
-                    ItemGrid #PlaceholderInputSlot {
-                        FlexWeight: 1;
-                        SlotsPerRow: 1;
-                        DisplayItemQuantity: false;
-                        RenderItemQualityBackground: false;
-                        Style: (SlotSize: 48, SlotIconSize: 48, SlotSpacing: 0);
-                    }
-                }
-
-                Group #PlaceholderDropIndicator {
-                    Anchor: (Width: 24, Height: 24, Horizontal: 0, Vertical: 0);
-                    Background: "../../Common/BlockSelectorSlotDropIcon.png";
-                    HitTestVisible: false;
-                }
+            Group #PlaceholderList {
+                Padding: (Top: 20);
+                LayoutMode: Top;
             }
         }
 
         Group { Anchor: (Height: 4); }
+        $C.@PanelSeparatorFancy {}
+        Group { Anchor: (Height: 4); }
 
-        // Clear button for the placeholder input
-        $C.@SecondaryTextButton #ClearPlaceholder {
-            Text: "Clear";
-            Anchor: (Height: 28);
-            Visible: false;
+        // ── Get Placeholder Button ──
+        $C.@SecondaryTextButton #GetPlaceholderBtn {
+            Text: "Get Placeholder (1x Life Essence)";
+            Anchor: (Height: 32);
         }
     }
 
