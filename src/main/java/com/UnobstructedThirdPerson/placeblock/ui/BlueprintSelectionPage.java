@@ -1,12 +1,12 @@
 package com.UnobstructedThirdPerson.placeblock.ui;
 
 import com.UnobstructedThirdPerson.placeblock.BlockPreviewReskinManager;
+import com.UnobstructedThirdPerson.placeblock.PlaceBlockCostUtil;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockMetadata;
 import com.UnobstructedThirdPerson.resourcecollection.BenchCategory;
 import com.UnobstructedThirdPerson.resourcecollection.FilteredRecipeEntry;
 import com.UnobstructedThirdPerson.resourcecollection.RecipeFilterRegistry;
 import com.UnobstructedThirdPerson.resourcecollection.ResourceTypeResolver;
-import com.hypixel.hytale.builtin.crafting.component.CraftingManager;
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
@@ -408,14 +408,15 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 try {
                     CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
                     if (recipe != null) {
-                        MaterialQuantity[] inputs = recipe.getInput();
-                        if (inputs != null) {
+                        // Use per-unit cost (recipe cost / output quantity)
+                        List<MaterialQuantity> perUnitInputs = PlaceBlockCostUtil.getPerUnitCost(recipe);
+                        if (!perUnitInputs.isEmpty()) {
                             FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(entry.recipeId);
                             BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
 
                             // Aggregate quantities by item ID
                             Map<String, Integer> ingredientMap = new LinkedHashMap<>();
-                            for (MaterialQuantity mq : inputs) {
+                            for (MaterialQuantity mq : perUnitInputs) {
                                 if (mq == null) continue;
                                 String itemId = ResourceTypeResolver.resolveInputItemId(mq, category);
                                 if (itemId == null || itemId.isEmpty()) continue;
@@ -635,7 +636,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private boolean isAffordable(RecipeFilterPipeline.InputRecipe entry, CombinedItemContainer container) {
         CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId());
         if (recipe != null) {
-            List<MaterialQuantity> materials = CraftingManager.getInputMaterials(recipe, 1);
+            List<MaterialQuantity> materials = PlaceBlockCostUtil.getPerUnitCost(recipe);
             if (container.canRemoveMaterials(materials)) return true;
         }
 

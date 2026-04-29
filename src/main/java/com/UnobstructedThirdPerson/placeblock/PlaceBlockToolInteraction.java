@@ -176,8 +176,8 @@ public class PlaceBlockToolInteraction extends SimpleBlockInteraction {
             return;
         }
 
-        // 7. Get materials
-        List<MaterialQuantity> materials = CraftingManager.getInputMaterials(recipe, 1);
+        // 7. Get per-unit materials (recipe cost / output quantity)
+        List<MaterialQuantity> materials = PlaceBlockCostUtil.getPerUnitCost(recipe);
 
         // 8. Get container
         Inventory inventory = player.getInventory();

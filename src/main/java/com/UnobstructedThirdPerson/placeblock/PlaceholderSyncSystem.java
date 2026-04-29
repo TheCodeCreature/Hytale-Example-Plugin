@@ -1,6 +1,5 @@
 package com.UnobstructedThirdPerson.placeblock;
 
-import com.hypixel.hytale.builtin.crafting.component.CraftingManager;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.registry.Registration;
@@ -101,7 +100,7 @@ public final class PlaceholderSyncSystem {
             CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(recipeId);
             if (recipe == null) continue;
 
-            List<MaterialQuantity> materials = CraftingManager.getInputMaterials(recipe, 1);
+            List<MaterialQuantity> materials = PlaceBlockCostUtil.getPerUnitCost(recipe);
             boolean affordable = container.canRemoveMaterials(materials);
 
             boolean currentlyGreen = PlaceBlockMetadata.isGreenVariant(stack);
