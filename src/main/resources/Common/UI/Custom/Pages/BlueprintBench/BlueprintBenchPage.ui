@@ -218,7 +218,7 @@ Group {
             SlotsPerRow: 4;
             DisplayItemQuantity: true;
             RenderItemQualityBackground: false;
-            Style: (SlotSize: 48, SlotSpacing: 4);
+            Style: (SlotSize: 48, SlotIconSize: 48, SlotSpacing: 4);
         }
     }
 

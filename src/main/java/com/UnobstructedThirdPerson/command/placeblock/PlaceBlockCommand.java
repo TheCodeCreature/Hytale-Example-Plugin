@@ -2,6 +2,7 @@ package com.UnobstructedThirdPerson.command.placeblock;
 
 import com.UnobstructedThirdPerson.command.placeblock.subcommands.AssignSubCommand;
 import com.UnobstructedThirdPerson.command.placeblock.subcommands.ClearSubCommand;
+import com.UnobstructedThirdPerson.command.placeblock.subcommands.GridTestSubCommand;
 import com.UnobstructedThirdPerson.command.placeblock.subcommands.InfoSubCommand;
 import com.UnobstructedThirdPerson.command.placeblock.subcommands.ListSubCommand;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractCommandCollection;
@@ -17,6 +18,7 @@ public class PlaceBlockCommand extends AbstractCommandCollection {
         super("placeblock", "Manage PlaceBlock placeholder arming");
         this.addSubCommand(new AssignSubCommand());
         this.addSubCommand(new ClearSubCommand());
+        this.addSubCommand(new GridTestSubCommand());
         this.addSubCommand(new InfoSubCommand());
         this.addSubCommand(new ListSubCommand());
     }
