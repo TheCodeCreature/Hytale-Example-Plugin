@@ -1,0 +1,314 @@
+package com.UnobstructedThirdPerson.placeblock.ui;
+
+import javax.annotation.Nullable;
+import java.util.*;
+
+/**
+ * Sequential, composable filter pipeline for Blueprint Bench recipes.
+ *
+ * <p>Replaces the interleaved filtering logic previously split across
+ * {@code BlueprintSelectionPage.applyFilter()} and {@code buildRecipeList()}.
+ * Each stage has a single responsibility: take a list, produce a list.
+ * Affordability is computed <b>once</b> in a dedicated tagging stage.
+ *
+ * <h3>Pipeline stages (executed in order):</h3>
+ * <ol>
+ *   <li><b>filterByTab</b> — retain recipes matching the active bench tab</li>
+ *   <li><b>filterBySearch</b> — retain recipes matching the search query</li>
+ *   <li><b>tagAffordability</b> — compute {@code affordable} boolean per recipe;
+ *       normalize null sets to {@link #UNCATEGORIZED_SET}</li>
+ *   <li><b>extractSets</b> — derive sidebar set list from tagged recipes</li>
+ *   <li><b>filterBySets</b> — retain recipes matching selected sets</li>
+ *   <li><b>sort</b> — group by set, affordable-first, then alphabetical</li>
+ * </ol>
+ *
+ * <p>The pipeline is a pure function: no UI state, no side effects, fully testable.
+ */
+public final class RecipeFilterPipeline {
+
+    /** Synthetic set name assigned to recipes whose {@code Item.set} is null. */
+    static final String UNCATEGORIZED_SET = "Uncategorized";
+
+    /** Tab value that means "show all tabs". */
+    private static final String ALL_TAB = "All";
+
+    // ─── Input / Output types ───────────────────────────────────
+
+    /**
+     * A recipe entering the pipeline. Contains only registry-sourced data;
+     * no affordability information.
+     *
+     * @param recipeId     recipe asset ID (e.g. "Wood_Hardwood_Planks")
+     * @param outputItemId output item asset ID
+     * @param blockTypeId  output block type ID
+     * @param benchId      primary bench ID for tab grouping
+     * @param set          {@code Item.set} value; may be {@code null}
+     */
+    public record InputRecipe(
+            String recipeId,
+            String outputItemId,
+            String blockTypeId,
+            String benchId,
+            @Nullable String set
+    ) {}
+
+    /**
+     * A recipe exiting the pipeline, enriched with affordability and a
+     * guaranteed non-null {@code effectiveSet}.
+     *
+     * @param recipeId      recipe asset ID
+     * @param outputItemId  output item asset ID
+     * @param blockTypeId   output block type ID
+     * @param benchId       primary bench ID
+     * @param effectiveSet  never null; equals original set or {@link #UNCATEGORIZED_SET}
+     * @param affordable    {@code true} if the player can craft this recipe
+     *                      (raw materials OR BlockGroup interchangeability)
+     */
+    public record TaggedRecipe(
+            String recipeId,
+            String outputItemId,
+            String blockTypeId,
+            String benchId,
+            String effectiveSet,
+            boolean affordable
+    ) {}
+
+    /**
+     * Complete output of a pipeline execution.
+     *
+     * @param displayedRecipes recipes to render in the grid, sorted and filtered
+     * @param currentSets      set names to show in the sidebar, sorted case-insensitive
+     */
+    public record PipelineResult(
+            List<TaggedRecipe> displayedRecipes,
+            List<String> currentSets
+    ) {}
+
+    /**
+     * Functional interface for affordability checks.
+     *
+     * <p>Implementations should account for both raw material availability
+     * (does the player have all required ingredients?) and BlockGroup
+     * interchangeability (does the player own any member of the output's
+     * FullBlocks group, enabling free conversion?).
+     *
+     * <p>The pipeline calls this exactly once per recipe per execution.
+     * Implementations may safely perform asset lookups and inventory scans.
+     */
+    @FunctionalInterface
+    public interface AffordabilityChecker {
+
+        /**
+         * Determines whether the given recipe is affordable for the current player.
+         *
+         * @param recipe the recipe to check (provides recipeId for CraftingRecipe
+         *               lookup and outputItemId for BlockGroup lookup)
+         * @return {@code true} if the player can craft this recipe or obtain the
+         *         output via BlockGroup conversion
+         */
+        boolean isAffordable(InputRecipe recipe);
+    }
+
+    // ─── Pipeline execution ─────────────────────────────────────
+
+    /**
+     * Executes the full filter pipeline.
+     *
+     * <p>Stages run sequentially with no backtracking:
+     * <pre>
+     * allRecipes → filterByTab → filterBySearch → tagAffordability
+     *            → extractSets (→ currentSets)
+     *            → filterBySets → sort (→ displayedRecipes)
+     * </pre>
+     *
+     * @param allRecipes       complete recipe list from the registry (unmodified)
+     * @param activeTab        current bench tab; {@code "All"} = no tab filter
+     * @param activeSetFilters selected set names for sidebar filtering;
+     *                         empty = show all sets
+     * @param searchQuery      search text; empty or null = no search filter
+     * @param checker          affordability checker; {@code null} = all recipes
+     *                         are considered affordable
+     * @param showUncategorized when false, recipes with effectiveSet equal to
+     *                          {@link #UNCATEGORIZED_SET} are excluded from results;
+     *                          when true, they are included
+     * @return pipeline result containing displayed recipes and sidebar sets
+     */
+    public PipelineResult execute(
+            List<InputRecipe> allRecipes,
+            String activeTab,
+            Set<String> activeSetFilters,
+            String searchQuery,
+            @Nullable AffordabilityChecker checker,
+            boolean showUncategorized
+    ) {
+        List<InputRecipe> tabFiltered = filterByTab(allRecipes, activeTab);
+        List<InputRecipe> searchFiltered = filterBySearch(tabFiltered, searchQuery);
+        List<TaggedRecipe> tagged = tagAffordability(searchFiltered, checker);
+        List<String> currentSets = extractSets(tagged);
+        List<TaggedRecipe> setFiltered = filterBySets(tagged, activeSetFilters);
+        if (!showUncategorized) {
+            setFiltered.removeIf(r -> UNCATEGORIZED_SET.equals(r.effectiveSet()));
+        }
+        List<TaggedRecipe> sorted = sort(setFiltered);
+        return new PipelineResult(sorted, currentSets);
+    }
+
+    // ─── Individual stages (package-private for testing) ────────
+
+    /**
+     * Stage 1: Retain recipes matching the active bench tab.
+     *
+     * <p>If {@code activeTab} is {@code "All"}, all recipes pass through.
+     * Otherwise, only recipes whose {@code benchId} equals {@code activeTab}
+     * (case-sensitive) are retained.
+     *
+     * @param recipes   input recipe list
+     * @param activeTab the tab to filter by
+     * @return new list containing only matching recipes
+     */
+    List<InputRecipe> filterByTab(List<InputRecipe> recipes, String activeTab) {
+        if (ALL_TAB.equals(activeTab)) {
+            return new ArrayList<>(recipes);
+        }
+        List<InputRecipe> result = new ArrayList<>();
+        for (InputRecipe recipe : recipes) {
+            if (activeTab.equals(recipe.benchId())) {
+                result.add(recipe);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Stage 2: Retain recipes matching the search query.
+     *
+     * <p>Matches against {@code recipeId}, {@code blockTypeId}, and {@code set}
+     * (all case-insensitive substring match). If query is null or empty,
+     * all recipes pass through.
+     *
+     * @param recipes input recipe list
+     * @param query   search text (may be null or empty)
+     * @return new list containing only matching recipes
+     */
+    List<InputRecipe> filterBySearch(List<InputRecipe> recipes, @Nullable String query) {
+        if (query == null || query.isBlank()) {
+            return new ArrayList<>(recipes);
+        }
+        String lowerQuery = query.toLowerCase(Locale.ROOT);
+        List<InputRecipe> result = new ArrayList<>();
+        for (InputRecipe recipe : recipes) {
+            if (recipe.recipeId().toLowerCase(Locale.ROOT).contains(lowerQuery)
+                    || recipe.blockTypeId().toLowerCase(Locale.ROOT).contains(lowerQuery)
+                    || (recipe.set() != null && recipe.set().toLowerCase(Locale.ROOT).contains(lowerQuery))) {
+                result.add(recipe);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Stage 3: Convert InputRecipes to TaggedRecipes with affordability.
+     *
+     * <p>For each recipe:
+     * <ul>
+     *   <li>Normalizes null {@code set} to {@link #UNCATEGORIZED_SET}</li>
+     *   <li>Computes {@code affordable} via the checker (or {@code true}
+     *       if checker is null)</li>
+     * </ul>
+     *
+     * <p>This is the <b>only</b> stage that calls the affordability checker.
+     *
+     * @param recipes input recipe list
+     * @param checker affordability checker; null = all affordable
+     * @return new list of TaggedRecipe with affordability set
+     */
+    List<TaggedRecipe> tagAffordability(List<InputRecipe> recipes,
+                                        @Nullable AffordabilityChecker checker) {
+        List<TaggedRecipe> result = new ArrayList<>();
+        for (InputRecipe recipe : recipes) {
+            String effectiveSet = (recipe.set() != null && !recipe.set().isEmpty())
+                    ? recipe.set() : UNCATEGORIZED_SET;
+            boolean affordable = (checker != null) ? checker.isAffordable(recipe) : true;
+            result.add(new TaggedRecipe(
+                    recipe.recipeId(),
+                    recipe.outputItemId(),
+                    recipe.blockTypeId(),
+                    recipe.benchId(),
+                    effectiveSet,
+                    affordable
+            ));
+        }
+        return result;
+    }
+
+    /**
+     * Stage 4: Extract unique set names from tagged recipes.
+     *
+     * <p>Returns a sorted (case-insensitive) list of all distinct
+     * {@code effectiveSet} values present in the recipe list. This becomes
+     * the sidebar set list ({@code currentSets}).
+     *
+     * <p>Called <b>before</b> set filtering so the sidebar reflects all
+     * available sets, not just the selected ones.
+     *
+     * @param recipes tagged recipe list
+     * @return sorted list of unique set names
+     */
+    List<String> extractSets(List<TaggedRecipe> recipes) {
+        TreeSet<String> sets = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (TaggedRecipe recipe : recipes) {
+            sets.add(recipe.effectiveSet());
+        }
+        sets.remove(UNCATEGORIZED_SET);
+        return new ArrayList<>(sets);
+    }
+
+    /**
+     * Stage 5: Retain recipes matching the active set filters.
+     *
+     * <p>If {@code activeSetFilters} is empty, all recipes pass through
+     * (equivalent to "All" selected). Otherwise, only recipes whose
+     * {@code effectiveSet} is in the filter set are retained.
+     *
+     * @param recipes          tagged recipe list
+     * @param activeSetFilters selected set names; empty = no filtering
+     * @return new list containing only matching recipes
+     */
+    List<TaggedRecipe> filterBySets(List<TaggedRecipe> recipes, Set<String> activeSetFilters) {
+        if (activeSetFilters == null || activeSetFilters.isEmpty()) {
+            return new ArrayList<>(recipes);
+        }
+        TreeSet<String> filterSet = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        filterSet.addAll(activeSetFilters);
+        List<TaggedRecipe> result = new ArrayList<>();
+        for (TaggedRecipe recipe : recipes) {
+            if (filterSet.contains(recipe.effectiveSet())) {
+                result.add(recipe);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Stage 6: Sort recipes for display.
+     *
+     * <p>Sort order:
+     * <ol>
+     *   <li>By {@code effectiveSet} (case-insensitive alphabetical)</li>
+     *   <li>Affordable recipes before unaffordable within each set</li>
+     *   <li>By {@code recipeId} (case-insensitive alphabetical) within
+     *       each affordability group</li>
+     * </ol>
+     *
+     * @param recipes tagged recipe list
+     * @return new sorted list
+     */
+    List<TaggedRecipe> sort(List<TaggedRecipe> recipes) {
+        List<TaggedRecipe> sorted = new ArrayList<>(recipes);
+        sorted.sort(Comparator
+                .comparing(TaggedRecipe::effectiveSet, String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(r -> !r.affordable())
+                .thenComparing(TaggedRecipe::recipeId, String.CASE_INSENSITIVE_ORDER));
+        return sorted;
+    }
+}

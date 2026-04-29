@@ -12,11 +12,13 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
+import com.hypixel.hytale.server.core.asset.type.item.config.BlockGroup;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
+import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import com.hypixel.hytale.server.core.ui.ItemGridSlot;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
@@ -28,6 +30,8 @@ import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nullable;
 import java.util.*;
+
+import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 
 public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSelectionPage.EventPayload> {
 
@@ -41,30 +45,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static final String ALL_TAB = "All";
     private static final String ALL_FILTER = "All";
 
-    /** Controls how inventory contents gate recipe/set visibility. */
-    private enum CraftableFilter {
-        /** Show all recipes regardless of inventory. */
-        NONE("No Filter"),
-        /** Show recipes where the player has at least one ingredient. */
-        PARTIAL("Has Partial"),
-        /** Show only recipes the player can fully craft. */
-        FULL("Can Craft");
-
-        final String label;
-        CraftableFilter(String label) { this.label = label; }
-        CraftableFilter next() { return values()[(ordinal() + 1) % values().length]; }
-    }
-
+    private final RecipeFilterPipeline pipeline = new RecipeFilterPipeline();
     private final List<RecipeEntry> allRecipes = new ArrayList<>();
-    private final List<RecipeEntry> filteredRecipes = new ArrayList<>();
     private final List<String> benchIds = new ArrayList<>();  // sorted bench IDs
     private String searchQuery = "";
     private String selectedRecipeId;
     private String placeholderItemId;  // item ID set in the placeholder input slot
     private String activeTab = ALL_TAB;
     private final Set<String> activeSetFilters = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-    private CraftableFilter craftableFilter = CraftableFilter.FULL;
-    private List<RecipeEntry> displayedRecipes = new ArrayList<>();
+    private boolean affordabilityEnabled = true;
+    private boolean showUncategorized = false;
+    private List<RecipeFilterPipeline.TaggedRecipe> displayedRecipes = new ArrayList<>();
     private List<String> currentSets = new ArrayList<>();  // sets for active tab
 
     private Ref<EntityStore> playerRef_ref;
@@ -97,66 +88,38 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         applyFilter();
     }
 
+    /**
+     * Delegates to {@link RecipeFilterPipeline#execute} and stores the result
+     * in {@link #displayedRecipes} and {@link #currentSets}.
+     */
     private void applyFilter() {
-        filteredRecipes.clear();
-        String query = searchQuery.toLowerCase();
-
-        for (RecipeEntry entry : allRecipes) {
-            // Tab filter
-            if (!ALL_TAB.equals(activeTab)) {
-                if (entry.benchId == null || !entry.benchId.equals(activeTab)) continue;
-            }
-
-            // Set filter — empty means "All"
-            if (!activeSetFilters.isEmpty()) {
-                if (entry.set == null || !activeSetFilters.contains(entry.set)) continue;
-            }
-
-            // Search filter
-            if (!query.isEmpty()
-                    && !entry.recipeId.toLowerCase().contains(query)
-                    && !entry.blockTypeId.toLowerCase().contains(query)
-                    && (entry.set == null || !entry.set.toLowerCase().contains(query))) {
-                continue;
-            }
-
-            filteredRecipes.add(entry);
-        }
-
-        // Rebuild current sets for the active tab
+        // Get player inventory for affordability checks
         Player filterPlayer = playerStore != null
                 ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
-        var filterContainer = filterPlayer != null
+        var container = filterPlayer != null
                 ? filterPlayer.getInventory().getCombinedBackpackStorageHotbar() : null;
 
-        Set<String> sets = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-        for (RecipeEntry entry : allRecipes) {
-            if (!ALL_TAB.equals(activeTab)) {
-                if (entry.benchId == null || !entry.benchId.equals(activeTab)) continue;
-            }
-            if (entry.set == null || entry.set.isEmpty()) continue;
-            if (sets.contains(entry.set)) continue; // already qualified
-
-            if (craftableFilter != CraftableFilter.NONE && filterContainer != null) {
-                CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
-                if (recipe != null) {
-                    List<MaterialQuantity> materials = CraftingManager.getInputMaterials(recipe, 1);
-                    if (craftableFilter == CraftableFilter.FULL) {
-                        // Include set only if at least one recipe in it is fully affordable
-                        if (!filterContainer.canRemoveMaterials(materials)) continue;
-                    } else {
-                        // PARTIAL: include set if the player has at least one ingredient
-                        boolean hasAny = materials.stream()
-                                .anyMatch(mat -> filterContainer.canRemoveMaterials(List.of(mat)));
-                        if (!hasAny) continue;
-                    }
-                    sets.add(entry.set);
-                }
-            } else {
-                sets.add(entry.set);
-            }
+        // Build affordability checker — null when disabled or no inventory
+        RecipeFilterPipeline.AffordabilityChecker checker = null;
+        if (affordabilityEnabled && container != null) {
+            final var inv = container;
+            checker = recipe -> isAffordable(recipe, inv);
         }
-        currentSets = new ArrayList<>(sets);
+
+        // Convert allRecipes to InputRecipe list
+        List<RecipeFilterPipeline.InputRecipe> inputs = new ArrayList<>();
+        for (RecipeEntry entry : allRecipes) {
+            inputs.add(new RecipeFilterPipeline.InputRecipe(
+                    entry.recipeId(), entry.outputItemId(), entry.blockTypeId(),
+                    entry.benchId(), entry.set()));
+        }
+
+        // Execute pipeline
+        RecipeFilterPipeline.PipelineResult result = pipeline.execute(
+                inputs, activeTab, activeSetFilters, searchQuery, checker, showUncategorized);
+
+        this.displayedRecipes = result.displayedRecipes();
+        this.currentSets = result.currentSets();
     }
 
     @Override
@@ -181,13 +144,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 false
         );
 
-        // Set craftable filter dropdown value
-        cmd.set("#CraftableDropdown.Value", craftableFilter.name());
+        // Set initial toggle styles
+        cmd.set("#AffordableToggle.Style", affordabilityEnabled ? FILTER_ACTIVE : FILTER_INACTIVE);
         evt.addEventBinding(
-                CustomUIEventBindingType.ValueChanged,
-                "#CraftableDropdown",
-                EventData.of("@CraftableFilter", "#CraftableDropdown.Value"),
-                false
+                CustomUIEventBindingType.Activating, "#AffordableToggle",
+                EventData.of("Action", "ToggleAffordable")
+        );
+
+        cmd.set("#UncategorizedToggle.Style", showUncategorized ? FILTER_ACTIVE : FILTER_INACTIVE);
+        evt.addEventBinding(
+                CustomUIEventBindingType.Activating, "#UncategorizedToggle",
+                EventData.of("Action", "ToggleUncategorized")
         );
 
         // Build tabs, filters, recipe list, and detail panel
@@ -247,18 +214,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             updateDetailPanel(cmd);
             sendUpdate(cmd, evt, false);
 
-        } else if (data.craftableFilter != null) {
-            try {
-                this.craftableFilter = CraftableFilter.valueOf(data.craftableFilter);
-            } catch (IllegalArgumentException e) {
-                return;
-            }
-            applyFilter();
-            buildSetFilters(cmd, evt);
-            buildRecipeList(cmd, evt, store, ref);
-            updateDetailPanel(cmd);
-            sendUpdate(cmd, evt, false);
-
         } else if (data.searchQuery != null) {
             this.searchQuery = data.searchQuery.trim();
             applyFilter();
@@ -271,6 +226,24 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         } else if (data.recipeId != null) {
             this.selectedRecipeId = data.recipeId;
+            buildRecipeList(cmd, evt, store, ref);
+            updateDetailPanel(cmd);
+            sendUpdate(cmd, evt, false);
+
+        } else if ("ToggleAffordable".equals(data.action)) {
+            this.affordabilityEnabled = !this.affordabilityEnabled;
+            applyFilter();
+            cmd.set("#AffordableToggle.Style", affordabilityEnabled ? FILTER_ACTIVE : FILTER_INACTIVE);
+            buildSetFilters(cmd, evt);
+            buildRecipeList(cmd, evt, store, ref);
+            updateDetailPanel(cmd);
+            sendUpdate(cmd, evt, false);
+
+        } else if ("ToggleUncategorized".equals(data.action)) {
+            this.showUncategorized = !this.showUncategorized;
+            applyFilter();
+            cmd.set("#UncategorizedToggle.Style", showUncategorized ? FILTER_ACTIVE : FILTER_INACTIVE);
+            buildSetFilters(cmd, evt);
             buildRecipeList(cmd, evt, store, ref);
             updateDetailPanel(cmd);
             sendUpdate(cmd, evt, false);
@@ -292,8 +265,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         } else if ("RecipeHover".equals(data.action)) {
             // Hover over a recipe slot — preview details using slotIndex
             if (data.slotIndex != null && data.slotIndex >= 0 && data.slotIndex < displayedRecipes.size()) {
-                RecipeEntry entry = displayedRecipes.get(data.slotIndex);
-                this.selectedRecipeId = entry.recipeId;
+                RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(data.slotIndex);
+                this.selectedRecipeId = entry.recipeId();
                 updateDetailPanel(cmd);
             }
             sendUpdate(cmd, evt, false);
@@ -301,8 +274,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         } else if ("RecipeSelect".equals(data.action)) {
             // Click-release on a recipe slot — confirm selection
             if (data.slotIndex != null && data.slotIndex >= 0 && data.slotIndex < displayedRecipes.size()) {
-                RecipeEntry entry = displayedRecipes.get(data.slotIndex);
-                this.selectedRecipeId = entry.recipeId;
+                RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(data.slotIndex);
+                this.selectedRecipeId = entry.recipeId();
                 updateDetailPanel(cmd);
             }
             sendUpdate(cmd, evt, false);
@@ -365,52 +338,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private void buildRecipeList(UICommandBuilder cmd, UIEventBuilder evt,
                                  Store<EntityStore> store, Ref<EntityStore> ref) {
 
-        // Compute affordability for each filtered recipe
-        Player player = store.getComponent(ref, Player.getComponentType());
-        var container = player != null ? player.getInventory().getCombinedBackpackStorageHotbar() : null;
-
-        List<RecipeEntry> withAffordability = new ArrayList<>(filteredRecipes.size());
-        for (RecipeEntry entry : filteredRecipes) {
-            boolean affordable = true;
-            if (container != null) {
-                CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
-                if (recipe != null) {
-                    List<MaterialQuantity> materials = CraftingManager.getInputMaterials(recipe, 1);
-                    affordable = container.canRemoveMaterials(materials);
-                }
-            }
-            // When craftable filter is active, skip recipes that don't meet the threshold
-            if (craftableFilter == CraftableFilter.FULL && !affordable) continue;
-            if (craftableFilter == CraftableFilter.PARTIAL && container != null) {
-                CraftingRecipe partialRecipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
-                if (partialRecipe != null) {
-                    List<MaterialQuantity> mats = CraftingManager.getInputMaterials(partialRecipe, 1);
-                    boolean hasAny = mats.stream()
-                            .anyMatch(mat -> container.canRemoveMaterials(List.of(mat)));
-                    if (!hasAny) continue;
-                }
-            }
-
-            withAffordability.add(new RecipeEntry(entry.recipeId, entry.outputItemId, entry.blockTypeId,
-                    entry.benchId, entry.set, affordable));
-        }
-
-        // Sort: group by set (alphabetical), then affordable first, then recipe ID within each set
-        withAffordability.sort(Comparator
-                .comparing((RecipeEntry e) -> e.set != null ? e.set : "", String.CASE_INSENSITIVE_ORDER)
-                .thenComparing(e -> !e.affordable)
-                .thenComparing(e -> e.recipeId, String.CASE_INSENSITIVE_ORDER));
-
-        displayedRecipes = new ArrayList<>(withAffordability);
-
-        // Build ItemGridSlot array for the recipe grid
+        // No need to sort — pipeline already sorted
         ItemGridSlot[] recipeSlots = new ItemGridSlot[displayedRecipes.size()];
         for (int i = 0; i < displayedRecipes.size(); i++) {
-            RecipeEntry entry = displayedRecipes.get(i);
-            ItemGridSlot slot = new ItemGridSlot(new ItemStack(entry.outputItemId, 1));
+            RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(i);
+            ItemGridSlot slot = new ItemGridSlot(new ItemStack(entry.outputItemId(), 1));
             slot.setActivatable(true);
-            slot.setName(entry.blockTypeId != null
-                    ? entry.blockTypeId.replace('_', ' ') : entry.outputItemId.replace('_', ' '));
+            slot.setName(entry.blockTypeId() != null
+                    ? entry.blockTypeId().replace('_', ' ') : entry.outputItemId().replace('_', ' '));
+            if (!entry.affordable()) {
+                slot.setItemUncraftable(true);
+            }
             recipeSlots[i] = slot;
         }
         cmd.set("#RecipeGrid.Slots", recipeSlots);
@@ -509,13 +447,47 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         return null;
     }
 
+    /**
+     * Checks if a recipe is affordable, accounting for both raw material
+     * availability and BlockGroup interchangeability (FullBlocks cycling).
+     *
+     * <p>A recipe is affordable if:
+     * <ol>
+     *   <li>The player can directly craft it (has raw materials), OR</li>
+     *   <li>The output belongs to a BlockGroup and the player has any
+     *       member of that group in inventory (free conversion)</li>
+     * </ol>
+     */
+    private boolean isAffordable(RecipeFilterPipeline.InputRecipe entry, CombinedItemContainer container) {
+        CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId());
+        if (recipe != null) {
+            List<MaterialQuantity> materials = CraftingManager.getInputMaterials(recipe, 1);
+            if (container.canRemoveMaterials(materials)) return true;
+        }
+
+        Item outputItem = Item.getAssetMap().getAsset(entry.outputItemId());
+        if (outputItem != null) {
+            BlockGroup group = BlockGroup.findItemGroup(outputItem);
+            if (group != null) {
+                for (int i = 0; i < group.size(); i++) {
+                    String memberId = group.get(i);
+                    if (container.canRemoveMaterials(List.of(
+                            new MaterialQuantity(memberId, null, null, 1, null)))) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     private record RecipeEntry(String recipeId, String outputItemId, String blockTypeId,
                                String benchId, String set, boolean affordable) {}
 
     public static class EventPayload {
         public static final BuilderCodec<EventPayload> CODEC = BuilderCodec.builder(EventPayload.class, EventPayload::new)
                 .append(new KeyedCodec<>("@SearchQuery", Codec.STRING), (e, s) -> e.searchQuery = s, e -> e.searchQuery).add()
-                .append(new KeyedCodec<>("@CraftableFilter", Codec.STRING), (e, s) -> e.craftableFilter = s, e -> e.craftableFilter).add()
                 .append(new KeyedCodec<>("@SelectedTab", Codec.STRING), (e, s) -> e.selectedTab = s, e -> e.selectedTab).add()
                 .append(new KeyedCodec<>("RecipeId", Codec.STRING), (e, s) -> e.recipeId = s, e -> e.recipeId).add()
                 .append(new KeyedCodec<>("Action", Codec.STRING), (e, s) -> e.action = s, e -> e.action).add()
@@ -524,7 +496,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 .build();
 
         String searchQuery;
-        String craftableFilter;
         String selectedTab;
         String recipeId;
         String action;

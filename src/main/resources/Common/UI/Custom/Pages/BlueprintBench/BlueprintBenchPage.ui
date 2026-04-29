@@ -128,25 +128,19 @@ Group {
                 LayoutMode: TopScrolling;
                 ScrollbarStyle: $C.@DefaultScrollbarStyle;
 
-                // Craftable filter dropdown
-                $C.@DropdownBox #CraftableDropdown {
-                    @Anchor = (Height: 24, Left: 0, Right: 0);
-                    Value: "FULL";
+                // Filter toggles
+                TextButton #AffordableToggle {
+                    Text: "Affordable Only";
+                    Anchor: (Height: 24, Left: 0, Right: 0);
+                    Padding: (Left: 6, Right: 6);
+                }
 
-                    DropdownEntry {
-                        Value: "NONE";
-                        Text: "No Filter";
-                    }
+                Group { Anchor: (Height: 2); }
 
-                    DropdownEntry {
-                        Value: "PARTIAL";
-                        Text: "Has Partial";
-                    }
-
-                    DropdownEntry {
-                        Value: "FULL";
-                        Text: "Can Craft";
-                    }
+                TextButton #UncategorizedToggle {
+                    Text: "Uncategorized";
+                    Anchor: (Height: 24, Left: 0, Right: 0);
+                    Padding: (Left: 6, Right: 6);
                 }
 
                 Group { Anchor: (Height: 2); }
