@@ -116,7 +116,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         // Execute pipeline
         RecipeFilterPipeline.PipelineResult result = pipeline.execute(
-                inputs, activeTab, activeSetFilters, searchQuery, checker, showUncategorized);
+                inputs, activeTab, activeSetFilters, searchQuery, checker,
+                affordabilityEnabled, showUncategorized);
 
         this.displayedRecipes = result.displayedRecipes();
         this.currentSets = result.currentSets();

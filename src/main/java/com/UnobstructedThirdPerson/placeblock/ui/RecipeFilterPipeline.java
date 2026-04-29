@@ -128,6 +128,9 @@ public final class RecipeFilterPipeline {
      * @param searchQuery      search text; empty or null = no search filter
      * @param checker          affordability checker; {@code null} = all recipes
      *                         are considered affordable
+     * @param affordableOnly   when true, unaffordable recipes are removed before
+     *                         extracting sets and building the display list;
+     *                         sets with zero affordable recipes will not appear
      * @param showUncategorized when false, recipes with effectiveSet equal to
      *                          {@link #UNCATEGORIZED_SET} are excluded from results;
      *                          when true, they are included
@@ -139,11 +142,15 @@ public final class RecipeFilterPipeline {
             Set<String> activeSetFilters,
             String searchQuery,
             @Nullable AffordabilityChecker checker,
+            boolean affordableOnly,
             boolean showUncategorized
     ) {
         List<InputRecipe> tabFiltered = filterByTab(allRecipes, activeTab);
         List<InputRecipe> searchFiltered = filterBySearch(tabFiltered, searchQuery);
         List<TaggedRecipe> tagged = tagAffordability(searchFiltered, checker);
+        if (affordableOnly) {
+            tagged = filterByAffordability(tagged);
+        }
         List<String> currentSets = extractSets(tagged);
         List<TaggedRecipe> setFiltered = filterBySets(tagged, activeSetFilters);
         if (!showUncategorized) {
@@ -237,6 +244,27 @@ public final class RecipeFilterPipeline {
                     effectiveSet,
                     affordable
             ));
+        }
+        return result;
+    }
+
+    /**
+     * Stage 3b: Remove unaffordable recipes.
+     *
+     * <p>Used when "Affordable Only" is active. Removes recipes tagged
+     * as unaffordable so they do not appear in the grid and their sets
+     * are excluded from the sidebar when no affordable recipes remain
+     * in that set.
+     *
+     * @param recipes tagged recipe list
+     * @return new list containing only affordable recipes
+     */
+    List<TaggedRecipe> filterByAffordability(List<TaggedRecipe> recipes) {
+        List<TaggedRecipe> result = new ArrayList<>();
+        for (TaggedRecipe recipe : recipes) {
+            if (recipe.affordable()) {
+                result.add(recipe);
+            }
         }
         return result;
     }
