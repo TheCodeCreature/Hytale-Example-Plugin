@@ -328,6 +328,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             if (hotbarSlot >= 0 && hotbarSlot < PlaceBlockMetadata.HOTBAR_SIZE
                     && data.itemStackId != null && !data.itemStackId.isEmpty()) {
                 armPlaceholder(store, ref, hotbarSlot, data.itemStackId);
+                selectRecipeByItemId(data.itemStackId);
+                updateDetailPanel(cmd);
                 updatePlaceholderList(cmd, store, ref);
                 LOGGER.info("[BlueprintUI] Armed slot " + hotbarSlot + " with " + data.itemStackId);
             }
@@ -354,6 +356,21 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 savePrefs();
                 sendUpdate(cmd, null, false);
             }
+
+        } else if ("RecipeDragSelect".equals(data.action)) {
+            boolean selected = false;
+            if (data.slotIndex != null && data.slotIndex >= 0 && data.slotIndex < displayedRecipes.size()) {
+                RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(data.slotIndex);
+                this.selectedRecipeId = entry.recipeId();
+                selected = true;
+            } else if (data.itemStackId != null) {
+                selected = selectRecipeByItemId(data.itemStackId);
+            }
+            if (selected) {
+                updateDetailPanel(cmd);
+                savePrefs();
+            }
+            sendUpdate(cmd, null, false);
 
         } else if ("GetPlaceholder".equals(data.action)) {
             craftPlaceholder(store, ref, cmd);
@@ -423,6 +440,10 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 EventData.of("Action", "RecipeHover"), false);
         evt.addEventBinding(CustomUIEventBindingType.SlotClicking, "#RecipeGrid",
                 EventData.of("Action", "RecipeSelect"), false);
+        evt.addEventBinding(CustomUIEventBindingType.SlotMouseDragCompleted, "#RecipeGrid",
+                EventData.of("Action", "RecipeDragSelect"), false);
+        evt.addEventBinding(CustomUIEventBindingType.DragCancelled, "#RecipeGrid",
+                EventData.of("Action", "RecipeDragSelect"), false);
     }
 
     private void updateRecipeGrid(UICommandBuilder cmd) {
@@ -648,6 +669,16 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         this.playerRef.sendMessage(
                 Message.raw("\u00a7a[BlueprintBench] Acquired Block Placeholder."));
         LOGGER.info("[BlueprintUI] Player crafted placeholder from Life Essence");
+    }
+
+    private boolean selectRecipeByItemId(String itemId) {
+        for (RecipeEntry entry : allRecipes) {
+            if (itemId.equals(entry.outputItemId())) {
+                this.selectedRecipeId = entry.recipeId();
+                return true;
+            }
+        }
+        return false;
     }
 
     @Nullable
