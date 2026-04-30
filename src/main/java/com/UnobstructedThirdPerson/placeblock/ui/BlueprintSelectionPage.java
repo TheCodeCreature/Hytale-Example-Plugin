@@ -26,6 +26,7 @@ import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.ui.ItemGridSlot;
+import com.hypixel.hytale.server.core.ui.PatchStyle;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
@@ -465,6 +466,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                     ? entry.blockTypeId().replace('_', ' ') : entry.outputItemId().replace('_', ' '));
             if (!entry.affordable()) {
                 slot.setItemUncraftable(true);
+                slot.setItemIncompatible(true);
             }
             recipeSlots[i] = slot;
         }
