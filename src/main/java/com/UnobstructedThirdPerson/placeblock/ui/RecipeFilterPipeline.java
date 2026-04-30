@@ -148,11 +148,20 @@ public final class RecipeFilterPipeline {
         List<InputRecipe> tabFiltered = filterByTab(allRecipes, activeTab);
         List<InputRecipe> searchFiltered = filterBySearch(tabFiltered, searchQuery);
         List<TaggedRecipe> tagged = tagAffordability(searchFiltered, checker);
-        if (affordableOnly) {
-            tagged = filterByAffordability(tagged);
-        }
-        List<String> currentSets = extractSets(tagged);
-        List<TaggedRecipe> setFiltered = filterBySets(tagged, activeSetFilters);
+
+        // Sets are driven by affordability: only sets with ≥1 affordable recipe appear.
+        // When affordability is OFF, all sets qualify (all items treated as affordable).
+        List<String> currentSets = affordableOnly
+                ? extractSets(filterByAffordability(tagged))
+                : extractSets(tagged);
+
+        // Restrict items to qualifying sets. When the user selects specific sets,
+        // filter to those; when "All" is selected (empty), restrict to currentSets
+        // so items from non-qualifying sets never appear.
+        Set<String> effectiveSetFilter = (activeSetFilters != null && !activeSetFilters.isEmpty())
+                ? activeSetFilters
+                : new TreeSet<>(currentSets);
+        List<TaggedRecipe> setFiltered = filterBySets(tagged, effectiveSetFilter);
         if (!showUncategorized) {
             setFiltered.removeIf(r -> UNCATEGORIZED_SET.equals(r.effectiveSet()));
         }
@@ -338,5 +347,19 @@ public final class RecipeFilterPipeline {
                 .thenComparing(r -> !r.affordable())
                 .thenComparing(TaggedRecipe::recipeId, String.CASE_INSENSITIVE_ORDER));
         return sorted;
+    }
+
+    /**
+     * Converts a raw set name to a display-friendly label by stripping
+     * any prefix before the first underscore and replacing remaining
+     * underscores with spaces.
+     */
+    static String setDisplayLabel(String setName) {
+        if (setName == null) return "";
+        String label = setName;
+        if (label.contains("_")) {
+            label = label.substring(label.indexOf('_') + 1).replace('_', ' ');
+        }
+        return label;
     }
 }

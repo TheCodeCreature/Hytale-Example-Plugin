@@ -219,6 +219,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     @Override
     public void onDismiss(@NonNull Ref<EntityStore> ref, @NonNull Store<EntityStore> store) {
         savePrefs();
+
+        // Clear tooltip-triggering data so any visible tooltip is dismissed.
+        // The engine's tooltip overlay is independent of the page lifecycle,
+        // so we must explicitly remove the data that drives tooltips.
+        UICommandBuilder cmd = new UICommandBuilder();
+        cmd.set("#OutputIcon.ItemId", "");
+        cmd.set("#RecipeGrid.Slots", new ItemGridSlot[0]);
+        for (int i = 0; i < MAX_COST_CELLS; i++) {
+            cmd.set("#CostGrid[" + i + "].Visible", false);
+        }
+        sendUpdate(cmd, null, false);
     }
 
     private void savePrefs() {
@@ -422,10 +433,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             String sel = "#SetFilters[" + (i + 1) + "]";
             if (i < currentSets.size()) {
                 String setName = currentSets.get(i);
-                String label = setName;
-                if (label.contains("_")) {
-                    label = label.substring(label.indexOf('_') + 1).replace('_', ' ');
-                }
+                String label = RecipeFilterPipeline.setDisplayLabel(setName);
                 cmd.set(sel + ".Visible", true);
                 cmd.set(sel + ".Text", label);
                 cmd.set(sel + ".Style", activeSetFilters.contains(setName) ? FILTER_ACTIVE : FILTER_INACTIVE);
