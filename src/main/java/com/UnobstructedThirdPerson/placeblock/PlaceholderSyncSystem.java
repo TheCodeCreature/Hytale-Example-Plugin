@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 /**
@@ -32,6 +33,8 @@ public final class PlaceholderSyncSystem {
     private static final Logger LOGGER = Logger.getLogger("PlaceholderSyncSystem");
 
     private static final Map<UUID, Registration[]> registrations = new ConcurrentHashMap<>();
+    /** Per-player re-entry guard — prevents recursive/redundant sync when checkAffordability mutates hotbar. */
+    private static final Map<UUID, AtomicBoolean> syncInProgress = new ConcurrentHashMap<>();
 
     private PlaceholderSyncSystem() {}
 
@@ -49,15 +52,23 @@ public final class PlaceholderSyncSystem {
         ItemContainer hotbar = inventory.getHotbar();
         ItemContainer storage = inventory.getStorage();
 
-        Registration hotbarReg = hotbar.registerChangeEvent(event -> {
-            BlockPreviewReskinManager.syncPlaceholder(playerRef, inventory);
-            checkAffordability(playerRef, inventory);
-        });
+        AtomicBoolean guard = new AtomicBoolean(false);
+        syncInProgress.put(playerId, guard);
 
-        Registration storageReg = storage.registerChangeEvent(event -> {
-            BlockPreviewReskinManager.syncPlaceholder(playerRef, inventory);
-            checkAffordability(playerRef, inventory);
-        });
+        Runnable onInventoryChanged = () -> {
+            // Re-entry guard: checkAffordability mutates hotbar (setItemStackForSlot),
+            // which triggers another change event. Skip if already inside a sync.
+            if (!guard.compareAndSet(false, true)) return;
+            try {
+                BlockPreviewReskinManager.syncPlaceholder(playerRef, inventory);
+                checkAffordability(playerRef, inventory);
+            } finally {
+                guard.set(false);
+            }
+        };
+
+        Registration hotbarReg = hotbar.registerChangeEvent(event -> onInventoryChanged.run());
+        Registration storageReg = storage.registerChangeEvent(event -> onInventoryChanged.run());
 
         registrations.put(playerId, new Registration[]{hotbarReg, storageReg});
         LOGGER.info("[PlaceholderSync] Registered inventory listeners for " + playerRef.getUsername());
@@ -73,6 +84,7 @@ public final class PlaceholderSyncSystem {
      */
     public static void unregister(@Nonnull UUID playerId) {
         Registration[] regs = registrations.remove(playerId);
+        syncInProgress.remove(playerId);
         if (regs != null) {
             for (Registration reg : regs) {
                 reg.unregister();

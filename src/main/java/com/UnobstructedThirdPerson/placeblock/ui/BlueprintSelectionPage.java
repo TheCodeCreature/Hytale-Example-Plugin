@@ -5,6 +5,7 @@ import com.UnobstructedThirdPerson.placeblock.PlaceBlockCostUtil;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockMetadata;
 import com.UnobstructedThirdPerson.resourcecollection.BenchCategory;
 import com.UnobstructedThirdPerson.resourcecollection.FilteredRecipeEntry;
+import com.UnobstructedThirdPerson.resourcecollection.NaturalResourceRegistry;
 import com.UnobstructedThirdPerson.resourcecollection.RecipeFilterRegistry;
 import com.UnobstructedThirdPerson.resourcecollection.ResourceTypeResolver;
 import com.hypixel.hytale.codec.Codec;
@@ -492,6 +493,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                                 if (mq == null) continue;
                                 String itemId = ResourceTypeResolver.resolveInputItemId(mq, category);
                                 if (itemId == null || itemId.isEmpty()) continue;
+                                itemId = NaturalResourceRegistry.resolveToGatherableForm(itemId);
                                 ingredientMap.merge(itemId, mq.getQuantity(), Integer::sum);
                             }
 

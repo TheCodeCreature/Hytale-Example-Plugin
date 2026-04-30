@@ -192,14 +192,8 @@ public class PlaceBlockToolInteraction extends SimpleBlockInteraction {
             return;
         }
 
-        // 10. Atomic consumption
-        ListTransaction<MaterialTransaction> txn = container.removeMaterials(materials, true, true, true);
-        if (!txn.succeeded()) {
-            context.getState().state = InteractionState.Failed;
-            return;
-        }
-
-        // 11. Compute adjacent placement position from targetBlock + blockFace
+        // 10. Compute adjacent placement position from targetBlock + blockFace
+        //     (resolved BEFORE consumption so we can abort without losing materials)
         InteractionSyncData clientState = context.getClientState();
         BlockFace face = null;
         if (clientState != null && clientState.blockFace != null) {
@@ -230,28 +224,39 @@ public class PlaceBlockToolInteraction extends SimpleBlockInteraction {
             float playerYawDeg = (float) Math.toDegrees(playerYawRad);
             Rotation blockYaw = Rotation.closestOfDegrees(playerYawDeg);
             rotationIndex = RotationTuple.of(blockYaw, Rotation.None, Rotation.None).index();
-            System.out.println("[PlaceBlockTool] HeadRotation yawRad=" + playerYawRad
-                    + " yawDeg=" + playerYawDeg
-                    + " blockYaw=" + blockYaw + " rotationIndex=" + rotationIndex);
-        } else {
-            System.out.println("[PlaceBlockTool] WARNING: No rotation source found — using rotationIndex=0"); 
         }
 
-        // 12. Place block
+        // 11. Verify chunk is loaded before consuming materials
         long chunkIndex = ChunkUtil.indexChunkFromBlock(pos.x, pos.z);
         WorldChunk worldChunk = world.getChunkIfInMemory(chunkIndex);
         if (worldChunk == null) {
             context.getState().state = InteractionState.Failed;
             return;
         }
-        boolean placed = worldChunk.setBlock(pos.x, pos.y, pos.z, targetBlockId, targetBlockType, rotationIndex, 0, 6);
 
-        // 13. Send feedback
-        if (placed && playerRef != null) {
+        // 12. Place block BEFORE consuming — verify placement succeeds
+        boolean placed = worldChunk.setBlock(pos.x, pos.y, pos.z, targetBlockId, targetBlockType, rotationIndex, 0, 6);
+        if (!placed) {
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        // 13. Atomic consumption — only after confirmed placement
+        ListTransaction<MaterialTransaction> txn = container.removeMaterials(materials, true, true, true);
+        if (!txn.succeeded()) {
+            // Placement succeeded but consumption failed (race condition) —
+            // revert the block to avoid a free placement
+            worldChunk.setBlock(pos.x, pos.y, pos.z, 0, BlockType.getAssetMap().getAsset("Empty"), 0, 0, 6);
+            context.getState().state = InteractionState.Failed;
+            return;
+        }
+
+        // 14. Send feedback
+        if (playerRef != null) {
             playerRef.sendMessage(Message.raw("§a[PlaceBlock] Placed " + outputBlockTypeId));
         }
 
-        // 14. Set state
+        // 15. Set state
         context.getState().state = InteractionState.Finished;
     }
 

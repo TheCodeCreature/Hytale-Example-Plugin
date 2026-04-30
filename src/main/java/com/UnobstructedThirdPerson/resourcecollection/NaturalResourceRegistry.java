@@ -14,8 +14,10 @@ import com.hypixel.hytale.server.core.modules.interaction.BlockHarvestUtils;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -32,6 +34,8 @@ public final class NaturalResourceRegistry {
 
     private static Set<String> naturalBlockTypes = Collections.emptySet();
     private static Set<String> naturalItemIds = Collections.emptySet();
+    /** Maps block-item IDs to their gatherable drop form (e.g. Rock_Shale → Rock_Shale_Cobble). */
+    private static Map<String, String> gatherableFormMap = Collections.emptyMap();
 
     private NaturalResourceRegistry() {}
 
@@ -81,10 +85,30 @@ public final class NaturalResourceRegistry {
             collectDropItems(bt, itemIds);
         }
 
+        // Build gatherable-form map: block-item → breaking drop for natural blocks
+        Map<String, String> gfMap = new HashMap<>();
+        for (String btId : blockTypes) {
+            BlockType bt = BlockType.getAssetMap().getAsset(btId);
+            if (bt == null) continue;
+            Item blockItem = bt.getItem();
+            if (blockItem == null) continue;
+            BlockGathering gathering = bt.getGathering();
+            if (gathering == null) continue;
+            var breaking = gathering.getBreaking();
+            if (breaking == null) continue;
+            String breakingDrop = breaking.getItemId();
+            if (breakingDrop != null && !breakingDrop.isEmpty()
+                    && !breakingDrop.equals(blockItem.getId())) {
+                gfMap.put(blockItem.getId(), breakingDrop);
+            }
+        }
+
         naturalBlockTypes = Collections.unmodifiableSet(blockTypes);
         naturalItemIds = Collections.unmodifiableSet(itemIds);
+        gatherableFormMap = Collections.unmodifiableMap(gfMap);
         log("Initialized: " + blockTypes.size() + " natural block types, "
-                + itemIds.size() + " natural items");
+                + itemIds.size() + " natural items, "
+                + gfMap.size() + " gatherable-form mappings");
     }
 
     /**
@@ -190,6 +214,17 @@ public final class NaturalResourceRegistry {
     /** Returns the full set of natural resource item IDs (read-only). */
     public static Set<String> getNaturalItemIds() {
         return naturalItemIds;
+    }
+
+    /**
+     * If the given item is a block-item for a natural block whose gathering
+     * drop is different (e.g. Rock_Shale → Rock_Shale_Cobble), returns the
+     * gatherable drop form. Otherwise returns the input unchanged.
+     * Single-level resolution only — no recursive chains.
+     */
+    @Nonnull
+    public static String resolveToGatherableForm(@Nonnull String itemId) {
+        return gatherableFormMap.getOrDefault(itemId, itemId);
     }
 
     /**

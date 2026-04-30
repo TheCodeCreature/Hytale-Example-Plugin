@@ -64,6 +64,7 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
                 if (mq == null) continue;
                 String itemId = ResourceTypeResolver.resolveInputItemId(mq, category());
                 if (itemId == null) continue;
+                itemId = NaturalResourceRegistry.resolveToGatherableForm(itemId);
                 int inputQty = mq.getQuantity(); // already 12x scaled from Phase 1
                 int dropQty = Math.max(1, inputQty / outputQty);
                 resolved.add(new ResolvedIngredient(itemId, dropQty));
