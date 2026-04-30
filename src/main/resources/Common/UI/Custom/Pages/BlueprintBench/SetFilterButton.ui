@@ -1,0 +1,10 @@
+// SetFilterButton — single set filter toggle button
+// Reusable component: server appends N instances into #SetFilters during build()
+// Server updates via cmd.set() on indexed selectors: #SetFilters[N].Visible, .Text, .Style
+
+TextButton {
+    Text: "";
+    Anchor: (Height: 24);
+    Padding: (Left: 6, Right: 6);
+    Visible: false;
+}

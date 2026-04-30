@@ -42,6 +42,10 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("BlueprintSelectionPage");
 
+    private static final int MAX_SET_FILTERS = 20;
+    private static final int MAX_COST_CELLS = 8;
+    private static final int MAX_PLACEHOLDER_ROWS = PlaceBlockMetadata.HOTBAR_SIZE; // 9
+
     private static final Value<String> FILTER_ACTIVE =
             Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "FilterActiveStyle");
     private static final Value<String> FILTER_INACTIVE =
@@ -61,7 +65,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private boolean showUncategorized = false;
     private List<RecipeFilterPipeline.TaggedRecipe> displayedRecipes = new ArrayList<>();
     private List<String> currentSets = new ArrayList<>();  // sets for active tab
-    private List<PlaceholderSlotInfo> placeholderSlots = new ArrayList<>();  // hotbar placeholders
 
     private Ref<EntityStore> playerRef_ref;
     private Store<EntityStore> playerStore;
@@ -139,10 +142,31 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         loadRecipes();
 
-        // Load custom .ui template — no appendInline()
+        // Load main template
         cmd.append("Pages/BlueprintBench/BlueprintBenchPage.ui");
 
-        // Bind search input
+        // ── Append reusable components into empty containers (one-time init) ──
+
+        // Set filter buttons: 1 "All" + MAX_SET_FILTERS indexed buttons
+        for (int i = 0; i < 1 + MAX_SET_FILTERS; i++) {
+            cmd.append("#SetFilters", "Pages/BlueprintBench/SetFilterButton.ui");
+        }
+        // Set "All" text on the first filter button
+        cmd.set("#SetFilters[0].Text", "All");
+
+        // Cost cells
+        for (int i = 0; i < MAX_COST_CELLS; i++) {
+            cmd.append("#CostGrid", "Pages/BlueprintBench/CostCell.ui");
+        }
+
+        // Placeholder rows
+        for (int i = 0; i < MAX_PLACEHOLDER_ROWS; i++) {
+            cmd.append("#PlaceholderList", "Pages/BlueprintBench/PlaceholderRow.ui");
+        }
+
+        // ── Bind ALL events (one-time) ──
+
+        // Search input
         evt.addEventBinding(
                 CustomUIEventBindingType.ValueChanged,
                 "#SearchInput",
@@ -150,33 +174,36 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 false
         );
 
-        // Set initial toggle styles
-        cmd.set("#AffordableToggle.Style", affordabilityEnabled ? FILTER_ACTIVE : FILTER_INACTIVE);
+        // Toggle buttons
         evt.addEventBinding(
                 CustomUIEventBindingType.Activating, "#AffordableToggle",
                 EventData.of("Action", "ToggleAffordable")
         );
-
-        cmd.set("#UncategorizedToggle.Style", showUncategorized ? FILTER_ACTIVE : FILTER_INACTIVE);
         evt.addEventBinding(
                 CustomUIEventBindingType.Activating, "#UncategorizedToggle",
                 EventData.of("Action", "ToggleUncategorized")
         );
 
-        // Build tabs, filters, recipe list, and detail panel
-        bindBenchTabs(cmd, evt);
-        buildSetFilters(cmd, evt);
-        buildRecipeList(cmd, evt, store, ref);
-        updateDetailPanel(cmd);
-
-        // Build placeholder list from hotbar
-        buildPlaceholderList(cmd, evt, store, ref);
-
-        // Bind "Get Placeholder" button
+        // Get Placeholder button
         evt.addEventBinding(
                 CustomUIEventBindingType.Activating, "#GetPlaceholderBtn",
                 EventData.of("Action", "GetPlaceholder")
         );
+
+        buildBenchTabs(evt);
+        buildSetFilterBindings(evt);
+        buildRecipeGridBindings(evt);
+        buildPlaceholderBindings(evt);
+
+        // ── Set initial state ──
+        cmd.set("#AffordableToggle.Style", affordabilityEnabled ? FILTER_ACTIVE : FILTER_INACTIVE);
+        cmd.set("#UncategorizedToggle.Style", showUncategorized ? FILTER_ACTIVE : FILTER_INACTIVE);
+
+        updateBenchTabs(cmd);
+        updateSetFilters(cmd);
+        updateRecipeGrid(cmd);
+        updateDetailPanel(cmd);
+        updatePlaceholderList(cmd, store, ref);
     }
 
     @Override
@@ -188,7 +215,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         this.playerStore = store;
 
         UICommandBuilder cmd = new UICommandBuilder();
-        UIEventBuilder evt = new UIEventBuilder();
+        // No UIEventBuilder — all events were bound in build()
 
         if (data.selectedTab != null) {
             // Tab switch
@@ -200,68 +227,74 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 this.selectedRecipeId = null;
                 applyFilter();
                 cmd.set("#SearchInput.Value", "");
-                bindBenchTabs(cmd, evt);
-                buildSetFilters(cmd, evt);
-                buildRecipeList(cmd, evt, store, ref);
+                updateBenchTabs(cmd);
+                updateSetFilters(cmd);
+                updateRecipeGrid(cmd);
                 updateDetailPanel(cmd);
-                sendUpdate(cmd, evt, false);
+                sendUpdate(cmd, null, false);
             }
 
         } else if (data.action != null && data.action.startsWith("SetFilter:")) {
-            // Set filter toggle — multi-select
-            String setFilter = data.action.substring("SetFilter:".length());
-            if (ALL_FILTER.equals(setFilter)) {
+            // Set filter toggle — index-based resolution
+            String filterPayload = data.action.substring("SetFilter:".length());
+            if (ALL_FILTER.equals(filterPayload)) {
                 activeSetFilters.clear();
-            } else {
-                if (activeSetFilters.contains(setFilter)) {
-                    activeSetFilters.remove(setFilter);
-                } else {
-                    activeSetFilters.add(setFilter);
+            } else if (filterPayload.startsWith("idx:")) {
+                int idx = -1;
+                try {
+                    idx = Integer.parseInt(filterPayload.substring(4));
+                } catch (NumberFormatException ignored) {}
+                if (idx >= 0 && idx < currentSets.size()) {
+                    String setName = currentSets.get(idx);
+                    if (activeSetFilters.contains(setName)) {
+                        activeSetFilters.remove(setName);
+                    } else {
+                        activeSetFilters.add(setName);
+                    }
                 }
             }
             this.selectedRecipeId = null;
             applyFilter();
-            buildSetFilters(cmd, evt);
-            buildRecipeList(cmd, evt, store, ref);
+            updateSetFilters(cmd);
+            updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
-            sendUpdate(cmd, evt, false);
+            sendUpdate(cmd, null, false);
 
         } else if (data.searchQuery != null) {
             this.searchQuery = data.searchQuery.trim();
             applyFilter();
             this.selectedRecipeId = null;
-            bindBenchTabs(cmd, evt);
-            buildSetFilters(cmd, evt);
-            buildRecipeList(cmd, evt, store, ref);
+            updateBenchTabs(cmd);
+            updateSetFilters(cmd);
+            updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
-            sendUpdate(cmd, evt, false);
+            sendUpdate(cmd, null, false);
 
         } else if (data.recipeId != null) {
             this.selectedRecipeId = data.recipeId;
-            buildRecipeList(cmd, evt, store, ref);
+            updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
-            sendUpdate(cmd, evt, false);
+            sendUpdate(cmd, null, false);
 
         } else if ("ToggleAffordable".equals(data.action)) {
             this.affordabilityEnabled = !this.affordabilityEnabled;
             applyFilter();
             cmd.set("#AffordableToggle.Style", affordabilityEnabled ? FILTER_ACTIVE : FILTER_INACTIVE);
-            buildSetFilters(cmd, evt);
-            buildRecipeList(cmd, evt, store, ref);
+            updateSetFilters(cmd);
+            updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
-            sendUpdate(cmd, evt, false);
+            sendUpdate(cmd, null, false);
 
         } else if ("ToggleUncategorized".equals(data.action)) {
             this.showUncategorized = !this.showUncategorized;
             applyFilter();
             cmd.set("#UncategorizedToggle.Style", showUncategorized ? FILTER_ACTIVE : FILTER_INACTIVE);
-            buildSetFilters(cmd, evt);
-            buildRecipeList(cmd, evt, store, ref);
+            updateSetFilters(cmd);
+            updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
-            sendUpdate(cmd, evt, false);
+            sendUpdate(cmd, null, false);
 
         } else if (data.action != null && data.action.startsWith("PlaceholderDrop:")) {
-            // Drag recipe from grid into a specific placeholder row
             int hotbarSlot = -1;
             try {
                 hotbarSlot = Integer.parseInt(data.action.substring("PlaceholderDrop:".length()));
@@ -270,13 +303,12 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             if (hotbarSlot >= 0 && hotbarSlot < PlaceBlockMetadata.HOTBAR_SIZE
                     && data.itemStackId != null && !data.itemStackId.isEmpty()) {
                 armPlaceholder(store, ref, hotbarSlot, data.itemStackId);
-                buildPlaceholderList(cmd, evt, store, ref);
+                updatePlaceholderList(cmd, store, ref);
                 LOGGER.info("[BlueprintUI] Armed slot " + hotbarSlot + " with " + data.itemStackId);
             }
-            sendUpdate(cmd, evt, false);
+            sendUpdate(cmd, null, false);
 
         } else if (data.action != null && data.action.startsWith("PlaceholderClear:")) {
-            // Drag out of placeholder row — disarm
             int hotbarSlot = -1;
             try {
                 hotbarSlot = Integer.parseInt(data.action.substring("PlaceholderClear:".length()));
@@ -284,42 +316,35 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
             if (hotbarSlot >= 0 && hotbarSlot < PlaceBlockMetadata.HOTBAR_SIZE) {
                 disarmPlaceholder(store, ref, hotbarSlot);
-                buildPlaceholderList(cmd, evt, store, ref);
+                updatePlaceholderList(cmd, store, ref);
                 LOGGER.info("[BlueprintUI] Disarmed slot " + hotbarSlot);
             }
-            sendUpdate(cmd, evt, false);
+            sendUpdate(cmd, null, false);
 
         } else if ("RecipeHover".equals(data.action)) {
-            // Hover over a recipe slot — preview details using slotIndex
             if (data.slotIndex != null && data.slotIndex >= 0 && data.slotIndex < displayedRecipes.size()) {
                 RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(data.slotIndex);
                 this.selectedRecipeId = entry.recipeId();
                 updateDetailPanel(cmd);
             }
-            sendUpdate(cmd, evt, false);
+            sendUpdate(cmd, null, false);
 
         } else if ("RecipeSelect".equals(data.action)) {
-            // Click-release on a recipe slot — confirm selection
             if (data.slotIndex != null && data.slotIndex >= 0 && data.slotIndex < displayedRecipes.size()) {
                 RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(data.slotIndex);
                 this.selectedRecipeId = entry.recipeId();
                 updateDetailPanel(cmd);
             }
-            sendUpdate(cmd, evt, false);
+            sendUpdate(cmd, null, false);
 
         } else if ("GetPlaceholder".equals(data.action)) {
             craftPlaceholder(store, ref, cmd);
-            buildPlaceholderList(cmd, evt, store, ref);
-            sendUpdate(cmd, evt, false);
+            updatePlaceholderList(cmd, store, ref);
+            sendUpdate(cmd, null, false);
         }
     }
 
-    private void bindBenchTabs(UICommandBuilder cmd, UIEventBuilder evt) {
-        // Set the active tab (tabs are static in .ui)
-        cmd.set("#BenchTabs.SelectedTab", activeTab);
-        cmd.set("#ActiveBenchLabel.Text", tabDisplayName(activeTab));
-
-        // Bind tab change event
+    private void buildBenchTabs(UIEventBuilder evt) {
         evt.addEventBinding(
                 CustomUIEventBindingType.SelectedTabChanged, "#BenchTabs",
                 EventData.of("@SelectedTab", "#BenchTabs.SelectedTab"),
@@ -327,50 +352,62 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         );
     }
 
+    private void updateBenchTabs(UICommandBuilder cmd) {
+        cmd.set("#BenchTabs.SelectedTab", activeTab);
+        cmd.set("#ActiveBenchLabel.Text", tabDisplayName(activeTab));
+    }
+
     private static String tabDisplayName(String tabId) {
         if (tabId == null) return "";
         return tabId.replace('_', ' ');
     }
 
-    private void buildSetFilters(UICommandBuilder cmd, UIEventBuilder evt) {
-        cmd.clear("#SetFilters");
-
-        if (currentSets.isEmpty()) return;
-
-        // "All" filter
-        cmd.appendInline("#SetFilters",
-                "TextButton #FilterAll { Text: \"All\"; Anchor: (Height: 24); Padding: (Left: 6, Right: 6); }");
-        cmd.set("#FilterAll.Style", activeSetFilters.isEmpty() ? FILTER_ACTIVE : FILTER_INACTIVE);
+    private void buildSetFilterBindings(UIEventBuilder evt) {
+        // Index 0 is the "All" button
         evt.addEventBinding(
-                CustomUIEventBindingType.Activating, "#FilterAll",
+                CustomUIEventBindingType.Activating, "#SetFilters[0]",
                 EventData.of("Action", "SetFilter:" + ALL_FILTER)
         );
-
-        // One filter per set — vertical list, multi-select
-        for (int i = 0; i < currentSets.size(); i++) {
-            String setName = currentSets.get(i);
-            String filterId = "Filter" + i;
-            // Shorten set name for display (e.g. "Wood_Hardwood_Planks" -> "Hardwood Planks")
-            String label = setName;
-            if (label.contains("_")) {
-                // Drop first segment (usually material category), replace underscores with spaces
-                label = label.substring(label.indexOf('_') + 1).replace('_', ' ');
-            }
-
-            cmd.appendInline("#SetFilters",
-                    "TextButton #" + filterId + " { Text: \"" + label + "\"; Anchor: (Height: 24); Padding: (Left: 6, Right: 6); }");
-            cmd.set("#" + filterId + ".Style", activeSetFilters.contains(setName) ? FILTER_ACTIVE : FILTER_INACTIVE);
+        // Indices 1..MAX_SET_FILTERS are the per-set buttons
+        for (int i = 0; i < MAX_SET_FILTERS; i++) {
             evt.addEventBinding(
-                    CustomUIEventBindingType.Activating, "#" + filterId,
-                    EventData.of("Action", "SetFilter:" + setName)
+                    CustomUIEventBindingType.Activating, "#SetFilters[" + (i + 1) + "]",
+                    EventData.of("Action", "SetFilter:idx:" + i)
             );
         }
     }
 
-    private void buildRecipeList(UICommandBuilder cmd, UIEventBuilder evt,
-                                 Store<EntityStore> store, Ref<EntityStore> ref) {
+    private void updateSetFilters(UICommandBuilder cmd) {
+        // "All" filter button — index 0
+        cmd.set("#SetFilters[0].Visible", !currentSets.isEmpty());
+        cmd.set("#SetFilters[0].Style", activeSetFilters.isEmpty() ? FILTER_ACTIVE : FILTER_INACTIVE);
 
-        // No need to sort — pipeline already sorted
+        // Per-set filter buttons — indices 1..MAX_SET_FILTERS
+        for (int i = 0; i < MAX_SET_FILTERS; i++) {
+            String sel = "#SetFilters[" + (i + 1) + "]";
+            if (i < currentSets.size()) {
+                String setName = currentSets.get(i);
+                String label = setName;
+                if (label.contains("_")) {
+                    label = label.substring(label.indexOf('_') + 1).replace('_', ' ');
+                }
+                cmd.set(sel + ".Visible", true);
+                cmd.set(sel + ".Text", label);
+                cmd.set(sel + ".Style", activeSetFilters.contains(setName) ? FILTER_ACTIVE : FILTER_INACTIVE);
+            } else {
+                cmd.set(sel + ".Visible", false);
+            }
+        }
+    }
+
+    private void buildRecipeGridBindings(UIEventBuilder evt) {
+        evt.addEventBinding(CustomUIEventBindingType.SlotMouseEntered, "#RecipeGrid",
+                EventData.of("Action", "RecipeHover"), false);
+        evt.addEventBinding(CustomUIEventBindingType.SlotClicking, "#RecipeGrid",
+                EventData.of("Action", "RecipeSelect"), false);
+    }
+
+    private void updateRecipeGrid(UICommandBuilder cmd) {
         ItemGridSlot[] recipeSlots = new ItemGridSlot[displayedRecipes.size()];
         for (int i = 0; i < displayedRecipes.size(); i++) {
             RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(i);
@@ -384,19 +421,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             recipeSlots[i] = slot;
         }
         cmd.set("#RecipeGrid.Slots", recipeSlots);
-
-        // Bind hover to preview recipe details
-        evt.addEventBinding(CustomUIEventBindingType.SlotMouseEntered, "#RecipeGrid",
-                EventData.of("Action", "RecipeHover"), false);
-
-        // Bind click-release to confirm recipe selection
-        evt.addEventBinding(CustomUIEventBindingType.SlotClicking, "#RecipeGrid",
-                EventData.of("Action", "RecipeSelect"), false);
     }
 
     private void updateDetailPanel(UICommandBuilder cmd) {
-        cmd.clear("#CostGrid");
-
         if (selectedRecipeId != null) {
             RecipeEntry entry = findEntry(selectedRecipeId);
             if (entry != null) {
@@ -404,17 +431,15 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 cmd.set("#OutputName.Text", entry.blockTypeId != null
                         ? entry.blockTypeId.replace('_', ' ') : entry.outputItemId);
 
-                // Populate ingredient grid with quantities
+                int costIdx = 0;
                 try {
                     CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
                     if (recipe != null) {
-                        // Use per-unit cost (recipe cost / output quantity)
                         List<MaterialQuantity> perUnitInputs = PlaceBlockCostUtil.getPerUnitCost(recipe);
                         if (!perUnitInputs.isEmpty()) {
                             FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(entry.recipeId);
                             BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
 
-                            // Aggregate quantities by item ID
                             Map<String, Integer> ingredientMap = new LinkedHashMap<>();
                             for (MaterialQuantity mq : perUnitInputs) {
                                 if (mq == null) continue;
@@ -423,113 +448,106 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                                 ingredientMap.merge(itemId, mq.getQuantity(), Integer::sum);
                             }
 
-                            int idx = 0;
                             for (var e : ingredientMap.entrySet()) {
-                                cmd.append("#CostGrid", "Pages/BlueprintBench/CostCell.ui");
-                                cmd.set("#CostGrid[" + idx + "] #CostIcon.ItemId", e.getKey());
-                                cmd.set("#CostGrid[" + idx + "] #CostQty.Text", "x" + e.getValue());
-                                idx++;
+                                if (costIdx >= MAX_COST_CELLS) break;
+                                String sel = "#CostGrid[" + costIdx + "]";
+                                cmd.set(sel + ".Visible", true);
+                                cmd.set(sel + " #CostIcon.ItemId", e.getKey());
+                                cmd.set(sel + " #CostQty.Text", "x" + e.getValue());
+                                costIdx++;
                             }
                         }
                     }
                 } catch (Exception e) {
                     LOGGER.warning("[BlueprintUI] Error populating cost grid: " + e.getMessage());
                 }
+
+                // Hide remaining cost cells
+                for (int i = costIdx; i < MAX_COST_CELLS; i++) {
+                    cmd.set("#CostGrid[" + i + "].Visible", false);
+                }
                 return;
             }
         }
         cmd.set("#OutputIcon.ItemId", "");
         cmd.set("#OutputName.Text", "No recipe selected");
+        for (int i = 0; i < MAX_COST_CELLS; i++) {
+            cmd.set("#CostGrid[" + i + "].Visible", false);
+        }
     }
 
     // ─── Placeholder list ─────────────────────────────────────
 
-    private record PlaceholderSlotInfo(int hotbarSlot, boolean armed,
-                                       @Nullable String outputItemId,
-                                       @Nullable String blockName) {}
-
-    private List<PlaceholderSlotInfo> scanHotbarPlaceholders(Store<EntityStore> store, Ref<EntityStore> ref) {
-        List<PlaceholderSlotInfo> result = new ArrayList<>();
-        Player player = store.getComponent(ref, Player.getComponentType());
-        if (player == null) return result;
-
-        ItemContainer hotbar = player.getInventory().getHotbar();
-        for (short slot = 0; slot < PlaceBlockMetadata.HOTBAR_SIZE; slot++) {
-            ItemStack stack = hotbar.getItemStack(slot);
-            if (!PlaceBlockMetadata.isPlaceBlock(stack)) continue;
-
-            boolean armed = PlaceBlockMetadata.isArmed(stack);
-            String outputItemId = null;
-            String blockName = null;
-
-            if (armed) {
-                String blockTypeId = PlaceBlockMetadata.getOutputBlockTypeId(stack);
-                if (blockTypeId != null) {
-                    blockName = blockTypeId.replace('_', ' ');
-                    // Find the output item ID from our recipe registry using the blockTypeId
-                    for (RecipeEntry entry : allRecipes) {
-                        if (blockTypeId.equals(entry.blockTypeId())) {
-                            outputItemId = entry.outputItemId();
-                            break;
-                        }
-                    }
-                }
-            }
-
-            result.add(new PlaceholderSlotInfo(slot, armed, outputItemId, blockName));
+    private void buildPlaceholderBindings(UIEventBuilder evt) {
+        for (int i = 0; i < MAX_PLACEHOLDER_ROWS; i++) {
+            evt.addEventBinding(CustomUIEventBindingType.Dropped,
+                    "#PlaceholderList[" + i + "] #RowInputSlot",
+                    EventData.of("Action", "PlaceholderDrop:" + i), false);
+            evt.addEventBinding(CustomUIEventBindingType.Activating,
+                    "#PlaceholderList[" + i + "] #RowClearBtn",
+                    EventData.of("Action", "PlaceholderClear:" + i));
         }
-        return result;
     }
 
-    private void buildPlaceholderList(UICommandBuilder cmd, UIEventBuilder evt,
-                                      Store<EntityStore> store, Ref<EntityStore> ref) {
-        cmd.clear("#PlaceholderList");
-        this.placeholderSlots = scanHotbarPlaceholders(store, ref);
+    private void updatePlaceholderList(UICommandBuilder cmd,
+                                       Store<EntityStore> store, Ref<EntityStore> ref) {
+        Player player = store.getComponent(ref, Player.getComponentType());
+        boolean anyPlaceholder = false;
 
-        for (int i = 0; i < placeholderSlots.size(); i++) {
-            PlaceholderSlotInfo info = placeholderSlots.get(i);
-            String rowSel = "#PlaceholderList[" + i + "]";
+        if (player != null) {
+            ItemContainer hotbar = player.getInventory().getHotbar();
+            for (int i = 0; i < MAX_PLACEHOLDER_ROWS; i++) {
+                String rowSel = "#PlaceholderList[" + i + "]";
+                ItemStack stack = hotbar.getItemStack((short) i);
 
-            // Append row template
-            cmd.append("#PlaceholderList", "Pages/BlueprintBench/PlaceholderRow.ui");
+                if (PlaceBlockMetadata.isPlaceBlock(stack)) {
+                    anyPlaceholder = true;
+                    cmd.set(rowSel + ".Visible", true);
+                    cmd.set(rowSel + " #RowSlotLabel.Text", String.valueOf(i + 1));
 
-            // Set slot number label
-            cmd.set(rowSel + " #RowSlotLabel.Text", String.valueOf(info.hotbarSlot + 1));
-
-            // Set input slot contents
-            if (info.armed && info.outputItemId != null) {
-                ItemGridSlot slot = new ItemGridSlot(new ItemStack(info.outputItemId, 1));
-                slot.setActivatable(true);
-                slot.setName(info.blockName != null ? info.blockName : "");
-                cmd.set(rowSel + " #RowInputSlot.Slots", new ItemGridSlot[]{slot});
-                cmd.set(rowSel + " #RowBlockName.Text", info.blockName != null ? info.blockName : "");
-            } else {
-                ItemGridSlot emptySlot = new ItemGridSlot();
-                emptySlot.setActivatable(true);
-                cmd.set(rowSel + " #RowInputSlot.Slots", new ItemGridSlot[]{emptySlot});
-                cmd.set(rowSel + " #RowBlockName.Text", "Empty");
+                    boolean armed = PlaceBlockMetadata.isArmed(stack);
+                    if (armed) {
+                        String blockTypeId = PlaceBlockMetadata.getOutputBlockTypeId(stack);
+                        String blockName = blockTypeId != null ? blockTypeId.replace('_', ' ') : "";
+                        String outputItemId = null;
+                        if (blockTypeId != null) {
+                            for (RecipeEntry entry : allRecipes) {
+                                if (blockTypeId.equals(entry.blockTypeId())) {
+                                    outputItemId = entry.outputItemId();
+                                    break;
+                                }
+                            }
+                        }
+                        if (outputItemId != null) {
+                            ItemGridSlot slot = new ItemGridSlot(new ItemStack(outputItemId, 1));
+                            slot.setActivatable(true);
+                            slot.setName(blockName);
+                            cmd.set(rowSel + " #RowInputSlot.Slots", new ItemGridSlot[]{slot});
+                        } else {
+                            ItemGridSlot emptySlot = new ItemGridSlot();
+                            emptySlot.setActivatable(true);
+                            cmd.set(rowSel + " #RowInputSlot.Slots", new ItemGridSlot[]{emptySlot});
+                        }
+                        cmd.set(rowSel + " #RowBlockName.Text", blockName);
+                        cmd.set(rowSel + " #RowClearBtn.Visible", true);
+                    } else {
+                        ItemGridSlot emptySlot = new ItemGridSlot();
+                        emptySlot.setActivatable(true);
+                        cmd.set(rowSel + " #RowInputSlot.Slots", new ItemGridSlot[]{emptySlot});
+                        cmd.set(rowSel + " #RowBlockName.Text", "Empty");
+                        cmd.set(rowSel + " #RowClearBtn.Visible", false);
+                    }
+                } else {
+                    cmd.set(rowSel + ".Visible", false);
+                }
             }
-
-            // Bind drop event — arm on drop (uses hotbar slot, not row index)
-            evt.addEventBinding(CustomUIEventBindingType.Dropped,
-                    rowSel + " #RowInputSlot",
-                    EventData.of("Action", "PlaceholderDrop:" + info.hotbarSlot), false);
-
-            // Show clear button and bind it only if armed
-            if (info.armed) {
-                cmd.set(rowSel + " #RowClearBtn.Visible", true);
-                evt.addEventBinding(CustomUIEventBindingType.Activating,
-                        rowSel + " #RowClearBtn",
-                        EventData.of("Action", "PlaceholderClear:" + info.hotbarSlot));
+        } else {
+            for (int i = 0; i < MAX_PLACEHOLDER_ROWS; i++) {
+                cmd.set("#PlaceholderList[" + i + "].Visible", false);
             }
         }
 
-        if (placeholderSlots.isEmpty()) {
-            cmd.appendInline("#PlaceholderList",
-                    "Label { Text: \"No placeholders in hotbar\"; Anchor: (Height: 32); " +
-                    "Style: LabelStyle(FontSize: 11, TextColor: #6e7da1, " +
-                    "HorizontalAlignment: Center, VerticalAlignment: Center); }");
-        }
+        cmd.set("#NoPlaceholdersLabel.Visible", !anyPlaceholder);
     }
 
     private void armPlaceholder(Store<EntityStore> store, Ref<EntityStore> ref,

@@ -122,7 +122,6 @@ public class ItemGridTestPage extends InteractiveCustomUIPage<ItemGridTestPage.E
                                 @NonNull Store<EntityStore> store,
                                 @NonNull EventPayload data) {
         UICommandBuilder cmd = new UICommandBuilder();
-        UIEventBuilder evt = new UIEventBuilder();
 
         if (data.action != null) {
             LOGGER.info("[GridTest] Event: " + data.action);
@@ -134,14 +133,10 @@ public class ItemGridTestPage extends InteractiveCustomUIPage<ItemGridTestPage.E
             cmd.set("#StatusLabel.Text", "Event with null action");
         }
 
-        // Re-bind all grid events on every update
-        bindGridEvents(evt, "#SourceGrid", "Src");
-        bindGridEvents(evt, "#InputGrid", "Input");
-
         // Update event log display
         cmd.set("#EventLog.Text", getLogText());
 
-        this.sendUpdate(cmd, evt, false);
+        this.sendUpdate(cmd, null, false);
     }
 
     private void logEvent(String msg) {

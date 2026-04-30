@@ -1,5 +1,6 @@
 // PlaceholderRow — one row per placeholder item in the hotbar
-// Server appends into #PlaceholderList and sets properties via indexed selectors
+// Reusable component: server appends N instances into #PlaceholderList during build()
+// Server updates via cmd.set() on indexed selectors: #PlaceholderList[N] #RowSlotLabel, etc.
 
 $C = "../../Common.ui";
 
@@ -17,6 +18,7 @@ $C = "../../Common.ui";
 Group {
     LayoutMode: Left;
     Anchor: (Height: 64, Left: 0, Right: 0);
+    Visible: false;
 
     // Slot number label
     Label #RowSlotLabel {

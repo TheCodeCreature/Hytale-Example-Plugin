@@ -1,8 +1,11 @@
 // Cost cell — single ingredient icon with quantity overlay
+// Reusable component: server appends N instances into #CostGrid during build()
+// Server updates via cmd.set() on indexed selectors: #CostGrid[N] #CostIcon, #CostGrid[N] #CostQty
 $C = "../../Common.ui";
 
 Group {
     Anchor: (Width: 52, Height: 52);
+    Visible: false;
 
     ItemIcon #CostIcon {
         Anchor: (Full: 2);
