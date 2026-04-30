@@ -231,8 +231,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 updateSetFilters(cmd);
                 updateRecipeGrid(cmd);
                 updateDetailPanel(cmd);
-                sendUpdate(cmd, null, false);
             }
+            sendUpdate(cmd, null, false);
 
         } else if (data.action != null && data.action.startsWith("SetFilter:")) {
             // Set filter toggle — index-based resolution
@@ -266,12 +266,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             this.selectedRecipeId = null;
             updateBenchTabs(cmd);
             updateSetFilters(cmd);
-            updateRecipeGrid(cmd);
-            updateDetailPanel(cmd);
-            sendUpdate(cmd, null, false);
-
-        } else if (data.recipeId != null) {
-            this.selectedRecipeId = data.recipeId;
             updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
             sendUpdate(cmd, null, false);
@@ -321,21 +315,13 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             }
             sendUpdate(cmd, null, false);
 
-        } else if ("RecipeHover".equals(data.action)) {
+        } else if ("RecipeHover".equals(data.action) || "RecipeSelect".equals(data.action)) {
             if (data.slotIndex != null && data.slotIndex >= 0 && data.slotIndex < displayedRecipes.size()) {
                 RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(data.slotIndex);
                 this.selectedRecipeId = entry.recipeId();
                 updateDetailPanel(cmd);
+                sendUpdate(cmd, null, false);
             }
-            sendUpdate(cmd, null, false);
-
-        } else if ("RecipeSelect".equals(data.action)) {
-            if (data.slotIndex != null && data.slotIndex >= 0 && data.slotIndex < displayedRecipes.size()) {
-                RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(data.slotIndex);
-                this.selectedRecipeId = entry.recipeId();
-                updateDetailPanel(cmd);
-            }
-            sendUpdate(cmd, null, false);
 
         } else if ("GetPlaceholder".equals(data.action)) {
             craftPlaceholder(store, ref, cmd);
