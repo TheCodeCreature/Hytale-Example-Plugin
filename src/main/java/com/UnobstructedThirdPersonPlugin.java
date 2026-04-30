@@ -21,6 +21,7 @@ import com.UnobstructedThirdPerson.placeblock.PlaceBlockMenuInteraction;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockToolInteraction;
 import com.UnobstructedThirdPerson.placeblock.PlaceholderSyncSystem;
 import com.UnobstructedThirdPerson.placeblock.ui.BlueprintBenchOpenUIInteraction;
+import com.UnobstructedThirdPerson.placeblock.ui.BlueprintBenchPrefsStore;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 // import com.UnobstructedThirdPerson.assignbench.AssignBenchInteraction;
 import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
@@ -73,6 +74,8 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         PortableBenchConfigLoader.loadAndRegister("/portable_benches.json");
 
         PlaceBlockConfigLoader.loadAndStore("/placeblock_config.json");
+
+        BlueprintBenchPrefsStore.initialize(this.getDataDirectory());
 
         // Register PlaceBlock interaction types
         this.getCodecRegistry(Interaction.CODEC)

@@ -140,6 +140,16 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         this.playerRef_ref = ref;
         this.playerStore = store;
 
+        // Load persisted preferences
+        BlueprintBenchPrefs prefs = BlueprintBenchPrefsStore.load(this.playerRef.getUuid());
+        this.activeTab = prefs.activeTab != null ? prefs.activeTab : ALL_TAB;
+        this.activeSetFilters.clear();
+        this.activeSetFilters.addAll(prefs.activeSetFilters);
+        this.affordabilityEnabled = prefs.affordabilityEnabled;
+        this.showUncategorized = prefs.showUncategorized;
+        this.searchQuery = prefs.searchQuery != null ? prefs.searchQuery : "";
+        this.selectedRecipeId = prefs.selectedRecipeId;
+
         loadRecipes();
 
         // Load main template
@@ -207,6 +217,22 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     }
 
     @Override
+    public void onDismiss(@NonNull Ref<EntityStore> ref, @NonNull Store<EntityStore> store) {
+        savePrefs();
+    }
+
+    private void savePrefs() {
+        BlueprintBenchPrefs prefs = new BlueprintBenchPrefs();
+        prefs.activeTab = this.activeTab;
+        prefs.activeSetFilters = new ArrayList<>(this.activeSetFilters);
+        prefs.affordabilityEnabled = this.affordabilityEnabled;
+        prefs.showUncategorized = this.showUncategorized;
+        prefs.searchQuery = this.searchQuery;
+        prefs.selectedRecipeId = this.selectedRecipeId;
+        BlueprintBenchPrefsStore.save(this.playerRef.getUuid(), prefs);
+    }
+
+    @Override
     public void handleDataEvent(@NonNull Ref<EntityStore> ref,
                                 @NonNull Store<EntityStore> store,
                                 @NonNull EventPayload data) {
@@ -231,6 +257,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 updateSetFilters(cmd);
                 updateRecipeGrid(cmd);
                 updateDetailPanel(cmd);
+                savePrefs();
             }
             sendUpdate(cmd, null, false);
 
@@ -258,6 +285,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             updateSetFilters(cmd);
             updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
+            savePrefs();
             sendUpdate(cmd, null, false);
 
         } else if (data.searchQuery != null) {
@@ -268,6 +296,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             updateSetFilters(cmd);
             updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
+            savePrefs();
             sendUpdate(cmd, null, false);
 
         } else if ("ToggleAffordable".equals(data.action)) {
@@ -277,6 +306,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             updateSetFilters(cmd);
             updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
+            savePrefs();
             sendUpdate(cmd, null, false);
 
         } else if ("ToggleUncategorized".equals(data.action)) {
@@ -286,6 +316,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             updateSetFilters(cmd);
             updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
+            savePrefs();
             sendUpdate(cmd, null, false);
 
         } else if (data.action != null && data.action.startsWith("PlaceholderDrop:")) {
@@ -320,6 +351,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(data.slotIndex);
                 this.selectedRecipeId = entry.recipeId();
                 updateDetailPanel(cmd);
+                savePrefs();
                 sendUpdate(cmd, null, false);
             }
 
