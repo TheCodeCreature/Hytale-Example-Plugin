@@ -15,13 +15,7 @@ import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
 import com.UnobstructedThirdPerson.resourcecollection.PlacementCostScaler;
 import com.UnobstructedThirdPerson.stencil.StencilPlacementSystem;
 import com.UnobstructedThirdPerson.stencil.StencilSyncSystem;
-import com.UnobstructedThirdPerson.placeblock.BlockPreviewReskinManager;
 import com.UnobstructedThirdPerson.placeblock.BlueprintBenchRecipeMutator;
-import com.UnobstructedThirdPerson.placeblock.PlaceBlockBenchInterceptor;
-import com.UnobstructedThirdPerson.placeblock.PlaceBlockConfigLoader;
-import com.UnobstructedThirdPerson.placeblock.PlaceBlockMenuInteraction;
-import com.UnobstructedThirdPerson.placeblock.PlaceBlockToolInteraction;
-import com.UnobstructedThirdPerson.placeblock.PlaceholderSyncSystem;
 import com.UnobstructedThirdPerson.placeblock.ui.BlueprintBenchOpenUIInteraction;
 import com.UnobstructedThirdPerson.placeblock.ui.BlueprintBenchPrefsStore;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -78,19 +72,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
         PortableBenchConfigLoader.loadAndRegister("/portable_benches.json");
 
-        PlaceBlockConfigLoader.loadAndStore("/placeblock_config.json");
-
         BlueprintBenchPrefsStore.initialize(this.getDataDirectory());
-
-        // Register PlaceBlock interaction types
-        this.getCodecRegistry(Interaction.CODEC)
-                .register("PlaceBlock_Menu", PlaceBlockMenuInteraction.class, PlaceBlockMenuInteraction.CODEC);
-        // this.getCodecRegistry(Interaction.CODEC)
-        //         .register("Assign_Bench", AssignBenchInteraction.class, AssignBenchInteraction.CODEC);
-
-        // Register PlaceBlockTool interaction type (direct placement, replaces PlaceBlockPlacementSystem)
-        this.getCodecRegistry(Interaction.CODEC)
-                .register("PlaceBlockTool", PlaceBlockToolInteraction.class, PlaceBlockToolInteraction.CODEC);
 
         // Register Blueprint Bench interaction type (opens custom UI page)
         this.getCodecRegistry(Interaction.CODEC)
@@ -122,10 +104,9 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
         playerRef.sendMessage(Message.raw("§a[Plugin] Resource scaling active."));
 
-        // Register per-player inventory change listeners for placeholder variant sync
+        // Register per-player stencil sync listeners
         Player player = store.getComponent(ref, Player.getComponentType());
         if (player != null) {
-            PlaceholderSyncSystem.register(playerRef, player);
             StencilSyncSystem.register(playerRef, player);
         }
 
@@ -139,9 +120,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         CameraTransparencyVolume.remove(playerRef.getUuid());
         CameraTransparencyVolumeV2.remove(playerRef.getUuid());
         PreviewBlockManager.remove(playerRef.getUuid());
-        PlaceholderSyncSystem.unregister(playerRef.getUuid());
         StencilSyncSystem.unregister(playerRef.getUuid());
-        BlockPreviewReskinManager.cleanup(playerRef.getUuid());
         NewMovementSystem.disableMoonGravity(playerRef.getUuid());
     }
 

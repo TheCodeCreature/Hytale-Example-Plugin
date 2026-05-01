@@ -1,5 +1,5 @@
 // Blueprint Bench — main page layout
-// Server appends reusable .ui components (SetFilterButton, CostCell, PlaceholderRow) during build()
+// Server appends reusable .ui components (SetFilterButton, CostCell) during build()
 // Server updates via cmd.set() only in handleDataEvent() — no append/clear after build()
 
 $C = "../../Common.ui";
@@ -223,42 +223,6 @@ Group {
         Group { Anchor: (Height: 8); }
         $C.@PanelSeparatorFancy {}
         Group { Anchor: (Height: 8); }
-
-        // ── Placeholder List ──
-        Label #InputSlotLabel {
-            Text: "Placeholders";
-            Anchor: (Height: 20);
-            Style: @DetailLabelStyle;
-        }
-
-        Group { Anchor: (Height: 4); }
-
-        // Scrollable list of placeholder rows — server appends PlaceholderRow.ui instances during build()
-        Group {
-            FlexWeight: 1;
-            LayoutMode: TopScrolling;
-            ScrollbarStyle: $C.@DefaultScrollbarStyle;
-
-            // ── Empty state label (outside PlaceholderList to avoid index offset) ──
-            Label #NoPlaceholdersLabel {
-                Text: "No placeholders in hotbar";
-                Anchor: (Height: 32);
-                Visible: false;
-                Style: LabelStyle(
-                    FontSize: 11, TextColor: #6e7da1,
-                    HorizontalAlignment: Center, VerticalAlignment: Center
-                );
-            }
-
-            Group #PlaceholderList {
-                Padding: (Top: 20);
-                LayoutMode: Top;
-            }
-        }
-
-        Group { Anchor: (Height: 4); }
-        $C.@PanelSeparatorFancy {}
-        Group { Anchor: (Height: 4); }
 
         // ── Give Stencil Button ──
         $C.@SecondaryTextButton #GetPlaceholderBtn {

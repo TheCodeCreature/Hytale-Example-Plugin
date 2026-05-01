@@ -14,7 +14,6 @@ import javax.annotation.Nonnull;
  * <ul>
  *   <li>PlaceBlockBenchInterceptor (Phase 2) — to filter recipes by affordability at the bench</li>
  *   <li>{@link PlaceBlockPlacementSystem} — to consume resources atomically at placement time</li>
- *   <li>{@link PlaceholderSyncSystem} — to evaluate affordability for Green/Red state toggling</li>
  * </ul>
  *
  * <p><strong>Chest scanning (RISK R4):</strong> The method for discovering chest
