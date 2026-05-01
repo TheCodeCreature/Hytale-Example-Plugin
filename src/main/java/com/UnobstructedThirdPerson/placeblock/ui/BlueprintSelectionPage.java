@@ -196,10 +196,10 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 EventData.of("Action", "ToggleUncategorized")
         );
 
-        // Get Placeholder button
+        // Give Blueprint button
         evt.addEventBinding(
                 CustomUIEventBindingType.Activating, "#GetPlaceholderBtn",
-                EventData.of("Action", "GetPlaceholder")
+                EventData.of("Action", "GiveBlueprint")
         );
 
         buildBenchTabs(evt);
@@ -385,9 +385,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             }
             sendUpdate(cmd, null, false);
 
-        } else if ("GetPlaceholder".equals(data.action)) {
-            craftPlaceholder(store, ref, cmd);
-            updatePlaceholderList(cmd, store, ref);
+        } else if ("GiveBlueprint".equals(data.action)) {
+            giveSelectedBlueprint(store, ref, cmd);
             sendUpdate(cmd, null, false);
         }
     }
@@ -650,37 +649,26 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         BlockPreviewReskinManager.syncPlaceholder(this.playerRef, inventory);
     }
 
-    private static final String LIFE_ESSENCE_ID = "Ingredient_Life_Essence";
-
-    private void craftPlaceholder(Store<EntityStore> store, Ref<EntityStore> ref,
+    private void giveSelectedBlueprint(Store<EntityStore> store, Ref<EntityStore> ref,
                                   UICommandBuilder cmd) {
-        Player player = store.getComponent(ref, Player.getComponentType());
-        if (player == null) return;
-
-        Inventory inventory = player.getInventory();
-        ItemContainer container = inventory.getCombinedBackpackStorageHotbar();
-
-        // Check for 1x Life Essence
-        List<MaterialQuantity> cost = List.of(
-                new MaterialQuantity(LIFE_ESSENCE_ID, null, null, 1, null));
-
-        if (!container.canRemoveMaterials(cost)) {
+        if (selectedRecipeId == null) {
             this.playerRef.sendMessage(
-                    Message.raw("\u00a7c[BlueprintBench] Not enough Life Essence."));
+                    Message.raw("\u00a7c[BlueprintBench] No recipe selected."));
             return;
         }
 
-        // Consume 1x Life Essence
-        var txn = container.removeMaterials(cost, true, true, true);
-        if (!txn.succeeded()) return;
+        RecipeEntry entry = findEntry(selectedRecipeId);
+        if (entry == null) return;
 
-        // Give 1x Block_Placeholder to hotbar-first
-        ItemStack placeholder = new ItemStack(PlaceBlockMetadata.PLACEHOLDER_ID, 1);
-        inventory.getCombinedHotbarFirst().addItemStack(placeholder);
+        Player player = store.getComponent(ref, Player.getComponentType());
+        if (player == null) return;
+
+        ItemStack item = new ItemStack(entry.outputItemId(), 1);
+        player.getInventory().getCombinedHotbarFirst().addItemStack(item);
 
         this.playerRef.sendMessage(
-                Message.raw("\u00a7a[BlueprintBench] Acquired Block Placeholder."));
-        LOGGER.info("[BlueprintUI] Player crafted placeholder from Life Essence");
+                Message.raw("\u00a7a[BlueprintBench] Given 1x " + entry.outputItemId().replace('_', ' ')));
+        LOGGER.info("[BlueprintUI] Gave player 1x " + entry.outputItemId());
     }
 
     private boolean selectRecipeByItemId(String itemId) {

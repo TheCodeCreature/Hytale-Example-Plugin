@@ -81,6 +81,7 @@ Group {
 
     // Main container
     $C.@Container {
+    @Anchor = (Left: 50, Top: 0, Width: 1060, Bottom: 10);
 
     #Title {
         Group {
@@ -157,6 +158,10 @@ Group {
             // Vertical divider between filters and grid
             Group { Anchor: (Width: 1); Background: #2b3542; }
 
+    // ══════════════════════════════
+    // CENTER COLUMN — Recipe browser
+    // ══════════════════════════════
+
             // Scrollable recipe item grid — ItemGrid for drag support
             Group {
                 FlexWeight: 1;
@@ -165,7 +170,6 @@ Group {
                 Padding: (Left: 8);
 
                 ItemGrid #RecipeGrid {
-                    FlexWeight: 1;
                     SlotsPerRow: 9;
                     DisplayItemQuantity: false;
                     RenderItemQualityBackground: false;
@@ -264,10 +268,10 @@ Group {
         $C.@PanelSeparatorFancy {}
         Group { Anchor: (Height: 4); }
 
-        // ── Get Placeholder Button ──
+        // ── Give Blueprint Button ──
         $C.@SecondaryTextButton #GetPlaceholderBtn {
-            Text: "Get Placeholder (1x Life Essence)";
-            Anchor: (Height: 32);
+            @Text = "Give Blueprint";
+            Anchor: (Height: 82);
         }
     }
 
