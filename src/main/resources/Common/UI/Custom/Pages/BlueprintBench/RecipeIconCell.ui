@@ -1,11 +1,37 @@
-// Blueprint Bench — single recipe icon cell
-// ItemSlotButton provides Activating events + auto item tooltips
-// Server sets #CellIcon.ItemId via: #RecipeGrid[i] #CellIcon.ItemId
+// Blueprint Bench — single recipe icon cell (static, no drag)
+// Group root for background, ItemIcon for display, TextButton overlay for clicks
+// Server sets #CellIcon.ItemId and #CellDim.Visible via #RecipeGrid[i]
 
-ItemSlotButton {
-    Anchor: (Width: 80, Height: 80);
+@TransparentBtnStyle = TextButtonStyle(
+    Default: (Background: #000000(0.0), LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
+    Hovered: (Background: #ffffff(0.1), LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
+    Pressed: (Background: #ffffff(0.2), LabelStyle: (FontSize: 1, TextColor: #000000(0.0)))
+);
 
-    ItemIcon #CellIcon {
-        Anchor: (Full: 4);
+Group {
+    Anchor: (Width: 72, Height: 72);
+    Padding: (Left: 4, Right: 4, Top: 4, Bottom: 4);
+    Group{
+        Anchor: (Full: 0);
+        Background: "../../Common/BlockSelectorSlotBackground.png";
+
+        ItemIcon #CellIcon {
+            Anchor: (Full: 4);
+            ShowItemTooltip: true;
+        }
+
+        // Dimming overlay — toggled via #CellDim.Visible for unaffordable items
+        Group #CellDim {
+            Anchor: (Full: 2);
+            Background: #000000(0.5);
+            Visible: false;
+        }
+
+        // Transparent click target — inset to avoid sharp corners
+        TextButton #CellBtn {
+            Text: "";
+            Anchor: (Full: 2);
+            Style: @TransparentBtnStyle;
+        }
     }
 }

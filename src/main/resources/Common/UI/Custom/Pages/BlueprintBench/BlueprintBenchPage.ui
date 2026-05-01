@@ -162,23 +162,15 @@ Group {
     // CENTER COLUMN — Recipe browser
     // ══════════════════════════════
 
-            // Scrollable recipe item grid — ItemGrid for drag support
+            // Scrollable recipe item grid — append-based, no drag
             Group {
                 FlexWeight: 1;
                 LayoutMode: TopScrolling;
                 ScrollbarStyle: $C.@DefaultScrollbarStyle;
                 Padding: (Left: 8);
 
-                ItemGrid #RecipeGrid {
-                    SlotsPerRow: 9;
-                    DisplayItemQuantity: false;
-                    RenderItemQualityBackground: false;
-                    Style: (
-                        SlotSize: 64,
-                        SlotIconSize: 64,
-                        SlotSpacing: 8,
-                        SlotBackground: "../../Common/BlockSelectorSlotBackground.png"
-                    );
+                Group #RecipeGrid {
+                    LayoutMode: LeftCenterWrap;
                 }
             }
         }
@@ -268,9 +260,9 @@ Group {
         $C.@PanelSeparatorFancy {}
         Group { Anchor: (Height: 4); }
 
-        // ── Give Blueprint Button ──
+        // ── Give Stencil Button ──
         $C.@SecondaryTextButton #GetPlaceholderBtn {
-            @Text = "Give Blueprint";
+            @Text = "Give Stencil";
             Anchor: (Height: 82);
         }
     }

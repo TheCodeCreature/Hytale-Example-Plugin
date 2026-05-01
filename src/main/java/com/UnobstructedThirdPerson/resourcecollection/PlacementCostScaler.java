@@ -10,6 +10,7 @@ import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.ecs.PlaceBlockEvent;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.UnobstructedThirdPerson.stencil.StencilMetadata;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
@@ -72,6 +73,9 @@ public class PlacementCostScaler extends EntityEventSystem<EntityStore, PlaceBlo
 
         ItemStack itemInHand = event.getItemInHand();
         if (itemInHand == null) return;
+
+        // Blueprint stencils handle their own resource consumption — skip extra cost
+        if (StencilMetadata.isStencil(itemInHand)) return;
 
         String blockTypeId = itemInHand.getBlockKey();
         if (blockTypeId == null) return;

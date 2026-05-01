@@ -1,6 +1,6 @@
 # Product Board
 
-> Last updated: 2026-04-27 21:30
+> Last updated: 2026-05-01 10:00
 
 ## Status Overview
 
@@ -8,7 +8,7 @@
 pie title Backlog Distribution
     "Backlog" : 22
     "In Progress" : 1
-    "Done" : 18
+    "Done" : 27
     "Cancelled" : 8
 ```
 
@@ -48,6 +48,15 @@ pie title Backlog Distribution
 ### Done
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
+| E2604301400 | Epic | Blueprint Stencil POC | — | high |
+| F2604301410 | Feature | Blueprint Stencil Placement Interception | E2604301400 | high |
+| S2604301411 | Story | Blueprint Stencil Metadata Utility | E2604301400 | high |
+| S2604301412 | Story | PlaceBlockEvent Interception Handler | E2604301400 | high |
+| S2604301413 | Story | Atomic Resource Consumption with Slot Priority | E2604301400 | high |
+| F2604301420 | Feature | PlacementCostScaler Blueprint Guard | E2604301400 | high |
+| S2604301421 | Story | Add Blueprint BSON Guard to PlacementCostScaler | E2604301400 | high |
+| F2604301430 | Feature | Stencil Test Command | E2604301400 | high |
+| S2604301431 | Story | Implement Stencil Test Command | E2604301400 | high |
 | F2604271700 | Feature | Unified Recipe Filter Registry | E2604201200 | high |
 | S2604271710 | Story | Extract Shared Recipe Predicate Pipeline | E2604201200 | high |
 | S2604271720 | Story | Migrate BlueprintSelectionPage to Shared Registry | E2604201200 | high |

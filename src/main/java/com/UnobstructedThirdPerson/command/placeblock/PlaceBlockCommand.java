@@ -5,6 +5,7 @@ import com.UnobstructedThirdPerson.command.placeblock.subcommands.ClearSubComman
 import com.UnobstructedThirdPerson.command.placeblock.subcommands.GridTestSubCommand;
 import com.UnobstructedThirdPerson.command.placeblock.subcommands.InfoSubCommand;
 import com.UnobstructedThirdPerson.command.placeblock.subcommands.ListSubCommand;
+import com.UnobstructedThirdPerson.command.placeblock.subcommands.StencilSubCommand;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractCommandCollection;
 
 /**
@@ -21,5 +22,6 @@ public class PlaceBlockCommand extends AbstractCommandCollection {
         this.addSubCommand(new GridTestSubCommand());
         this.addSubCommand(new InfoSubCommand());
         this.addSubCommand(new ListSubCommand());
+        this.addSubCommand(new StencilSubCommand());
     }
 }

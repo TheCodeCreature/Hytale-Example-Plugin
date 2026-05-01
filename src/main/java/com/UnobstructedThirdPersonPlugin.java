@@ -13,6 +13,8 @@ import com.UnobstructedThirdPerson.portablebench.PortableBenchInteraction;
 import com.UnobstructedThirdPerson.resourcecollection.BreakBlockDiagnostic;
 import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
 import com.UnobstructedThirdPerson.resourcecollection.PlacementCostScaler;
+import com.UnobstructedThirdPerson.stencil.StencilPlacementSystem;
+import com.UnobstructedThirdPerson.stencil.StencilSyncSystem;
 import com.UnobstructedThirdPerson.placeblock.BlockPreviewReskinManager;
 import com.UnobstructedThirdPerson.placeblock.BlueprintBenchRecipeMutator;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockBenchInterceptor;
@@ -63,6 +65,9 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         
         // Consume extra items when placing natural blocks (12x cost to match 12x drops)
         this.getEntityStoreRegistry().registerSystem(new PlacementCostScaler());
+
+        // Blueprint stencil placement — intercepts PlaceBlockEvent for BSON-tagged block items
+        this.getEntityStoreRegistry().registerSystem(new StencilPlacementSystem());
 
         // Diagnostic: log block drop config on break (toggle via /Debug BreakLog)
         this.getEntityStoreRegistry().registerSystem(new BreakBlockDiagnostic());
@@ -121,6 +126,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         Player player = store.getComponent(ref, Player.getComponentType());
         if (player != null) {
             PlaceholderSyncSystem.register(playerRef, player);
+            StencilSyncSystem.register(playerRef, player);
         }
 
         CameraTransparencyVolumeV2.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresetsV2()
@@ -134,6 +140,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         CameraTransparencyVolumeV2.remove(playerRef.getUuid());
         PreviewBlockManager.remove(playerRef.getUuid());
         PlaceholderSyncSystem.unregister(playerRef.getUuid());
+        StencilSyncSystem.unregister(playerRef.getUuid());
         BlockPreviewReskinManager.cleanup(playerRef.getUuid());
         NewMovementSystem.disableMoonGravity(playerRef.getUuid());
     }

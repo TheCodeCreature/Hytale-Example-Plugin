@@ -3,6 +3,7 @@ package com.UnobstructedThirdPerson.placeblock.ui;
 import com.UnobstructedThirdPerson.placeblock.BlockPreviewReskinManager;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockCostUtil;
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockMetadata;
+import com.UnobstructedThirdPerson.stencil.StencilMetadata;
 import com.UnobstructedThirdPerson.resourcecollection.BenchCategory;
 import com.UnobstructedThirdPerson.resourcecollection.FilteredRecipeEntry;
 import com.UnobstructedThirdPerson.resourcecollection.NaturalResourceRegistry;
@@ -47,6 +48,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static final int MAX_SET_FILTERS = 20;
     private static final int MAX_COST_CELLS = 8;
     private static final int MAX_PLACEHOLDER_ROWS = PlaceBlockMetadata.HOTBAR_SIZE; // 9
+    private static final int MAX_RECIPE_CELLS = 200;
 
     private static final Value<String> FILTER_ACTIVE =
             Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "FilterActiveStyle");
@@ -176,6 +178,11 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             cmd.append("#PlaceholderList", "Pages/BlueprintBench/PlaceholderRow.ui");
         }
 
+        // Recipe icon cells
+        for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
+            cmd.append("#RecipeGrid", "Pages/BlueprintBench/RecipeIconCell.ui");
+        }
+
         // ── Bind ALL events (one-time) ──
 
         // Search input
@@ -227,7 +234,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         // so we must explicitly remove the data that drives tooltips.
         UICommandBuilder cmd = new UICommandBuilder();
         cmd.set("#OutputIcon.ItemId", "");
-        cmd.set("#RecipeGrid.Slots", new ItemGridSlot[0]);
+        for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
+            cmd.set("#RecipeGrid[" + i + "].Visible", false);
+        }
         for (int i = 0; i < MAX_COST_CELLS; i++) {
             cmd.set("#CostGrid[" + i + "].Visible", false);
         }
@@ -361,29 +370,19 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             }
             sendUpdate(cmd, null, false);
 
-        } else if ("RecipeHover".equals(data.action) || "RecipeSelect".equals(data.action)) {
-            if (data.slotIndex != null && data.slotIndex >= 0 && data.slotIndex < displayedRecipes.size()) {
-                RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(data.slotIndex);
+        } else if (data.action != null && data.action.startsWith("RecipeSelect:")) {
+            int idx = -1;
+            try {
+                idx = Integer.parseInt(data.action.substring("RecipeSelect:".length()));
+            } catch (NumberFormatException ignored) {}
+
+            if (idx >= 0 && idx < displayedRecipes.size()) {
+                RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(idx);
                 this.selectedRecipeId = entry.recipeId();
                 updateDetailPanel(cmd);
                 savePrefs();
                 sendUpdate(cmd, null, false);
             }
-
-        } else if ("RecipeDragSelect".equals(data.action)) {
-            boolean selected = false;
-            if (data.slotIndex != null && data.slotIndex >= 0 && data.slotIndex < displayedRecipes.size()) {
-                RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(data.slotIndex);
-                this.selectedRecipeId = entry.recipeId();
-                selected = true;
-            } else if (data.itemStackId != null) {
-                selected = selectRecipeByItemId(data.itemStackId);
-            }
-            if (selected) {
-                updateDetailPanel(cmd);
-                savePrefs();
-            }
-            sendUpdate(cmd, null, false);
 
         } else if ("GiveBlueprint".equals(data.action)) {
             giveSelectedBlueprint(store, ref, cmd);
@@ -445,31 +444,24 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     }
 
     private void buildRecipeGridBindings(UIEventBuilder evt) {
-        evt.addEventBinding(CustomUIEventBindingType.SlotMouseEntered, "#RecipeGrid",
-                EventData.of("Action", "RecipeHover"), false);
-        evt.addEventBinding(CustomUIEventBindingType.SlotClicking, "#RecipeGrid",
-                EventData.of("Action", "RecipeSelect"), false);
-        evt.addEventBinding(CustomUIEventBindingType.SlotMouseDragCompleted, "#RecipeGrid",
-                EventData.of("Action", "RecipeDragSelect"), false);
-        evt.addEventBinding(CustomUIEventBindingType.DragCancelled, "#RecipeGrid",
-                EventData.of("Action", "RecipeDragSelect"), false);
+        for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
+            evt.addEventBinding(CustomUIEventBindingType.Activating, "#RecipeGrid[" + i + "] #CellBtn",
+                    EventData.of("Action", "RecipeSelect:" + i));
+        }
     }
 
     private void updateRecipeGrid(UICommandBuilder cmd) {
-        ItemGridSlot[] recipeSlots = new ItemGridSlot[displayedRecipes.size()];
-        for (int i = 0; i < displayedRecipes.size(); i++) {
-            RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(i);
-            ItemGridSlot slot = new ItemGridSlot(new ItemStack(entry.outputItemId(), 1));
-            slot.setActivatable(true);
-            slot.setName(entry.blockTypeId() != null
-                    ? entry.blockTypeId().replace('_', ' ') : entry.outputItemId().replace('_', ' '));
-            if (!entry.affordable()) {
-                slot.setItemUncraftable(true);
-                slot.setItemIncompatible(true);
+        for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
+            String sel = "#RecipeGrid[" + i + "]";
+            if (i < displayedRecipes.size()) {
+                RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(i);
+                cmd.set(sel + ".Visible", true);
+                cmd.set(sel + " #CellIcon.ItemId", entry.outputItemId());
+                cmd.set(sel + " #CellDim.Visible", !entry.affordable());
+            } else {
+                cmd.set(sel + ".Visible", false);
             }
-            recipeSlots[i] = slot;
         }
-        cmd.set("#RecipeGrid.Slots", recipeSlots);
     }
 
     private void updateDetailPanel(UICommandBuilder cmd) {
@@ -663,12 +655,12 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         Player player = store.getComponent(ref, Player.getComponentType());
         if (player == null) return;
 
-        ItemStack item = new ItemStack(entry.outputItemId(), 1);
+        ItemStack item = StencilMetadata.createStencil(entry.outputItemId(), entry.recipeId());
         player.getInventory().getCombinedHotbarFirst().addItemStack(item);
 
         this.playerRef.sendMessage(
-                Message.raw("\u00a7a[BlueprintBench] Given 1x " + entry.outputItemId().replace('_', ' ')));
-        LOGGER.info("[BlueprintUI] Gave player 1x " + entry.outputItemId());
+                Message.raw("\u00a7a[BlueprintBench] Given stencil: " + entry.outputItemId().replace('_', ' ')));
+        LOGGER.info("[BlueprintUI] Gave player stencil for " + entry.outputItemId() + " (recipe: " + entry.recipeId() + ")");
     }
 
     private boolean selectRecipeByItemId(String itemId) {
