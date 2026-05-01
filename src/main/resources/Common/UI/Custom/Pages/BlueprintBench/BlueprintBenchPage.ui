@@ -9,8 +9,7 @@ $C = "../../Common.ui";
 @HeaderStyle = LabelStyle(
     ...$C.@DefaultLabelStyle,
     FontSize: 22, RenderBold: true,
-    HorizontalAlignment: Start, VerticalAlignment: Center,
-    Wrap:true
+    HorizontalAlignment: Start, VerticalAlignment: Center
 );
 
 @DetailLabelStyle = LabelStyle(
@@ -170,7 +169,12 @@ Group {
                     SlotsPerRow: 9;
                     DisplayItemQuantity: false;
                     RenderItemQualityBackground: false;
-                    Style: (SlotSize: 64, SlotIconSize: 64, SlotSpacing: 8);
+                    Style: (
+                        SlotSize: 64,
+                        SlotIconSize: 64,
+                        SlotSpacing: 8,
+                        SlotBackground: "../../Common/BlockSelectorSlotBackground.png"
+                    );
                 }
             }
         }
@@ -190,18 +194,19 @@ Group {
         // ── Output Name ──
         Label #OutputName {
             Text: "No recipe selected";
-            Anchor: (Height: 48);
-            Style: @HeaderStyle;
+            Style: @DetailLabelStyle;
         }
 
-        // ── Output Icon (centered) ──
+        Group { Anchor: (Height: 10); }
+
+        // ── Output Icon + Cost Grid ──
         Group {
-            Anchor: (Height: 94);
-            LayoutMode: Center;
+            Anchor: (Height: 150);
+            LayoutMode: Left;
 
             Group {
-                Anchor: (Width: 96, Height: 96);
-                FlexWeight: 2;
+                Anchor: (Width: 96, Height: 96, Top: 0);
+                Background: "../../Common/BlockSelectorSlotBackground.png";
 
                 ItemIcon #OutputIcon {
                     Anchor: (Full: 4);
@@ -209,10 +214,13 @@ Group {
                 }
             }
 
-            // Ingredient list — server appends CostCell.ui instances during build()
+            Group { Anchor: (Width: 4); }
+
+            // ── Ingredient cost grid (wrapping, full width) ──
             Group #CostGrid {
+                Anchor: (Height: 128, Top: 0);
                 LayoutMode: LeftCenterWrap;
-                FlexWeight: 4;
+                FlexWeight: 1;
             }
         }
 
@@ -224,7 +232,7 @@ Group {
         Label #InputSlotLabel {
             Text: "Placeholders";
             Anchor: (Height: 20);
-            Style: @SectionLabelStyle;
+            Style: @DetailLabelStyle;
         }
 
         Group { Anchor: (Height: 4); }

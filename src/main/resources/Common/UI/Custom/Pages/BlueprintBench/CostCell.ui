@@ -4,8 +4,10 @@
 $C = "../../Common.ui";
 
 Group {
-    Anchor: (Width: 52, Height: 52);
+    Anchor: (Width: 56, Height: 56);
     Visible: false;
+    Padding: (Left: 4, Right: 4, Top: 4, Bottom: 4);
+    Background: "../../Common/BlockSelectorSlotBackground.png";
 
     ItemIcon #CostIcon {
         Anchor: (Full: 2);

@@ -30,18 +30,14 @@ Group {
     // Drop target — 1-slot ItemGrid for arming
     Group {
         Anchor: (Width: 56, Height: 56);
-        LayoutMode: Center;
-        Background: "../../Common/InputBox.png";
+        Background: "../../Common/BlockSelectorSlotBackground.png";
 
-        Group{
-            LayoutMode: Center;
-            ItemGrid #RowInputSlot {
-                FlexWeight: 1;
-                SlotsPerRow: 1;
-                DisplayItemQuantity: false;
-                RenderItemQualityBackground: false;
-                Style: (SlotSize: 48, SlotIconSize: 48, SlotSpacing: 0);
-            }
+        ItemGrid #RowInputSlot {
+            Anchor: (Full: 4);
+            SlotsPerRow: 1;
+            DisplayItemQuantity: false;
+            RenderItemQualityBackground: false;
+            Style: (SlotSize: 48, SlotIconSize: 48, SlotSpacing: 0);
         }
     }
 
