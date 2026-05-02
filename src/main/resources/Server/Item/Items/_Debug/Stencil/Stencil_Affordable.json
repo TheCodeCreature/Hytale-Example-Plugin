@@ -1,0 +1,13 @@
+{
+  "QualityValue": 100,
+  "ItemTooltipTexture": "UI/ItemQualities/Tooltips/ItemTooltipDefault.png",
+  "ItemTooltipArrowTexture": "UI/ItemQualities/Tooltips/ItemTooltipDefaultArrow.png",
+  "SlotTexture": "UI/ItemQualities/Slots/SlotDefault.png",
+  "BlockSlotTexture": "UI/ItemQualities/Slots/SlotDefault.png",
+  "SpecialSlotTexture": "UI/ItemQualities/Slots/SpecialSlotDefault.png",
+  "TextColor": "#55FF55",
+  "LocalizationKey": "server.general.qualities.Stencil_Affordable",
+  "VisibleQualityLabel": false,
+  "RenderSpecialSlot": true,
+  "HideFromSearch": true
+}

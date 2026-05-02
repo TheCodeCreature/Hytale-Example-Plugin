@@ -42,7 +42,16 @@ public final class StencilSyncSystem {
         Inventory inventory = player.getInventory();
         ItemContainer hotbar = inventory.getHotbar();
 
-        hotbar.registerChangeEvent(event -> restoreStencils(hotbar));
+        hotbar.registerChangeEvent(event -> {
+            restoreStencils(hotbar);
+            StencilVisualManager.refreshAffordability(playerRef, player);
+        });
+
+        // Also refresh affordability when backpack/storage change (e.g., picking up or dropping items)
+        inventory.getBackpack().registerChangeEvent(event ->
+                StencilVisualManager.refreshAffordability(playerRef, player));
+        inventory.getStorage().registerChangeEvent(event ->
+                StencilVisualManager.refreshAffordability(playerRef, player));
     }
 
     /**

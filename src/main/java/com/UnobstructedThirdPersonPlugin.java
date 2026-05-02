@@ -15,6 +15,7 @@ import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
 import com.UnobstructedThirdPerson.resourcecollection.PlacementCostScaler;
 import com.UnobstructedThirdPerson.stencil.StencilPlacementSystem;
 import com.UnobstructedThirdPerson.stencil.StencilSyncSystem;
+import com.UnobstructedThirdPerson.stencil.StencilVisualManager;
 import com.UnobstructedThirdPerson.placeblock.BlueprintBenchRecipeMutator;
 import com.UnobstructedThirdPerson.placeblock.ui.BlueprintBenchOpenUIInteraction;
 import com.UnobstructedThirdPerson.placeblock.ui.BlueprintBenchPrefsStore;
@@ -108,6 +109,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         Player player = store.getComponent(ref, Player.getComponentType());
         if (player != null) {
             StencilSyncSystem.register(playerRef, player);
+            StencilVisualManager.applyVisuals(playerRef, player);
         }
 
         CameraTransparencyVolumeV2.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresetsV2()
@@ -121,6 +123,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         CameraTransparencyVolumeV2.remove(playerRef.getUuid());
         PreviewBlockManager.remove(playerRef.getUuid());
         StencilSyncSystem.unregister(playerRef.getUuid());
+        StencilVisualManager.removePlayer(playerRef.getUuid());
         NewMovementSystem.disableMoonGravity(playerRef.getUuid());
     }
 
