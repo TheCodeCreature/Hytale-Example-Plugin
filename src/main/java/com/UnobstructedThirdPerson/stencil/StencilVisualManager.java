@@ -4,6 +4,7 @@ import com.UnobstructedThirdPerson.placeblock.PlaceBlockCostUtil;
 import com.hypixel.hytale.protocol.ItemBase;
 import com.hypixel.hytale.protocol.ItemTranslationProperties;
 import com.hypixel.hytale.protocol.UpdateType;
+import com.hypixel.hytale.protocol.packets.assets.UpdateItemQualities;
 import com.hypixel.hytale.protocol.packets.assets.UpdateItems;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 /**
  * Manages per-player visual overrides for blueprint stencil items in the hotbar.
@@ -70,11 +72,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class StencilVisualManager {
 
+    private static final Logger LOGGER = Logger.getLogger("StencilVisualManager");
+
     /** Quality asset ID for affordable stencils (green slot glow). */
-    private static final String QUALITY_AFFORDABLE = "Uncommon";
+    private static final String QUALITY_AFFORDABLE = "Stencil_Affordable";
 
     /** Quality asset ID for unaffordable stencils (red slot glow). */
-    private static final String QUALITY_UNAFFORDABLE = "Developer";
+    private static final String QUALITY_UNAFFORDABLE = "Stencil_Unaffordable";
 
     /** Display name prefix prepended to the block name. */
     private static final String STENCIL_NAME_PREFIX = "[Stencil] ";
@@ -102,6 +106,15 @@ public final class StencilVisualManager {
      * @param player    the player entity, used to access inventory
      */
     public static void applyVisuals(@Nonnull PlayerRef playerRef, @Nonnull Player player) {
+        LOGGER.info("[StencilVisual] applyVisuals called for " + playerRef.getUuid());
+        int affIdx = ItemQuality.getAssetMap().getIndexOrDefault(QUALITY_AFFORDABLE, -1);
+        int unaffIdx = ItemQuality.getAssetMap().getIndexOrDefault(QUALITY_UNAFFORDABLE, -1);
+        LOGGER.info("[StencilVisual] Quality indices: affordable=" + affIdx + ", unaffordable=" + unaffIdx);
+
+        // Send custom quality definitions to the client — the init packet may not include
+        // plugin-loaded qualities if the packet generator cached before our asset pack loaded.
+        sendCustomQualities(playerRef);
+
         PlayerVisualState state = new PlayerVisualState(playerRef.getUuid());
         playerStates.put(playerRef.getUuid(), state);
         scanAndSend(playerRef, player, state);
@@ -117,6 +130,40 @@ public final class StencilVisualManager {
      */
     public static void removePlayer(@Nonnull UUID uuid) {
         playerStates.remove(uuid);
+    }
+
+    /**
+     * Sends an {@code UpdateItemQualities} packet to ensure the client knows
+     * about our custom quality definitions. The engine's init packet may not
+     * include plugin-loaded qualities if the packet generator cached before
+     * our asset pack was registered.
+     */
+    private static void sendCustomQualities(@Nonnull PlayerRef playerRef) {
+        var assetMap = ItemQuality.getAssetMap();
+        String[] customIds = { QUALITY_AFFORDABLE, QUALITY_UNAFFORDABLE };
+
+        UpdateItemQualities packet = new UpdateItemQualities();
+        packet.type = UpdateType.AddOrUpdate;
+        packet.itemQualities = new HashMap<>();
+
+        for (String qualityId : customIds) {
+            ItemQuality quality = assetMap.getAsset(qualityId);
+            if (quality == null) {
+                LOGGER.warning("[StencilVisual] Custom quality not found: " + qualityId);
+                continue;
+            }
+            int index = assetMap.getIndexOrDefault(qualityId, -1);
+            if (index < 0) continue;
+            packet.itemQualities.put(index, quality.toPacket());
+        }
+
+        packet.maxId = assetMap.getNextIndex();
+
+        if (!packet.itemQualities.isEmpty()) {
+            LOGGER.info("[StencilVisual] Sending UpdateItemQualities with " + packet.itemQualities.size()
+                    + " custom qualities (maxId=" + packet.maxId + ")");
+            playerRef.getPacketHandler().writeNoCache(packet);
+        }
     }
 
     /**
@@ -177,16 +224,21 @@ public final class StencilVisualManager {
         Set<String> currentStencils = new HashSet<>();
         Map<String, ItemVisualState> changedItems = new HashMap<>();
 
+        LOGGER.info("[StencilVisual] scanAndSend: hotbar capacity=" + hotbar.getCapacity());
         short capacity = hotbar.getCapacity();
         for (short slot = 0; slot < capacity; slot++) {
             ItemStack stack = hotbar.getItemStack(slot);
             if (stack == null) continue;
-            if (!StencilMetadata.isStencil(stack)) continue;
+            if (!StencilMetadata.isStencil(stack)) {
+                LOGGER.fine("[StencilVisual] slot " + slot + ": not a stencil (" + stack.getItemId() + ")");
+                continue;
+            }
 
             String recipeId = StencilMetadata.getRecipeId(stack);
             if (recipeId == null) continue;
 
             String itemId = stack.getItemId();
+            LOGGER.info("[StencilVisual] slot " + slot + ": stencil found — itemId=" + itemId + ", recipeId=" + recipeId);
             currentStencils.add(itemId);
 
             CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(recipeId);
@@ -202,10 +254,14 @@ public final class StencilVisualManager {
 
         state.getTrackedItems().keySet().removeIf(key -> !currentStencils.contains(key));
 
+        LOGGER.info("[StencilVisual] scanAndSend: found " + currentStencils.size() + " stencils, " + changedItems.size() + " changed");
         if (!changedItems.isEmpty()) {
             UpdateItems packet = buildUpdatePacket(changedItems);
             if (packet != null) {
+                LOGGER.info("[StencilVisual] Sending UpdateItems with " + packet.items.size() + " item overrides");
                 playerRef.getPacketHandler().writeNoCache(packet);
+            } else {
+                LOGGER.warning("[StencilVisual] buildUpdatePacket returned null despite " + changedItems.size() + " changed items");
             }
         }
     }
@@ -246,9 +302,13 @@ public final class StencilVisualManager {
             ItemVisualState vis = entry.getValue();
 
             Item item = Item.getAssetMap().getAsset(itemId);
-            if (item == null) continue;
+            if (item == null) {
+                LOGGER.warning("[StencilVisual] Item asset not found for: " + itemId);
+                continue;
+            }
 
             ItemBase packet = item.toPacket();
+            LOGGER.info("[StencilVisual] Override: " + itemId + " qualityIndex=" + vis.getQualityIndex() + " name=" + resolveDisplayName(itemId));
             packet.qualityIndex = vis.getQualityIndex();
             packet.translationProperties = new ItemTranslationProperties();
             packet.translationProperties.name = resolveDisplayName(itemId);
