@@ -1,0 +1,247 @@
+{
+	"$NodeId":	"Constant.Assignments-fc12f01e-b5e5-4770-a9fc-38a660e24cee",
+	"Type":	"Constant",
+	"ExportAs":	"Boreal1_Henges_Ice",
+	"Prop":	{
+		"$NodeId":	"Orienter.Prop-8605c895-c148-4989-abe7-6bac3ac9002e",
+		"Type":	"Orienter",
+		"Skip":	false,
+		"SelectionMode":	"FirstValid",
+		"Prop":	{
+			"$NodeId":	"Prefab.Prop-38802711-c632-44a4-8075-a5ac13b69998",
+			"Type":	"Prefab",
+			"Skip":	false,
+			"WeightedPrefabPaths":	[{
+					"$NodeId":	"WeightedPath.Prefab.Prop-a8c5bc53-12ff-495e-b47c-edc3455e07db",
+					"Path":	"Rock_Formations/Ice_Formations/Stalactites/Ceiling",
+					"Weight":	1
+				}],
+			"LegacyPath":	false,
+			"LoadEntities":	true,
+			"MoldingDirection":	"None",
+			"MoldingChildren":	false
+		},
+		"Rotations":	[{
+				"$NodeId":	"OrthogonalRotation-359b2aa2-5c91-4d02-a2a9-80667d5f9e5f",
+				"Yaw":	"None",
+				"Pitch":	"None",
+				"Roll":	"None"
+			}, {
+				"$NodeId":	"OrthogonalRotation-5526e8cc-437d-44a8-9987-534d1e419a9b",
+				"Yaw":	"OneEighty",
+				"Pitch":	"None",
+				"Roll":	"None"
+			}, {
+				"$NodeId":	"OrthogonalRotation-ea43537a-1158-453b-a07c-ecc17b359ac6",
+				"Yaw":	"Ninety",
+				"Pitch":	"None",
+				"Roll":	"None"
+			}, {
+				"$NodeId":	"OrthogonalRotation-cf1d61b7-db83-4f3a-a2ff-149c1f5c13d1",
+				"Yaw":	"TwoSeventy",
+				"Pitch":	"None",
+				"Roll":	"None"
+			}],
+		"Pattern":	{
+			"$NodeId":	"And.Pattern-bace4992-c4d3-4342-b818-930d4e0ff7e1",
+			"Type":	"And",
+			"Skip":	false,
+			"Patterns":	[{
+					"$NodeId":	"Offset.Pattern-8a73f98a-b215-4a26-85c2-e73bdb9ac5af",
+					"Type":	"Offset",
+					"Skip":	false,
+					"Pattern":	{
+						"$NodeId":	"BlockSet.Pattern-3594886b-2aa4-4af6-9563-1dace5d589b5",
+						"Type":	"BlockSet",
+						"Skip":	false,
+						"BlockSet":	{
+							"$NodeId":	"BlockSet.BlockMask-19480b4c-eedf-48fe-965d-1a83de733dee",
+							"Inclusive":	true,
+							"Materials":	[{
+									"$NodeId":	"Material-558ea21a-59a8-4b31-bf77-2772a91b96a8",
+									"Solid":	"Empty",
+									"SolidBottomUp":	false
+								}]
+						}
+					},
+					"Offset":	{
+						"$NodeId":	"Point3D-6e29df22-d71c-4b1a-b831-4b1ec5075ead",
+						"X":	2,
+						"Y":	0,
+						"Z":	0
+					}
+				}, {
+					"$NodeId":	"BlockSet.Pattern-7db2242b-af06-414b-928e-b81db2caa98a",
+					"Type":	"BlockSet",
+					"Skip":	false,
+					"BlockSet":	{
+						"$NodeId":	"BlockSet.BlockMask-8d20282a-2f72-4c2c-a4be-f0d2e1ae9e8b",
+						"Inclusive":	true,
+						"Materials":	[{
+								"$NodeId":	"Material-fc947566-a811-47c0-9dfb-9df47c608ec1",
+								"Solid":	"Rock_Slate",
+								"SolidBottomUp":	false
+							}, {
+								"$NodeId":	"Material-197b413d-6161-4d9a-9991-6c35ec1e1bbf",
+								"Solid":	"Rock_Volcanic",
+								"SolidBottomUp":	false
+							}]
+					}
+				}]
+		},
+		"Scanner":	{
+			"$NodeId":	"Linear.Scanner-0ca4774c-7dd2-485c-83d8-f42a81b23878",
+			"Type":	"Linear",
+			"Skip":	false,
+			"Axis":	"Y",
+			"AscendingOrder":	false,
+			"Scanner":	{
+				"$NodeId":	"Origin.Scanner-c579c96a-40f7-49b9-8a3a-fac6fc25bb24",
+				"Type":	"Origin",
+				"Skip":	false
+			},
+			"Range":	{
+				"$NodeId":	"Integer.Range-9ee3f222-12a6-41f6-a5d9-aa330a8bccd7",
+				"MinInclusive":	20,
+				"MaxExclusive":	100
+			}
+		}
+	},
+	"$NodeEditorMetadata":	{
+		"$Nodes":	{
+			"Constant.Assignments-fc12f01e-b5e5-4770-a9fc-38a660e24cee":	{
+				"$Position":	{
+					"$x":	15465,
+					"$y":	2232
+				},
+				"$Title":	"[ROOT] Constant Assignments"
+			},
+			"Prefab.Prop-38802711-c632-44a4-8075-a5ac13b69998":	{
+				"$Position":	{
+					"$x":	16866,
+					"$y":	1481
+				}
+			},
+			"WeightedPath.Prefab.Prop-a8c5bc53-12ff-495e-b47c-edc3455e07db":	{
+				"$Position":	{
+					"$x":	17663,
+					"$y":	1480
+				}
+			},
+			"And.Pattern-bace4992-c4d3-4342-b818-930d4e0ff7e1":	{
+				"$Position":	{
+					"$x":	16821,
+					"$y":	2496
+				}
+			},
+			"BlockSet.Pattern-3594886b-2aa4-4af6-9563-1dace5d589b5":	{
+				"$Position":	{
+					"$x":	18152,
+					"$y":	2311
+				}
+			},
+			"BlockSet.BlockMask-19480b4c-eedf-48fe-965d-1a83de733dee":	{
+				"$Position":	{
+					"$x":	18784,
+					"$y":	2316
+				}
+			},
+			"Material-558ea21a-59a8-4b31-bf77-2772a91b96a8":	{
+				"$Position":	{
+					"$x":	19270,
+					"$y":	2308
+				}
+			},
+			"BlockSet.Pattern-7db2242b-af06-414b-928e-b81db2caa98a":	{
+				"$Position":	{
+					"$x":	17504,
+					"$y":	2696
+				}
+			},
+			"BlockSet.BlockMask-8d20282a-2f72-4c2c-a4be-f0d2e1ae9e8b":	{
+				"$Position":	{
+					"$x":	18136,
+					"$y":	2701
+				}
+			},
+			"Material-fc947566-a811-47c0-9dfb-9df47c608ec1":	{
+				"$Position":	{
+					"$x":	18635,
+					"$y":	2612
+				}
+			},
+			"Material-197b413d-6161-4d9a-9991-6c35ec1e1bbf":	{
+				"$Position":	{
+					"$x":	18637,
+					"$y":	2761
+				}
+			},
+			"Offset.Pattern-8a73f98a-b215-4a26-85c2-e73bdb9ac5af":	{
+				"$Position":	{
+					"$x":	17493,
+					"$y":	2313
+				}
+			},
+			"Point3D-6e29df22-d71c-4b1a-b831-4b1ec5075ead":	{
+				"$Position":	{
+					"$x":	18153,
+					"$y":	2485
+				}
+			},
+			"Linear.Scanner-0ca4774c-7dd2-485c-83d8-f42a81b23878":	{
+				"$Position":	{
+					"$x":	16866,
+					"$y":	2889
+				}
+			},
+			"Origin.Scanner-c579c96a-40f7-49b9-8a3a-fac6fc25bb24":	{
+				"$Position":	{
+					"$x":	17498,
+					"$y":	2891
+				}
+			},
+			"Integer.Range-9ee3f222-12a6-41f6-a5d9-aa330a8bccd7":	{
+				"$Position":	{
+					"$x":	17496,
+					"$y":	3036
+				}
+			},
+			"Orienter.Prop-8605c895-c148-4989-abe7-6bac3ac9002e":	{
+				"$Position":	{
+					"$x":	16067,
+					"$y":	2233
+				}
+			},
+			"OrthogonalRotation-cf1d61b7-db83-4f3a-a2ff-149c1f5c13d1":	{
+				"$Position":	{
+					"$x":	17329,
+					"$y":	2064
+				}
+			},
+			"OrthogonalRotation-5526e8cc-437d-44a8-9987-534d1e419a9b":	{
+				"$Position":	{
+					"$x":	17333,
+					"$y":	1873
+				}
+			},
+			"OrthogonalRotation-ea43537a-1158-453b-a07c-ecc17b359ac6":	{
+				"$Position":	{
+					"$x":	16868,
+					"$y":	2060
+				}
+			},
+			"OrthogonalRotation-359b2aa2-5c91-4d02-a2a9-80667d5f9e5f":	{
+				"$Position":	{
+					"$x":	16870,
+					"$y":	1862
+				}
+			}
+		},
+		"$FloatingNodes":	[],
+		"$Links":	{
+		},
+		"$Groups":	[],
+		"$Comments":	[],
+		"$WorkspaceID":	"HytaleGenerator - Assignments"
+	}
+}

@@ -1,0 +1,350 @@
+$C = "../../../Common.ui";
+$CV = "../CodeViewer.ui";
+
+// Containers Category Content
+Group {
+  LayoutMode: Top;
+
+  // Panel Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.containers.section.panel;
+    }
+
+    $C.@Panel {
+      Anchor: (Width: 350, Height: 80, Bottom: 8, Left: 0);
+      Padding: (Full: 15);
+
+      Label {
+        Text: %server.customUI.uiGallery.containers.panelDesc;
+        Style: (FontSize: 13, TextColor: $C.@ColorDefaultLabel, Wrap: true);
+      }
+    }
+
+    Group #Code0 {
+      $CV.@CodeBlock {
+        @Code = "$C.@Panel {
+  Anchor: (Width: 350, Height: 80);
+  Padding: (Full: 15);
+  // content here
+}";
+      }
+    }
+  }
+
+  // Panel Title Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.containers.section.panelWithTitle;
+    }
+
+    $C.@Panel {
+      Anchor: (Width: 400, Height: 100, Bottom: 8, Left: 0);
+      LayoutMode: Top;
+      Padding: (Full: 15);
+
+      $C.@PanelTitle {
+        @Text = %server.customUI.uiGallery.containers.panelTitleExample;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.containers.panelTitleContent;
+        Style: (FontSize: 13, TextColor: $C.@ColorDefaultLabel, Wrap: true);
+        Anchor: (Top: 10);
+        Padding: (Horizontal: 8);
+      }
+    }
+
+    Group #Code1 {
+      $CV.@CodeBlock {
+        @Code = "$C.@PanelTitle {
+  @Text = \"Panel Title\";
+}";
+      }
+    }
+  }
+
+  // Container Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.containers.section.container;
+    }
+
+    $C.@Container {
+      Anchor: (Width: 400, Height: 130, Bottom: 8, Left: 0);
+
+      #Title {
+        $C.@Title {
+          @Text = %server.customUI.uiGallery.containers.containerTitle;
+        }
+      }
+
+      #Content {
+        Label {
+          Text: %server.customUI.uiGallery.containers.containerContent;
+          Style: (FontSize: 13, TextColor: $C.@ColorDefaultLabel, Wrap: true);
+        }
+      }
+    }
+
+    Group #Code2 {
+      $CV.@CodeBlock {
+        @Code = "$C.@Container {
+  Anchor: (Width: 400, Height: 150);
+
+  #Title {
+    $C.@Title { @Text = \"Title\"; }
+  }
+
+  #Content {
+    // content here
+  }
+}";
+      }
+    }
+  }
+
+  // Decorated Container Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.containers.section.decoratedContainer;
+    }
+
+    $C.@DecoratedContainer {
+      Anchor: (Width: 400, Height: 150, Bottom: 8, Left: 0);
+
+      #Title {
+        $C.@Title {
+          @Text = %server.customUI.uiGallery.containers.decoratedTitle;
+        }
+      }
+
+      #Content {
+        Label {
+          Text: %server.customUI.uiGallery.containers.decoratedContent;
+          Style: (FontSize: 13, TextColor: $C.@ColorDefaultLabel, Wrap: true);
+        }
+      }
+    }
+
+    Group #Code3 {
+      $CV.@CodeBlock {
+        @Code = "$C.@DecoratedContainer {
+  Anchor: (Width: 400, Height: 170);
+  // Same structure as @Container
+}";
+      }
+    }
+  }
+
+  // Complex Container Example
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.containers.section.complexContainer;
+    }
+
+    Label {
+      Text: %server.customUI.uiGallery.containers.complexDesc;
+      Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, Wrap: true);
+      Anchor: (Bottom: 12, Right: 100);
+    }
+
+    Group {
+      Anchor: (Height: 220, Bottom: 8);
+      LayoutMode: Top;
+
+      // Top Tabs above the container
+      TabNavigation #ComplexTopTabs {
+        Anchor: (Height: 66, Left: 2, Right: 0);
+        Style: $C.@TopTabsStyle;
+        SelectedTab: "Main";
+
+        TabButton {
+          Icon: "../../../Common/RecipesIcon.png";
+          TooltipText: %server.customUI.uiGallery.containers.tabMain;
+          Id: "Main";
+        }
+
+        TabButton {
+          Icon: "../../../Common/RecipesIcon.png";
+          TooltipText: %server.customUI.uiGallery.containers.tabSettings;
+          Id: "Settings";
+        }
+
+        TabButton {
+          Icon: "../../../Common/RecipesIcon.png";
+          TooltipText: %server.customUI.uiGallery.containers.tabInfo;
+          Id: "Info";
+        }
+      }
+
+      $C.@Container {
+        Anchor: (Width: 500, Height: 150, Left: 0);
+
+        #Title {
+          Group {
+            LayoutMode: Left;
+            Anchor: (Full: 0);
+
+            // Header tabs on the left
+            TabNavigation #ComplexHeaderTabs {
+              Anchor: (Height: 34, Left: 4);
+              Style: $C.@HeaderTabsStyle;
+              SelectedTab: "List";
+
+              TabButton {
+                Icon: "../../../Common/RecipesIcon.png";
+                TooltipText: %server.customUI.uiGallery.containers.tabListView;
+                Id: "List";
+              }
+
+              TabButton {
+                Icon: "../../../Common/RecipesIcon.png";
+                TooltipText: %server.customUI.uiGallery.containers.tabGridView;
+                Id: "Grid";
+              }
+            }
+
+            // Spacer
+            Group {
+              FlexWeight: 1;
+            }
+
+            // Search on the right
+            $C.@HeaderSearch #Search {}
+          }
+        }
+
+        #Content {
+          Label {
+            Text: %server.customUI.uiGallery.containers.complexContent;
+            Style: (FontSize: 13, TextColor: $C.@ColorDefaultLabel, Wrap: true);
+          }
+        }
+      }
+    }
+
+    Group #Code4 {
+      $CV.@CodeBlock {
+        @Code = "// Top tabs above container
+TabNavigation {
+  Anchor: (Height: 66, Left: 2, Right: 0);
+  Style: $C.@TopTabsStyle;
+  // TabButtons...
+}
+
+$C.@Container {
+  #Title {
+    Group {
+      LayoutMode: Left;
+
+      // Header tabs (left)
+      TabNavigation {
+        Anchor: (Height: 34, Left: 4);
+        Style: $C.@HeaderTabsStyle;
+      }
+
+      Group { FlexWeight: 1; } // Spacer
+
+      // Search (right)
+      $C.@HeaderSearch #Search {}
+    }
+  }
+
+  #Content { ... }
+}";
+      }
+    }
+  }
+
+  // Simple Container Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.containers.section.simpleContainer;
+    }
+
+    $C.@SimpleContainer {
+      Anchor: (Width: 350, Height: 80, Bottom: 8, Left: 0);
+
+      Label {
+        Text: %server.customUI.uiGallery.containers.simpleContainerContent;
+        Style: (FontSize: 13, TextColor: $C.@ColorDefaultLabel, Wrap: true);
+      }
+    }
+
+    Group #Code5 {
+      $CV.@CodeBlock {
+        @Code = "$C.@SimpleContainer {
+  Anchor: (Width: 350, Height: 80);
+  // content here
+}";
+      }
+    }
+  }
+
+  // Separators Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.containers.section.separators;
+      Anchor: (Bottom: 15);
+    }
+
+    Group {
+      Anchor: (Bottom: 15);
+      LayoutMode: Top;
+
+      Label {
+        Text: %server.customUI.uiGallery.containers.contentSeparatorDesc;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption);
+        Anchor: (Bottom: 8);
+      }
+
+      $C.@ContentSeparator {
+        @Anchor = (Right: 200);
+      }
+    }
+
+    Group {
+      Anchor: (Bottom: 15);
+      LayoutMode: Top;
+
+      Label {
+        Text: %server.customUI.uiGallery.containers.fancySeparatorDesc;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption);
+        Anchor: (Bottom: 8);
+      }
+
+      $C.@PanelSeparatorFancy {
+        @Anchor = (Right: 200);
+      }
+    }
+
+    Group #Code6 {
+      $CV.@CodeBlock {
+        @Code = "$C.@ContentSeparator {}
+$C.@PanelSeparatorFancy {}";
+      }
+    }
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "Icon": "Icons/ItemCategories/Editor.png",
+  "Order": 3,
+  "Children": [
+    {
+      "Id": "BuilderTool",
+      "Name": "server.ui.itemcategory.basicTools",
+      "Icon": "Icons/ItemCategories/Builder Tools.png",
+      "InfoDisplayMode": "Adjacent",
+      "SubCategories": [
+        {
+          "Id": "BasicTools",
+          "Name": "server.ui.itemcategory.subcategory.basicTools.name",
+          "Order": 10,
+          "Description": "server.ui.itemcategory.subcategory.basicTools.description"
+        },
+        {
+          "Id": "Terrain",
+          "Name": "server.ui.itemcategory.subcategory.terrain.name",
+          "Order": 20,
+          "Description": "server.ui.itemcategory.subcategory.terrain.description"
+        },
+        {
+          "Id": "Decoration",
+          "Name": "server.ui.itemcategory.subcategory.decoration.name",
+          "Order": 30,
+          "Description": "server.ui.itemcategory.subcategory.decoration.description"
+        },
+        {
+          "Id": "Buildings",
+          "Name": "server.ui.itemcategory.subcategory.buildings.name",
+          "Order": 40,
+          "Description": "server.ui.itemcategory.subcategory.buildings.description"
+        }
+      ]
+    },
+    {
+      "Id": "BuilderToolSecondPage",
+      "Name": "server.ui.itemcategory.specializedTools",
+      "Icon": "Icons/ItemCategories/Builder Tools.png",
+      "InfoDisplayMode": "Adjacent",
+      "SubCategories": [
+        {
+          "Id": "SpecializedTools",
+          "Name": "server.ui.itemcategory.subcategory.specializedTools.name",
+          "Order": 10,
+          "Description": "server.ui.itemcategory.subcategory.specializedTools.description"
+        },
+        {
+          "Id": "MiscTools",
+          "Name": "server.ui.itemcategory.subcategory.miscTools.name",
+          "Order": 20,
+          "Description": "server.ui.itemcategory.subcategory.miscTools.description"
+        }
+      ]
+    },
+    {
+      "Id": "BrushFilters",
+      "Name": "server.ui.itemcategory.brushfilters",
+      "Icon": "Icons/ItemCategories/Scripted Brushes.png",
+      "InfoDisplayMode": "Adjacent",
+      "SubCategories": [
+        {
+          "Id": "BrushFilters",
+          "Name": "server.ui.itemcategory.subcategory.brushFilters.name",
+          "Order": 10,
+          "Description": "server.ui.itemcategory.subcategory.brushFilters.description"
+        }
+      ]
+    },
+    {
+      "Id": "PrefabEditing",
+      "Name": "server.ui.itemcategory.prefabEditing",
+      "Icon": "Icons/ItemCategories/Scripted Blocks.png",
+      "InfoDisplayMode": "Adjacent",
+      "SubCategories": [
+        {
+          "Id": "PrefabTools",
+          "Name": "server.ui.itemcategory.subcategory.prefabEditingTools.name",
+          "Order": 10,
+          "Description": "server.ui.itemcategory.subcategory.prefabEditingTools.description"
+        },
+        {
+          "Id": "PrefabBlocks",
+          "Name": "server.ui.itemcategory.subcategory.prefabEditingBlocks.name",
+          "Order": 20,
+          "Description": "server.ui.itemcategory.subcategory.prefabEditingBlocks.description"
+        }
+      ]
+    },
+    {
+      "Id": "Machinima",
+      "Name": "server.ui.itemcategory.machinima",
+      "Icon": "Icons/ItemCategories/Machinima.png",
+      "InfoDisplayMode": "Adjacent",
+      "SubCategories": [
+        {
+          "Id": "MachinimaTools",
+          "Name": "server.ui.itemcategory.subcategory.machinimaTools.name",
+          "Order": 10,
+          "Description": "server.ui.itemcategory.subcategory.machinimaTools.description"
+        }
+      ]
+    },
+    {
+      "Id": "TechnicalBlocks",
+      "Name": "server.ui.itemcategory.technicalBlocks",
+      "Icon": "Icons/ItemCategories/TechnicalBlocks.png",
+      "SubCategories": [
+        {
+          "Id": "BlockSets",
+          "Name": "server.ui.itemcategory.subcategory.blockSets.name",
+          "Order": 10,
+          "Description": "server.ui.itemcategory.subcategory.blockSets.description"
+        },
+        {
+          "Id": "LightSources",
+          "Name": "server.ui.itemcategory.subcategory.lightSources.name",
+          "Order": 20,
+          "Description": "server.ui.itemcategory.subcategory.lightSources.description"
+        }
+      ]
+    }
+  ]
+}

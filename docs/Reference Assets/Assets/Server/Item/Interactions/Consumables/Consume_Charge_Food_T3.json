@@ -1,0 +1,24 @@
+{
+  "Type": "Serial",
+  "Interactions": [
+    {
+      "Type": "Replace",
+      "Var": "ConsumeSFX",
+      "DefaultValue": {
+        "Interactions": [
+          "Consume_SFX"
+        ]
+      }
+    },
+    {
+      "Type": "Replace",
+      "Var": "Consume_Charge",
+      "DefaultOk": true,
+      "DefaultValue": {
+        "Interactions": [
+          "Consume_Charge_Food_T3_Inner"
+        ]
+      }
+    }
+  ]
+}

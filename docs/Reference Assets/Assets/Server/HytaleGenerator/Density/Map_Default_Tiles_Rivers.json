@@ -1,0 +1,161 @@
+{
+	"$NodeId":	"Exported.Density-ed27c3c9-2416-4644-ac84-4e381c084b99",
+	"Type":	"Exported",
+	"ExportAs":	"Biome-Map-Tiles-Rivers",
+	"SingleInstance":	true,
+	"Skip":	false,
+	"Inputs":	[{
+			"$NodeId":	"YOverride.Density-b51e23ab-0333-450d-9677-22994170db28",
+			"Type":	"YOverride",
+			"Skip":	false,
+			"Value":	0,
+			"Inputs":	[{
+					"$NodeId":	"Cache.Density-ac158397-64c5-4c98-b278-7428b9ee50df",
+					"Type":	"Cache",
+					"Skip":	false,
+					"Capacity":	1,
+					"Inputs":	[{
+							"$NodeId":	"Scale.Density-4e5e3265-168b-4889-aa55-467bcbe3a4d9",
+							"Type":	"Scale",
+							"Skip":	false,
+							"ScaleX":	1,
+							"ScaleY":	1,
+							"ScaleZ":	1,
+							"Inputs":	[{
+									"$NodeId":	"Mix.Density-911c6a4c-8042-4679-9930-9c543b3968ae",
+									"Type":	"Mix",
+									"Skip":	false,
+									"Inputs":	[{
+											"$NodeId":	"ImportedDensityNode-cc12dd2a-64a6-4901-ad96-ee9dba02f672",
+											"Type":	"Imported",
+											"Skip":	false,
+											"Name":	"Biome-Map-Tiles"
+										}, {
+											"$NodeId":	"ConstantDensityNode-4901ee83-7af3-47a6-a2ad-daebe8318270",
+											"Type":	"Constant",
+											"Skip":	false,
+											"Value":	-0.3
+										}, {
+											"$NodeId":	"ClampDensityNode-1a3a0c82-4054-424c-a92d-19952d26dd9f",
+											"Type":	"Clamp",
+											"Skip":	false,
+											"WallA":	0,
+											"WallB":	1,
+											"Inputs":	[{
+													"$NodeId":	"NormalizerDensityNode-f5dec591-9de0-49a3-a004-246a241e63ba",
+													"Type":	"Normalizer",
+													"Skip":	false,
+													"FromMin":	0.62,
+													"FromMax":	0.62,
+													"ToMin":	0,
+													"ToMax":	1,
+													"Inputs":	[{
+															"$NodeId":	"ImportedDensityNode-df2f067a-5fbb-47b7-865b-9712c1634cdf",
+															"Type":	"Imported",
+															"Skip":	false,
+															"Name":	"World-River-Map"
+														}]
+												}]
+										}]
+								}]
+						}]
+				}]
+		}],
+	"$NodeEditorMetadata":	{
+		"$Nodes":	{
+			"Exported.Density-ed27c3c9-2416-4644-ac84-4e381c084b99":	{
+				"$Position":	{
+					"$x":	-3493,
+					"$y":	-6834
+				},
+				"$Title":	"[ROOT] Exported Density"
+			},
+			"YOverride.Density-b51e23ab-0333-450d-9677-22994170db28":	{
+				"$Position":	{
+					"$x":	-2809,
+					"$y":	-6828
+				}
+			},
+			"Cache.Density-ac158397-64c5-4c98-b278-7428b9ee50df":	{
+				"$Position":	{
+					"$x":	-2181,
+					"$y":	-6824
+				}
+			},
+			"Scale.Density-4e5e3265-168b-4889-aa55-467bcbe3a4d9":	{
+				"$Position":	{
+					"$x":	-1576,
+					"$y":	-6821
+				}
+			},
+			"Mix.Density-911c6a4c-8042-4679-9930-9c543b3968ae":	{
+				"$Position":	{
+					"$x":	-967,
+					"$y":	-6821
+				}
+			},
+			"ImportedDensityNode-cc12dd2a-64a6-4901-ad96-ee9dba02f672":	{
+				"$Position":	{
+					"$x":	-218,
+					"$y":	-7404
+				}
+			},
+			"ConstantDensityNode-4901ee83-7af3-47a6-a2ad-daebe8318270":	{
+				"$Position":	{
+					"$x":	-238,
+					"$y":	-6806
+				}
+			},
+			"ClampDensityNode-1a3a0c82-4054-424c-a92d-19952d26dd9f":	{
+				"$Position":	{
+					"$x":	-210,
+					"$y":	-6348
+				}
+			},
+			"NormalizerDensityNode-f5dec591-9de0-49a3-a004-246a241e63ba":	{
+				"$Position":	{
+					"$x":	409,
+					"$y":	-6361
+				}
+			},
+			"ImportedDensityNode-df2f067a-5fbb-47b7-865b-9712c1634cdf":	{
+				"$Position":	{
+					"$x":	1020,
+					"$y":	-6359
+				}
+			}
+		},
+		"$FloatingNodes":	[],
+		"$Links":	{
+		},
+		"$Groups":	[{
+				"$Position":	{
+					"$x":	-292.625,
+					"$y":	-7753.375
+				},
+				"$width":	4494.8125,
+				"$height":	854,
+				"$name":	"Biome Tiles"
+			}, {
+				"$Position":	{
+					"$x":	-275.6875,
+					"$y":	-6454.9375
+				},
+				"$width":	1909.125,
+				"$height":	500.375,
+				"$name":	"Rivers"
+			}],
+		"$Comments":	[{
+				"$Position":	{
+					"$x":	751046.75,
+					"$y":	743842.5
+				},
+				"$width":	790.5,
+				"$height":	280.8125,
+				"$name":	"Comment",
+				"$text":	"Importing from another density asset caused a defect for a few select indivi. Copy pasted river setup for now",
+				"$fontSize":	25
+			}],
+		"$WorkspaceID":	"HytaleGenerator - Density"
+	}
+}

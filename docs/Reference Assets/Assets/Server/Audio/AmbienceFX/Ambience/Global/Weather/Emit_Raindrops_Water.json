@@ -1,0 +1,23 @@
+{
+  "Sounds": [
+    {
+      "SoundEventId": "SFX_Env_Emit_Raindrops_Water",
+      "Radius": {
+        "Min": 0,
+        "Max": 15
+      },
+      "Play3D": "LocationName",
+      "BlockSoundSetId": "Water",
+      "Frequency": {
+        "Min": 0,
+        "Max": 1
+      }
+    }
+  ],
+  "Conditions": {
+    "WeatherTagPattern": {
+      "Op": "Equals",
+      "Tag": "Rain"
+    }
+  }
+}

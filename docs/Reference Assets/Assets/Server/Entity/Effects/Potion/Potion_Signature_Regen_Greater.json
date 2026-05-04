@@ -1,0 +1,17 @@
+{
+  "StatModifiers": {
+    "SignatureEnergy": 12.50
+  },
+  "ValueType": "Percent",
+  "DamageCalculatorCooldown": 5,
+  "Duration": 30.05,
+  "OverlapBehavior": "Overwrite",
+  "StatusEffectIcon": "Icons/ItemsGenerated/Potion_Signature_Greater.png",
+  "StatModifierEffects": {
+    "WorldParticles": [
+      {
+        "SystemId": "Potion_Signature_Burst"
+      }
+    ]
+  }
+}

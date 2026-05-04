@@ -1,0 +1,27 @@
+{
+  "Layers": [
+    {
+      "Files": [
+        "Sounds/Environments/Emitters/Rain/Emit_Raindrops_Glass_Loop_01.ogg",
+        "Sounds/Environments/Emitters/Rain/Emit_Raindrops_Glass_Loop_02.ogg",
+        "Sounds/Environments/Emitters/Rain/Emit_Raindrops_Glass_Loop_03.ogg",
+        "Sounds/Environments/Emitters/Rain/Emit_Raindrops_Glass_Loop_04.ogg",
+        "Sounds/Environments/Emitters/Rain/Emit_Raindrops_Glass_Loop_05.ogg",
+        "Sounds/Environments/Emitters/Rain/Emit_Raindrops_Glass_Loop_06.ogg"
+      ],
+      "RandomSettings": {
+        "MinVolume": -4,
+        "MinPitch": -2,
+        "MaxPitch": 2,
+        "MaxStartOffset": 3
+      },
+      "Probability": 100,
+      "Looping": true
+    }
+  ],
+  "PreventSoundInterruption": false,
+  "Volume": 0.0,
+  "MaxInstance": 10,
+  "Parent": "SFX_Attn_VeryQuiet",
+  "SpatialBlend": 0.5
+}

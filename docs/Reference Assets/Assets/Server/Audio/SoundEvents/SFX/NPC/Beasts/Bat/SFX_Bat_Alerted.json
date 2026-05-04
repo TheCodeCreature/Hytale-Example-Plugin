@@ -1,0 +1,28 @@
+{
+  "Layers": [
+    {
+      "Files": [
+        "Sounds/NPC/Beasts/Bat/Bat_Alerted_01.ogg",
+        "Sounds/NPC/Beasts/Bat/Bat_Alerted_02.ogg",
+        "Sounds/NPC/Beasts/Bat/Bat_Alerted_03.ogg",
+        "Sounds/NPC/Beasts/Bat/Bat_Alerted_04.ogg",
+        "Sounds/NPC/Beasts/Bat/Bat_Alerted_05.ogg",
+        "Sounds/NPC/Beasts/Bat/Bat_Alerted_06.ogg"
+      ],
+      "RandomSettings": {
+        "MinVolume": -4.5,
+        "MaxVolume": 0,
+        "MinPitch": -2,
+        "MaxPitch": 2
+      },
+      "Volume": -7,
+      "StartDelay": 0,
+      "Probability": 60
+    }
+  ],
+  "MaxInstance": 2,
+  "Volume": 0,
+  "PreventSoundInterruption": false,
+  "AudioCategory": "AudioCat_NPC_Bat",
+  "Parent": "SFX_Attn_Quiet"
+}

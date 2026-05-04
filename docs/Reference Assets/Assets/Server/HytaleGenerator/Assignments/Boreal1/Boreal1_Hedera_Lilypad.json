@@ -1,0 +1,209 @@
+{
+	"$NodeId":	"Constant.Assignments-c0dc97dc-150b-4f57-bfe4-b55880b93497",
+	"Type":	"Constant",
+	"ExportAs":	"Boreal1_Hedera_Lilypad",
+	"Prop":	{
+		"$NodeId":	"Locator.Prop-4b25ef55-8d6b-447d-bda3-b9d256f091ff",
+		"Type":	"Locator",
+		"Skip":	false,
+		"PlacementCap":	1,
+		"Prop":	{
+			"$NodeId":	"Manual.Prop-9bd22c2c-a506-42de-91ac-855d11e33353",
+			"Type":	"Manual",
+			"Skip":	false,
+			"Blocks":	[{
+					"$NodeId":	"Block.Manual.Prop-2e3e30ea-aedc-4ed3-afd0-e667722a63b6",
+					"Material":	{
+						"$NodeId":	"Material-2f574c40-1c30-485c-b046-956812989138",
+						"Solid":	"Plant_Flower_Water_Green",
+						"SolidBottomUp":	false
+					},
+					"Position":	{
+						"$NodeId":	"Vector3i-f6c6e0ed-6f60-4c6a-a107-63274bd7c40d",
+						"X":	0,
+						"Y":	0,
+						"Z":	0
+					}
+				}]
+		},
+		"Pattern":	{
+			"$NodeId":	"And.Pattern-0236520c-a473-4047-a83d-9267a5aebc88",
+			"Type":	"And",
+			"Skip":	false,
+			"Patterns":	[{
+					"$NodeId":	"BlockSet.Pattern-4037edcd-82ad-4b3d-816e-ca24da616cbb",
+					"Type":	"BlockSet",
+					"Skip":	false,
+					"BlockSet":	{
+						"$NodeId":	"BlockSet.BlockMask-9bf63c20-a018-4b40-a209-5be9607cda19",
+						"Inclusive":	true,
+						"Materials":	[{
+								"$NodeId":	"Material-7c06d43d-dd33-4d58-8f51-0f2a860dd1b1",
+								"Solid":	"Empty",
+								"SolidBottomUp":	false
+							}]
+					}
+				}, {
+					"$NodeId":	"Offset.Pattern-69d9c3cf-93d4-4310-a1be-2b5cd88cc234",
+					"Type":	"Offset",
+					"Skip":	false,
+					"Pattern":	{
+						"$NodeId":	"BlockSet.Pattern-09af2e85-307e-43d1-933f-aff2ec1eafb9",
+						"Type":	"BlockSet",
+						"Skip":	false,
+						"BlockSet":	{
+							"$NodeId":	"BlockSet.BlockMask-0f74afb6-6d0f-4aa9-b17d-d0849a6dc2f4",
+							"Inclusive":	true,
+							"Materials":	[{
+									"$NodeId":	"Material-4fe9574b-4d8a-4482-b0bc-31af55863320",
+									"Fluid":	"Water_Source",
+									"SolidBottomUp":	false
+								}]
+						}
+					},
+					"Offset":	{
+						"$NodeId":	"Point3D-a88b2ad7-7a4f-4ef8-8a8c-27aa7755cd5f",
+						"X":	0,
+						"Y":	-1,
+						"Z":	0
+					}
+				}]
+		},
+		"Scanner":	{
+			"$NodeId":	"Linear.Scanner-c6aa6427-b5c3-4f50-ab17-d502ce9a6957",
+			"Type":	"Linear",
+			"Skip":	false,
+			"Axis":	"Y",
+			"AscendingOrder":	false,
+			"Scanner":	{
+				"$NodeId":	"Origin.Scanner-f62a8271-5356-42ac-8397-07e1ee70a6a7",
+				"Type":	"Origin",
+				"Skip":	false
+			},
+			"Range":	{
+				"$NodeId":	"Integer.Range-d746d64a-b5b7-4d41-bab9-714b9d3bb4e2",
+				"MinInclusive":	-5,
+				"MaxExclusive":	5
+			}
+		}
+	},
+	"$NodeEditorMetadata":	{
+		"$Nodes":	{
+			"Constant.Assignments-c0dc97dc-150b-4f57-bfe4-b55880b93497":	{
+				"$Position":	{
+					"$x":	10191,
+					"$y":	-1093
+				},
+				"$Title":	"[ROOT] Constant Assignments"
+			},
+			"Material-2f574c40-1c30-485c-b046-956812989138":	{
+				"$Position":	{
+					"$x":	12484,
+					"$y":	-1365
+				}
+			},
+			"And.Pattern-0236520c-a473-4047-a83d-9267a5aebc88":	{
+				"$Position":	{
+					"$x":	11479,
+					"$y":	-929
+				}
+			},
+			"BlockSet.Pattern-4037edcd-82ad-4b3d-816e-ca24da616cbb":	{
+				"$Position":	{
+					"$x":	12118,
+					"$y":	-926
+				}
+			},
+			"BlockSet.BlockMask-9bf63c20-a018-4b40-a209-5be9607cda19":	{
+				"$Position":	{
+					"$x":	12750,
+					"$y":	-921
+				}
+			},
+			"Material-7c06d43d-dd33-4d58-8f51-0f2a860dd1b1":	{
+				"$Position":	{
+					"$x":	13243,
+					"$y":	-921
+				}
+			},
+			"BlockSet.Pattern-09af2e85-307e-43d1-933f-aff2ec1eafb9":	{
+				"$Position":	{
+					"$x":	12713,
+					"$y":	-747
+				}
+			},
+			"BlockSet.BlockMask-0f74afb6-6d0f-4aa9-b17d-d0849a6dc2f4":	{
+				"$Position":	{
+					"$x":	13372,
+					"$y":	-737
+				}
+			},
+			"Material-4fe9574b-4d8a-4482-b0bc-31af55863320":	{
+				"$Position":	{
+					"$x":	13868,
+					"$y":	-750
+				}
+			},
+			"Locator.Prop-4b25ef55-8d6b-447d-bda3-b9d256f091ff":	{
+				"$Position":	{
+					"$x":	10790,
+					"$y":	-1090
+				}
+			},
+			"Manual.Prop-9bd22c2c-a506-42de-91ac-855d11e33353":	{
+				"$Position":	{
+					"$x":	11509,
+					"$y":	-1282
+				}
+			},
+			"Offset.Pattern-69d9c3cf-93d4-4310-a1be-2b5cd88cc234":	{
+				"$Position":	{
+					"$x":	12094,
+					"$y":	-747
+				}
+			},
+			"Point3D-a88b2ad7-7a4f-4ef8-8a8c-27aa7755cd5f":	{
+				"$Position":	{
+					"$x":	12713,
+					"$y":	-590
+				}
+			},
+			"Linear.Scanner-c6aa6427-b5c3-4f50-ab17-d502ce9a6957":	{
+				"$Position":	{
+					"$x":	11481,
+					"$y":	-495
+				}
+			},
+			"Origin.Scanner-f62a8271-5356-42ac-8397-07e1ee70a6a7":	{
+				"$Position":	{
+					"$x":	12101,
+					"$y":	-501
+				}
+			},
+			"Integer.Range-d746d64a-b5b7-4d41-bab9-714b9d3bb4e2":	{
+				"$Position":	{
+					"$x":	12123,
+					"$y":	-329
+				}
+			},
+			"Block.Manual.Prop-2e3e30ea-aedc-4ed3-afd0-e667722a63b6":	{
+				"$Position":	{
+					"$x":	12155,
+					"$y":	-1274
+				}
+			},
+			"Vector3i-f6c6e0ed-6f60-4c6a-a107-63274bd7c40d":	{
+				"$Position":	{
+					"$x":	12483,
+					"$y":	-1172
+				}
+			}
+		},
+		"$FloatingNodes":	[],
+		"$Links":	{
+		},
+		"$Groups":	[],
+		"$Comments":	[],
+		"$WorkspaceID":	"HytaleGenerator - Assignments"
+	}
+}

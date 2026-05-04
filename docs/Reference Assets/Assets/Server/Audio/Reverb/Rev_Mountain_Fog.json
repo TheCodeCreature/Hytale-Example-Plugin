@@ -1,0 +1,16 @@
+{
+  "DryGain": 0,
+  "ModalDensity": 1,
+  "Diffusion": 0.3,
+  "Gain": -18,
+  "HighFrequencyGain": -25,
+  "DecayTime": 1.49,
+  "HighFrequencyDecayRatio": 0.83,
+  "ReflectionGain": -26,
+  "ReflectionDelay": 0.18,
+  "LateReverbGain": -14,
+  "LateReverbDelay": 0.07,
+  "RoomRolloffFactor": 0,
+  "AirAbsorbptionHighFrequencyGain": -1,
+  "LimitDecayHighFrequency": true
+}

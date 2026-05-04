@@ -1,0 +1,156 @@
+$C = "../../../Common.ui";
+$CV = "../CodeViewer.ui";
+
+// Input Fields Category Content
+Group {
+  LayoutMode: Top;
+
+  // TextField Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.inputs.section.textField;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 10);
+
+      $C.@TextField #TextField1 {
+        @Anchor = (Width: 300, Right: 20);
+        PlaceholderText: %server.customUI.uiGallery.inputs.textFieldPlaceholder;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.inputs.textFieldDesc;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+      }
+    }
+
+    Group #Code0 {
+      $CV.@CodeBlock {
+        @Code = "$C.@TextField {
+  @Anchor = (Width: 300);
+  PlaceholderText: \"Enter text here...\";
+}";
+      }
+    }
+  }
+
+  // NumberField Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.inputs.section.numberField;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 10);
+
+      $C.@NumberField #NumberField1 {
+        @Anchor = (Width: 150, Right: 20);
+        Value: 10;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.inputs.numberFieldDesc;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+      }
+    }
+
+    Group #Code1 {
+      $CV.@CodeBlock {
+        @Code = "$C.@NumberField {
+  @Anchor = (Width: 150);
+  Value: 10;
+}";
+      }
+    }
+  }
+
+  // Compact TextField with Search
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.inputs.section.compactTextField;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Height: 35, Bottom: 8);
+
+      Group {
+        Anchor: (Width: 220);
+
+        CompactTextField #SearchDemo {
+          Anchor: (Height: 30, Width: 200);
+          CollapsedWidth: 34;
+          ExpandedWidth: 200;
+          PlaceholderText: %server.customUI.uiGallery.searchPlaceholder;
+          Style: (FontSize: 14);
+          PlaceholderStyle: (TextColor: $C.@ColorPlaceholder, RenderUppercase: true, FontSize: 12);
+          Padding: (Horizontal: 12, Left: 34);
+          Decoration: (
+            Default: (
+              Icon: (Texture: "../../../Common/SearchIcon.png", Width: 16, Height: 16, Offset: 9),
+              ClearButtonStyle: $C.@ClearButtonStyle
+            )
+          );
+        }
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.inputs.compactTextFieldDesc;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+      }
+    }
+
+    Group #Code2 {
+      $CV.@CodeBlock {
+        @Code = "CompactTextField {
+  CollapsedWidth: 34;
+  ExpandedWidth: 200;
+  PlaceholderText: \"Search...\";
+  Decoration: (
+    Default: (
+      Icon: (Texture: \"SearchIcon.png\", ...)
+    )
+  );
+}";
+      }
+    }
+  }
+
+  // Multiline TextField
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.inputs.section.multilineTextField;
+    }
+
+    $C.@MultilineTextField #MultilineField {
+      @Anchor = (Width: 400, Height: 80, Bottom: 8, Left: 0);
+      PlaceholderText: %server.customUI.uiGallery.inputs.multilinePlaceholder;
+    }
+
+    Group #Code3 {
+      $CV.@CodeBlock {
+        @Code = "$C.@MultilineTextField {
+  @Anchor = (Width: 400, Height: 80, Bottom: 8, Left: 0);
+  PlaceholderText: \"Enter text...\";
+}";
+      }
+    }
+  }
+}
+
+@DefaultInputFieldStyle = InputFieldStyle();

@@ -1,0 +1,78 @@
+$LegendCommon = "ToolsLegendsCommon.ui";
+
+$LegendCommon.@Legend {
+  #Pages {
+    $LegendCommon.@Page #Page1Basics {
+      @Title = %client.builderTools.legend.SelectPrefabTool.Page1.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectPrefabTool.Page1.Description;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectPrefabTool.Page1.SelectingPrefabs;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @Description = %client.builderTools.legend.SelectPrefabTool.Page1.SelectPrefab;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SelectPrefabRemove";
+        @Description = %client.builderTools.legend.SelectPrefabTool.Page1.UnselectPrefab;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectPrefabTool.Page1.EditingPrefabs;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SelectPrefabOpenSaveUI";
+        @Description = %client.builderTools.legend.SelectPrefabTool.Page1.OpenSaveUI;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SelectPrefabUpdateBounds";
+        @Description = %client.builderTools.legend.SelectPrefabTool.Page1.UpdateBoundingBox;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SelectPrefabTeleport";
+        @Description = %client.builderTools.legend.SelectPrefabTool.Page1.TeleportToPrefab;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SetPrefabAnchor";
+        @Description = %client.builderTools.legend.SelectPrefabTool.Page1.SetAnchor;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectPrefabTool.Page1.QuickAccess;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SelectPrefabBack";
+        @Description = %client.builderTools.legend.SelectPrefabTool.Page1.SwitchWorlds;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectPrefabTool.Page1.UsefulCommands;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectPrefabTool.Page1.KillCommand;
+      }
+
+    }
+
+  }
+}

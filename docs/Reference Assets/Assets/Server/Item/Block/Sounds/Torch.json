@@ -1,0 +1,7 @@
+{
+  "Parent": "Wood",
+  "SoundEvents": {
+    "Break": "SFX_Torch_Break",
+    "Build": "SFX_Torch_Build"
+  }
+}

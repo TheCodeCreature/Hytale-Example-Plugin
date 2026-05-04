@@ -1,0 +1,26 @@
+{
+  "Layers": [
+    {
+      "Files": [
+        "Sounds/NPC/Beasts/Bat/Bat_Hurt_01.ogg",
+        "Sounds/NPC/Beasts/Bat/Bat_Hurt_02.ogg",
+        "Sounds/NPC/Beasts/Bat/Bat_Hurt_03.ogg",
+        "Sounds/NPC/Beasts/Bat/Bat_Hurt_04.ogg",
+        "Sounds/NPC/Beasts/Bat/Bat_Hurt_05.ogg"
+      ],
+      "RandomSettings": {
+        "MinVolume": -1,
+        "MaxVolume": 0,
+        "MinPitch": -4,
+        "MaxPitch": 2
+      },
+      "StartDelay": 0.1,
+      "Volume": -3
+    }
+  ],
+  "MaxInstance": 1,
+  "Volume": 0,
+  "PreventSoundInterruption": true,
+  "AudioCategory": "AudioCat_NPC_Bat",
+  "Parent": "SFX_Attn_Quiet"
+}

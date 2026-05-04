@@ -1,0 +1,21 @@
+{
+  "Type": "ChangeBlock",
+  "Changes": {
+    "Soil_Dirt_Tilled": "Soil_Dirt_Crystal",
+    "*Soil_Dirt_Tilled_State_Definitions_Fertilized": "Soil_Dirt_Crystal",
+    "*Soil_Dirt_Tilled_State_Definitions_Watered": "Soil_Dirt_Crystal",
+    "*Soil_Dirt_Tilled_State_Definitions_Fertilized_Watered": "Soil_Dirt_Crystal"
+  },
+  "Next": {
+    "Type": "ModifyInventory",
+    "AdjustHeldItemQuantity": -1,
+    "Next": {
+      "Type": "Simple",
+      "RunTime": 0.15,
+      "Effects": {
+        "ItemAnimationId": "Till",
+        "WorldSoundEventId": "SFX_Crystal_Hit"
+      }
+    }
+  }
+}

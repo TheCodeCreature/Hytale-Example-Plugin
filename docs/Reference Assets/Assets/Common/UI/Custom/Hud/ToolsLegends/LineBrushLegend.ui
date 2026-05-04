@@ -1,0 +1,35 @@
+$LegendCommon = "ToolsLegendsCommon.ui";
+
+$LegendCommon.@Legend {
+  #Pages {
+    $LegendCommon.@Page #Page1Basics {
+      @Title = %client.builderTools.legend.LineBrush.Page1.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.LineBrush.Page1.Description;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SecondaryItemAction";
+        @Description = %client.builderTools.legend.LineBrush.Page1.StartOrAddPoint;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @Description = %client.builderTools.legend.LineBrush.Page1.CancelLine;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SHIFT";
+        @Description = %client.builderTools.legend.LineBrush.Page1.SnapToAngles;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "OpenInventory";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.LineBrush.Page1.EditInventoryProperties;
+      }
+    }
+
+  }
+}

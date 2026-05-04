@@ -1,0 +1,58 @@
+{
+	"$NodeId":	"Scaler.Positions-06a80804-51c2-42fb-8920-261fa5fdd533",
+	"Type":	"Scaler",
+	"ExportAs":	"testB",
+	"Skip":	false,
+	"Scale":	{
+		"$NodeId":	"Point3D-39a7f018-6a7e-4842-9760-1ec34100ea10",
+		"X":	10,
+		"Y":	10,
+		"Z":	10
+	},
+	"Positions":	{
+		"$NodeId":	"Jitter2d.Positions-aa5a3f83-c1d4-4d3b-ab90-634011422cfe",
+		"Type":	"Jitter2d",
+		"Skip":	false,
+		"Magnitude":	0.4,
+		"Positions":	{
+			"$NodeId":	"TriangularGrid2d.Positions-d60c0c95-26ec-428f-a7b9-cc9a3d7cbe00",
+			"Type":	"TriangularGrid2d",
+			"Skip":	false
+		}
+	},
+	"$NodeEditorMetadata":	{
+		"$Nodes":	{
+			"TriangularGrid2d.Positions-d60c0c95-26ec-428f-a7b9-cc9a3d7cbe00":	{
+				"$Position":	{
+					"$x":	613,
+					"$y":	127
+				}
+			},
+			"Jitter2d.Positions-aa5a3f83-c1d4-4d3b-ab90-634011422cfe":	{
+				"$Position":	{
+					"$x":	-23,
+					"$y":	122
+				}
+			},
+			"Scaler.Positions-06a80804-51c2-42fb-8920-261fa5fdd533":	{
+				"$Position":	{
+					"$x":	-725,
+					"$y":	132
+				},
+				"$Title":	"[ROOT] Scaler Positions"
+			},
+			"Point3D-39a7f018-6a7e-4842-9760-1ec34100ea10":	{
+				"$Position":	{
+					"$x":	-18,
+					"$y":	344
+				}
+			}
+		},
+		"$FloatingNodes":	[],
+		"$Links":	{
+		},
+		"$Groups":	[],
+		"$Comments":	[],
+		"$WorkspaceID":	"HytaleGenerator - Biome"
+	}
+}

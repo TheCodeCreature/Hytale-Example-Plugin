@@ -1,0 +1,126 @@
+$C = "../../../Common.ui";
+$CV = "../CodeViewer.ui";
+
+// Tooltips Category Content
+Group {
+  LayoutMode: Top;
+
+  // Default Text Tooltip Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.tooltips.section.defaultTooltip;
+    }
+
+    Label {
+      Text: %server.customUI.uiGallery.tooltips.hoverDescription;
+      Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, Wrap: true);
+      Anchor: (Bottom: 12, Right: 100);
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12);
+
+      $C.@TextButton #TooltipButton1 {
+        @Anchor = (Width: 200, Right: 20);
+        @Text = %server.customUI.uiGallery.tooltips.hover;
+        TooltipText: %server.customUI.uiGallery.tooltips.simpleTooltip;
+        TextTooltipStyle: $C.@DefaultTextTooltipStyle;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.tooltips.buttonWithTooltip;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+      }
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12);
+
+      $C.@SecondaryTextButton #TooltipButton2 {
+        @Anchor = (Width: 200, Right: 20);
+        @Text = %server.customUI.uiGallery.tooltips.moreInfo;
+        TooltipText: %server.customUI.uiGallery.tooltips.contextTooltip;
+        TextTooltipStyle: $C.@DefaultTextTooltipStyle;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.tooltips.longerTooltip;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+      }
+    }
+
+    Group #Code0 {
+      $CV.@CodeBlock {
+        @Code = "$C.@TextButton {
+  @Text = \"Hover Me\";
+  TooltipText: \"Tooltip text here\";
+  TextTooltipStyle: $C.@DefaultTextTooltipStyle;
+}";
+      }
+    }
+  }
+
+  // Tooltip on Other Elements Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.tooltips.section.variousElements;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12);
+
+      $C.@CheckBox #TooltipCheckbox {
+        TooltipText: %server.customUI.uiGallery.tooltips.enableDisableFeature;
+        TextTooltipStyle: $C.@DefaultTextTooltipStyle;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.tooltips.checkboxWithTooltip;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+        Anchor: (Left: 10);
+      }
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12);
+
+      Group #TooltipGroup {
+        Anchor: (Width: 150, Height: 36, Right: 20);
+        Background: (Color: #1a2535);
+        TooltipText: %server.customUI.uiGallery.tooltips.anyElementTooltip;
+        TextTooltipStyle: $C.@DefaultTextTooltipStyle;
+
+        Label {
+          Text: %server.customUI.uiGallery.tooltips.hoverThisArea;
+          Style: (FontSize: 12, TextColor: $C.@ColorDefaultLabel, VerticalAlignment: Center, HorizontalAlignment: Center);
+        }
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.tooltips.groupWithTooltip;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+      }
+    }
+
+    Group #Code1 {
+      $CV.@CodeBlock {
+        @Code = "// Add to any element:
+TooltipText: \"Your tooltip\";
+TextTooltipStyle: $C.@DefaultTextTooltipStyle;
+
+// For localized text:
+TooltipTextSpans: %key.to.translation;";
+      }
+    }
+  }
+}

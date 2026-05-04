@@ -1,0 +1,19 @@
+{
+  "Conditions": {
+    "SunLightLevel": {
+      "Min": 10,
+      "Max": 15
+    },
+    "EnvironmentIds": [
+      "Env_Zone1_Mountains"
+    ],
+    "Altitude":{
+      "Min": 0,
+      "Max": 150
+    }
+  },
+  "AmbientBed": {
+    "Track": "Sounds/Environments/Zone1/Environments/Plains/Day/Z1_Plains_Gen_Day_Stereo_LOOP.ogg",
+    "Volume": 1.0
+  }
+}

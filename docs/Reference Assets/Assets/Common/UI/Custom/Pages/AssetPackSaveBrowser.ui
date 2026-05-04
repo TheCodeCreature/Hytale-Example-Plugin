@@ -1,0 +1,190 @@
+$C = "../Common.ui";
+$Sounds = "../Sounds.ui";
+
+@InputLabel = Label {
+  Anchor: (Left: 6, Right: 16, Width: 200);
+  Style: (...$C.@DefaultLabelStyle, VerticalAlignment: Center, Wrap: true);
+};
+
+@AssetPackSaveBrowserContent = Group {
+  LayoutMode: Top;
+  FlexWeight: 1;
+
+  Group #FilterRow {
+    LayoutMode: Left;
+    Anchor: (Bottom: 10, Height: 38);
+
+    $C.@TextField #SearchInput {
+      @Anchor = (Right: 0);
+      FlexWeight: 1;
+      PlaceholderText: %server.customUI.assetPackBrowser.searchPlaceholder;
+    }
+
+    $C.@DropdownBox #DirectoryFilter {
+      Anchor: (Width: 140, Left: 8, Height: 38);
+      Visible: false;
+    }
+  }
+
+  Group #PackList {
+    FlexWeight: 1;
+    LayoutMode: TopScrolling;
+    ScrollbarStyle: $C.@DefaultScrollbarStyle;
+  }
+
+  Group #BrowserButtons {
+    LayoutMode: Center;
+    Anchor: (Top: 12, Height: 40);
+
+    $C.@SecondaryTextButton #CreateNewPackButton {
+      @Sounds = $Sounds.@SaveSettings;
+      @Anchor = (Right: 4);
+      Text: %server.customUI.assetPackBrowser.createNew;
+      FlexWeight: 1;
+    }
+
+    $C.@TextButton #SelectButton {
+      @Sounds = $Sounds.@SaveSettings;
+      @Anchor = (Left: 4, Right: 4);
+      Text: %server.customUI.assetPackBrowser.select;
+      FlexWeight: 1;
+    }
+
+    $C.@SecondaryTextButton #CancelButton {
+      @Sounds = $Sounds.@ButtonsCancel;
+      @Anchor = (Left: 4);
+      Text: %server.customUI.cancel;
+      FlexWeight: 1;
+    }
+  }
+};
+
+@CreatePackFormContent = Group {
+  LayoutMode: Top;
+  Padding: (Full: 16);
+
+  Group #PackName {
+    LayoutMode: Left;
+    Anchor: (Bottom: 12);
+
+    @InputLabel {
+      Text: %server.customUI.assetPackBrowser.create.name;
+    }
+
+    $C.@TextField #Input {
+      @Anchor = (Left: 0, Right: 16);
+      FlexWeight: 1;
+    }
+  }
+
+  Group #PackGroup {
+    LayoutMode: Left;
+    Anchor: (Bottom: 12);
+
+    @InputLabel {
+      Text: %server.customUI.assetPackBrowser.create.group;
+    }
+
+    $C.@TextField #Input {
+      @Anchor = (Left: 0, Right: 16);
+      FlexWeight: 1;
+    }
+  }
+
+  Group #TargetDirectory {
+    LayoutMode: Left;
+    Anchor: (Bottom: 12);
+
+    @InputLabel {
+      Text: %server.customUI.assetPackBrowser.create.targetDir;
+    }
+
+    $C.@DropdownBox #TargetDirDropdown {
+      @Anchor = (Left: 0, Right: 16);
+      FlexWeight: 1;
+    }
+  }
+
+  Group #PackDescription {
+    LayoutMode: Left;
+    Anchor: (Bottom: 12);
+
+    @InputLabel {
+      Text: %server.customUI.assetPackBrowser.create.description;
+    }
+
+    $C.@TextField #Input {
+      @Anchor = (Left: 0, Right: 16);
+      FlexWeight: 1;
+    }
+  }
+
+  Group #PackVersion {
+    LayoutMode: Left;
+    Anchor: (Bottom: 12);
+
+    @InputLabel {
+      Text: %server.customUI.assetPackBrowser.create.version;
+    }
+
+    $C.@TextField #Input {
+      @Anchor = (Left: 0, Right: 16);
+      FlexWeight: 1;
+      PlaceholderText: "1.0.0";
+    }
+  }
+
+  Group #PackWebsite {
+    LayoutMode: Left;
+    Anchor: (Bottom: 12);
+
+    @InputLabel {
+      Text: %server.customUI.assetPackBrowser.create.website;
+    }
+
+    $C.@TextField #Input {
+      @Anchor = (Left: 0, Right: 16);
+      FlexWeight: 1;
+    }
+  }
+
+  Group #PackAuthorName {
+    LayoutMode: Left;
+    Anchor: (Bottom: 16);
+
+    @InputLabel {
+      Text: %server.customUI.assetPackBrowser.create.authorName;
+    }
+
+    $C.@TextField #Input {
+      @Anchor = (Left: 0, Right: 16);
+      FlexWeight: 1;
+    }
+  }
+
+  Label #CreateErrorText {
+    Anchor: (Bottom: 8, Horizontal: 4);
+    Visible: false;
+    Style: (...$C.@DefaultLabelStyle, HorizontalAlignment: Center, TextColor: #ff6b6b);
+    Text: "";
+  }
+
+  Group {
+    LayoutMode: Center;
+    Anchor: (Top: 8);
+
+    $C.@TextButton #CreateButton {
+      @Sounds = $Sounds.@SaveSettings;
+      @Anchor = (Right: 4);
+      Text: %server.customUI.assetPackBrowser.create.create;
+      FlexWeight: 1;
+    }
+
+    $C.@SecondaryTextButton #CancelCreateButton {
+      @Sounds = $Sounds.@ButtonsCancel;
+      @Anchor = (Left: 4);
+      Text: %server.customUI.cancel;
+      FlexWeight: 1;
+    }
+  }
+};

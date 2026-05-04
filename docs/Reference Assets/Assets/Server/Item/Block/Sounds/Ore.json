@@ -1,0 +1,7 @@
+{
+  "Parent": "Stone",
+  "SoundEvents": {
+    "Hit": "SFX_Ore_Hit",
+    "Break": "SFX_Ore_Break"
+  }
+}

@@ -1,0 +1,66 @@
+$LegendCommon = "ToolsLegendsCommon.ui";
+
+$LegendCommon.@Legend {
+  #Pages {
+    $LegendCommon.@Page #Page1Basics {
+      @Title = %client.builderTools.legend.TintBrush.Page1.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.TintBrush.Page1.Description;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SecondaryItemAction";
+        @Description = %client.builderTools.legend.TintBrush.Page1.PaintTints;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @Description = %client.builderTools.legend.TintBrush.Page1.BlendTints;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @InputBindingKeyPrefixBinding = "AlternatePlaySculptBrushModeModifier";
+        @Description = %client.builderTools.legend.TintBrush.Page1.PickColor;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "UndoItemAction";
+        @Description = %client.builderTools.legend.TintBrush.Page1.UndoLastBrush;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "RedoItemAction";
+        @Description = %client.builderTools.legend.TintBrush.Page1.RedoLastUndo;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.shiftFasterChange;
+      }
+
+      $LegendCommon.@DoubleHotkeyRow {
+        @InputBindingKeyOne = "BrushIncreaseHeight";
+        @InputBindingKeyTwo = "BrushDecreaseHeight";
+        @Text = %client.builderTools.legend.changeHeight;
+      }
+
+      $LegendCommon.@DoubleHotkeyRow {
+        @InputBindingKeyOne = "BrushIncreaseWidth";
+        @InputBindingKeyTwo = "BrushDecreaseWidth";
+        @Text = %client.builderTools.legend.changeWidth;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "OpenInventory";
+        @Description = %client.builderTools.legend.TintBrush.Page1.EditInventoryProperties;
+      }
+    }
+  }
+}

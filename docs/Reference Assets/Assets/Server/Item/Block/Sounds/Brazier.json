@@ -1,0 +1,7 @@
+{
+  "Parent": "Stone",
+  "SoundEvents": {
+    "Break": "SFX_Brazier_Break",
+    "Build": "SFX_Brazier_Build"
+  }
+}

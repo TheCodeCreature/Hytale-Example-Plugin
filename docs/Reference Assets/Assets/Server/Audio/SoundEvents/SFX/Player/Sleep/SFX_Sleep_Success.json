@@ -1,0 +1,15 @@
+{
+  "Layers": [
+    {
+      "Files": [
+        "Sounds/PlayerActions/Sleep/Sleep_Success_Stereo_01.ogg"
+      ],
+      "Looping": false,
+      "Volume": 0
+    }
+  ],
+  "Volume": 0,
+  "PreventSoundInterruption": true,
+  "AudioCategory": "AudioCat_UI_Sleep",
+  "MusicDuckingVolume": -20
+}

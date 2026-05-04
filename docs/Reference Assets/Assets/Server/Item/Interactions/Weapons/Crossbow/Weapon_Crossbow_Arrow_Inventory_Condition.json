@@ -1,0 +1,8 @@
+{
+  "Type": "ModifyInventory",
+  "RequiredGameMode": "Adventure",
+  "ItemToRemove": {
+    "Id": "Weapon_Arrow_Crude",
+    "Quantity": 1
+  }
+}

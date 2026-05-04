@@ -1,0 +1,15 @@
+{
+  "Entries": [
+    {
+      "Name": "Furniture_Lumberjack_Chest_Small",
+      "Weight": 100,
+      "Components": {
+        "Components": {
+          "ItemContainerBlock": {
+            "Droplist": "Zone1_Trork_Tier3"
+          }
+        }
+      }
+    }
+  ]
+}

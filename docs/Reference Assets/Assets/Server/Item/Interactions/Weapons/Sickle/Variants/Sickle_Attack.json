@@ -1,0 +1,26 @@
+{
+  "Type": "Chaining",
+  "ChainingAllowance": 3,
+  "Next": [
+    {
+      "Type": "Replace",
+      "DefaultOk": true,
+      "DefaultValue": {
+        "Interactions": [
+          "Sickle_Swing_Left"
+        ]
+      },
+      "Var": "Swing_Left"
+    },
+    {
+      "Type": "Replace",
+      "DefaultOk": true,
+      "DefaultValue": {
+        "Interactions": [
+          "Sickle_Swing_Right"
+        ]
+      },
+      "Var": "Swing_Right"
+    }
+  ]
+}

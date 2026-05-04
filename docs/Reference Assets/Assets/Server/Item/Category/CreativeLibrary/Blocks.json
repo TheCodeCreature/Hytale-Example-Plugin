@@ -1,0 +1,124 @@
+{
+  "Icon": "Icons/ItemCategories/Natural.png",
+  "Order": 0,
+  "Children": [
+    {
+      "Id": "Rocks",
+      "Name": "server.ui.itemcategory.rocks",
+      "Icon": "Icons/ItemCategories/Blocks.png"
+    },
+    {
+      "Id": "Wood",
+      "Name": "server.ui.itemcategory.wood",
+      "Icon": "Icons/ItemCategories/Wood.png",
+      "SubCategories": [
+        {
+          "Id": "BlockSets",
+          "Name": "server.ui.itemcategory.subcategory.wood.blockSets.name",
+          "Order": 10,
+          "Description": "server.ui.itemcategory.subcategory.wood.blockSets.description"
+        },
+        {
+          "Id": "Trees",
+          "Name": "server.ui.itemcategory.subcategory.wood.trees.name",
+          "Order": 20,
+          "Description": "server.ui.itemcategory.subcategory.wood.trees.description"
+        }
+      ]
+    },
+    {
+      "Id": "Metal",
+      "Name": "server.ui.itemcategory.metal",
+      "Icon": "Icons/ItemCategories/Metal.png"
+    },
+    {
+      "Id": "Cloth",
+      "Name": "server.ui.itemcategory.cloth",
+      "Icon": "Icons/ItemCategories/Cloth.png",
+      "SubCategories": [
+        {
+          "Id": "BlockSets",
+          "Name": "server.ui.itemcategory.subcategory.cloth.blockSets.name",
+          "Order": 10,
+          "Description": "server.ui.itemcategory.subcategory.cloth.blockSets.description"
+        },
+        {
+          "Id": "RoofBlocks",
+          "Name": "server.ui.itemcategory.subcategory.cloth.roofBlocks.name",
+          "Order": 20,
+          "Description": "server.ui.itemcategory.subcategory.cloth.roofBlocks.description"
+        }
+      ]
+    },
+    {
+      "Id": "Soils",
+      "Name": "server.ui.itemcategory.soils",
+      "Icon": "Icons/ItemCategories/Soil.png",
+      "SubCategories": [
+        {
+          "Id": "GrassAndDirt",
+          "Name": "server.ui.itemcategory.subcategory.soils.grassAndDirt.name",
+          "Order": 10,
+          "Description": "server.ui.itemcategory.subcategory.soils.grassAndDirt.description"
+        },
+        {
+          "Id": "BlockSets",
+          "Name": "server.ui.itemcategory.subcategory.soils.blockSets.name",
+          "Order": 20,
+          "Description": "server.ui.itemcategory.subcategory.soils.blockSets.description"
+        },
+        {
+          "Id": "ColouredClay",
+          "Name": "server.ui.itemcategory.subcategory.soils.colouredClay.name",
+          "Order": 30,
+          "Description": "server.ui.itemcategory.subcategory.soils.colouredClay.description"
+        }
+      ]
+    },
+    {
+      "Id": "Ores",
+      "Name": "server.ui.itemcategory.ores",
+      "Icon": "Icons/ItemCategories/Natural-Ore.png",
+      "SubCategories": [
+        {
+          "Id": "Ore",
+          "Name": "server.ui.itemcategory.subcategory.ores.ore.name",
+          "Order": 10,
+          "Description": "server.ui.itemcategory.subcategory.ores.ore.description"
+        },
+        {
+          "Id": "Crystal",
+          "Name": "server.ui.itemcategory.subcategory.ores.crystal.name",
+          "Order": 20,
+          "Description": "server.ui.itemcategory.subcategory.ores.crystal.description"
+        },
+        {
+          "Id": "Gem",
+          "Name": "server.ui.itemcategory.subcategory.ores.gem.name",
+          "Order": 30,
+          "Description": "server.ui.itemcategory.subcategory.ores.gem.description"
+        }
+      ]
+    },
+    {
+      "Id": "Plants",
+      "Name": "server.ui.itemcategory.plants",
+      "Icon": "Icons/ItemCategories/Natural-Vegetal.png"
+    },
+    {
+      "Id": "Fluids",
+      "Name": "server.ui.itemcategory.fluids",
+      "Icon": "Icons/ItemCategories/Natural-Fluid.png"
+    },
+    {
+      "Id": "Portals",
+      "Name": "server.ui.itemcategory.portals",
+      "Icon": "Icons/ItemCategories/Portal.png"
+    },
+    {
+      "Id": "Deco",
+      "Name": "server.ui.itemcategory.deco",
+      "Icon": "Icons/ItemCategories/Natural-Fire.png"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "Entries": [
+    {
+      "Name": "Furniture_Temple_Emerald_Chest_Small",
+      "Weight": 100,
+      "Components": {
+        "Components": {
+          "ItemContainerBlock": {
+            "Droplist": "Zone1_Encounters_Tier4"
+          }
+        }
+      }
+    }
+  ]
+}

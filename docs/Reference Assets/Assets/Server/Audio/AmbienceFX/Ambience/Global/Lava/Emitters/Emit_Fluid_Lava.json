@@ -1,0 +1,28 @@
+{
+  "Sounds": [
+    {
+      "SoundEventId": "SFX_Env_Emit_Fluid_Lava",
+      "Radius": {
+        "Min": 0,
+        "Max": 15
+      },
+      "Play3D": "LocationName",
+      "BlockSoundSetId": "Lava",
+      "Frequency": {
+        "Min": 0,
+        "Max": 1
+      }
+    }
+  ],
+  "Conditions": {
+    "SurroundingBlockSoundSets": [
+      {
+        "BlockSoundSetId": "Lava",
+        "Percent": {
+          "Min": 0.1,
+          "Max": 100
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "Conditions": {
+    "DayTime": {
+      "Min": 19,
+      "Max": 5
+    },
+    "EnvironmentTagPattern": {
+      "Op": "Equals",
+      "Tag": "Zone1"
+    }
+  },
+  "Music": {
+    "Tracks": [
+      "Music/Zone1/Z1AN-AuroraCascade.ogg",
+      "Music/Zone1/Z1AN-AWizardsDiscipline.ogg",
+      "Music/Zone1/Z1AN-ByTheCampfire.ogg",
+      "Music/Zone1/Z1AN-KnightsOfTheBrokenOrder.ogg",
+      "Music/Zone1/Z1AN-Reflection.ogg",
+      "Music/Zone1/Z1AN-ShadowsOfThePast.ogg",
+      "Music/Zone1/Z1AN-TidesOfDarkness.ogg",
+      "Music/Zone1/Z1AN-TwistedShadows.ogg",
+      "Music/Zone3/Z3AD-TravelingBand.ogg"
+    ]
+  },
+  "AudioCategory": "AudioCat_Music",
+  "Priority": 20
+}

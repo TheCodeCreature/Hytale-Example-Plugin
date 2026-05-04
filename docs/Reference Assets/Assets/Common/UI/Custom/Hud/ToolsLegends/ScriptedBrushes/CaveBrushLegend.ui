@@ -1,0 +1,185 @@
+$LegendCommon = "../ToolsLegendsCommon.ui";
+
+$LegendCommon.@Legend {
+  #Pages {
+    $LegendCommon.@Page #Page1Basics {
+      @Title = %client.builderTools.legend.CaveBrush.Page1.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.CaveBrush.Page1.Description;
+        Padding: (Vertical: 8);
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @Description = %client.builderTools.legend.CaveBrush.Page1.DecorateArea;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SecondaryItemAction";
+        @Description = %client.builderTools.legend.CaveBrush.Page1.ShapeArea;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "UndoItemAction";
+        @Description = %client.builderTools.legend.UndoLastBrush;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "RedoItemAction";
+        @Description = %client.builderTools.legend.RedoLastUndo;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.shiftFasterChange;
+      }
+
+      $LegendCommon.@DoubleHotkeyRow {
+        @InputBindingKeyOne = "BrushIncreaseHeight";
+        @InputBindingKeyTwo = "BrushDecreaseHeight";
+        @Text = %client.builderTools.legend.changeHeight;
+      }
+
+      $LegendCommon.@DoubleHotkeyRow {
+        @InputBindingKeyOne = "BrushIncreaseWidth";
+        @InputBindingKeyTwo = "BrushDecreaseWidth";
+        @Text = %client.builderTools.legend.changeWidth;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page2TipsAndTricks {
+      @Title = %client.builderTools.legend.TipsAndTricks.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.TipsAndTricks.Description;
+        Padding: (Vertical: 8);
+      }
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.CaveBrush.Page2.BlockTip.Title;
+        @Description = %client.builderTools.legend.CaveBrush.Page2.BlockTip.Description;
+        @Spacing = 10;
+        Padding: (Vertical: 8);
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.CaveBrush.Page2.Example1.Title;
+        @Description = %client.builderTools.legend.CaveBrush.Page2.Example1.Description;
+        @Spacing = 10;
+        Padding: (Vertical: 8);
+      }
+
+    }
+
+    $LegendCommon.@Page #Page3DecorationSettings {
+      @Title = %client.builderTools.legend.CaveBrush.Page3.Title;
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "OpenInventory";
+        @Description = %client.builderTools.legend.EditInventoryProperties;
+        Padding: (Vertical: 8);
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SettingDescription;
+        Padding: (Vertical: 8);
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.CaveBrush.Page3.CaveBlocks.Title;
+        @Description = %client.builderTools.legend.CaveBrush.Page3.CaveBlocks.Description;
+      }
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.CaveBrush.Page3.CaveBlockDecorations.Title;
+        @Description = %client.builderTools.legend.CaveBrush.Page3.CaveBlockDecorations.Description;
+      }
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.CaveBrush.Page3.TopDecorations.Title;
+        @Description = %client.builderTools.legend.CaveBrush.Page3.TopDecorations.Description;
+      }
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.CaveBrush.Page3.FloorBlocks.Title;
+        @Description = %client.builderTools.legend.CaveBrush.Page3.FloorBlocks.Description;
+      }
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.CaveBrush.Page3.FloorDecorations.Title;
+        @Description = %client.builderTools.legend.CaveBrush.Page3.FloorDecorations.Description;
+      }
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.CaveBrush.Page3.OreBlocks.Title;
+        @Description = %client.builderTools.legend.CaveBrush.Page3.OreBlocks.Description;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page4ShapingSettings {
+      @Title = %client.builderTools.legend.CaveBrush.Page4.Title;
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.CaveBrush.Page4.Randomize.Title;
+        @Description = %client.builderTools.legend.CaveBrush.Page4.Randomize.Description;
+        Padding: (Top: 8);
+      }
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.CaveBrush.Page4.MeltStrength.Title;
+        @Description = %client.builderTools.legend.CaveBrush.Page4.MeltStrength.Description;
+      }
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.CaveBrush.Page4.SmoothStrength.Title;
+        @Description = %client.builderTools.legend.CaveBrush.Page4.SmoothStrength.Description;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page5ScriptedBrush {
+      @Title = %client.builderTools.legend.ScriptedBrushPage.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.ScriptedBrushPage.Description;
+        Padding: (Vertical: 8);
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "OpenToolsSettings";
+        @Description = %client.builderTools.legend.ScriptedBrushPage.ToolSettings;
+        Padding: (Vertical: 4);
+      }
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.ScriptedBrushPage.ExampleScriptedBrush.Title;
+        @Description = %client.builderTools.legend.ScriptedBrushPage.ExampleScriptedBrush.Description;
+        @Spacing = 10;
+      }
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.ScriptedBrushPage.NodeEditorBasics.Title;
+        @Description = %client.builderTools.legend.ScriptedBrushPage.NodeEditorBasics.Description;
+        @Spacing = 10;
+      }
+
+      $LegendCommon.@TitledRow {
+        @Name = %client.builderTools.legend.ScriptedBrushPage.NodeEditorSavingAndTesting.Title;
+        @Description = %client.builderTools.legend.ScriptedBrushPage.NodeEditorSavingAndTesting.Description;
+        @Spacing = 10;
+      }
+
+    }
+
+  }
+}

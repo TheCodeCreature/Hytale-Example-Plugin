@@ -1,0 +1,18 @@
+{
+  "Type": "DamageEntity",
+  "DamageEffects": {
+    "Knockback": {
+      "Force": 0.5,
+      "RelativeX": -5,
+      "RelativeZ": -5,
+      "VelocityY": 5
+    },
+    "WorldSoundEventId": "SFX_Sword_T2_Impact",
+    "LocalSoundEventId": "SFX_Sword_T2_Impact",
+    "WorldParticles": [
+      {
+        "SystemId": "Impact_Blade_01"
+      }
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "Type": "FertilizeSoil",
+  "RefreshModifiers": [
+    "Fertilizer"
+  ],
+  "Next": {
+    "Type": "ModifyInventory",
+    "AdjustHeldItemDurability": -1,
+    "BrokenItem": "Empty",
+    "Next": {
+      "Type": "Simple",
+      "RunTime": 0.15,
+      "Effects": {
+        "ItemAnimationId": "Till"
+      }
+    }
+  }
+}

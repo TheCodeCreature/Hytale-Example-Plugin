@@ -1,0 +1,189 @@
+$LegendCommon = "ToolsLegendsCommon.ui";
+
+$LegendCommon.@Legend {
+  #Pages {
+    $LegendCommon.@Page #Page1Basics {
+      @Title = %client.builderTools.legend.SelectionTool.Page1.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: "";
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectionTool.Page1.CreatingSelection;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @Description = %client.builderTools.legend.SelectionTool.Page1.HoldAndDrag;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.SelectionTool.Page1.AdjustAndClick;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SelectionClear";
+        @Description = %client.builderTools.legend.SelectionTool.Page1.ClearSelection;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectionTool.Page1.ClickDragPanels;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @Description = %client.builderTools.legend.SelectionTool.Page1.ChangeSelectionSize;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @Description = %client.builderTools.legend.SelectionTool.Page1.MoveSelection;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @InputBindingKeyPrefix = "ALT + ";
+        @Description = %client.builderTools.legend.SelectionTool.Page1.ExtrudeFace;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectionTool.Page1.MultipleSelections;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SelectionNextSet";
+        @Description = %client.builderTools.legend.SelectionTool.Page1.NextSelection;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SelectionPreviousSet";
+        @Description = %client.builderTools.legend.SelectionTool.Page1.PreviousSelection;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @Description = %client.builderTools.legend.SelectionTool.Page1.SetGreenPoint;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SecondaryItemAction";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @Description = %client.builderTools.legend.SelectionTool.Page1.SetRedPoint;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page2MoveMode {
+      @Title = %client.builderTools.legend.SelectionTool.Page2.Title;
+      $LegendCommon.@RowLabel {
+        Text: "";
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectionTool.Page2.WithSelectionCreated;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SelectionTranslateMode";
+        @Description = %client.builderTools.legend.SelectionTool.Page2.AttachToCursor;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SelectionGizmoMode";
+        @Description = %client.builderTools.legend.SelectionTool.Page2.ShowMoveTool;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SelectionRotateMode";
+        @Description = %client.builderTools.legend.SelectionTool.Page2.ShowRotationTool;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SecondaryItemAction";
+        @Description = %client.builderTools.legend.SelectionTool.Page2.PasteAndExit;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SecondaryItemAction";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @Description = %client.builderTools.legend.SelectionTool.Page2.DuplicatePasteContinue;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SelectionCancelTransform";
+        @Description = %client.builderTools.legend.SelectionTool.Page2.CancelMovement;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "T/E/R";
+        @InputBindingKeyPrefix = "ALT + ";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.SelectionTool.Page2.DuplicateSelection;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: "";
+      }
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectionTool.Page2.UsingYourSelection;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SelectionCopy";
+        @Description = %client.builderTools.legend.SelectionTool.Page2.CopySelection;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectionTool.Page2.CopyUsageOptions;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectionTool.Page2.SavingPrefabs;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "/prefab save <name>";
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectionTool.Page2.SavePrefabCommand;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectionTool.Page2.LoadPrefabReference;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page3Commands {
+      @Title = %client.builderTools.legend.SelectionTool.Page3.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectionTool.Page3.BasicCommands;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.SelectionTool.Page3.SeeHelpMenu;
+      }
+
+    }
+
+  }
+}

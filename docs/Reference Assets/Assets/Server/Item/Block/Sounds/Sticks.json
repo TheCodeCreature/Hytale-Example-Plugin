@@ -1,0 +1,7 @@
+{
+  "Parent": "Wood",
+  "SoundEvents": {
+    "Break": "SFX_Sticks_Break",
+    "Harvest": "SFX_Sticks_Break"
+  }
+}

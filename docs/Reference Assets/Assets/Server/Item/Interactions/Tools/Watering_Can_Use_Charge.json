@@ -1,0 +1,22 @@
+{
+  "Type": "Charging",
+  "AllowIndefiniteHold": true,
+  "DisplayProgress": true,
+  "Effects": {
+    "ItemAnimationId": "Water",
+    "ClearAnimationOnFinish": true,
+    "Particles": [
+      {
+        "SystemId": "Watering_Can",
+        "TargetEntityPart": "PrimaryItem",
+        "TargetNodeName": "Can"
+      }
+    ],
+    "WorldSoundEventId": "SFX_Tool_Watering_Can_Water"
+  },
+  "CancelOnItemChange": true,
+  "Next": {
+    "0": "Watering_Can_Use",
+    "0.5": "Watering_Can_Use_3x3"
+  }
+}

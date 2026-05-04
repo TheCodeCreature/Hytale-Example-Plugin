@@ -1,0 +1,29 @@
+{
+  "Type": "UseWateringCan",
+  "UseLatestTarget": true,
+  "Duration": 86400,
+  "RadiusX": 1,
+  "RadiusZ": 1,
+  "RefreshModifiers": [
+    "Water"
+  ],
+  "Effects": {
+    "ItemAnimationId": "Water",
+    "Particles": [
+      {
+        "SystemId": "Watering_Can",
+        "TargetEntityPart": "PrimaryItem",
+        "TargetNodeName": "Can"
+      }
+    ],
+    "WorldSoundEventId": "SFX_Tool_Watering_Can_Water"
+  },
+  "Next": {
+    "Type": "ModifyInventory",
+    "AdjustHeldItemDurability": -1,
+    "BrokenItem": "Tool_Watering_Can"
+  },
+  "Failed": "Watering_Can_No_Effect",
+  "RunTime": 0.2,
+  "CancelOnItemChange": true
+}

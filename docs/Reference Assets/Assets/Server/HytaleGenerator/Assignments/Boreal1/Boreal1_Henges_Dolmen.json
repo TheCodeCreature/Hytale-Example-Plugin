@@ -1,0 +1,202 @@
+{
+	"$NodeId":	"Constant.Assignments-3a284eaf-90a9-4777-93e7-88ab4ba577a3",
+	"Type":	"Constant",
+	"ExportAs":	"Boreal1_Henges_Dolmen",
+	"Prop":	{
+		"$NodeId":	"Locator.Prop-209cf89a-79ba-4f2e-80da-5a48988ac049",
+		"Type":	"Locator",
+		"Skip":	false,
+		"PlacementCap":	1,
+		"Prop":	{
+			"$NodeId":	"RandomRotator.Prop-bb4841ed-bb9e-4611-a90e-be0145029842",
+			"Type":	"RandomRotator",
+			"Skip":	false,
+			"HorizontalRotations":	true,
+			"Prop":	{
+				"$NodeId":	"Prefab.Prop-4ab3af99-8ade-4e54-97a1-7ac583a2ef28",
+				"Type":	"Prefab",
+				"Skip":	false,
+				"WeightedPrefabPaths":	[{
+						"$NodeId":	"WeightedPath.Prefab.Prop-ca8c823f-e648-4ba7-b133-7a4d4651e16b",
+						"Path":	"Rock_Formations/Dolmen",
+						"Weight":	60
+					}],
+				"LegacyPath":	false,
+				"LoadEntities":	false,
+				"MoldingDirection":	"None",
+				"MoldingChildren":	false
+			}
+		},
+		"Pattern":	{
+			"$NodeId":	"Floor.Pattern-a6cc0d83-b017-405f-9179-1e96a9f67d94",
+			"Type":	"Floor",
+			"Skip":	false,
+			"Origin":	{
+				"$NodeId":	"BlockSet.Pattern-1ce13178-d257-47b1-a279-845f2c186db4",
+				"Type":	"BlockSet",
+				"Skip":	false,
+				"BlockSet":	{
+					"$NodeId":	"BlockSet.BlockMask-ea0dd9fc-5651-445e-9236-af3b06265b3a",
+					"Inclusive":	true,
+					"Materials":	[{
+							"$NodeId":	"Material-9dbaff86-c2e5-437a-a2f7-b8483c5c4a5c",
+							"Fluid":	"Water_Source",
+							"SolidBottomUp":	false
+						}, {
+							"$NodeId":	"Material-c5fb14f8-65e6-4863-8f72-eae00e43a9c0",
+							"Solid":	"Empty",
+							"SolidBottomUp":	false
+						}]
+				}
+			},
+			"Floor":	{
+				"$NodeId":	"BlockSet.Pattern-31a86903-2004-4087-b0fb-fb86c6d60684",
+				"Type":	"BlockSet",
+				"Skip":	false,
+				"BlockSet":	{
+					"$NodeId":	"BlockSet.BlockMask-3e4ef78b-a78e-4007-9b80-9fd0aec3b354",
+					"Inclusive":	false,
+					"Materials":	[{
+							"$NodeId":	"Material-7ec62e2d-5292-41b6-8622-78bc1ffc9d5a",
+							"Solid":	"Empty",
+							"SolidBottomUp":	false
+						}, {
+							"$NodeId":	"Material-ce52bde3-ccec-411a-8ec8-96b9f3dd3173",
+							"Fluid":	"Water_Source",
+							"SolidBottomUp":	false
+						}]
+				}
+			}
+		},
+		"Scanner":	{
+			"$NodeId":	"Linear.Scanner-f93baac4-96cc-4e87-9002-526de7df318f",
+			"Type":	"Linear",
+			"Skip":	false,
+			"Axis":	"Y",
+			"AscendingOrder":	false,
+			"Scanner":	{
+				"$NodeId":	"Origin.Scanner-4bb19ad8-df72-4903-b3f5-f28347221f7b",
+				"Type":	"Origin",
+				"Skip":	false
+			},
+			"Range":	{
+				"$NodeId":	"Integer.Range-d2b9c755-e023-4c49-80c3-24809fe00b0b",
+				"MinInclusive":	0,
+				"MaxExclusive":	90
+			}
+		}
+	},
+	"$NodeEditorMetadata":	{
+		"$Nodes":	{
+			"Constant.Assignments-3a284eaf-90a9-4777-93e7-88ab4ba577a3":	{
+				"$Position":	{
+					"$x":	1780,
+					"$y":	12600
+				},
+				"$Title":	"[ROOT] Constant Assignments"
+			},
+			"Locator.Prop-209cf89a-79ba-4f2e-80da-5a48988ac049":	{
+				"$Position":	{
+					"$x":	2378,
+					"$y":	12598
+				}
+			},
+			"RandomRotator.Prop-bb4841ed-bb9e-4611-a90e-be0145029842":	{
+				"$Position":	{
+					"$x":	3059,
+					"$y":	12202
+				}
+			},
+			"Prefab.Prop-4ab3af99-8ade-4e54-97a1-7ac583a2ef28":	{
+				"$Position":	{
+					"$x":	3678,
+					"$y":	12204
+				}
+			},
+			"WeightedPath.Prefab.Prop-ca8c823f-e648-4ba7-b133-7a4d4651e16b":	{
+				"$Position":	{
+					"$x":	4461,
+					"$y":	12200
+				}
+			},
+			"Floor.Pattern-a6cc0d83-b017-405f-9179-1e96a9f67d94":	{
+				"$Position":	{
+					"$x":	3045,
+					"$y":	12668
+				}
+			},
+			"BlockSet.Pattern-1ce13178-d257-47b1-a279-845f2c186db4":	{
+				"$Position":	{
+					"$x":	3661,
+					"$y":	12539
+				}
+			},
+			"BlockSet.BlockMask-ea0dd9fc-5651-445e-9236-af3b06265b3a":	{
+				"$Position":	{
+					"$x":	4278,
+					"$y":	12539
+				}
+			},
+			"Material-9dbaff86-c2e5-437a-a2f7-b8483c5c4a5c":	{
+				"$Position":	{
+					"$x":	4764,
+					"$y":	12454
+				}
+			},
+			"Material-c5fb14f8-65e6-4863-8f72-eae00e43a9c0":	{
+				"$Position":	{
+					"$x":	4763,
+					"$y":	12628
+				}
+			},
+			"BlockSet.Pattern-31a86903-2004-4087-b0fb-fb86c6d60684":	{
+				"$Position":	{
+					"$x":	3662,
+					"$y":	12910
+				}
+			},
+			"BlockSet.BlockMask-3e4ef78b-a78e-4007-9b80-9fd0aec3b354":	{
+				"$Position":	{
+					"$x":	4288,
+					"$y":	12912
+				}
+			},
+			"Material-7ec62e2d-5292-41b6-8622-78bc1ffc9d5a":	{
+				"$Position":	{
+					"$x":	4776,
+					"$y":	12825
+				}
+			},
+			"Material-ce52bde3-ccec-411a-8ec8-96b9f3dd3173":	{
+				"$Position":	{
+					"$x":	4782,
+					"$y":	12979
+				}
+			},
+			"Linear.Scanner-f93baac4-96cc-4e87-9002-526de7df318f":	{
+				"$Position":	{
+					"$x":	3000,
+					"$y":	13108
+				}
+			},
+			"Origin.Scanner-4bb19ad8-df72-4903-b3f5-f28347221f7b":	{
+				"$Position":	{
+					"$x":	3633,
+					"$y":	13103
+				}
+			},
+			"Integer.Range-d2b9c755-e023-4c49-80c3-24809fe00b0b":	{
+				"$Position":	{
+					"$x":	3654,
+					"$y":	13287
+				}
+			}
+		},
+		"$FloatingNodes":	[],
+		"$Links":	{
+		},
+		"$Groups":	[],
+		"$Comments":	[],
+		"$WorkspaceID":	"HytaleGenerator - Assignments"
+	}
+}

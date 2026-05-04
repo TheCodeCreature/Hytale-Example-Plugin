@@ -1,0 +1,31 @@
+{
+  "Type": "NoiseRange",
+  "DefaultBiome": "Basic",
+  "MaxBiomeEdgeDistance" : 32,
+  "DefaultTransitionDistance": 32,
+  "Density": {
+    "Type": "Imported",
+    "Name": "Biome-Map"
+  },
+  "Framework": [
+    {
+      "Type" : "Positions",
+      "Entries" : [
+        {
+          "Name" : "Spawns",
+          "Positions" : {
+            "Type" : "List",
+            "ExportAs" : "Spawns",
+            "Positions": [
+              {
+                "X": 0,
+                "Y": 140,
+                "Z": 0
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

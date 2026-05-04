@@ -1,0 +1,7 @@
+{
+  "Parent": "Stone",
+  "SoundEvents": {
+    "Break": "SFX_Torch_Stone_Break",
+    "Build": "SFX_Torch_Stone_Build"
+  }
+}

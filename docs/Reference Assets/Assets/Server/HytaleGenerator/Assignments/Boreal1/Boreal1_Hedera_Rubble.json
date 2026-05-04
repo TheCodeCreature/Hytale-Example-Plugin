@@ -1,0 +1,187 @@
+{
+	"$NodeId":	"Constant.Assignments-4d31df9a-0f7d-4ccd-a048-56505e035cd6",
+	"Type":	"Constant",
+	"ExportAs":	"Boreal1_Hedera_Rubble",
+	"Prop":	{
+		"$NodeId":	"Locator.Prop-256a54cb-4d34-48e1-9887-800430e088da",
+		"Type":	"Locator",
+		"Skip":	false,
+		"PlacementCap":	1,
+		"Prop":	{
+			"$NodeId":	"Manual.Prop-3bb1a136-6cb9-4090-8313-bbc7715892a7",
+			"Type":	"Manual",
+			"Skip":	false,
+			"Blocks":	[{
+					"$NodeId":	"Block.Manual.Prop-71701947-8a70-4190-936b-e0bba940d394",
+					"Material":	{
+						"$NodeId":	"Material-c84484bd-5357-47f0-b2f8-a3c90028955a",
+						"Solid":	"Rubble_Shale",
+						"SolidBottomUp":	false
+					},
+					"Position":	{
+						"$NodeId":	"Vector3i-e0b63c8b-c840-4a90-ad2e-b2afa22944e7",
+						"X":	0,
+						"Y":	0,
+						"Z":	0
+					}
+				}]
+		},
+		"Pattern":	{
+			"$NodeId":	"Floor.Pattern-c9422405-89dd-4012-8cb2-a1ef0cab3ea8",
+			"Type":	"Floor",
+			"Skip":	false,
+			"Origin":	{
+				"$NodeId":	"BlockSet.Pattern-50b40292-89ed-486d-bc98-ba23ae33d6d5",
+				"Type":	"BlockSet",
+				"Skip":	false,
+				"BlockSet":	{
+					"$NodeId":	"BlockSet.BlockMask-b484c9b1-0d43-423a-979d-4622f96f357f",
+					"Inclusive":	true,
+					"Materials":	[{
+							"$NodeId":	"Material-752f9124-9ac8-40b8-aa1f-cf02e0e8bba5",
+							"Solid":	"Empty",
+							"SolidBottomUp":	false
+						}]
+				}
+			},
+			"Floor":	{
+				"$NodeId":	"BlockSet.Pattern-d7aa0a61-1d06-429a-9aa8-63a386b8cf8a",
+				"Type":	"BlockSet",
+				"Skip":	false,
+				"BlockSet":	{
+					"$NodeId":	"BlockSet.BlockMask-25e2e2bd-23bc-4237-ac6e-c3b10418a2c8",
+					"Inclusive":	true,
+					"Materials":	[{
+							"$NodeId":	"Material-7a564d22-21f9-4dc1-ada8-dda2e943aadc",
+							"Solid":	"Soil_Pebbles_Frozen",
+							"SolidBottomUp":	false
+						}]
+				}
+			}
+		},
+		"Scanner":	{
+			"$NodeId":	"Linear.Scanner-1a4824f4-04ea-47f8-95b0-5966cc4569a5",
+			"Type":	"Linear",
+			"Skip":	false,
+			"Axis":	"Y",
+			"AscendingOrder":	false,
+			"Scanner":	{
+				"$NodeId":	"Origin.Scanner-8282ec7a-eaec-4685-8a8b-e51101481eb8",
+				"Type":	"Origin",
+				"Skip":	false
+			},
+			"Range":	{
+				"$NodeId":	"Integer.Range-4dc94399-6687-40e2-80d3-4367e3696c5b",
+				"MinInclusive":	0,
+				"MaxExclusive":	5
+			}
+		}
+	},
+	"$NodeEditorMetadata":	{
+		"$Nodes":	{
+			"Constant.Assignments-4d31df9a-0f7d-4ccd-a048-56505e035cd6":	{
+				"$Position":	{
+					"$x":	-234,
+					"$y":	7304
+				},
+				"$Title":	"[ROOT] Constant Assignments"
+			},
+			"Locator.Prop-256a54cb-4d34-48e1-9887-800430e088da":	{
+				"$Position":	{
+					"$x":	371,
+					"$y":	7309
+				}
+			},
+			"Manual.Prop-3bb1a136-6cb9-4090-8313-bbc7715892a7":	{
+				"$Position":	{
+					"$x":	1011,
+					"$y":	7310
+				}
+			},
+			"Block.Manual.Prop-71701947-8a70-4190-936b-e0bba940d394":	{
+				"$Position":	{
+					"$x":	1641,
+					"$y":	7318
+				}
+			},
+			"Material-c84484bd-5357-47f0-b2f8-a3c90028955a":	{
+				"$Position":	{
+					"$x":	1951,
+					"$y":	7314
+				}
+			},
+			"Vector3i-e0b63c8b-c840-4a90-ad2e-b2afa22944e7":	{
+				"$Position":	{
+					"$x":	1958,
+					"$y":	7482
+				}
+			},
+			"Floor.Pattern-c9422405-89dd-4012-8cb2-a1ef0cab3ea8":	{
+				"$Position":	{
+					"$x":	1103,
+					"$y":	7882
+				}
+			},
+			"BlockSet.Pattern-50b40292-89ed-486d-bc98-ba23ae33d6d5":	{
+				"$Position":	{
+					"$x":	1751,
+					"$y":	7829
+				}
+			},
+			"BlockSet.BlockMask-b484c9b1-0d43-423a-979d-4622f96f357f":	{
+				"$Position":	{
+					"$x":	2383,
+					"$y":	7834
+				}
+			},
+			"Material-752f9124-9ac8-40b8-aa1f-cf02e0e8bba5":	{
+				"$Position":	{
+					"$x":	2914,
+					"$y":	7818
+				}
+			},
+			"BlockSet.Pattern-d7aa0a61-1d06-429a-9aa8-63a386b8cf8a":	{
+				"$Position":	{
+					"$x":	1755,
+					"$y":	8008
+				}
+			},
+			"BlockSet.BlockMask-25e2e2bd-23bc-4237-ac6e-c3b10418a2c8":	{
+				"$Position":	{
+					"$x":	2414,
+					"$y":	8018
+				}
+			},
+			"Material-7a564d22-21f9-4dc1-ada8-dda2e943aadc":	{
+				"$Position":	{
+					"$x":	2898,
+					"$y":	8017
+				}
+			},
+			"Linear.Scanner-1a4824f4-04ea-47f8-95b0-5966cc4569a5":	{
+				"$Position":	{
+					"$x":	1075,
+					"$y":	8278
+				}
+			},
+			"Origin.Scanner-8282ec7a-eaec-4685-8a8b-e51101481eb8":	{
+				"$Position":	{
+					"$x":	1714,
+					"$y":	8287
+				}
+			},
+			"Integer.Range-4dc94399-6687-40e2-80d3-4367e3696c5b":	{
+				"$Position":	{
+					"$x":	1720,
+					"$y":	8460
+				}
+			}
+		},
+		"$FloatingNodes":	[],
+		"$Links":	{
+		},
+		"$Groups":	[],
+		"$Comments":	[],
+		"$WorkspaceID":	"HytaleGenerator - Assignments"
+	}
+}

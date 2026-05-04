@@ -1,0 +1,29 @@
+$C = "../../Common.ui";
+
+@LabelStyle = (
+  Default: (
+    LabelStyle: (FontSize: 14, TextColor: $C.@ColorDefaultLabel, RenderUppercase: true, VerticalAlignment: Center, ShrinkTextToFit: true, MinShrinkTextToFitFontSize: 12)
+  ),
+  Hovered: (
+    LabelStyle: (FontSize: 14, TextColor: $C.@ColorButtonText, RenderUppercase: true, VerticalAlignment: Center, ShrinkTextToFit: true, MinShrinkTextToFitFontSize: 12),
+    Background: $C.@ColorSimpleButtonBackground
+  )
+);
+
+@SelectedLabelStyle = (
+  Default: (
+    LabelStyle: (FontSize: 14, TextColor: $C.@ColorDefault, RenderBold: true, RenderUppercase: true, VerticalAlignment: Center),
+    LabelMaskTexturePath: $C.@TextHighlightGradientMask
+  ),
+  Hovered: (
+    LabelStyle: (FontSize: 14, TextColor: $C.@ColorDefault, RenderBold: true, RenderUppercase: true, VerticalAlignment: Center),
+    Background: $C.@ColorSimpleButtonBackground,
+    LabelMaskTexturePath: $C.@TextHighlightGradientMask
+  )
+);
+
+TextButton #CategoryButton {
+  Anchor: (Height: 32, Bottom: 4);
+  Padding: (Horizontal: 10);
+  Style: @LabelStyle;
+}

@@ -1,0 +1,6 @@
+{
+  "Parent": "Clay_Pot_Large",
+  "SoundEvents": {
+    "Break": "SFX_Clay_Pot_Small_Break"
+  }
+}

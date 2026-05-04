@@ -1,0 +1,112 @@
+{
+	"$NodeId":	"Weighted.Assignments-fde93fc5-c099-487d-9355-befede1a6fa9",
+	"Type":	"Weighted",
+	"ExportAs":	"Boreal1_Henges_Crystal",
+	"SkipChance":	0.4,
+	"Seed":	"A",
+	"WeightedAssignments":	[{
+			"$NodeId":	"Weight.Weighted.Assignments-b1ab508e-4a6c-49cd-a0b3-f708a1e9d872",
+			"Weight":	1,
+			"Assignments":	{
+				"$NodeId":	"Constant.Assignments-28793aa0-6148-4734-a342-8f0f10ba75d2",
+				"Type":	"Constant",
+				"Prop":	{
+					"$NodeId":	"Mask.Prop-7b0e44e8-617b-41b3-a122-8c3de9ab87d1",
+					"Type":	"Mask",
+					"Skip":	false,
+					"Prop":	{
+						"$NodeId":	"Prefab.Prop-79371e65-9d55-4b33-a853-372edbe0e4da",
+						"Type":	"Prefab",
+						"Skip":	false,
+						"WeightedPrefabPaths":	[{
+								"$NodeId":	"WeightedPath.Prefab.Prop-2c299582-d28a-48c2-98eb-c52ee6eaaeba",
+								"Path":	"Rock_Formations/Crystal_Pattern/Large",
+								"Weight":	60
+							}],
+						"LegacyPath":	false,
+						"LoadEntities":	true,
+						"MoldingDirection":	"None",
+						"MoldingChildren":	false
+					},
+					"Mask":	{
+						"$NodeId":	"BlockMask-3fc1fba8-0888-4059-933b-3438e4a0b9eb",
+						"DontReplace":	{
+							"$NodeId":	"BlockSet.BlockMask-61164cd6-7b9b-4602-9a7b-bf985b08e570",
+							"Inclusive":	true,
+							"Materials":	[{
+									"$NodeId":	"Material-00632c9b-fa32-4327-8eca-123b430e4b4b",
+									"Solid":	"Empty",
+									"SolidBottomUp":	false
+								}]
+						},
+						"Advanced":	[]
+					}
+				}
+			}
+		}],
+	"$NodeEditorMetadata":	{
+		"$Nodes":	{
+			"Mask.Prop-7b0e44e8-617b-41b3-a122-8c3de9ab87d1":	{
+				"$Position":	{
+					"$x":	2863,
+					"$y":	12012
+				}
+			},
+			"Prefab.Prop-79371e65-9d55-4b33-a853-372edbe0e4da":	{
+				"$Position":	{
+					"$x":	3611,
+					"$y":	11815
+				}
+			},
+			"WeightedPath.Prefab.Prop-2c299582-d28a-48c2-98eb-c52ee6eaaeba":	{
+				"$Position":	{
+					"$x":	4398,
+					"$y":	11818
+				}
+			},
+			"BlockMask-3fc1fba8-0888-4059-933b-3438e4a0b9eb":	{
+				"$Position":	{
+					"$x":	3594,
+					"$y":	12193
+				}
+			},
+			"BlockSet.BlockMask-61164cd6-7b9b-4602-9a7b-bf985b08e570":	{
+				"$Position":	{
+					"$x":	4258,
+					"$y":	12260
+				}
+			},
+			"Material-00632c9b-fa32-4327-8eca-123b430e4b4b":	{
+				"$Position":	{
+					"$x":	4742,
+					"$y":	12262
+				}
+			},
+			"Constant.Assignments-28793aa0-6148-4734-a342-8f0f10ba75d2":	{
+				"$Position":	{
+					"$x":	2268,
+					"$y":	12012
+				}
+			},
+			"Weight.Weighted.Assignments-b1ab508e-4a6c-49cd-a0b3-f708a1e9d872":	{
+				"$Position":	{
+					"$x":	1799,
+					"$y":	12013
+				}
+			},
+			"Weighted.Assignments-fde93fc5-c099-487d-9355-befede1a6fa9":	{
+				"$Position":	{
+					"$x":	1088,
+					"$y":	12008
+				},
+				"$Title":	"[ROOT] Weighted Assignments"
+			}
+		},
+		"$FloatingNodes":	[],
+		"$Links":	{
+		},
+		"$Groups":	[],
+		"$Comments":	[],
+		"$WorkspaceID":	"HytaleGenerator - Assignments"
+	}
+}

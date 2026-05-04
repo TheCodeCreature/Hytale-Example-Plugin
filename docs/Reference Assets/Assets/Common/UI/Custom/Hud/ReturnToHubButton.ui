@@ -1,0 +1,19 @@
+$Custom = "../Common.ui";
+
+Button #ReturnToHubButton {
+  Anchor: (Width: 300, Height: 44, Top: 25);
+  Style: $Custom.@SecondaryButtonStyle;
+  LayoutMode: CenterMiddle;
+  Padding: (Horizontal: 12);
+
+  Group {
+    Background: "../InGame/Pages/MapIcons/ReturnToCrossroads.png";
+    Anchor: (Width: 24, Height: 24);
+  }
+
+  Label {
+    Anchor: (Left: 8);
+    Text: %server.map.returnToHub;
+    Style: $Custom.@SecondaryButtonLabelStyle;
+  }
+}

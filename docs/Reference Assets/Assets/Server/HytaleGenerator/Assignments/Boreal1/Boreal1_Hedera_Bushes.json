@@ -1,0 +1,216 @@
+{
+	"$NodeId":	"Constant.Assignments-1b5d7c38-b605-4e5f-bd0c-cfb0ea21e669",
+	"Type":	"Constant",
+	"ExportAs":	"Boreal1_Hedera_Bushes",
+	"Prop":	{
+		"$NodeId":	"Locator.Prop-95de7a23-21db-4e34-a14c-aefcabbb2ebd",
+		"Type":	"Locator",
+		"Skip":	false,
+		"PlacementCap":	1,
+		"Prop":	{
+			"$NodeId":	"Manual.Prop-4ccd1ace-6384-4a35-a9cb-5e5a86f9bae5",
+			"Type":	"Manual",
+			"Skip":	false,
+			"Blocks":	[{
+					"$NodeId":	"Block.Manual.Prop-279de4bd-248b-462d-a69d-21b7d2ba5565",
+					"Material":	{
+						"$NodeId":	"Material-1a620bab-ac00-44f2-bd23-d878fedb7909",
+						"Solid":	"Plant_Bush_Lush",
+						"SolidBottomUp":	false
+					},
+					"Position":	{
+						"$NodeId":	"Vector3i-27f3128e-9617-4a76-ade3-efc3f2f32b05",
+						"X":	0,
+						"Y":	0,
+						"Z":	0
+					}
+				}]
+		},
+		"Pattern":	{
+			"$NodeId":	"Floor.Pattern-3f3c789e-e264-4350-bcb9-baba23c5b03b",
+			"Type":	"Floor",
+			"ExportAs":	"",
+			"Skip":	false,
+			"Origin":	{
+				"$NodeId":	"BlockSet.Pattern-18a80581-32a3-47d4-9b73-48b4a362ab1b",
+				"Type":	"BlockSet",
+				"Skip":	false,
+				"BlockSet":	{
+					"$NodeId":	"BlockSet.BlockMask-d7342ea0-c86b-4c21-b96b-f9bdbee00320",
+					"Inclusive":	true,
+					"Materials":	[{
+							"$NodeId":	"Material-5f52fc13-ef95-4472-b281-09520a471a9e",
+							"Solid":	"Empty",
+							"SolidBottomUp":	false
+						}]
+				}
+			},
+			"Floor":	{
+				"$NodeId":	"BlockSet.Pattern-ab25391d-8390-4bcb-bd1f-c00aecf795c7",
+				"Type":	"BlockSet",
+				"Skip":	false,
+				"BlockSet":	{
+					"$NodeId":	"BlockSet.BlockMask-5b3dc526-6c7e-480d-90a9-fc617c43474a",
+					"Inclusive":	true,
+					"Materials":	[{
+							"$NodeId":	"Material-b7de3e63-19aa-48e1-a90e-8669feceadfd",
+							"Solid":	"Soil_Dirt_Cold",
+							"SolidBottomUp":	false
+						}, {
+							"$NodeId":	"Material-084864f2-466e-441d-a9d6-ed3d19378321",
+							"Solid":	"Soil_Pebbles_Frozen",
+							"SolidBottomUp":	false
+						}, {
+							"$NodeId":	"Material-54e43fe3-3781-4e5f-bb2c-8dae34e91434",
+							"Solid":	"Soil_Mud",
+							"SolidBottomUp":	false
+						}]
+				}
+			}
+		},
+		"Scanner":	{
+			"$NodeId":	"Linear.Scanner-b9199c2e-b6a7-4a01-a6b3-4011db01de78",
+			"Type":	"Linear",
+			"Skip":	false,
+			"Axis":	"Y",
+			"AscendingOrder":	false,
+			"Scanner":	{
+				"$NodeId":	"Origin.Scanner-e1064eaa-cc41-460a-9f1d-6d0fa330bf45",
+				"Type":	"Origin",
+				"Skip":	false
+			},
+			"Range":	{
+				"$NodeId":	"Integer.Range-7bcc47f3-bf30-4f4f-ac10-ee0e90a76720",
+				"MinInclusive":	0,
+				"MaxExclusive":	5
+			}
+		}
+	},
+	"$NodeEditorMetadata":	{
+		"$Nodes":	{
+			"Constant.Assignments-1b5d7c38-b605-4e5f-bd0c-cfb0ea21e669":	{
+				"$Position":	{
+					"$x":	-503,
+					"$y":	7304
+				},
+				"$Title":	"[ROOT] Constant Assignments"
+			},
+			"Material-1a620bab-ac00-44f2-bd23-d878fedb7909":	{
+				"$Position":	{
+					"$x":	1649,
+					"$y":	7170
+				}
+			},
+			"Floor.Pattern-3f3c789e-e264-4350-bcb9-baba23c5b03b":	{
+				"$Position":	{
+					"$x":	770,
+					"$y":	7620
+				}
+			},
+			"BlockSet.Pattern-18a80581-32a3-47d4-9b73-48b4a362ab1b":	{
+				"$Position":	{
+					"$x":	1395,
+					"$y":	7583
+				}
+			},
+			"BlockSet.BlockMask-d7342ea0-c86b-4c21-b96b-f9bdbee00320":	{
+				"$Position":	{
+					"$x":	2056,
+					"$y":	7587
+				}
+			},
+			"Material-5f52fc13-ef95-4472-b281-09520a471a9e":	{
+				"$Position":	{
+					"$x":	2562,
+					"$y":	7586
+				}
+			},
+			"BlockSet.Pattern-ab25391d-8390-4bcb-bd1f-c00aecf795c7":	{
+				"$Position":	{
+					"$x":	1383,
+					"$y":	7762
+				}
+			},
+			"BlockSet.BlockMask-5b3dc526-6c7e-480d-90a9-fc617c43474a":	{
+				"$Position":	{
+					"$x":	2047,
+					"$y":	7803
+				}
+			},
+			"Material-b7de3e63-19aa-48e1-a90e-8669feceadfd":	{
+				"$Position":	{
+					"$x":	2544,
+					"$y":	7811
+				}
+			},
+			"Material-084864f2-466e-441d-a9d6-ed3d19378321":	{
+				"$Position":	{
+					"$x":	2544,
+					"$y":	7983
+				}
+			},
+			"Material-54e43fe3-3781-4e5f-bb2c-8dae34e91434":	{
+				"$Position":	{
+					"$x":	2552,
+					"$y":	8166
+				}
+			},
+			"Locator.Prop-95de7a23-21db-4e34-a14c-aefcabbb2ebd":	{
+				"$Position":	{
+					"$x":	91,
+					"$y":	7308
+				}
+			},
+			"Manual.Prop-4ccd1ace-6384-4a35-a9cb-5e5a86f9bae5":	{
+				"$Position":	{
+					"$x":	712,
+					"$y":	7216
+				}
+			},
+			"Block.Manual.Prop-279de4bd-248b-462d-a69d-21b7d2ba5565":	{
+				"$Position":	{
+					"$x":	1324,
+					"$y":	7218
+				}
+			},
+			"Vector3i-27f3128e-9617-4a76-ade3-efc3f2f32b05":	{
+				"$Position":	{
+					"$x":	1643,
+					"$y":	7358
+				}
+			},
+			"Linear.Scanner-b9199c2e-b6a7-4a01-a6b3-4011db01de78":	{
+				"$Position":	{
+					"$x":	761,
+					"$y":	7980
+				}
+			},
+			"Integer.Range-7bcc47f3-bf30-4f4f-ac10-ee0e90a76720":	{
+				"$Position":	{
+					"$x":	1394,
+					"$y":	8222
+				}
+			},
+			"Origin.Scanner-e1064eaa-cc41-460a-9f1d-6d0fa330bf45":	{
+				"$Position":	{
+					"$x":	1398,
+					"$y":	7981
+				}
+			}
+		},
+		"$FloatingNodes":	[],
+		"$Links":	{
+		},
+		"$Groups":	[{
+				"$Position":	{
+					"$x":	-629.1875,
+					"$y":	7097.125
+				},
+				"$width":	5636.5,
+				"$height":	1929.125,
+				"$name":	"Bushes"
+			}],
+		"$Comments":	[],
+		"$WorkspaceID":	"HytaleGenerator - Assignments"
+	}
+}

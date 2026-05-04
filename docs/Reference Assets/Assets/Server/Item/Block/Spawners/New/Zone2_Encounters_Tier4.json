@@ -1,0 +1,15 @@
+{
+  "Entries": [
+    {
+      "Name": "Furniture_Temple_Wind_Chest_Small",
+      "Weight": 100,
+      "Components": {
+        "Components": {
+          "ItemContainerBlock": {
+            "Droplist": "Zone2_Encounters_Tier4"
+          }
+        }
+      }
+    }
+  ]
+}

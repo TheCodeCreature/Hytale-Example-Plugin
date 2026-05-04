@@ -1,0 +1,146 @@
+$C = "../../../Common.ui";
+$CV = "../CodeViewer.ui";
+
+// Navigation Category Content
+Group {
+  LayoutMode: Top;
+
+  // Top Tabs Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.navigation.section.topTabs;
+    }
+
+    Label {
+      Text: %server.customUI.uiGallery.navigation.topTabsDesc;
+      Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, Wrap: true);
+      Anchor: (Bottom: 18, Right: 100);
+    }
+
+    Group {
+      Anchor: (Height: 180, Bottom: 8);
+      LayoutMode: Top;
+
+      TabNavigation #TopTabs {
+        Anchor: (Height: 66, Left: 2, Right: 0);
+        Style: $C.@TopTabsStyle;
+        SelectedTab: "Tab1";
+
+        TabButton {
+          Icon: "../../../Common/RecipesIcon.png";
+          TooltipText: %server.customUI.uiGallery.navigation.tabOne;
+          Id: "Tab1";
+        }
+
+        TabButton {
+          Icon: "../../../Common/RecipesIcon.png";
+          TooltipText: %server.customUI.uiGallery.navigation.tabTwo;
+          Id: "Tab2";
+        }
+
+        TabButton {
+          Icon: "../../../Common/RecipesIcon.png";
+          TooltipText: %server.customUI.uiGallery.navigation.tabThree;
+          Id: "Tab3";
+        }
+      }
+
+      $C.@Container {
+        Anchor: (Width: 400, Height: 110, Left: 0);
+
+        #Title {
+          $C.@Title {
+            @Text = %server.customUI.uiGallery.navigation.tabContentArea;
+          }
+        }
+
+        #Content {
+          Label {
+            Text: %server.customUI.uiGallery.navigation.tabContent;
+            Style: (FontSize: 13, TextColor: $C.@ColorDefaultLabel, Wrap: true);
+          }
+        }
+      }
+    }
+
+    Group #Code0 {
+      $CV.@CodeBlock {
+        @Code = "TabNavigation {
+  Style: $C.@TopTabsStyle;
+  SelectedTab: \"Tab1\";
+  Anchor: (Height: 66, Left: 2, Right: 0);
+
+  TabButton {
+    Icon: \"icon.png\";
+    TooltipText: \"Tab One\";
+    Id: \"Tab1\";
+  }
+  // more tabs...
+}";
+      }
+    }
+  }
+
+  // Header Tabs Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.navigation.section.headerTabs;
+    }
+
+    Label {
+      Text: %server.customUI.uiGallery.navigation.headerTabsDesc;
+      Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, Wrap: true);
+      Anchor: (Bottom: 12, Right: 100);
+    }
+
+    Group {
+      Anchor: (Height: 45, Bottom: 8);
+      LayoutMode: Left;
+
+      TabNavigation #HeaderTabs {
+        Anchor: (Height: 34);
+        Style: $C.@HeaderTabsStyle;
+        SelectedTab: "Tab1";
+
+        TabButton {
+          Icon: "../../../Common/RecipesIcon.png";
+          TooltipText: %server.customUI.uiGallery.navigation.first;
+          Id: "Tab1";
+        }
+
+        TabButton {
+          Icon: "../../../Common/RecipesIcon.png";
+          TooltipText: %server.customUI.uiGallery.navigation.second;
+          Id: "Tab2";
+        }
+
+        TabButton {
+          Icon: "../../../Common/RecipesIcon.png";
+          TooltipText: %server.customUI.uiGallery.navigation.third;
+          Id: "Tab3";
+        }
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.navigation.headerTabsSeparator;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+        Anchor: (Left: 20);
+      }
+    }
+
+    Group #Code1 {
+      $CV.@CodeBlock {
+        @Code = "TabNavigation {
+  Style: $C.@HeaderTabsStyle;
+  // Compact tabs with separators
+}";
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "Type": "Simple",
+  "Effects": {
+    "ItemAnimationId": "SwingRightSlow"
+  },
+  "$Comment": "Prepare Delay",
+  "RunTime": 0.3,
+  "Next": {
+    "Type": "Parallel",
+    "$Comment": "Make sure this parallel interaction is needed and can't be optimized away",
+    "Interactions": [
+      {
+        "Interactions": [
+          {
+            "Type": "Replace",
+            "DefaultOk": true,
+            "DefaultValue": {
+              "Interactions": [
+                "Sickle_Swing_Right_Selector"
+              ]
+            },
+            "Var": "Swing_Right_Selector"
+          }
+        ]
+      },
+      {
+        "Interactions": [
+          {
+            "Type": "Replace",
+            "DefaultOk": true,
+            "DefaultValue": {
+              "Interactions": [
+                "Sickle_Swing_Right_Effect"
+              ]
+            },
+            "Var": "Swing_Right_Effect"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "Entries": [
+    {
+      "Name": "Furniture_Ancient_Chest_Small",
+      "Weight": 100,
+      "Components": {
+        "Components": {
+          "ItemContainerBlock": {
+            "Droplist": "Zone3_Undead_Tier1"
+          }
+        }
+      }
+    }
+  ]
+}

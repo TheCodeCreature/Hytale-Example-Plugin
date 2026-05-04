@@ -1,0 +1,44 @@
+{
+  "Type": "Simple",
+  "Effects": {
+    "ItemPlayerAnimationsId": "Goblin_Club",
+    "ItemAnimationId": "SwingLeft"
+  },
+  "$Comment": "Prepare Delay",
+  "RunTime": 0.2,
+  "Next": {
+      "Type": "Selector",
+      "$Comment": "Length of Combat",
+      "RunTime": 0.25,
+      "Selector": {
+        "Id": "Horizontal",
+        "Direction": "ToLeft",
+        "TestLineOfSight": true,
+        "ExtendTop": 0.5,
+        "ExtendBottom": 2,
+        "StartDistance": 0.1,
+        "EndDistance": 3.5,
+        "Length": 60,
+        "RollOffset": 0,
+        "YawStartOffset": -30
+      },
+      "HitEntity": {
+        "Interactions": [
+          {
+           "Type": "Replace",
+          "DefaultValue": {
+            "Interactions": [
+              "Goblin_Ogre_Swing_Left_Damage"
+            ]
+          },
+          "Var": "Melee_SwingLeft_Damage"
+          }
+        ]
+      },
+      "Next": {
+        "Type": "Simple",
+        "$Comment": "Pad the interaction length",
+        "RunTime": 0.1
+        }
+      }
+}

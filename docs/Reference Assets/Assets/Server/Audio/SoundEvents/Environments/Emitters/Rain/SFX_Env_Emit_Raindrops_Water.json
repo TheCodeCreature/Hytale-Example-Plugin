@@ -1,0 +1,22 @@
+{
+  "Layers": [
+    {
+      "Files": [
+        "Sounds/Environments/Emitters/Rain/Emit_Raindrops_Water_Loop_01.ogg"
+      ],
+      "RandomSettings": {
+        "MinVolume": -3,
+        "MinPitch": -2,
+        "MaxPitch": 2,
+        "MaxStartOffset": 10
+      },
+      "Probability": 100,
+      "Looping": true
+    }
+  ],
+  "PreventSoundInterruption": false,
+  "Volume": -2.0,
+  "MaxInstance": 10,
+  "Parent": "SFX_Attn_Quiet",
+  "SpatialBlend": 0.5
+}

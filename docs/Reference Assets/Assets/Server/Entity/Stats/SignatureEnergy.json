@@ -1,0 +1,9 @@
+{
+  "InitialValue": 0,
+  "Min": 0,
+  "Max": 0,
+  "Shared": true,
+  "MaxValueEffects": {
+  },
+  "HideFromTooltip": true
+}

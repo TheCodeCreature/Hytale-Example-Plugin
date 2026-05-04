@@ -1,0 +1,6 @@
+{
+  "Type": "Condition",
+  "Crouching": true,
+  "Next": "Block_Secondary",
+  "Failed": "Watering_Can_Fill"
+}

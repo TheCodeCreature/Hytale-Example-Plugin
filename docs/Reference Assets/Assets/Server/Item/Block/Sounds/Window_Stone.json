@@ -1,0 +1,6 @@
+{
+  "Parent": "Stone",
+  "SoundEvents": {
+    "Break": "SFX_Window_Stone_Break"
+  }
+}

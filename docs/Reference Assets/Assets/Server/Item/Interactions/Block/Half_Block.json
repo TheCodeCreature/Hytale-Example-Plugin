@@ -1,0 +1,25 @@
+{
+  "Type": "BlockCondition",
+  "Matchers": [
+    {
+      "Block": {
+        "Id": "Rock_Stone",
+        "State": "default"
+      },
+      "Face": "Up",
+      "StaticFace": false
+    }
+  ],
+  "Next": {
+    "Type": "ChangeState",
+    "Changes": {
+      "default": "Block"
+    },
+    "Next": {
+      "Type": "ModifyInventory",
+      "AdjustHeldItemQuantity": -1,
+      "RequiredGameMode": "Adventure"
+    }
+  },
+  "Failed": "Block_Secondary"
+}

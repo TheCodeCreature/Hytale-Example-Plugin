@@ -1,0 +1,111 @@
+$LegendCommon = "ToolsLegendsCommon.ui";
+
+$LegendCommon.@Legend {
+  #Pages {
+    $LegendCommon.@Page #Page1Basics {
+      @Title = %client.builderTools.legend.RulerTool.Page1.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.RulerTool.Page1.Description;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SecondaryItemAction";
+        @Description = %client.builderTools.legend.RulerTool.Page1.PlacePoint;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @Description = %client.builderTools.legend.RulerTool.Page1.EndCurrentLine;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SHIFT";
+        @Description = %client.builderTools.legend.RulerTool.Page1.SnapToAngles;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.RulerTool.Page1.DistanceMeasurement;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.RulerTool.Page2.PointEditing;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SecondaryItemAction";
+        @Description = %client.builderTools.legend.RulerTool.Page2.MovePoint;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SecondaryItemAction";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.RulerTool.Page2.DropPoint;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "RulerDeletePoint";
+        @Description = %client.builderTools.legend.RulerTool.Page2.DeletePoint;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "RulerClearLine";
+        @Description = %client.builderTools.legend.RulerTool.Page2.ClearCurrentLine;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "RulerReset";
+        @Description = %client.builderTools.legend.RulerTool.Page2.ClearAllLines;
+      }
+
+
+    }
+
+    $LegendCommon.@Page #Page3MultipleLines {
+      @Title = %client.builderTools.legend.RulerTool.Page3.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.RulerTool.Page3.Description;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "RulerNextLine";
+        @Description = %client.builderTools.legend.RulerTool.Page3.NextLine;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "RulerPreviousLine";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.RulerTool.Page3.PreviousLine;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: "";
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.RulerTool.Page3.SwitchToLine;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: "";
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.RulerTool.Page3.WorkflowTip;
+      }
+
+    }
+
+  }
+}

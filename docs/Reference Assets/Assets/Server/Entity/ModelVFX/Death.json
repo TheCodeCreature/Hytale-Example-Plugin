@@ -1,0 +1,20 @@
+{
+  "AnimationDuration": 2,
+  "SwitchTo": "PostColor",
+  "EffectDirection": "None",
+  "PostColor": "#ffffff",
+  "PostColorOpacity": 0.064,
+  "NoiseScale": {
+    "X": 6,
+    "Y": 6
+  },
+  "NoiseScrollSpeed": {
+    "Y": 0.05
+  },
+  "LoopOption": "PlayOnce",
+  "UseProgessiveHighlight": true,
+  "CurveType": "Linear",
+  "HighlightColor": "#ffffff",
+  "UseBloomOnHighlight": true,
+  "HighlightThickness": 1
+}

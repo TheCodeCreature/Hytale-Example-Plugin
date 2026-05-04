@@ -1,0 +1,17 @@
+{
+  "SoundEffect": {
+    "ReverbEffectId": "Rev_Mountain",
+    "IsInstant": false
+  },
+  "Conditions": {
+    "EnvironmentIds": [
+      "Env_Zone1_Mountains",
+      "Env_Zone2_Plateaus"
+    ],
+    "Altitude": {
+      "Min": 150,
+      "Max": 512
+    }
+  },
+  "Priority": 10
+}

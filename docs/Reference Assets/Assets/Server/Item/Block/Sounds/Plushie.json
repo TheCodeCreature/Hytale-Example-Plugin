@@ -1,0 +1,7 @@
+{
+  "Parent": "Cloth",
+  "SoundEvents": {
+    "Break": "SFX_Plushie_Break",
+    "Build": "SFX_Plushie_Build"
+  }
+}

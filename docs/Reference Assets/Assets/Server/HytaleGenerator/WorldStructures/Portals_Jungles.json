@@ -1,0 +1,58 @@
+{
+  "Type": "NoiseRange",
+  "Biomes": [{
+      "Biome" : "Volcanic1_Jungle",
+      "Min" : -2,
+      "Max" : -0.5
+    }
+  ],
+  "DefaultBiome": "Basic",
+  "MaxBiomeEdgeDistance" : 64,
+  "DefaultTransitionDistance": 32,
+  "Density": {
+    "Type" : "Imported",
+    "Name" : "Biome-Map-Tiles"
+	},
+  "SpawnPositions" : {
+    "Type" : "Imported",
+    "Name" : "Portals-Jungles-Spawns"
+  },
+  "Framework" : [
+    {
+      "Type" : "Positions",
+      "Entries" : [
+        {
+          "Name" : "Spawns",
+          "Positions" : {
+            "Type" : "List",
+            "ExportAs" : "Portals-Jungles-Spawns",
+            "Positions": [
+              {
+                "X": 0,
+                "Y": 130,
+                "Z": 0
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "Type" : "DecimalConstants",
+      "Entries" : [
+        {
+          "Name" : "Base",
+          "Value" : 120
+        },
+        {
+          "Name" : "Water",
+          "Value" : 100
+        },
+        {
+          "Name" : "Bedrock",
+          "Value" : 0
+        }
+      ]
+    }
+  ]
+}

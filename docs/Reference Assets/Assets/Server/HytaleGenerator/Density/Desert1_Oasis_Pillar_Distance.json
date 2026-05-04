@@ -1,0 +1,156 @@
+{
+	"$NodeId":	"Exported.Density-0c042637-0c54-48cc-b2bc-a56b2cc23782",
+	"Type":	"Exported",
+	"ExportAs":	"Desert1_Oasis_Pillar_Distance",
+	"SingleInstance":	true,
+	"Skip":	false,
+	"Inputs":	[{
+			"$NodeId":	"Cache.Density-6db6ebac-247c-4803-8719-8009cb0caa99",
+			"Type":	"Cache",
+			"Skip":	false,
+			"Capacity":	3,
+			"Inputs":	[{
+					"$NodeId":	"InverterDensityNode-72fa3a36-1b80-4a23-961a-e090f3724ccd",
+					"Type":	"Inverter",
+					"Skip":	false,
+					"Inputs":	[{
+							"$NodeId":	"YOverride.Density-1662e6af-04e5-4cc0-a7cf-4d18eb3cc0df",
+							"Type":	"YOverride",
+							"Skip":	false,
+							"Value":	0,
+							"Inputs":	[{
+									"$NodeId":	"Cache.Density-d942cc15-d6be-45ae-a304-309fb34ee55c",
+									"Type":	"Cache",
+									"Skip":	false,
+									"Capacity":	3,
+									"Inputs":	[{
+											"$NodeId":	"PositionsCellNoiseDensityNode-3cddc738-4a8b-4705-9ecc-507c4c679e6e",
+											"Type":	"PositionsCellNoise",
+											"Skip":	false,
+											"MaxDistance":	240,
+											"Positions":	{
+												"$NodeId":	"OccurrencePositions-5b5475ac-eab9-48a9-8eef-ec700711dc74",
+												"Type":	"Occurrence",
+												"ExportAs":	"Desert1_Oasis_Pillars_Positions",
+												"Skip":	false,
+												"Seed":	"Oasis_Pillars",
+												"FieldFunction":	{
+													"$NodeId":	"ConstantDensityNode-7cbfae3b-edfd-4408-933c-a8e8ec72fdf3",
+													"Type":	"Constant",
+													"Skip":	false,
+													"Value":	0.5
+												},
+												"Positions":	{
+													"$NodeId":	"Mesh2DPositions-2f0cdd4e-c470-4b75-b222-c549bc1a48f3",
+													"Type":	"Mesh2D",
+													"ExportAs":	"Oasis_Pillars_Mesh2D",
+													"Skip":	false,
+													"PointsY":	0,
+													"PointGenerator":	{
+														"$NodeId":	"MeshPointGenerator-b22585c4-603c-4c6c-ae20-6695e1189f25",
+														"Type":	"Mesh",
+														"Jitter":	0.3,
+														"ScaleX":	150,
+														"ScaleY":	150,
+														"ScaleZ":	150,
+														"Seed":	"Pillars"
+													}
+												}
+											},
+											"ReturnType":	{
+												"$NodeId":	"DistancePCNReturnType-a82d4323-96cc-4e13-ad16-4ea7f5f2885b",
+												"Type":	"Distance"
+											},
+											"DistanceFunction":	{
+												"$NodeId":	"PCNDistanceFunction-8f41d350-f63a-4fb5-b5af-cfba2a127477",
+												"Type":	"Euclidean"
+											}
+										}]
+								}]
+						}]
+				}]
+		}],
+	"$NodeEditorMetadata":	{
+		"$Nodes":	{
+			"Exported.Density-0c042637-0c54-48cc-b2bc-a56b2cc23782":	{
+				"$Position":	{
+					"$x":	-4713,
+					"$y":	-5692
+				},
+				"$Title":	"[ROOT] Exported Density"
+			},
+			"InverterDensityNode-72fa3a36-1b80-4a23-961a-e090f3724ccd":	{
+				"$Position":	{
+					"$x":	-3415,
+					"$y":	-5696
+				}
+			},
+			"YOverride.Density-1662e6af-04e5-4cc0-a7cf-4d18eb3cc0df":	{
+				"$Position":	{
+					"$x":	-2804,
+					"$y":	-5696
+				}
+			},
+			"Cache.Density-d942cc15-d6be-45ae-a304-309fb34ee55c":	{
+				"$Position":	{
+					"$x":	-2158,
+					"$y":	-5692
+				}
+			},
+			"PositionsCellNoiseDensityNode-3cddc738-4a8b-4705-9ecc-507c4c679e6e":	{
+				"$Position":	{
+					"$x":	-1506,
+					"$y":	-5684
+				}
+			},
+			"OccurrencePositions-5b5475ac-eab9-48a9-8eef-ec700711dc74":	{
+				"$Position":	{
+					"$x":	-653,
+					"$y":	-5921
+				}
+			},
+			"ConstantDensityNode-7cbfae3b-edfd-4408-933c-a8e8ec72fdf3":	{
+				"$Position":	{
+					"$x":	87,
+					"$y":	-5653
+				}
+			},
+			"Mesh2DPositions-2f0cdd4e-c470-4b75-b222-c549bc1a48f3":	{
+				"$Position":	{
+					"$x":	98,
+					"$y":	-5910
+				}
+			},
+			"MeshPointGenerator-b22585c4-603c-4c6c-ae20-6695e1189f25":	{
+				"$Position":	{
+					"$x":	820,
+					"$y":	-5907
+				}
+			},
+			"DistancePCNReturnType-a82d4323-96cc-4e13-ad16-4ea7f5f2885b":	{
+				"$Position":	{
+					"$x":	-682,
+					"$y":	-5478
+				}
+			},
+			"PCNDistanceFunction-8f41d350-f63a-4fb5-b5af-cfba2a127477":	{
+				"$Position":	{
+					"$x":	-661,
+					"$y":	-5636
+				}
+			},
+			"Cache.Density-6db6ebac-247c-4803-8719-8009cb0caa99":	{
+				"$Position":	{
+					"$x":	-4035,
+					"$y":	-5695
+				}
+			}
+		},
+		"$FloatingNodes":	[],
+		"$Links":	{
+		},
+		"$Groups":	[],
+		"$Comments":	[],
+		"$WorkspaceID":	"HytaleGenerator - Density"
+	}
+}

@@ -1,0 +1,9 @@
+{
+  "Type": "Simple",
+  "$Comment": "Prepare Delay",
+  "RunTime": 1.5,
+  "Next": {
+    "Type": "ApplyEffect",
+     "EffectId": "Death"
+  }
+}

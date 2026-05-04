@@ -1,0 +1,6 @@
+{
+  "Parent": "Wood",
+  "SoundEvents": {
+    "Break": "SFX_Window_Break"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "Layers": [
+    {
+      "Looping": true,
+      "Files": [
+        "Sounds/Items/Cauldron/Cauldron_Bubbling_Large.ogg"
+      ]
+    }
+  ],
+  "Volume": 2.9019608002851363,
+  "Parent": "SFX_Attn_VeryQuiet",
+  "SpatialBlend": 0.4
+}

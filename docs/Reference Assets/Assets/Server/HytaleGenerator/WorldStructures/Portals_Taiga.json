@@ -1,0 +1,102 @@
+{
+  "Type": "NoiseRange",
+  "Biomes": [
+    {
+      "Biome" : "Taiga1_Mountains",
+      "Min" : -2,
+      "Max" : -0.75
+    },
+    {
+      "Biome" : "Taiga1_Redwood",
+      "Min" : -0.75,
+      "Max" : -0.5
+    },
+    {
+      "Biome" : "Taiga1_River",
+      "Min" : -0.5,
+      "Max" : 0
+    }
+  ],
+  "DefaultBiome": "Void",
+  "DefaultTransitionDistance": 48,
+  "MaxBiomeEdgeDistance" : 48,
+  "Density": {
+    "Type" : "Imported",
+    "Name" : "Biome-Map-Tiles-Rivers"
+  },
+  "SpawnPositions" : {
+    "Type":	"Offset",
+    "OffsetY":	120,
+    "Positions":	{
+      "Type" : "Imported",
+      "Name" : "Portals-Taiga-Spawns"
+    }
+  },
+  "Framework": [
+    {
+      "Type": "Positions",
+      "Entries": [
+        {
+          "Name": "Portals-Taiga-Spawns",
+          "Positions": {
+            "Type": "FieldFunction",
+            "ExportAs": "Portals-Taiga-Spawns",
+            "FieldFunction": {
+              "Type": "Imported",
+              "Name": "World-River-Map"
+            },
+            "Delimiters": [
+              {
+                "Min": 0.7,
+                "Max": 0.92
+              }
+            ],
+            "Positions": {
+              "Type": "Bound",
+              "Bounds": {
+                "PointA": {
+                  "X": 10000,
+                  "Y": 100,
+                  "Z": 10000
+                },
+                "PointB": {
+                  "X": -10000,
+                  "Y": 0,
+                  "Z": -10000
+                }
+              },
+              "Positions": {
+                "Type": "Mesh2D",
+                "PointGenerator": {
+                  "Type": "Mesh",
+                  "ScaleX":	40,
+                  "ScaleY":	40,
+                  "ScaleZ":	40,
+                  "Jitter": 0,
+                  "Seed": "Global-Spawns"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Type" : "DecimalConstants",
+      "Entries" : [
+        {
+          "Name" : "Base",
+          "Value" : 100
+        },
+        {
+          "Name" : "Water",
+          "Value" : 100
+        },
+        {
+          "Name" : "Bedrock",
+          "Value" : 0
+        }
+      ]
+    }
+  ]
+}

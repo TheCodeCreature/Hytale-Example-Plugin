@@ -1,0 +1,159 @@
+$C = "../../../Common.ui";
+$CV = "../CodeViewer.ui";
+
+// Progress & Loading Category Content
+Group {
+  LayoutMode: Top;
+
+  // Spinner Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.progress.section.spinner;
+      Anchor: (Bottom: 12);
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12);
+
+      $C.@DefaultSpinner #Spinner1 {}
+
+      Label {
+        Text: %server.customUI.uiGallery.progress.spinnerDesc;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+        Anchor: (Left: 15);
+      }
+    }
+
+    Group #Code0 {
+      $CV.@CodeBlock {
+        @Code = "$C.@DefaultSpinner {}
+
+// Or customize:
+Sprite {
+  TexturePath: \"Common/Spinner.png\";
+  Frame: (Width: 32, Height: 32,
+          PerRow: 8, Count: 72);
+  FramesPerSecond: 30;
+}";
+      }
+    }
+  }
+
+  // Progress Bar Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.progress.section.progressBar;
+      Anchor: (Bottom: 12);
+    }
+
+    Group {
+      Anchor: (Bottom: 10);
+      LayoutMode: Top;
+
+      $C.@ProgressBar #ProgressBar25 {
+        @Anchor = (Bottom: 4, Left: 0);
+        Value: 0.25;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.progress.percent25;
+        Style: (FontSize: 11, TextColor: $C.@ColorCaptionLight);
+      }
+    }
+
+    Group {
+      Anchor: (Bottom: 10);
+      LayoutMode: Top;
+
+      $C.@ProgressBar #ProgressBar75 {
+        @Anchor = (Bottom: 4, Left: 0);
+        Value: 0.75;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.progress.percent75;
+        Style: (FontSize: 11, TextColor: $C.@ColorCaptionLight);
+      }
+    }
+
+    Group {
+      Anchor: (Bottom: 10);
+      LayoutMode: Top;
+
+      $C.@ProgressBar #ProgressBar100 {
+        @Anchor = (Bottom: 4, Left: 0);
+        Value: 1.0;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.progress.percent100;
+        Style: (FontSize: 11, TextColor: $C.@ColorCaptionLight);
+      }
+    }
+
+    Group #Code1 {
+      $CV.@CodeBlock {
+        @Code = "$C.@ProgressBar #ProgressBar75 {
+  @Anchor = (Bottom: 4, Left: 0);
+  Value: 0.75;
+}";
+      }
+    }
+  }
+
+  // Circular Progress Bar Section
+  Group {
+    Anchor: (Bottom: 25);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.progress.section.circularProgressBar;
+      Anchor: (Bottom: 12);
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 12);
+
+      $C.@CircularProgressBar #CircularProgress1 {
+        @Anchor = (Right: 20);
+        Value: 0.33;
+        Color: #4a7caa;
+      }
+
+      $C.@CircularProgressBar #CircularProgress2 {
+        @Anchor = (Right: 20);
+        Value: 0.66;
+        Color: #7caa4a;
+      }
+
+      $C.@CircularProgressBar #CircularProgress3 {
+        @Anchor = (Right: 20);
+        Value: 1.0;
+      }
+
+      Label {
+        Text: %server.customUI.uiGallery.progress.circularPercentages;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+      }
+    }
+
+    Group #Code2 {
+      $CV.@CodeBlock {
+        @Code = "CircularProgressBar {
+  Anchor: (Width: 48, Height: 48);
+  Value: 0.66;
+  Background: #1a2030;
+  Color: #4a7caa;
+}";
+      }
+    }
+  }
+}

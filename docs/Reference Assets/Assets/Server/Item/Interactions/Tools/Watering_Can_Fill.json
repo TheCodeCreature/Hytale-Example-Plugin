@@ -1,0 +1,20 @@
+{
+  "Type": "RefillContainer",
+  "Next": {
+    "Type": "Simple",
+    "Effects": {
+      "ClearAnimationOnFinish": true,
+      "ItemAnimationId": "Water",
+      "WorldSoundEventId": "SFX_Water_MoveIn"
+    },
+    "RunTime": 0.5
+  },
+  "States": {
+    "Filled_Water": {
+      "AllowedFluids": [
+        "Water_Source",
+        "Water"
+      ]
+    }
+  }
+}

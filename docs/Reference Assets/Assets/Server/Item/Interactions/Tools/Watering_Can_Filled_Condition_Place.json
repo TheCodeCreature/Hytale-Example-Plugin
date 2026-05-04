@@ -1,0 +1,9 @@
+{
+  "Type": "Condition",
+  "Crouching": true,
+  "Next": "Block_Secondary",
+  "Failed": {
+    "Parent": "Watering_Can_Fill",
+    "Failed": "Watering_Can_Use_Charge"
+  }
+}

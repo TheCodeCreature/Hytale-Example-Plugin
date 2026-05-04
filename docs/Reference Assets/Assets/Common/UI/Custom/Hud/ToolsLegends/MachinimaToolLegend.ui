@@ -1,0 +1,455 @@
+$LegendCommon = "ToolsLegendsCommon.ui";
+
+$LegendCommon.@Legend {
+  #Pages {
+    $LegendCommon.@Page #Page1Basics {
+      @Title = %client.builderTools.legend.MachinimaTool.Page1.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page1.Description;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "OpenMachinimaEditor";
+        @Description = %client.builderTools.legend.MachinimaTool.Page1.OpensMenu;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = ".mach";
+        @Description = %client.builderTools.legend.MachinimaTool.Page1.BaseCommand;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page1.Scenes;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page1.CreatingFirstScene;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page1.Actors;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page1.AddingCameraActor;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page2ActorTypes {
+      @Title = %client.builderTools.legend.MachinimaTool.Page2.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page2.Description;
+      }
+
+      $LegendCommon.@SectionHeader {
+        Text: %client.builderTools.legend.MachinimaTool.Page2.CameraHeader;
+      }
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page2.CameraDesc;
+      }
+
+      $LegendCommon.@SectionHeader {
+        Text: %client.builderTools.legend.MachinimaTool.Page2.EntityHeader;
+      }
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page2.EntityDesc;
+      }
+
+      $LegendCommon.@SectionHeader {
+        Text: %client.builderTools.legend.MachinimaTool.Page2.PlayerHeader;
+      }
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page2.PlayerDesc;
+      }
+
+      $LegendCommon.@SectionHeader {
+        Text: %client.builderTools.legend.MachinimaTool.Page2.ReferenceHeader;
+      }
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page2.ReferenceDesc;
+      }
+
+      $LegendCommon.@SectionHeader {
+        Text: %client.builderTools.legend.MachinimaTool.Page2.ItemHeader;
+      }
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page2.ItemDesc;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page2.AddActorCommand;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page3PlaybackControls {
+      @Title = %client.builderTools.legend.MachinimaTool.Page3.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page3.Description;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaTogglePause";
+        @Description = %client.builderTools.legend.MachinimaTool.Page3.TogglePause;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaTogglePause";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @Description = %client.builderTools.legend.MachinimaTool.Page3.ContinuousPlayback;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaTogglePause";
+        @InputBindingKeyPrefix = "ALT + ";
+        @Description = %client.builderTools.legend.MachinimaTool.Page3.AutoRestart;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaRestartScene";
+        @Description = %client.builderTools.legend.MachinimaTool.Page3.RestartScene;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaRestartScene";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @Description = %client.builderTools.legend.MachinimaTool.Page3.EndScene;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page3.NavigationTitle;
+      }
+
+      $LegendCommon.@DoubleArrowKeyHotkeyRow {
+        @IconOne = $LegendCommon.@RowHintIconKeyLeft;
+        @IconTwo = $LegendCommon.@RowHintIconKeyRight;
+        @Text = %client.builderTools.legend.MachinimaTool.Page3.FrameScrub;
+      }
+
+      $LegendCommon.@DoubleArrowKeyHotkeyRow {
+        @IconOne = $LegendCommon.@RowHintIconKeyUp;
+        @IconTwo = $LegendCommon.@RowHintIconKeyDown;
+        @Text = %client.builderTools.legend.MachinimaTool.Page3.JumpKeyframe;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page3.SpeedModifiers;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page4KeyframeEditing {
+      @Title = %client.builderTools.legend.MachinimaTool.Page4.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page4.Description;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaAddKeyframe";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.MachinimaTool.Page4.AddKeyframe;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: "";
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaAddKeyframe";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.MachinimaTool.Page4.AddAtCurrentFrame;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: "";
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaAddKeyframe";
+        @InputBindingKeyPrefix = "ALT + ";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.MachinimaTool.Page4.CopyKeyframe;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: "";
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaRemoveKeyframe";
+        @Description = %client.builderTools.legend.MachinimaTool.Page4.DeleteKeyframe;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaEditKeyframe";
+        @Description = %client.builderTools.legend.MachinimaTool.Page4.EditKeyframe;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaEditKeyframe";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @Description = %client.builderTools.legend.MachinimaTool.Page4.MoveActor;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaEditKeyframe";
+        @InputBindingKeyPrefix = "ALT + ";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.MachinimaTool.Page4.EditFrameTime;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: "";
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@DoubleArrowKeyHotkeyRow {
+        @IconOne = $LegendCommon.@RowHintIconKeyLeft;
+        @IconTwo = $LegendCommon.@RowHintIconKeyRight;
+        @InputBindingKeyPrefix = "+ / -";
+        @LayoutMode = Top;
+        @Text = %client.builderTools.legend.MachinimaTool.Page4.AdjustFrameTime;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page5MouseInteractions {
+      @Title = %client.builderTools.legend.MachinimaTool.Page5.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page5.Description;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @Description = %client.builderTools.legend.MachinimaTool.Page5.SelectKeyframe;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SecondaryItemAction";
+        @Description = %client.builderTools.legend.MachinimaTool.Page5.JumpToKeyframe;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page5.GizmoTitle;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @Description = %client.builderTools.legend.MachinimaTool.Page5.TranslationGizmo;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @InputBindingKeyPrefix = "ALT + ";
+        @Description = %client.builderTools.legend.MachinimaTool.Page5.RotationGizmo;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page5.FreeMoveTitle;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page5.FreeMoveDescription;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page6SelectionModes {
+      @Title = %client.builderTools.legend.MachinimaTool.Page6.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page6.Description;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaCycleSelectionMode";
+        @Description = %client.builderTools.legend.MachinimaTool.Page6.CycleMode;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@SectionHeader {
+        Text: %client.builderTools.legend.MachinimaTool.Page6.KeyframeModeTitle;
+      }
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page6.KeyframeModeDesc;
+      }
+
+      $LegendCommon.@SectionHeader {
+        Text: %client.builderTools.legend.MachinimaTool.Page6.ActorModeTitle;
+      }
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page6.ActorModeDesc;
+      }
+
+      $LegendCommon.@SectionHeader {
+        Text: %client.builderTools.legend.MachinimaTool.Page6.SceneModeTitle;
+      }
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page6.SceneModeDesc;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page7DisplayAndOrigin {
+      @Title = %client.builderTools.legend.MachinimaTool.Page7.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page7.DisplayTitle;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaToggleDisplay";
+        @Description = %client.builderTools.legend.MachinimaTool.Page7.ToggleDisplay;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaToggleDisplay";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @Description = %client.builderTools.legend.MachinimaTool.Page7.TogglePathNodes;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaToggleCamera";
+        @Description = %client.builderTools.legend.MachinimaTool.Page7.ToggleCamera;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaToggleCamera";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @Description = %client.builderTools.legend.MachinimaTool.Page7.ToggleFrustum;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page7.OriginTitle;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaOriginAction";
+        @Description = %client.builderTools.legend.MachinimaTool.Page7.GoToOrigin;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaOriginAction";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @Description = %client.builderTools.legend.MachinimaTool.Page7.SetOrigin;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "MachinimaOriginAction";
+        @InputBindingKeyPrefix = "ALT + ";
+        @Description = %client.builderTools.legend.MachinimaTool.Page7.OffsetToOrigin;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page8PathsAndCurves {
+      @Title = %client.builderTools.legend.MachinimaTool.Page8.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page8.Description;
+      }
+
+      $LegendCommon.@SectionHeader {
+        Text: %client.builderTools.legend.MachinimaTool.Page8.LinearHeader;
+      }
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page8.LinearDesc;
+      }
+
+      $LegendCommon.@SectionHeader {
+        Text: %client.builderTools.legend.MachinimaTool.Page8.BezierHeader;
+      }
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page8.BezierDesc;
+      }
+
+      $LegendCommon.@SectionHeader {
+        Text: %client.builderTools.legend.MachinimaTool.Page8.SplineHeader;
+      }
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page8.SplineDesc;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page8.BezierCommands;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = ".mach bezier";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.MachinimaTool.Page8.EnableBezier;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = ".mach bezier smooth";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.MachinimaTool.Page8.SmoothBezier;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = ".mach spline";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.MachinimaTool.Page8.EnableSpline;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page9Commands {
+      @Title = %client.builderTools.legend.MachinimaTool.Page9.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page9.SceneCommands;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page9.ActorCommands;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page9.EventCommands;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page9.FileCommands;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.MachinimaTool.Page9.UtilityCommands;
+      }
+
+    }
+
+  }
+}

@@ -1,0 +1,114 @@
+$LegendCommon = "ToolsLegendsCommon.ui";
+
+$LegendCommon.@Legend {
+  #Pages {
+    $LegendCommon.@Page #Page1Basics {
+      @Title = %client.builderTools.legend.EntityTool.Page1.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.EntityTool.Page1.Description;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.EntityTool.Page3.SpawnUI;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "EntityOpenSpawnUI";
+        @Description = %client.builderTools.legend.EntityTool.Page3.OpenSpawnUI;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.EntityTool.Page1.SelectingEntities;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PrimaryItemAction";
+        @Description = %client.builderTools.legend.EntityTool.Page1.SelectEntity;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SecondaryItemAction";
+        @Description = %client.builderTools.legend.EntityTool.Page1.CancelMovement;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PickBlock";
+        @Description = %client.builderTools.legend.EntityTool.Page1.AdjustDistance;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.EntityTool.Page3.MovementOptions;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "EntityTranslateMode";
+        @Description = %client.builderTools.legend.EntityTool.Page2.TranslateMode;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "EntityRotateMode";
+        @Description = %client.builderTools.legend.EntityTool.Page2.RotateMode;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "EntityRotateMode";
+        @InputBindingKeyPrefix = "ALT + ";
+        @Description = %client.builderTools.legend.EntityTool.Page2.RotateHeadMode;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "EntityFreeMoveMode";
+        @Description = %client.builderTools.legend.EntityTool.Page2.FreeMoveMode;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PickBlock";
+        @InputBindingKeyPrefix = "ALT + ";
+        @Description = %client.builderTools.legend.EntityTool.Page2.Scale;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "EntityToggleSurface";
+        @Description = %client.builderTools.legend.EntityTool.Page3.SurfaceLock;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page2Transform {
+      @Title = %client.builderTools.legend.EntityTool.Page2.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: "";
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.EntityTool.Page3.EntityActions;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "EntityClone";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @Description = %client.builderTools.legend.EntityTool.Page3.Clone;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "EntityRemove";
+        @Description = %client.builderTools.legend.EntityTool.Page3.Remove;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "EntityToggleFreeze";
+        @Description = %client.builderTools.legend.EntityTool.Page3.Freeze;
+      }
+
+    }
+
+  }
+}

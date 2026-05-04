@@ -1,0 +1,19 @@
+{
+  "Entries": [
+    {
+      "Name": "Furniture_Kweebec_Chest_Small",
+      "Weight": 100,
+      "Components": {
+        "Components": {
+          "ItemContainerBlock": {
+            "Droplist": "Zone1_Kweebec_Tier3"
+          }
+        }
+      }
+    },
+    {
+      "Name": "Empty",
+      "Weight": 100
+    }
+  ]
+}

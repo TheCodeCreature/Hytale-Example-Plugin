@@ -1,0 +1,122 @@
+{
+  "Type": "NoiseRange",
+  "Biomes": [
+    {
+      "Biome": "Desert1_Oasis",
+      "Min": 0,
+      "Max": 2
+    },
+    {
+      "Biome": "Void_Buffer_Oasis",
+      "Min": -0.1,
+      "Max": 0
+    },
+    {
+      "Biome": "Void",
+      "Min": -2,
+      "Max": -0.1
+    }
+  ],
+  "DefaultBiome": "Void",
+  "DefaultTransitionDistance": 16,
+  "MaxBiomeEdgeDistance": 16,
+  "Density": {
+    "Type": "Imported",
+    "Name": "Biome-Map-Portals"
+  },
+  "SpawnPositions": {
+    "Type": "Offset",
+    "OffsetY": 60,
+    "Positions": {
+      "Type": "Imported",
+      "Name": "Portals-Oasis-Spawns"
+    }
+  },
+  "Framework": [
+    {
+      "Type": "Positions",
+      "Entries": [
+        {
+          "Name": "Portals-Oasis-Spawns",
+          "Positions": {
+            "Type": "Bound",
+            "ExportAs": "Portals-Oasis-Spawns",
+            "Bounds": {
+              "PointA": {
+                "X": 1000,
+                "Y": 100,
+                "Z": 1000
+              },
+              "PointB": {
+                "X": -1000,
+                "Z": -1000
+              }
+            },
+            "Positions": {
+              "Type": "FieldFunction",
+              "FieldFunction": {
+                "Type": "Imported",
+                "Name": "Desert1_Oasis_Pillar_Distance"
+              },
+              "Delimiters": [
+                {
+                  "Min": -2,
+                  "Max": 0.65
+                }
+              ],
+              "Positions": {
+                "Type": "FieldFunction",
+                "FieldFunction": {
+                  "Type": "Distance",
+                  "Curve": {
+                    "Type": "Manual",
+                    "Points": [
+                      {
+                        "In": 0,
+                        "Out": 1
+                      },
+                      {
+                        "In": 250,
+                        "Out": -1
+                      }
+                    ]
+                  }
+                },
+                "Delimiters": [
+                  {
+                    "Min": 0,
+                    "Max": 2
+                  }
+                ],
+                "Positions": {
+                  "Type": "Mesh2D",
+                  "PointsY": 0,
+                  "PointGenerator": {
+                    "Type": "Mesh"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Type": "DecimalConstants",
+      "Entries": [
+        {
+          "Name": "Base",
+          "Value": 100
+        },
+        {
+          "Name": "Water",
+          "Value": 100
+        },
+        {
+          "Name": "Bedrock",
+          "Value": 0
+        }
+      ]
+    }
+  ]
+}

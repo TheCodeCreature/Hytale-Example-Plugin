@@ -1,0 +1,16 @@
+{
+  "ApplicationEffects": {
+    "Particles": [
+      {
+        "SystemId": "Effect_Death",
+        "Color": "#ffffff",
+        "Scale": 1,
+        "TargetEntityPart": "Self",
+        "TargetNodeName": "Pelvis"
+      }
+    ]
+  },
+  "Duration": 3.0,
+  "OverlapBehavior": "Ignore",
+  "RemovalBehavior": "Duration"
+}

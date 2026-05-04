@@ -1,0 +1,69 @@
+{
+  "Type": "NoiseRange",
+  "Biomes": [
+    {
+      "Biome" : "Boreal1_Hedera",
+      "Min" : 0,
+      "Max" : 2
+    },
+    {
+      "Biome" : "Void_Buffer",
+      "Min" : -0.1,
+      "Max" : 0
+    },
+    {
+      "Biome" : "Void",
+      "Min" : -2,
+      "Max" : -0.1
+    }
+  ],
+  "DefaultBiome": "Void",
+  "DefaultTransitionDistance": 16,
+  "MaxBiomeEdgeDistance": 16,
+  "Density": {
+    "Type" : "Imported",
+    "Name" : "Biome-Map-Portals"
+  },
+  "SpawnPositions" : {
+    "Type" : "Imported",
+    "Name" : "Portals-Hedera-Spawns"
+  },
+  "Framework" : [
+    {
+      "Type" : "Positions",
+      "Entries" : [
+        {
+          "Name" : "Spawns",
+          "Positions" : {
+            "Type" : "List",
+            "ExportAs" : "Portals-Hedera-Spawns",
+            "Positions": [
+              {
+                "X": 0,
+                "Y": 110,
+                "Z": 0
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "Type" : "DecimalConstants",
+      "Entries" : [
+        {
+          "Name" : "Base",
+          "Value" : 100
+        },
+        {
+          "Name" : "Water",
+          "Value" : 100
+        },
+        {
+          "Name" : "Bedrock",
+          "Value" : 0
+        }
+      ]
+    }
+  ]
+}

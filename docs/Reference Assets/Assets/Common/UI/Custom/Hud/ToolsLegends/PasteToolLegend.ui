@@ -1,0 +1,134 @@
+$LegendCommon = "ToolsLegendsCommon.ui";
+$InGame = "../../Common.ui";
+
+$LegendCommon.@Legend {
+  #Pages {
+    $LegendCommon.@Page #Page1Basics {
+      @Title = %client.builderTools.legend.PasteTool.Page1.Title;
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.PasteTool.Page1.Description;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@RowLabel {
+        Text: %client.builderTools.legend.PasteTool.Page1.LoadPrefabOrCopy;
+      }
+
+      $LegendCommon.@Row {
+        // ItemGrid #SelectionBrushLegend {
+        //   Anchor: (Top: 10, Height: 46);
+        //   Style: (
+        //     ...$InGame.@DefaultItemGridStyle,
+        //     SlotSize: 46,
+        //     SlotIconSize: 44,
+        //     SlotBackground: "../../Pages/Inventory/BuilderTools/Input/BlockSelectorSlotBackground.png",
+        //   );
+        //   RenderItemQualityBackground: false;
+        //   AreItemsDraggable: false;
+        //   SlotsPerRow: 1;
+        // }
+
+        $LegendCommon.@RowLabel {
+          Text: %client.builderTools.legend.PasteTool.Page1.UseSelectionContents;
+        }
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PasteOpenPrefabList";
+        @Description = %client.builderTools.legend.PasteTool.Page1.OpensPrefabList;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SecondaryItemAction";
+        @Description = %client.builderTools.legend.PasteTool.Page1.PastePrefab;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "SecondaryItemAction";
+        @InputBindingKeyPrefix = "SHIFT + ";
+        @LayoutMode = Top;
+        @Description = %client.builderTools.legend.PasteTool.Page1.StickPrefab;
+      }
+
+      $LegendCommon.@RowLabel {
+        Text: "";
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PasteRotateY";
+        @Description = %client.builderTools.legend.PasteTool.Page1.RotatePrefabY;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PasteRotateX";
+        @Description = %client.builderTools.legend.PasteTool.Page1.RotatePrefabX;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PasteRotateZ";
+        @Description = %client.builderTools.legend.PasteTool.Page1.RotatePrefabZ;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PastePreview";
+        @Description = %client.builderTools.legend.PasteTool.Page1.ShowTexture;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PasteCycleOrigin";
+        @Description = %client.builderTools.legend.PasteTool.Page1.CycleOrigin;
+      }
+
+    }
+
+    $LegendCommon.@Page #Page2 {
+      @Title = %client.builderTools.legend.PasteTool.Page2.Title;
+
+      $LegendCommon.@DoubleArrowKeyHotkeyRow {
+        @IconOne = $LegendCommon.@RowHintIconKeyLeft;
+        @IconTwo = $LegendCommon.@RowHintIconKeyRight;
+        @Text = %client.builderTools.legend.PasteTool.Page2.ShiftPrefabLeftRight;
+      }
+
+      $LegendCommon.@DoubleArrowKeyHotkeyRow {
+        @IconOne = $LegendCommon.@RowHintIconKeyUp;
+        @IconTwo = $LegendCommon.@RowHintIconKeyDown;
+        @Text = %client.builderTools.legend.PasteTool.Page2.ShiftPrefabForwardBackward;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PasteShiftUp";
+        @Description = %client.builderTools.legend.PasteTool.Page2.ShiftPrefabUp;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PasteShiftDown";
+        @Description = %client.builderTools.legend.PasteTool.Page2.ShiftPrefabDown;
+      }
+
+      $LegendCommon.@Separator {}
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PasteShiftReset";
+        @Description = %client.builderTools.legend.PasteTool.Page2.ResetShifting;
+      }
+
+      $LegendCommon.@HotkeyRow {
+        @InputBindingKey = "PasteRotationReset";
+        @Description = %client.builderTools.legend.PasteTool.Page2.ResetRotation;
+      }
+
+    }
+
+  }
+}

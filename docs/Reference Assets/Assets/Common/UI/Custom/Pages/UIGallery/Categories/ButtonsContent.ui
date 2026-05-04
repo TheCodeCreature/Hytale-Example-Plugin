@@ -1,0 +1,277 @@
+$C = "../../../Common.ui";
+$CV = "../CodeViewer.ui";
+
+// Buttons Category Content
+Group {
+  LayoutMode: Top;
+
+  // Primary Buttons Section
+  Group {
+    Anchor: (Bottom: 20);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.buttons.section.primary;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 8);
+
+      $C.@TextButton {
+        @Anchor = (Width: 180, Right: 15);
+        @Text = %server.customUI.uiGallery.buttons.section.primaryText;
+      }
+
+      $C.@TextButton {
+        @Anchor = (Width: 180, Right: 15);
+        @Text = %server.customUI.uiGallery.buttons.section.disabled;
+        Disabled: true;
+      }
+    }
+
+    Group #Code0 {
+      $CV.@CodeBlock {
+        @Code = "$C.@TextButton {
+  @Anchor = (Width: 180);
+  @Text = \"Primary Button\";
+}";
+      }
+    }
+  }
+
+  // Secondary Buttons Section
+  Group {
+    Anchor: (Bottom: 20);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.buttons.section.secondary;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 8);
+
+      $C.@SecondaryTextButton {
+        @Anchor = (Width: 180, Right: 15);
+        @Text = %server.customUI.uiGallery.buttons.section.secondaryText;
+      }
+
+      $C.@SecondaryTextButton {
+        @Anchor = (Width: 180, Right: 15);
+        @Text = %server.customUI.uiGallery.buttons.section.disabled;
+        Disabled: true;
+      }
+    }
+
+    Group #Code1 {
+      $CV.@CodeBlock {
+        @Code = "$C.@SecondaryTextButton {
+  @Anchor = (Width: 180);
+  @Text = \"Secondary\";
+}";
+      }
+    }
+  }
+
+  // Tertiary Buttons Section
+  Group {
+    Anchor: (Bottom: 20);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.buttons.section.tertiary;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 8);
+
+      $C.@TertiaryTextButton {
+        @Anchor = (Width: 180, Right: 15);
+        @Text = %server.customUI.uiGallery.buttons.section.tertiaryText;
+      }
+
+      $C.@TertiaryTextButton {
+        @Anchor = (Width: 180, Right: 15);
+        @Text = %server.customUI.uiGallery.buttons.section.disabled;
+        Disabled: true;
+      }
+    }
+
+    Group #Code2 {
+      $CV.@CodeBlock {
+        @Code = "$C.@TertiaryTextButton {
+  @Anchor = (Width: 180);
+  @Text = \"Tertiary\";
+}";
+      }
+    }
+  }
+
+  // Cancel/Destructive Buttons Section
+  Group {
+    Anchor: (Bottom: 20);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.buttons.section.destructive;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 8);
+
+      $C.@CancelTextButton {
+        @Anchor = (Width: 180, Right: 15);
+        @Text = %server.customUI.uiGallery.buttons.section.cancel;
+      }
+
+      $C.@CancelTextButton {
+        @Anchor = (Width: 180, Right: 15);
+        @Text = %server.customUI.uiGallery.buttons.section.disabled;
+        Disabled: true;
+      }
+    }
+
+    Group #Code3 {
+      $CV.@CodeBlock {
+        @Code = "$C.@CancelTextButton {
+  @Anchor = (Width: 180);
+  @Text = \"Cancel\";
+}";
+      }
+    }
+  }
+
+  // Small Buttons Section
+  Group {
+    Anchor: (Bottom: 20);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.buttons.section.small;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 8);
+
+      $C.@SmallSecondaryTextButton {
+        @Anchor = (Right: 15);
+        @Text = %server.customUI.uiGallery.buttons.section.smallSecondary;
+      }
+
+      $C.@SmallTertiaryTextButton {
+        @Anchor = (Right: 15);
+        @Text = %server.customUI.uiGallery.buttons.section.smallTertiary;
+      }
+    }
+
+    Group #Code4 {
+      $CV.@CodeBlock {
+        @Code = "$C.@SmallSecondaryTextButton {
+  @Text = \"Small Secondary\";
+}
+
+$C.@SmallTertiaryTextButton {
+  @Text = \"Small Tertiary\";
+}";
+      }
+    }
+  }
+
+  // Icon Buttons Section
+  Group {
+    Anchor: (Bottom: 20);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.buttons.section.icon;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Bottom: 8);
+
+      $C.@Button {
+        @Anchor = (Right: 10);
+
+        Group {
+          Anchor: (Width: 32, Height: 32);
+          Background: "../../../Common/RecipesIcon.png";
+        }
+      }
+
+      $C.@SecondaryButton {
+        @Anchor = (Right: 10);
+
+        Group {
+          Anchor: (Width: 32, Height: 32);
+          Background: "../../../Common/RecipesIcon.png";
+        }
+      }
+
+      $C.@TertiaryButton {
+        @Anchor = (Right: 10);
+
+        Group {
+          Anchor: (Width: 32, Height: 32);
+          Background: "../../../Common/RecipesIcon.png";
+        }
+      }
+
+      $C.@CancelButton {
+        Group {
+          Anchor: (Width: 32, Height: 32);
+          Background: "../../../Common/RecipesIcon.png";
+        }
+      }
+    }
+
+    Group #Code5 {
+      $CV.@CodeBlock {
+        @Code = "$C.@Button {
+  Group {
+    Anchor: (Width: 32, Height: 32);
+    Background: \"Icon.png\";
+  }
+}
+
+$C.@SecondaryButton {}
+$C.@TertiaryButton {}
+$C.@CancelButton {}";
+      }
+    }
+  }
+
+  // Back Button Section
+  Group {
+    Anchor: (Bottom: 20);
+    LayoutMode: Top;
+
+    $C.@Subtitle {
+      @Text = %server.customUI.uiGallery.buttons.section.back;
+    }
+
+    Group {
+      LayoutMode: Left;
+      Anchor: (Height: 40, Bottom: 8);
+
+      BackButton {}
+
+      Label {
+        Text: %server.customUI.uiGallery.buttons.backButtonDesc;
+        Style: (FontSize: 12, TextColor: $C.@ColorGrayCaption, VerticalAlignment: Center);
+        Anchor: (Left: 120);
+      }
+    }
+
+    Group #Code6 {
+      $CV.@CodeBlock {
+        @Code = "$C.@BackButton {}";
+      }
+    }
+  }
+}

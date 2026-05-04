@@ -1,0 +1,64 @@
+{
+  "Type": "Simple",
+  "Effects": {
+    "ItemPlayerAnimationsId": "Golem_Crystal_Earth_Default",
+    "ItemAnimationId": "Clap"
+  },
+  "$Comment": "Prepare Delay",
+  "RunTime": 0.417,
+  "Next": {
+    "Type": "Parallel",
+    "$Comment": "Make sure this parallel interaction is needed and can't be optimized away",
+    "Interactions": [
+      {
+        "Interactions": [
+          {
+            "Type": "Selector",
+            "$Comment": "Length of Combat",
+            "RunTime": 0.083,
+            "Selector": {
+              "Id": "Stab",
+              "TestLineOfSight": true,
+              "ExtendTop": 1,
+              "ExtendBottom": 1,
+              "ExtendRight": 1,
+              "ExtendLeft": 1,
+              "StartDistance": 0.1,
+              "EndDistance": 3.25
+            },
+            "HitEntity": {
+              "Interactions": [
+                {
+                  "Type": "Replace",
+                  "DefaultValue": {
+                    "Interactions": [
+                      "Golem_Crystal_Clap_Damage"
+                    ]
+                  },
+                  "Var": "Clap_Damage"
+                }
+              ]
+            },
+            "Next": {
+              "Type": "Simple",
+              "$Comment": "Pad the interaction length",
+              "RunTime": 0.583
+            }
+          }
+        ]
+      },
+      {
+        "Interactions": [
+          {
+            "Type": "Simple",
+            "$Comment": "Length of Effect",
+            "RunTime": 0.333,
+            "Effects": {
+              "WorldSoundEventId": "SFX_Golem_Earth_Swing"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

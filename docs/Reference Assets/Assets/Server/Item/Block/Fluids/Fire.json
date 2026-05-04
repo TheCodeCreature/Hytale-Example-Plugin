@@ -1,0 +1,192 @@
+{
+  "MaxFluidLevel": 8,
+  "Effect": [
+    "Lava"
+  ],
+  "Opacity": "Transparent",
+  "BlockParticleSetId": "Lava",
+  "ParticleColor": "#f94e11",
+  "BlockSoundSetId": "Empty",
+  "Light": {
+    "Color": "#e90"
+  },
+  "DrawType": "None",
+  "Particles": [
+    {
+      "SystemId": "Fluid_Fire",
+      "Scale": 1,
+      "PositionOffset": {
+        "Y": 0.5
+      }
+    }
+  ],
+  "Interactions": {
+    "Collision": {
+      "Cooldown": {
+        "Id": "BurnEffect",
+        "Cooldown": 1
+      },
+      "Interactions": [
+        {
+          "Type": "Condition",
+          "RequiredGameMode": "Adventure",
+          "Next": {
+            "Type": "ApplyEffect",
+            "EffectId": {
+              "Duration": 1,
+              "OverlapBehavior": "Overwrite",
+              "ApplicationEffects": {
+                "HorizontalSpeedMultiplier": 0.5
+              }
+            },
+            "Next": {
+              "Type": "ApplyEffect",
+              "EffectId": "Burn"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "Tags": {
+    "Fluid": [
+      "Fire"
+    ]
+  },
+  "Ticker": {
+    "Type": "Fire",
+    "CanDemote": false,
+    "SpreadFluid": "Fire",
+    "FlowRate": 2.0,
+    "SupportedBy": "Fire",
+    "Flammability": [
+      {
+        "TagPattern": {
+          "Op": "Equals",
+          "Tag": "Plant"
+        },
+        "Priority": 0,
+        "BurnLevel": 3,
+        "BurnChance": 0.9
+      },
+      {
+        "TagPattern": {
+          "Op": "And",
+          "Patterns": [
+            {
+              "Op": "Equals",
+              "Tag": "Type=Wood"
+            },
+            {
+              "Op": "Not",
+              "Pattern": {
+                "Op": "Equals",
+                "Tag": "Family=Burnt"
+              }
+            }
+          ]
+        },
+        "Priority": 0,
+        "BurnLevel": 6,
+        "BurnChance": 0.5
+      },
+      {
+        "TagPattern": {
+          "Op": "Equals",
+          "Tag": "Furniture"
+        },
+        "Priority": 1,
+        "BurnLevel": 4,
+        "BurnChance": 0.9
+      },
+      {
+        "TagPattern": {
+          "Op": "And",
+          "Patterns": [
+            {
+              "Op": "Equals",
+              "Tag": "Type=Trunk"
+            },
+            {
+              "Op": "Not",
+              "Pattern": {
+                "Op": "Equals",
+                "Tag": "Family=Burnt"
+              }
+            }
+          ]
+        },
+        "Priority": 10,
+        "BurnLevel": 6,
+        "BurnChance": 0.85,
+        "ResultingBlock": "Wood_Burnt_Trunk"
+      },
+      {
+        "TagPattern": {
+          "Op": "And",
+          "Patterns": [
+            {
+              "Op": "Equals",
+              "Tag": "BranchType=Long"
+            },
+            {
+              "Op": "Not",
+              "Pattern": {
+                "Op": "Equals",
+                "Tag": "Family=Burnt"
+              }
+            }
+          ]
+        },
+        "Priority": 8,
+        "BurnLevel": 5,
+        "BurnChance": 0.85,
+        "ResultingBlock": "Wood_Burnt_Branch_Long"
+      },
+      {
+        "TagPattern": {
+          "Op": "And",
+          "Patterns": [
+            {
+              "Op": "Equals",
+              "Tag": "BranchType=Short"
+            },
+            {
+              "Op": "Not",
+              "Pattern": {
+                "Op": "Equals",
+                "Tag": "Family=Burnt"
+              }
+            }
+          ]
+        },
+        "Priority": 9,
+        "BurnLevel": 5,
+        "BurnChance": 0.85,
+        "ResultingBlock": "Wood_Burnt_Branch_Short"
+      },
+      {
+        "TagPattern": {
+          "Op": "And",
+          "Patterns": [
+            {
+              "Op": "Equals",
+              "Tag": "BranchType=Corner"
+            },
+            {
+              "Op": "Not",
+              "Pattern": {
+                "Op": "Equals",
+                "Tag": "Family=Burnt"
+              }
+            }
+          ]
+        },
+        "Priority": 9,
+        "BurnLevel": 5,
+        "BurnChance": 0.85,
+        "ResultingBlock": "Wood_Burnt_Branch_Corner"
+      }
+    ]
+  }
+}

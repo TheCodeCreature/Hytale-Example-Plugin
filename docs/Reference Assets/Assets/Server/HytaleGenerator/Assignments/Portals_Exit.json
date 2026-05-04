@@ -1,0 +1,171 @@
+{
+	"$NodeId":	"Constant.Assignments-c0b1593b-145f-44a0-9845-7b510979e17e",
+	"Type":	"Constant",
+	"ExportAs":	"Portals_Exit",
+	"Prop":	{
+		"$NodeId":	"Column.Prop-c65884e6-9e48-4c82-8672-47e1483146d2",
+		"Type":	"Column",
+		"Skip":	false,
+		"ColumnBlocks":	[{
+				"$NodeId":	"Block.Column.Prop-ec581fb8-dbc3-4761-89f5-312a658ef9f5",
+				"Y":	0,
+				"Material":	{
+					"$NodeId":	"Material-1348f2e9-86b0-4bb5-8dd3-a2f27fb55e82",
+					"Solid":	"Deco_fire"
+				}
+			}],
+		"Directionality":	{
+			"$NodeId":	"Static.Directionality-e397ccc3-1152-4916-9d8b-6aa546fa8a22",
+			"Type":	"Static",
+			"Rotation":	0,
+			"Pattern":	{
+				"$NodeId":	"Floor.Pattern-bc5a1b2d-7211-437f-9e66-19d0ce3a3eb1",
+				"Type":	"Floor",
+				"Skip":	false,
+				"Origin":	{
+					"$NodeId":	"BlockSet.Pattern-4732049a-1a11-4b39-9c2a-bd9603bfc1d1",
+					"Type":	"BlockSet",
+					"Skip":	false,
+					"BlockSet":	{
+						"$NodeId":	"BlockSet.BlockMask-e95563b5-6f6b-40cf-bc4e-0c1faa3da155",
+						"Inclusive":	true,
+						"Materials":	[{
+								"$NodeId":	"Material-ebcc5837-15a7-4d42-9be9-adbb34a0b015",
+								"Solid":	"Empty"
+							}]
+					}
+				},
+				"Floor":	{
+					"$NodeId":	"BlockSet.Pattern-29f7c403-ddeb-4d1a-84e7-682109bd3b9b",
+					"Type":	"BlockSet",
+					"Skip":	false,
+					"BlockSet":	{
+						"$NodeId":	"BlockSet.BlockMask-aa631069-a7d8-4571-99ad-97c2c296ec81",
+						"Inclusive":	false,
+						"Materials":	[{
+								"$NodeId":	"Material-cde837f6-49b3-44b0-911b-57f43654f52c",
+								"Solid":	"Empty"
+							}, {
+								"$NodeId":	"Material-b4406033-0711-42c4-95a0-9b1177487575",
+								"Fluid":	"Water_Source"
+							}]
+					}
+				}
+			}
+		},
+		"Scanner":	{
+			"$NodeId":	"ColumnLinear.Scanner-29d82c82-f649-4d89-9043-eba2db8ff2c4",
+			"Type":	"ColumnLinear",
+			"Skip":	false,
+			"MaxY":	0,
+			"MinY":	200,
+			"RelativeToPosition":	true,
+			"BaseHeightName":	"Bedrock",
+			"TopDownOrder":	true,
+			"ResultCap":	1
+		}
+	},
+	"$NodeEditorMetadata":	{
+		"$Nodes":	{
+			"Constant.Assignments-c0b1593b-145f-44a0-9845-7b510979e17e":	{
+				"$Position":	{
+					"$x":	9729,
+					"$y":	3789
+				},
+				"$Title":	"[ROOT] Constant Assignments"
+			},
+			"Column.Prop-c65884e6-9e48-4c82-8672-47e1483146d2":	{
+				"$Position":	{
+					"$x":	10387,
+					"$y":	3791
+				}
+			},
+			"Block.Column.Prop-ec581fb8-dbc3-4761-89f5-312a658ef9f5":	{
+				"$Position":	{
+					"$x":	11159,
+					"$y":	3502
+				}
+			},
+			"Material-1348f2e9-86b0-4bb5-8dd3-a2f27fb55e82":	{
+				"$Position":	{
+					"$x":	11577,
+					"$y":	3502
+				}
+			},
+			"Static.Directionality-e397ccc3-1152-4916-9d8b-6aa546fa8a22":	{
+				"$Position":	{
+					"$x":	11128,
+					"$y":	3717
+				}
+			},
+			"Floor.Pattern-bc5a1b2d-7211-437f-9e66-19d0ce3a3eb1":	{
+				"$Position":	{
+					"$x":	11742,
+					"$y":	3719
+				}
+			},
+			"BlockSet.Pattern-4732049a-1a11-4b39-9c2a-bd9603bfc1d1":	{
+				"$Position":	{
+					"$x":	12411,
+					"$y":	3627
+				}
+			},
+			"BlockSet.BlockMask-e95563b5-6f6b-40cf-bc4e-0c1faa3da155":	{
+				"$Position":	{
+					"$x":	13041,
+					"$y":	3634
+				}
+			},
+			"Material-ebcc5837-15a7-4d42-9be9-adbb34a0b015":	{
+				"$Position":	{
+					"$x":	13511,
+					"$y":	3638
+				}
+			},
+			"BlockSet.Pattern-29f7c403-ddeb-4d1a-84e7-682109bd3b9b":	{
+				"$Position":	{
+					"$x":	12426,
+					"$y":	3807
+				}
+			},
+			"BlockSet.BlockMask-aa631069-a7d8-4571-99ad-97c2c296ec81":	{
+				"$Position":	{
+					"$x":	13055,
+					"$y":	3814
+				}
+			},
+			"Material-cde837f6-49b3-44b0-911b-57f43654f52c":	{
+				"$Position":	{
+					"$x":	13525,
+					"$y":	3818
+				}
+			},
+			"Material-b4406033-0711-42c4-95a0-9b1177487575":	{
+				"$Position":	{
+					"$x":	13526,
+					"$y":	3977
+				}
+			},
+			"ColumnLinear.Scanner-29d82c82-f649-4d89-9043-eba2db8ff2c4":	{
+				"$Position":	{
+					"$x":	11127,
+					"$y":	3878
+				}
+			}
+		},
+		"$FloatingNodes":	[],
+		"$Links":	{
+		},
+		"$Groups":	[{
+				"$Position":	{
+					"$x":	9612.625,
+					"$y":	3364.75
+				},
+				"$width":	4641.25,
+				"$height":	954.125,
+				"$name":	"Rubble"
+			}],
+		"$Comments":	[],
+		"$WorkspaceID":	"HytaleGenerator - Assignments"
+	}
+}
