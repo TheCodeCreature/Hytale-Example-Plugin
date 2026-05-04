@@ -1,0 +1,57 @@
+earSide = Lado da orelha
+earSide.left = Esquerda
+earSide.right = Direita
+earSide.both = Ambos
+
+pattern.skull = Modelo de Esqueleto
+pattern.star = Modelo de Estrela
+pattern.gaia = Modelo de Árvore Prismática
+pattern.cat = Modelo de Gato
+pattern.bunny = Modelo de Coelho
+pattern.unicorn = Modelo de Unicórnio
+pattern.play = Modelo de Botão Iniciar
+pattern.play_inverted = Modelo de Botão Iniciar Invertido
+
+pants.dungareesshorts = Shorts de Jardineiro
+pants.bracedshorts = Shorts com Suspensórios
+pants.dungarees = Macacão
+pants.bracedpants = Calças com Suspensórios
+pants.hiddenbelt = Cinto oculto
+
+option.a = Opção A
+option.b = Opção B
+option.c = Opção C
+
+default = Padrão
+
+overtops.Scavenger_Poncho = Sem caveiras
+
+capes.no_neck = Sem ombreira
+
+haircuts.Dreadlocks01.name = Dreads 1
+haircuts.Dreadlocks02.name = Dreads 2
+haircuts.Dreadlocks03.name = Dreads 3
+haircuts.FrizzyBun01.name = Coque Crespo 1
+haircuts.FrizzyBun02.name = Coque Crespo 2
+haircuts.SlickbackCowlick.name = Topete Lambido para Trás
+haircuts.Hairstrand.name = Faixa de Cabelo
+haircuts.GoldenBangles.name = Laços dourados
+
+haircuts.Messy.name = Bagunçado
+haircuts.Braids.name = Tranças
+haircuts.Locks.name = Preso
+haircuts.Wild.name = Rebelde
+
+headaccessory.Logo_Cap_Movie.name = Logotipo de Filme
+headaccessory.Logo_Cap_Heart.name = Logotipo de Coração
+headaccessory.Logo_Cap_Hypixel.name = Logotipo da Hypixel
+
+left_arm.name = Braço esquerdo
+right_arm.name = Braço direito
+
+thin.name = Fina
+thick.name = Grossa
+lefteye.name = Olho esquerdo
+righteye.name = Olho direito
+
+faceaccessory.BanditMask_SideKnot.name = Nó lateral

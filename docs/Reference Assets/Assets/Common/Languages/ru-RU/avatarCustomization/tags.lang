@@ -1,0 +1,15 @@
+style.fantasy = Фэнтези
+style.modern = Современный
+style.costume = Маскарадный
+style.special = Особый
+
+haircut.short = Короткие волосы
+haircut.medium = Волосы средней длины
+haircut.long = Длинные волосы
+HairLength.Short.name = Короткие
+HairLength.Medium.name = Средней длины
+HairLength.Long.name = Длинные
+Style.Fantasy.name = Фэнтези
+Style.Modern.name = Современный
+Style.Costume.name = Маскарадный
+Style.Special.name = Особый

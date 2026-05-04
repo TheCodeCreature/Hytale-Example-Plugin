@@ -1,0 +1,57 @@
+earSide = Вухо
+earSide.left = Ліве
+earSide.right = Праве
+earSide.both = Обидва
+
+pattern.skull = Візерунок черепа
+pattern.star = Візерунок зірки
+pattern.gaia = Візерунок призматичного дерева
+pattern.cat = Візерунок кота
+pattern.bunny = Візерунок кролика
+pattern.unicorn = Візерунок єдинорога
+pattern.play = Візерунок кнопки відтворення
+pattern.play_inverted = Світлий візерунок кнопки відтворення
+
+pants.dungareesshorts = Короткий комбінезон
+pants.bracedshorts = Шорти на підтяжках
+pants.dungarees = Комбінезон
+pants.bracedpants = Штани на підтяжках
+pants.hiddenbelt = Прихований пояс
+
+option.a = Варіант А
+option.b = Варіант B
+option.c = Варіант C
+
+default = Стандартний
+
+overtops.Scavenger_Poncho = Без черепа
+
+capes.no_neck = Без шиї
+
+haircuts.Dreadlocks01.name = Дреди 1
+haircuts.Dreadlocks02.name = Дреди 2
+haircuts.Dreadlocks03.name = Дреди 3
+haircuts.FrizzyBun01.name = Кудлаті пучки 1
+haircuts.FrizzyBun02.name = Кудлаті пучки 2
+haircuts.SlickbackCowlick.name = З чубчиком
+haircuts.Hairstrand.name = Пасмо на чолі
+haircuts.GoldenBangles.name = Золоті гумки
+
+haircuts.Messy.name = Неохайна
+haircuts.Braids.name = Коси
+haircuts.Locks.name = Пасма
+haircuts.Wild.name = Бунтівна
+
+headaccessory.Logo_Cap_Movie.name = Логотип фільму
+headaccessory.Logo_Cap_Heart.name = Логотип серця
+headaccessory.Logo_Cap_Hypixel.name = Логотип Hypixel
+
+left_arm.name = Ліва рука
+right_arm.name = Права рука
+
+thin.name = Вузька
+thick.name = Широка
+lefteye.name = Ліве око
+righteye.name = Праве око
+
+faceaccessory.BanditMask_SideKnot.name = Боковий вузол
