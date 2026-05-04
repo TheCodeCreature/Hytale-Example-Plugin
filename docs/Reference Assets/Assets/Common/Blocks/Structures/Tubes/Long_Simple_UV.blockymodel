@@ -1,0 +1,111 @@
+{
+  "lod": "auto",
+  "nodes": [ {
+      "id": "38",
+      "name": "root1",
+      "position": {
+        "x": -2,
+        "y": 16,
+        "z": -3
+      },
+      "orientation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": -1
+      },
+      "shape": {
+        "offset": {
+          "x": 2,
+          "y": 0,
+          "z": 3
+        },
+        "stretch": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "textureLayout": {
+          "top": {
+            "offset": {
+              "x": 14,
+              "y": 28
+            },
+            "mirror": {
+              "x": true,
+              "y": false
+            },
+            "angle": 90
+          },
+          "bottom": {
+            "offset": {
+              "x": 0,
+              "y": 28
+            },
+            "mirror": {
+              "x": true,
+              "y": true
+            },
+            "angle": 90
+          },
+          "front": {
+            "offset": {
+              "x": 0,
+              "y": 0
+            },
+            "mirror": {
+              "x": false,
+              "y": true
+            },
+            "angle": 90
+          },
+          "back": {
+            "offset": {
+              "x": 0,
+              "y": 14
+            },
+            "mirror": {
+              "x": true,
+              "y": true
+            },
+            "angle": 90
+          },
+          "left": {
+            "offset": {
+              "x": 0,
+              "y": 14
+            },
+            "mirror": {
+              "x": false,
+              "y": false
+            },
+            "angle": 270
+          },
+          "right": {
+            "offset": {
+              "x": 0,
+              "y": 0
+            },
+            "mirror": {
+              "x": true,
+              "y": false
+            },
+            "angle": 270
+          }
+        },
+        "type": "box",
+        "settings": {
+          "size": {
+            "x": 14,
+            "y": 32,
+            "z": 14
+          }
+        },
+        "unwrapMode": "custom",
+        "visible": true,
+        "doubleSided": false,
+        "shadingMode": "standard"
+      },
+      "children": []
+    } ]
+}

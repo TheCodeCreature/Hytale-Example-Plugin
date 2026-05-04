@@ -1,0 +1,108 @@
+{
+  "lod": "auto",
+  "nodes": [ {
+      "id": "0",
+      "name": "Poster",
+      "children": [],
+      "position": {
+        "x": -2.987748,
+        "y": 16.355494,
+        "z": -15.734444
+      },
+      "orientation": {
+        "x": 0,
+        "y": 0,
+        "z": 0.040966,
+        "w": 0.999161
+      },
+      "shape": {
+        "type": "quad",
+        "offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "stretch": {
+          "x": 0.45,
+          "y": 0.45,
+          "z": 0.5
+        },
+        "settings": {
+          "size": {
+            "x": 33,
+            "y": 50
+          },
+          "normal": "+Z"
+        },
+        "visible": true,
+        "doubleSided": true,
+        "shadingMode": "standard",
+        "unwrapMode": "custom",
+        "textureLayout": {
+          "front": {
+            "offset": {
+              "x": 0,
+              "y": 0
+            },
+            "mirror": {
+              "x": false,
+              "y": false
+            },
+            "angle": 0
+          }
+        }
+      }
+    }, {
+      "id": "2",
+      "name": "Poster",
+      "children": [],
+      "position": {
+        "x": 6.313999,
+        "y": 16,
+        "z": -15.368413
+      },
+      "orientation": {
+        "x": 0,
+        "y": 0,
+        "z": -0.025032,
+        "w": 0.999687
+      },
+      "shape": {
+        "type": "quad",
+        "offset": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "stretch": {
+          "x": 0.37337,
+          "y": 0.400854,
+          "z": 0.45
+        },
+        "settings": {
+          "size": {
+            "x": 33,
+            "y": 50
+          },
+          "normal": "+Z"
+        },
+        "visible": true,
+        "doubleSided": true,
+        "shadingMode": "standard",
+        "unwrapMode": "custom",
+        "textureLayout": {
+          "front": {
+            "offset": {
+              "x": 33,
+              "y": 1
+            },
+            "mirror": {
+              "x": false,
+              "y": false
+            },
+            "angle": 0
+          }
+        }
+      }
+    } ]
+}
