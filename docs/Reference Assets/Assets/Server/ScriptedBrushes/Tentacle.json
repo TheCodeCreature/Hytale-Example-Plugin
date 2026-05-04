@@ -1,0 +1,629 @@
+{
+	"$NodeId":	"Root-bf3fc41e-c328-40dc-a2aa-535a421dcd25",
+	"Operations":	[{
+			"$NodeId":	"DisableHoldInteraction-47701b69-dfea-493f-8c69-a8ccbfb5ddf0",
+			"Id":	"disableonhold"
+		}, {
+			"$NodeId":	"SaveBrushConfig-55ad37d3-1cfb-4df6-ac75-d174fa2cd13e",
+			"Id":	"savebrushconfig",
+			"StoredName":	"Explosion"
+		}, {
+			"$NodeId":	"Set-bfbdc683-d767-403f-9135-cb30ca06edd0",
+			"Id":	"set"
+		}, {
+			"$NodeId":	"SaveIndex-220f16be-0e32-499a-b762-70e00dda1702",
+			"Id":	"saveindex",
+			"StoredIndexName":	"RandomLoop"
+		}, {
+			"$NodeId":	"SaveIndex-70537f99-a5ae-4cbe-8c0c-23cd9b4731db",
+			"Id":	"saveindex",
+			"StoredIndexName":	"Offset"
+		}, {
+			"$NodeId":	"JumpToRandomIndex-b10fa712-433b-43ff-8e5b-7103048c9203",
+			"Id":	"jumprandom",
+			"WeightedListOfIndexNames":	[{
+					"$NodeId":	"IntegerStringPair-2f235d46-ada1-43bf-ba6b-e5beaa5c99e4",
+					"Left":	1,
+					"Right":	"Up"
+				}, {
+					"$NodeId":	"IntegerStringPair-f7783318-6b8b-40b4-9f68-13c4573c9614",
+					"Left":	1,
+					"Right":	"Down"
+				}]
+		}, {
+			"$NodeId":	"SaveIndex-a8d7a22e-4ff9-4a7a-978b-2523340a2ba3",
+			"Id":	"saveindex",
+			"StoredIndexName":	"Up"
+		}, {
+			"$NodeId":	"RandomOffset-cf9d3a7d-cf4b-450f-a93e-57d3865df1c3",
+			"Id":	"randomoffset",
+			"XOffsetRange":	{
+				"Min":	{
+					"Value":	-1,
+					"Relative":	true
+				},
+				"Max":	{
+					"Value":	0,
+					"Relative":	true
+				}
+			},
+			"YOffsetRange":	{
+				"Min":	{
+					"Value":	1,
+					"Relative":	true
+				},
+				"Max":	{
+					"Value":	1,
+					"Relative":	true
+				}
+			},
+			"ZOffsetRange":	{
+				"Min":	{
+					"Value":	-1,
+					"Relative":	true
+				},
+				"Max":	{
+					"Value":	0,
+					"Relative":	true
+				}
+			}
+		}, {
+			"$NodeId":	"JumpToIndex-800db2c9-3ddc-4330-ac14-28972b555599",
+			"Id":	"jump",
+			"StoredIndexName":	"Resolve"
+		}, {
+			"$NodeId":	"SaveIndex-72c186ce-9d32-415d-bb05-3cd075e53415",
+			"Id":	"saveindex",
+			"StoredIndexName":	"Down"
+		}, {
+			"$NodeId":	"RandomOffset-49990bc5-ba3c-4836-adc7-406b8a90b83f",
+			"Id":	"randomoffset",
+			"XOffsetRange":	{
+				"Min":	{
+					"Value":	-1,
+					"Relative":	true
+				},
+				"Max":	{
+					"Value":	0,
+					"Relative":	true
+				}
+			},
+			"YOffsetRange":	{
+				"Min":	{
+					"Value":	-1,
+					"Relative":	true
+				},
+				"Max":	{
+					"Value":	-1,
+					"Relative":	true
+				}
+			},
+			"ZOffsetRange":	{
+				"Min":	{
+					"Value":	-1,
+					"Relative":	true
+				},
+				"Max":	{
+					"Value":	0,
+					"Relative":	true
+				}
+			}
+		}, {
+			"$NodeId":	"JumpToIndex-cf8f310c-9057-47b1-9408-34e7ee9746f0",
+			"Id":	"jump",
+			"StoredIndexName":	"Resolve"
+		}, {
+			"$NodeId":	"SaveIndex-6e638457-c2cd-4327-8ad6-3d32aeb2f53c",
+			"Id":	"saveindex",
+			"StoredIndexName":	"Resolve"
+		}, {
+			"$NodeId":	"Set-5018194f-6fcf-4100-90ab-9a89059dadc1",
+			"Id":	"set"
+		}, {
+			"$NodeId":	"JumpIfCompare-419c1451-29ee-47b1-9638-59862e24bbf0",
+			"Id":	"jumpifcompare",
+			"Comparisons":	[{
+					"$NodeId":	"BrushConfigIntegerComparison-94d74355-73fd-4b7a-8b37-1b7fd02496dc",
+					"DataGettingFlag":	"Width",
+					"IntegerComparisonOperator":	"EqualTo",
+					"ValueToCompareTo":	1
+				}],
+			"StoredIndexName":	"End"
+		}, {
+			"$NodeId":	"JumpIfCompare-93736cb1-c4e3-45a4-a06b-0c230ce60f5d",
+			"Id":	"jumpifcompare",
+			"Comparisons":	[{
+					"$NodeId":	"BrushConfigIntegerComparison-a308f655-346c-40fd-87ee-2c4687b78258",
+					"DataGettingFlag":	"Height",
+					"IntegerComparisonOperator":	"EqualTo",
+					"ValueToCompareTo":	1
+				}],
+			"StoredIndexName":	"End"
+		}, {
+			"$NodeId":	"Loop-a6703687-393a-4926-8374-d9db0a505b88",
+			"Id":	"loop",
+			"StoredIndexName":	"Offset",
+			"AdditionalRepetitions":	5
+		}, {
+			"$NodeId":	"Dimensions-417d3928-fa72-4139-8e6d-d4816e323e35",
+			"Id":	"dimensions",
+			"Width":	{
+				"Value":	-1,
+				"Relative":	true
+			},
+			"Height":	{
+				"Value":	-1,
+				"Relative":	true
+			}
+		}, {
+			"$NodeId":	"Loop-92728896-679e-42ae-b488-e31ff14dd9fd",
+			"Id":	"loop",
+			"StoredIndexName":	"RandomLoop",
+			"AdditionalRepetitions":	100
+		}, {
+			"$NodeId":	"SaveIndex-b5bf45bf-e77e-4a17-b83c-30b0552b4c86",
+			"Id":	"saveindex",
+			"StoredIndexName":	"End"
+		}, {
+			"$NodeId":	"LoadBrushConfig-a66eda14-d914-4c3e-8551-ff6db626b0cb",
+			"Id":	"loadbrushconfig",
+			"StoredName":	"Explosion",
+			"ParametersToLoad":	["Offset", "Dimensions", "Shape", "OperationMask"]
+		}, {
+			"$NodeId":	"SaveIndex-3ca283ee-f0ee-421f-b31c-b7557d743932",
+			"Id":	"saveindex",
+			"StoredIndexName":	"RandomLoop2"
+		}, {
+			"$NodeId":	"SaveIndex-0c50ea7f-6c1d-4512-8e01-e4eb8a07fe26",
+			"Id":	"saveindex",
+			"StoredIndexName":	"Offset2"
+		}, {
+			"$NodeId":	"JumpToRandomIndex-be4fa814-2015-4734-b1b7-55e2b8f92696",
+			"Id":	"jumprandom",
+			"WeightedListOfIndexNames":	[{
+					"$NodeId":	"IntegerStringPair-54d3f346-00d6-4c34-ba05-9f964fd3bac7",
+					"Left":	1,
+					"Right":	"Up2"
+				}, {
+					"$NodeId":	"IntegerStringPair-29eb25c5-8063-44e5-bddd-20f17a36195f",
+					"Left":	1,
+					"Right":	"Down2"
+				}]
+		}, {
+			"$NodeId":	"SaveIndex-410ba947-7ea6-4630-afd5-62ccf88e87a9",
+			"Id":	"saveindex",
+			"StoredIndexName":	"Up2"
+		}, {
+			"$NodeId":	"RandomOffset-be6025a2-e2a0-4fbe-8766-8aa84e2f5bec",
+			"Id":	"randomoffset",
+			"XOffsetRange":	{
+				"Min":	{
+					"Value":	0,
+					"Relative":	true
+				},
+				"Max":	{
+					"Value":	1,
+					"Relative":	true
+				}
+			},
+			"YOffsetRange":	{
+				"Min":	{
+					"Value":	1,
+					"Relative":	true
+				},
+				"Max":	{
+					"Value":	1,
+					"Relative":	true
+				}
+			},
+			"ZOffsetRange":	{
+				"Min":	{
+					"Value":	0,
+					"Relative":	true
+				},
+				"Max":	{
+					"Value":	1,
+					"Relative":	true
+				}
+			}
+		}, {
+			"$NodeId":	"JumpToIndex-185a5123-c62d-42b4-9454-87879edf773a",
+			"Id":	"jump",
+			"StoredIndexName":	"Resolve2"
+		}, {
+			"$NodeId":	"SaveIndex-020d4b4f-5fd2-4f4b-b227-79f269aefb46",
+			"Id":	"saveindex",
+			"StoredIndexName":	"Down2"
+		}, {
+			"$NodeId":	"RandomOffset-6720b813-5c8b-4ee1-b021-4357c8ee851a",
+			"Id":	"randomoffset",
+			"XOffsetRange":	{
+				"Min":	{
+					"Value":	0,
+					"Relative":	true
+				},
+				"Max":	{
+					"Value":	1,
+					"Relative":	true
+				}
+			},
+			"YOffsetRange":	{
+				"Min":	{
+					"Value":	-1,
+					"Relative":	true
+				},
+				"Max":	{
+					"Value":	-1,
+					"Relative":	true
+				}
+			},
+			"ZOffsetRange":	{
+				"Min":	{
+					"Value":	0,
+					"Relative":	true
+				},
+				"Max":	{
+					"Value":	1,
+					"Relative":	true
+				}
+			}
+		}, {
+			"$NodeId":	"JumpToIndex-9ddd74b3-2adb-4729-9752-b3864c1dec78",
+			"Id":	"jump",
+			"StoredIndexName":	"Resolve2"
+		}, {
+			"$NodeId":	"SaveIndex-6c7cc065-93bc-4bad-9362-dc1345d187b2",
+			"Id":	"saveindex",
+			"StoredIndexName":	"Resolve2"
+		}, {
+			"$NodeId":	"Set-0ab9644f-2a28-41dc-8b2f-e38439794e71",
+			"Id":	"set"
+		}, {
+			"$NodeId":	"JumpIfCompare-3a34a2de-ef3a-4a06-ba89-baca41aa1e5b",
+			"Id":	"jumpifcompare",
+			"Comparisons":	[{
+					"$NodeId":	"BrushConfigIntegerComparison-2466c2a6-f4dd-4c25-b7e8-9e0cc2012b62",
+					"DataGettingFlag":	"Width",
+					"IntegerComparisonOperator":	"LessThanEqualTo",
+					"ValueToCompareTo":	1
+				}],
+			"StoredIndexName":	"End2"
+		}, {
+			"$NodeId":	"JumpIfCompare-f7d3d1f7-aa98-4e79-8230-a18ad8354a37",
+			"Id":	"jumpifcompare",
+			"Comparisons":	[{
+					"$NodeId":	"BrushConfigIntegerComparison-04e1eefe-ad2e-437b-9312-f3be2d19c1c1",
+					"DataGettingFlag":	"Height",
+					"IntegerComparisonOperator":	"LessThanEqualTo",
+					"ValueToCompareTo":	1
+				}],
+			"StoredIndexName":	"End2"
+		}, {
+			"$NodeId":	"Loop-6d033d1e-1ce6-4af9-920b-218aecfa83ac",
+			"Id":	"loop",
+			"StoredIndexName":	"Offset2",
+			"AdditionalRepetitions":	5
+		}, {
+			"$NodeId":	"Dimensions-4b38350c-1a1d-4085-9546-024aef1ae1dd",
+			"Id":	"dimensions",
+			"Width":	{
+				"Value":	-1,
+				"Relative":	true
+			},
+			"Height":	{
+				"Value":	-1,
+				"Relative":	true
+			}
+		}, {
+			"$NodeId":	"Loop-b75b9553-6231-4e31-a61d-b4bd42a5054f",
+			"Id":	"loop",
+			"StoredIndexName":	"RandomLoop2",
+			"AdditionalRepetitions":	100
+		}, {
+			"$NodeId":	"SaveIndex-0bc064b1-97ce-4ac8-8c86-67691a8e2753",
+			"Id":	"saveindex",
+			"StoredIndexName":	"End2"
+		}, {
+			"$NodeId":	"Exit-0e820de6-5d8a-4f91-9718-826b163f1543",
+			"Id":	"exit"
+		}],
+	"$NodeEditorMetadata":	{
+		"$Nodes":	{
+			"Root-bf3fc41e-c328-40dc-a2aa-535a421dcd25":	{
+				"$Position":	{
+					"$x":	0,
+					"$y":	0
+				},
+				"$Title":	"[ROOT] Root"
+			},
+			"DisableHoldInteraction-47701b69-dfea-493f-8c69-a8ccbfb5ddf0":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-6349
+				}
+			},
+			"SaveBrushConfig-55ad37d3-1cfb-4df6-ac75-d174fa2cd13e":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-6166
+				}
+			},
+			"Set-bfbdc683-d767-403f-9135-cb30ca06edd0":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-5982
+				}
+			},
+			"SaveIndex-220f16be-0e32-499a-b762-70e00dda1702":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-5798
+				}
+			},
+			"SaveIndex-70537f99-a5ae-4cbe-8c0c-23cd9b4731db":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-5614
+				}
+			},
+			"JumpToRandomIndex-b10fa712-433b-43ff-8e5b-7103048c9203":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-5430
+				}
+			},
+			"IntegerStringPair-2f235d46-ada1-43bf-ba6b-e5beaa5c99e4":	{
+				"$Position":	{
+					"$x":	1254,
+					"$y":	-5559
+				}
+			},
+			"IntegerStringPair-f7783318-6b8b-40b4-9f68-13c4573c9614":	{
+				"$Position":	{
+					"$x":	1254,
+					"$y":	-5338
+				}
+			},
+			"SaveIndex-a8d7a22e-4ff9-4a7a-978b-2523340a2ba3":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-4988
+				}
+			},
+			"RandomOffset-cf9d3a7d-cf4b-450f-a93e-57d3865df1c3":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-4804
+				}
+			},
+			"JumpToIndex-800db2c9-3ddc-4330-ac14-28972b555599":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-3572
+				}
+			},
+			"SaveIndex-72c186ce-9d32-415d-bb05-3cd075e53415":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-3388
+				}
+			},
+			"RandomOffset-49990bc5-ba3c-4836-adc7-406b8a90b83f":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-3204
+				}
+			},
+			"JumpToIndex-cf8f310c-9057-47b1-9408-34e7ee9746f0":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-1972
+				}
+			},
+			"SaveIndex-6e638457-c2cd-4327-8ad6-3d32aeb2f53c":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-1788
+				}
+			},
+			"Set-5018194f-6fcf-4100-90ab-9a89059dadc1":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-1604
+				}
+			},
+			"JumpIfCompare-419c1451-29ee-47b1-9638-59862e24bbf0":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-1420
+				}
+			},
+			"BrushConfigIntegerComparison-94d74355-73fd-4b7a-8b37-1b7fd02496dc":	{
+				"$Position":	{
+					"$x":	1254,
+					"$y":	-1458
+				}
+			},
+			"JumpIfCompare-93736cb1-c4e3-45a4-a06b-0c230ce60f5d":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-1161
+				}
+			},
+			"BrushConfigIntegerComparison-a308f655-346c-40fd-87ee-2c4687b78258":	{
+				"$Position":	{
+					"$x":	1254,
+					"$y":	-1199
+				}
+			},
+			"Loop-a6703687-393a-4926-8374-d9db0a505b88":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-903
+				}
+			},
+			"Dimensions-417d3928-fa72-4139-8e6d-d4816e323e35":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-682
+				}
+			},
+			"Loop-92728896-679e-42ae-b488-e31ff14dd9fd":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-244
+				}
+			},
+			"SaveIndex-b5bf45bf-e77e-4a17-b83c-30b0552b4c86":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	-24
+				}
+			},
+			"LoadBrushConfig-a66eda14-d914-4c3e-8551-ff6db626b0cb":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	159
+				}
+			},
+			"SaveIndex-3ca283ee-f0ee-421f-b31c-b7557d743932":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	666
+				}
+			},
+			"SaveIndex-0c50ea7f-6c1d-4512-8e01-e4eb8a07fe26":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	850
+				}
+			},
+			"JumpToRandomIndex-be4fa814-2015-4734-b1b7-55e2b8f92696":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	1034
+				}
+			},
+			"IntegerStringPair-54d3f346-00d6-4c34-ba05-9f964fd3bac7":	{
+				"$Position":	{
+					"$x":	1254,
+					"$y":	905
+				}
+			},
+			"IntegerStringPair-29eb25c5-8063-44e5-bddd-20f17a36195f":	{
+				"$Position":	{
+					"$x":	1254,
+					"$y":	1126
+				}
+			},
+			"SaveIndex-410ba947-7ea6-4630-afd5-62ccf88e87a9":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	1476
+				}
+			},
+			"RandomOffset-be6025a2-e2a0-4fbe-8766-8aa84e2f5bec":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	1660
+				}
+			},
+			"JumpToIndex-185a5123-c62d-42b4-9454-87879edf773a":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	2892
+				}
+			},
+			"SaveIndex-020d4b4f-5fd2-4f4b-b227-79f269aefb46":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	3076
+				}
+			},
+			"RandomOffset-6720b813-5c8b-4ee1-b021-4357c8ee851a":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	3260
+				}
+			},
+			"JumpToIndex-9ddd74b3-2adb-4729-9752-b3864c1dec78":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	4492
+				}
+			},
+			"SaveIndex-6c7cc065-93bc-4bad-9362-dc1345d187b2":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	4676
+				}
+			},
+			"Set-0ab9644f-2a28-41dc-8b2f-e38439794e71":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	4860
+				}
+			},
+			"JumpIfCompare-3a34a2de-ef3a-4a06-ba89-baca41aa1e5b":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	5044
+				}
+			},
+			"BrushConfigIntegerComparison-2466c2a6-f4dd-4c25-b7e8-9e0cc2012b62":	{
+				"$Position":	{
+					"$x":	1254,
+					"$y":	5006
+				}
+			},
+			"JumpIfCompare-f7d3d1f7-aa98-4e79-8230-a18ad8354a37":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	5303
+				}
+			},
+			"BrushConfigIntegerComparison-04e1eefe-ad2e-437b-9312-f3be2d19c1c1":	{
+				"$Position":	{
+					"$x":	1254,
+					"$y":	5265
+				}
+			},
+			"Loop-6d033d1e-1ce6-4af9-920b-218aecfa83ac":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	5562
+				}
+			},
+			"Dimensions-4b38350c-1a1d-4085-9546-024aef1ae1dd":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	5782
+				}
+			},
+			"Loop-b75b9553-6231-4e31-a61d-b4bd42a5054f":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	6220
+				}
+			},
+			"SaveIndex-0bc064b1-97ce-4ac8-8c86-67691a8e2753":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	6441
+				}
+			},
+			"Exit-0e820de6-5d8a-4f91-9718-826b163f1543":	{
+				"$Position":	{
+					"$x":	497,
+					"$y":	6624
+				}
+			}
+		},
+		"$FloatingNodes":	[],
+		"$Links":	{
+		},
+		"$Groups":	[],
+		"$Comments":	[],
+		"$WorkspaceID":	"Scriptable Brush"
+	}
+}
