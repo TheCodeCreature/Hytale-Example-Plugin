@@ -149,9 +149,13 @@ public final class RecipeFilterRegistry {
             // Extract Item.set via reflection
             String itemSet = extractItemSet(outputItem);
 
+            // Extract item categories
+            String[] cats = outputItem.getCategories();
+            List<String> categoryIds = (cats != null) ? List.of(cats) : List.of();
+
             FilteredRecipeEntry entry = new FilteredRecipeEntry(
                     recipe, recipeId, outputItemId, blockTypeId,
-                    Collections.unmodifiableSet(matchedBenchIds), category, itemSet);
+                    Collections.unmodifiableSet(matchedBenchIds), category, itemSet, categoryIds);
 
             result.add(entry);
             idMap.put(recipeId, entry);

@@ -23,7 +23,7 @@ import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
-import com.hypixel.hytale.server.core.ui.ItemGridSlot;
+import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.ui.PatchStyle;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
@@ -37,14 +37,16 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
+import com.hypixel.hytale.server.core.asset.type.item.config.ItemCategory;
 
 public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSelectionPage.EventPayload> {
 
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("BlueprintSelectionPage");
 
     private static final int MAX_SET_FILTERS = 20;
+    private static final int MAX_GROUP_BUTTONS = 25;
     private static final int MAX_COST_CELLS = 8;
-    private static final int MAX_RECIPE_CELLS = 200;
+    private static final int MAX_RECIPE_CELLS = 81;  // 9 columns × 9 rows
 
     private static final Value<String> FILTER_ACTIVE =
             Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "FilterActiveStyle");
@@ -63,8 +65,11 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private final Set<String> activeSetFilters = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     private boolean affordabilityEnabled = true;
     private boolean showUncategorized = false;
+    private final Set<String> activeMaterialGroups = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    private List<RecipeFilterPipeline.MaterialGroup> currentGroups = new ArrayList<>();
     private List<RecipeFilterPipeline.TaggedRecipe> displayedRecipes = new ArrayList<>();
     private List<String> currentSets = new ArrayList<>();  // sets for active tab
+    private Map<String, RecipeFilterPipeline.CategoryInfo> categoryInfoMap = Map.of();
 
     private Ref<EntityStore> playerRef_ref;
     private Store<EntityStore> playerStore;
@@ -85,13 +90,25 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             benchSet.addAll(fe.benchIds());
 
             allRecipes.add(new RecipeEntry(fe.recipeId(), fe.outputItemId(), fe.blockTypeId(),
-                    primaryBench, fe.set(), true));
+                    primaryBench, fe.set(), true, fe.categoryIds()));
         }
         allRecipes.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.recipeId, b.recipeId));
 
         benchIds.clear();
         benchIds.addAll(benchSet);
         LOGGER.info("[BlueprintBench] Loaded bench IDs: " + benchIds);
+
+        // Debug: log category coverage
+        long withCats = allRecipes.stream().filter(r -> r.categoryIds() != null && !r.categoryIds().isEmpty()).count();
+        LOGGER.info("[BlueprintBench] Recipes with categories: " + withCats + "/" + allRecipes.size());
+        // Debug: log distinct category IDs from recipes
+        Set<String> recipeCatIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (RecipeEntry r : allRecipes) {
+            if (r.categoryIds() != null) recipeCatIds.addAll(r.categoryIds());
+        }
+        LOGGER.info("[BlueprintBench] Distinct recipe category IDs: " + recipeCatIds);
+
+        this.categoryInfoMap = buildCategoryInfoMap();
 
         applyFilter();
     }
@@ -119,16 +136,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         for (RecipeEntry entry : allRecipes) {
             inputs.add(new RecipeFilterPipeline.InputRecipe(
                     entry.recipeId(), entry.outputItemId(), entry.blockTypeId(),
-                    entry.benchId(), entry.set()));
+                    entry.benchId(), entry.set(), entry.categoryIds()));
         }
 
         // Execute pipeline
         RecipeFilterPipeline.PipelineResult result = pipeline.execute(
-                inputs, activeTab, activeSetFilters, searchQuery, checker,
-                affordabilityEnabled, showUncategorized);
+                inputs, activeTab, activeMaterialGroups, activeSetFilters, searchQuery, checker,
+                affordabilityEnabled, showUncategorized, categoryInfoMap);
 
         this.displayedRecipes = result.displayedRecipes();
         this.currentSets = result.currentSets();
+        this.currentGroups = result.currentGroups();
     }
 
     @Override
@@ -145,6 +163,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         this.activeTab = prefs.activeTab != null ? prefs.activeTab : ALL_TAB;
         this.activeSetFilters.clear();
         this.activeSetFilters.addAll(prefs.activeSetFilters);
+        this.activeMaterialGroups.clear();
+        this.activeMaterialGroups.addAll(prefs.activeMaterialGroups);
         this.affordabilityEnabled = prefs.affordabilityEnabled;
         this.showUncategorized = prefs.showUncategorized;
         this.searchQuery = prefs.searchQuery != null ? prefs.searchQuery : "";
@@ -164,14 +184,16 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         // Set "All" text on the first filter button
         cmd.set("#SetFilters[0].Text", "All");
 
-        // Cost cells
-        for (int i = 0; i < MAX_COST_CELLS; i++) {
-            cmd.append("#CostGrid", "Pages/BlueprintBench/CostCell.ui");
-        }
+        // Material group tabs are pre-defined in BlueprintBenchPage.ui
 
         // Recipe icon cells
         for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
             cmd.append("#RecipeGrid", "Pages/BlueprintBench/RecipeIconCell.ui");
+        }
+
+        // Cost cells
+        for (int i = 0; i < MAX_COST_CELLS; i++) {
+            cmd.append("#CostGrid", "Pages/BlueprintBench/CostCell.ui");
         }
 
         // ── Bind ALL events (one-time) ──
@@ -202,6 +224,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         buildBenchTabs(evt);
         buildSetFilterBindings(evt);
+        buildMaterialGroupBindings(evt);
         buildRecipeGridBindings(evt);
 
         // ── Set initial state ──
@@ -209,6 +232,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         cmd.set("#UncategorizedToggle.Style", showUncategorized ? FILTER_ACTIVE : FILTER_INACTIVE);
 
         updateBenchTabs(cmd);
+        updateMaterialGroups(cmd);
         updateSetFilters(cmd);
         updateRecipeGrid(cmd);
         updateDetailPanel(cmd);
@@ -229,6 +253,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         for (int i = 0; i < MAX_COST_CELLS; i++) {
             cmd.set("#CostGrid[" + i + "].Visible", false);
         }
+
         sendUpdate(cmd, null, false);
     }
 
@@ -236,6 +261,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         BlueprintBenchPrefs prefs = new BlueprintBenchPrefs();
         prefs.activeTab = this.activeTab;
         prefs.activeSetFilters = new ArrayList<>(this.activeSetFilters);
+        prefs.activeMaterialGroups = new ArrayList<>(this.activeMaterialGroups);
         prefs.affordabilityEnabled = this.affordabilityEnabled;
         prefs.showUncategorized = this.showUncategorized;
         prefs.searchQuery = this.searchQuery;
@@ -260,11 +286,13 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             if (!tab.equals(this.activeTab)) {
                 this.activeTab = tab;
                 this.activeSetFilters.clear();
+                this.activeMaterialGroups.clear();
                 this.searchQuery = "";
                 this.selectedRecipeId = null;
                 applyFilter();
                 cmd.set("#SearchInput.Value", "");
                 updateBenchTabs(cmd);
+                updateMaterialGroups(cmd);
                 updateSetFilters(cmd);
                 updateRecipeGrid(cmd);
                 updateDetailPanel(cmd);
@@ -294,6 +322,32 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             this.selectedRecipeId = null;
             applyFilter();
             updateSetFilters(cmd);
+            updateMaterialGroups(cmd);
+            updateRecipeGrid(cmd);
+            updateDetailPanel(cmd);
+            savePrefs();
+            sendUpdate(cmd, null, false);
+
+        } else if (data.materialGroupTab != null) {
+            String tabId = data.materialGroupTab;
+            if ("All".equals(tabId)) {
+                activeMaterialGroups.clear();
+            } else {
+                // Parse "G1", "G2", etc. to get the group index
+                int idx = -1;
+                try { idx = Integer.parseInt(tabId.substring(1)) - 1; } catch (Exception ignored) {}
+                if (idx >= 0 && idx < currentGroups.size()) {
+                    String groupName = currentGroups.get(idx).categoryId();
+                    // Tab selection is single-select: clear others and set this one
+                    activeMaterialGroups.clear();
+                    activeMaterialGroups.add(groupName);
+                }
+            }
+            pruneIncompatibleSetFilters();
+            this.selectedRecipeId = null;
+            applyFilter();
+            updateMaterialGroups(cmd);
+            updateSetFilters(cmd);
             updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
             savePrefs();
@@ -302,8 +356,10 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         } else if (data.searchQuery != null) {
             this.searchQuery = data.searchQuery.trim();
             applyFilter();
+            pruneInvalidMaterialGroups();
             this.selectedRecipeId = null;
             updateBenchTabs(cmd);
+            updateMaterialGroups(cmd);
             updateSetFilters(cmd);
             updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
@@ -313,7 +369,10 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         } else if ("ToggleAffordable".equals(data.action)) {
             this.affordabilityEnabled = !this.affordabilityEnabled;
             applyFilter();
+            // Prune stale categories that no longer exist after affordability change
+            pruneInvalidMaterialGroups();
             cmd.set("#AffordableToggle.Style", affordabilityEnabled ? FILTER_ACTIVE : FILTER_INACTIVE);
+            updateMaterialGroups(cmd);
             updateSetFilters(cmd);
             updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
@@ -324,25 +383,24 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             this.showUncategorized = !this.showUncategorized;
             applyFilter();
             cmd.set("#UncategorizedToggle.Style", showUncategorized ? FILTER_ACTIVE : FILTER_INACTIVE);
+            updateMaterialGroups(cmd);
             updateSetFilters(cmd);
             updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
             savePrefs();
             sendUpdate(cmd, null, false);
 
-        } else if (data.action != null && data.action.startsWith("RecipeSelect:")) {
+        } else if (data.action != null && data.action.startsWith("RecipeSelect:idx:")) {
             int idx = -1;
-            try {
-                idx = Integer.parseInt(data.action.substring("RecipeSelect:".length()));
-            } catch (NumberFormatException ignored) {}
-
+            try { idx = Integer.parseInt(data.action.substring("RecipeSelect:idx:".length())); } catch (NumberFormatException ignored) {}
             if (idx >= 0 && idx < displayedRecipes.size()) {
                 RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(idx);
                 this.selectedRecipeId = entry.recipeId();
+                updateRecipeGrid(cmd);
                 updateDetailPanel(cmd);
                 savePrefs();
-                sendUpdate(cmd, null, false);
             }
+            sendUpdate(cmd, null, false);
 
         } else if ("GiveBlueprint".equals(data.action)) {
             giveSelectedBlueprint(store, ref, cmd);
@@ -405,8 +463,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
     private void buildRecipeGridBindings(UIEventBuilder evt) {
         for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
-            evt.addEventBinding(CustomUIEventBindingType.Activating, "#RecipeGrid[" + i + "] #CellBtn",
-                    EventData.of("Action", "RecipeSelect:" + i));
+            evt.addEventBinding(CustomUIEventBindingType.Activating,
+                    "#RecipeGrid[" + i + "] #CellBtn",
+                    EventData.of("Action", "RecipeSelect:idx:" + i));
         }
     }
 
@@ -476,6 +535,121 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         for (int i = 0; i < MAX_COST_CELLS; i++) {
             cmd.set("#CostGrid[" + i + "].Visible", false);
         }
+    }
+
+    // ─── Placeholder list ─────────────────────────────────────
+
+    private void buildMaterialGroupBindings(UIEventBuilder evt) {
+        evt.addEventBinding(
+                CustomUIEventBindingType.SelectedTabChanged, "#MaterialGroups",
+                EventData.of("@MaterialGroupTab", "#MaterialGroups.SelectedTab"),
+                false
+        );
+    }
+
+    private void updateMaterialGroups(UICommandBuilder cmd) {
+        // Show/hide pre-defined TabButtons by index (0=All, 1=G1, 2=G2, ...)
+        for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
+            int childIndex = i + 1; // offset by 1 because index 0 is "All"
+            if (i < currentGroups.size()) {
+                RecipeFilterPipeline.MaterialGroup group = currentGroups.get(i);
+                cmd.set("#MaterialGroups[" + childIndex + "].Visible", true);
+                cmd.set("#MaterialGroups[" + childIndex + "].TooltipText", group.displayName());
+                // Extract filename from engine icon path (e.g. "Icons/ItemCategories/Build-Beds.png" → "Build-Beds.png")
+                String iconFile = group.iconPath();
+                LOGGER.info("[BlueprintBench] Group " + i + ": categoryId=" + group.categoryId()
+                        + " displayName=" + group.displayName()
+                        + " rawIconPath=" + iconFile);
+                if (iconFile != null && iconFile.contains("/")) {
+                    iconFile = iconFile.substring(iconFile.lastIndexOf('/') + 1);
+                }
+                String iconPath = "Common/GroupIcons/" + iconFile;
+                LOGGER.info("[BlueprintBench] Group " + i + ": resolved iconFile=" + iconFile
+                        + " → " + iconPath);
+                if (iconFile != null && !iconFile.isEmpty()) {
+                    cmd.set("#MaterialGroups[" + childIndex + "].Icon", iconPath);
+                }
+            } else {
+                cmd.set("#MaterialGroups[" + childIndex + "].Visible", false);
+            }
+        }
+        // Set selected tab
+        if (activeMaterialGroups.isEmpty()) {
+            cmd.set("#MaterialGroups.SelectedTab", "All");
+        } else {
+            // Find the first active group's tab ID
+            for (int i = 0; i < currentGroups.size(); i++) {
+                if (activeMaterialGroups.contains(currentGroups.get(i).categoryId())) {
+                    cmd.set("#MaterialGroups.SelectedTab", "G" + (i + 1));
+                    break;
+                }
+            }
+        }
+    }
+
+    private void pruneIncompatibleSetFilters() {
+        if (activeMaterialGroups.isEmpty()) return;
+        // A set filter is compatible if any recipe with that set also has an active category
+        activeSetFilters.removeIf(setName -> {
+            for (RecipeEntry entry : allRecipes) {
+                if (setName.equalsIgnoreCase(entry.set()) && entry.categoryIds() != null) {
+                    for (String catId : entry.categoryIds()) {
+                        if (activeMaterialGroups.contains(catId)) return false; // compatible
+                    }
+                }
+            }
+            return true; // no recipe with this set has an active category
+        });
+    }
+
+    private void pruneInvalidMaterialGroups() {
+        if (activeMaterialGroups.isEmpty()) return;
+        Set<String> validCats = new HashSet<>();
+        for (RecipeFilterPipeline.MaterialGroup g : currentGroups) {
+            validCats.add(g.categoryId());
+        }
+        if (activeMaterialGroups.removeIf(c -> !validCats.contains(c))) {
+            applyFilter(); // re-run pipeline with pruned selection
+        }
+    }
+
+    private Map<String, RecipeFilterPipeline.CategoryInfo> buildCategoryInfoMap() {
+        Map<String, ItemCategory> allCats = ItemCategory.getAssetMap().getAssetMap();
+
+        // Item.getCategories() returns dot-notation strings like "Blocks.Metal",
+        // "Furniture.Beds", but ItemCategory.getId() returns simple IDs like "Metal".
+        // Build the map with dot-notation keys to match recipe category IDs.
+        Map<String, RecipeFilterPipeline.CategoryInfo> map = new LinkedHashMap<>();
+        for (ItemCategory topLevel : allCats.values()) {
+            LOGGER.info("[BlueprintBench] Top-level category: id=" + topLevel.getId()
+                    + " name=" + topLevel.getName() + " icon=" + topLevel.getIcon()
+                    + " order=" + topLevel.getOrder());
+            // Top-level entries (e.g. "Blocks", "Items", "Furniture")
+            map.put(topLevel.getId(), new RecipeFilterPipeline.CategoryInfo(
+                    topLevel.getId(), capitalize(topLevel.getId()), topLevel.getIcon(), topLevel.getOrder()));
+
+            // Child entries with dot-notation keys (e.g. "Blocks.Metal", "Furniture.Beds")
+            ItemCategory[] children = topLevel.getChildren();
+            if (children != null) {
+                for (ItemCategory child : children) {
+                    String dotKey = topLevel.getId() + "." + child.getId();
+                    LOGGER.info("[BlueprintBench]   Child category: dotKey=" + dotKey
+                            + " name=" + child.getName() + " icon=" + child.getIcon()
+                            + " order=" + child.getOrder());
+                    map.put(dotKey, new RecipeFilterPipeline.CategoryInfo(
+                            dotKey, capitalize(child.getId()), child.getIcon(), child.getOrder()));
+                }
+            }
+        }
+        LOGGER.info("[BlueprintBench] Built categoryInfoMap with " + map.size() + " categories: " + map.keySet());
+        return map;
+    }
+
+    private static String capitalize(String id) {
+        if (id == null || id.isEmpty()) return id;
+        // "TechnicalBlocks" → "Technical Blocks", "Beds" → "Beds"
+        String spaced = id.replaceAll("([a-z])([A-Z])", "$1 $2");
+        return Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1);
     }
 
     private void giveSelectedBlueprint(Store<EntityStore> store, Ref<EntityStore> ref,
@@ -554,7 +728,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     }
 
     private record RecipeEntry(String recipeId, String outputItemId, String blockTypeId,
-                               String benchId, String set, boolean affordable) {}
+                               String benchId, String set, boolean affordable,
+                               List<String> categoryIds) {}
 
     public static class EventPayload {
         public static final BuilderCodec<EventPayload> CODEC = BuilderCodec.builder(EventPayload.class, EventPayload::new)
@@ -562,6 +737,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 .append(new KeyedCodec<>("@SelectedTab", Codec.STRING), (e, s) -> e.selectedTab = s, e -> e.selectedTab).add()
                 .append(new KeyedCodec<>("RecipeId", Codec.STRING), (e, s) -> e.recipeId = s, e -> e.recipeId).add()
                 .append(new KeyedCodec<>("Action", Codec.STRING), (e, s) -> e.action = s, e -> e.action).add()
+                .append(new KeyedCodec<>("@MaterialGroupTab", Codec.STRING), (e, s) -> e.materialGroupTab = s, e -> e.materialGroupTab).add()
                 .append(new KeyedCodec<>("ItemStackId", Codec.STRING), (e, s) -> e.itemStackId = s, e -> e.itemStackId).add()
                 .append(new KeyedCodec<>("SlotIndex", Codec.INTEGER), (e, i) -> e.slotIndex = i, e -> e.slotIndex).add()
                 .build();
@@ -570,6 +746,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         String selectedTab;
         String recipeId;
         String action;
+        String materialGroupTab;
         String itemStackId;
         Integer slotIndex;
     }

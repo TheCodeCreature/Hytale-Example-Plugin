@@ -59,6 +59,8 @@ A comprehensive local reference for understanding how Hytale runs, its internal 
 - [UI Element Reference](./ui/ui-element-reference.md) — All element types and properties
 - [CommonUI Library](./ui/ui-commonui-library.md) — Reusable components from `Common.ui`
 - [UI Data Binding](./ui/ui-data-binding.md) — Events, value capture, codec patterns
+- [Path Resolution — Definitive Reference](./ui/path-resolution-definitive.md) — How `.ui` paths, `cmd.append()`, and `cmd.set()` resolve (**read this if icons don't show**)
+- [Icon Paths & Image References](./ui/icon-paths-and-images.md) — Icon directories, display patterns, gotchas
 
 ### Plugin API
 - [Plugin Lifecycle](./plugins/lifecycle.md) — JavaPlugin, JavaPluginInit, setup(), events

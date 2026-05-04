@@ -1,5 +1,5 @@
 // Blueprint Bench — main page layout
-// Server appends reusable .ui components (SetFilterButton, CostCell) during build()
+// Server appends reusable .ui components (SetFilterButton, CostCell, PlaceholderRow) during build()
 // Server updates via cmd.set() only in handleDataEvent() — no append/clear after build()
 
 $C = "../../Common.ui";
@@ -82,24 +82,57 @@ Group {
     // Main container
     $C.@Container {
     @Anchor = (Left: 50, Top: 0, Width: 1060, Bottom: 10);
+    @ContentPadding = 0;
 
     #Title {
         Group {
             LayoutMode: Left;
+            Anchor: (Full: 0);
 
-            Group {
+            $C.@Title {
+                @Text = "Blueprint Bench:";
+            }
+
+            Label #ActiveBenchLabel {
                 FlexWeight: 1;
-                LayoutMode: Left;
-                $C.@Title {
-                    @Text = "Blueprint Bench:";
-                }
+                Anchor: (Left: 0, Top: 4);
+                Text: "All";
+                Style: (FontSize: 18, TextColor: $C.@ColorDefault, RenderBold: true);
+                MaskTexturePath: $C.@TextHighlightGradientMask;
+            }
 
-                // $C.@Title #ActiveBenchLabel {
-                Label #ActiveBenchLabel {
-                    Text: "All";
-                    Style: (FontSize: 18, TextColor: $C.@ColorDefault, RenderBold: true);
-                    MaskTexturePath: $C.@TextHighlightGradientMask;
-                }
+            // Material group filter tabs — inline in header bar
+            TabNavigation #MaterialGroups {
+                Anchor: (Height: 34, Left: 4);
+                Style: $C.@HeaderTabsStyle;
+                SelectedTab: "All";
+
+                TabButton { Id: "All"; Icon: "../../Common/RecipesIcon.png"; TooltipText: "All"; }
+                TabButton { Id: "G1"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G2"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G3"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G4"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G5"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G6"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G7"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G8"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G9"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G10"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G11"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G12"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G13"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G14"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G15"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G16"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G17"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G18"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G19"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G20"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G21"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G22"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G23"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G24"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
+                TabButton { Id: "G25"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
             }
 
             $C.@HeaderSearch {}
@@ -108,10 +141,11 @@ Group {
 
     #Content {
 
-    // Two-column layout
+    // Three-column layout
     Group {
         FlexWeight: 1;
         LayoutMode: Left;
+        Padding: (Left: 8, Right: 8, Bottom: 8);
 
     // ══════════════════════════════
     // LEFT COLUMN — Recipe browser
@@ -162,7 +196,7 @@ Group {
     // CENTER COLUMN — Recipe browser
     // ══════════════════════════════
 
-            // Scrollable recipe item grid — append-based, no drag
+            // Scrollable recipe item grid — ItemGrid for drag support
             Group {
                 FlexWeight: 1;
                 LayoutMode: TopScrolling;
@@ -223,6 +257,42 @@ Group {
         Group { Anchor: (Height: 8); }
         $C.@PanelSeparatorFancy {}
         Group { Anchor: (Height: 8); }
+
+        // ── Placeholder List ──
+        Label #InputSlotLabel {
+            Text: "Placeholders";
+            Anchor: (Height: 20);
+            Style: @DetailLabelStyle;
+        }
+
+        Group { Anchor: (Height: 4); }
+
+        // Scrollable list of placeholder rows — server appends PlaceholderRow.ui instances during build()
+        Group {
+            FlexWeight: 1;
+            LayoutMode: TopScrolling;
+            ScrollbarStyle: $C.@DefaultScrollbarStyle;
+
+            // ── Empty state label (outside PlaceholderList to avoid index offset) ──
+            Label #NoPlaceholdersLabel {
+                Text: "No placeholders in hotbar";
+                Anchor: (Height: 32);
+                Visible: false;
+                Style: LabelStyle(
+                    FontSize: 11, TextColor: #6e7da1,
+                    HorizontalAlignment: Center, VerticalAlignment: Center
+                );
+            }
+
+            Group #PlaceholderList {
+                Padding: (Top: 20);
+                LayoutMode: Top;
+            }
+        }
+
+        Group { Anchor: (Height: 4); }
+        $C.@PanelSeparatorFancy {}
+        Group { Anchor: (Height: 4); }
 
         // ── Give Stencil Button ──
         $C.@SecondaryTextButton #GetPlaceholderBtn {

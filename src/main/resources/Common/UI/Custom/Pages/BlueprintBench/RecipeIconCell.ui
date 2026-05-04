@@ -11,7 +11,7 @@
 Group {
     Anchor: (Width: 72, Height: 72);
     Padding: (Left: 4, Right: 4, Top: 4, Bottom: 4);
-    Group{
+    Group {
         Anchor: (Full: 0);
         Background: "../../Common/BlockSelectorSlotBackground.png";
 

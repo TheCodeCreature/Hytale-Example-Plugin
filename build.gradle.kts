@@ -1,3 +1,5 @@
+import java.util.jar.JarFile
+
 plugins {
     `maven-publish`
     id("hytale-mod") version "0.+"
@@ -14,10 +16,30 @@ repositories {
     }
 }
 
+val hytaleInstall = file("${System.getenv("APPDATA")}/Hytale/install/release/package/game/latest")
+val serverJar = file("$hytaleInstall/Server/HytaleServer.jar")
+
+// Auto-detect server version from the local HytaleServer.jar manifest.
+// Falls back to the gradle.properties value if the JAR doesn't exist (e.g. CI).
+val detectedServerVersion: String by lazy {
+    if (serverJar.exists()) {
+        JarFile(serverJar).use { jar ->
+            jar.manifest.mainAttributes.getValue("Implementation-Version")
+                ?: findProperty("server_version")?.toString()
+                ?: error("No Implementation-Version in HytaleServer.jar and no server_version in gradle.properties")
+        }
+    } else {
+        findProperty("server_version")?.toString()
+            ?: error("HytaleServer.jar not found and no server_version fallback in gradle.properties")
+    }
+}
+
 dependencies {
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jspecify)
 
+    compileOnly(files("$hytaleInstall/Server/HytaleServer.jar"))
+    compileOnly(files("$hytaleInstall/Assets.zip"))
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
@@ -32,13 +54,13 @@ configurations {
 }
 
 hytale {
-//     uncomment if you want to add the Assets.zip file to your external libraries;
-//     ⚠️ CAUTION, this file is very big and might make your IDE unresponsive for some time!
+    // uncomment if you want to add the Assets.zip file to your external libraries;
+    // ⚠️ CAUTION, this file is very big and might make your IDE unresponsive for some time!
 
-//     addAssetsDependency = true
+    addAssetsDependency = true
 
     // uncomment if you want to develop your mod against the pre-release version of the game.
-    //
+    
     // updateChannel = "pre-release"
 }
 
@@ -56,7 +78,7 @@ tasks.named<ProcessResources>("processResources") {
         "plugin_maven_group" to project.group,
         "plugin_name" to project.name,
         "plugin_version" to project.version,
-        "server_version" to findProperty("server_version"),
+        "server_version" to detectedServerVersion,
 
         "plugin_description" to findProperty("plugin_description"),
         "plugin_website" to findProperty("plugin_website"),

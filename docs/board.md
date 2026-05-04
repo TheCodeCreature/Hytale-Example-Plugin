@@ -1,12 +1,12 @@
 # Product Board
 
-> Last updated: 2026-05-01 10:00
+> Last updated: 2026-05-02 03:00
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 22
+    "Backlog" : 26
     "In Progress" : 1
     "Done" : 27
     "Cancelled" : 8
@@ -41,6 +41,10 @@ pie title Backlog Distribution
 | S2604261660 | Story | Delete PlaceBlockIndicatorListener Stub | E2604221030 | medium |
 | F2604221050 | Feature | Rarity-Based Availability Indicators | E2604221030 | high |
 | F2604221055 | Feature | Resource Consumption (Inventory Only) | E2604221030 | high |
+| F2605020300 | Feature | Material Group Pre-Filter | E2604221030 | high |
+| S2605020305 | Story | Pipeline Material Group Extraction and Filtering | E2604221030 | high |
+| S2605020310 | Story | Material Group UI Bar and Event Handling | E2604221030 | high |
+| S2605020315 | Story | Persist Material Group Preferences | E2604221030 | medium |
 | S2604221135 | Story | Atomic Resource Consumption from Inventory | E2604221030 | high |
 | S2604221140 | Story | PlacementCostScaler Mutual Exclusion | E2604221030 | high |
 | S2604221200 | Story | Inventory Resource Availability Check | E2604221030 | high |

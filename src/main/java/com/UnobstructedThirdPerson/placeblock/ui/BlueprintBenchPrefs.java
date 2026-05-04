@@ -12,6 +12,8 @@ public class BlueprintBenchPrefs {
             .append(new KeyedCodec<>("ActiveTab", Codec.STRING, true), (p, v) -> p.activeTab = v, p -> p.activeTab).add()
             .append(new KeyedCodec<>("ActiveSetFilters", new ArrayCodec<>(Codec.STRING, String[]::new), true),
                     (p, v) -> p.activeSetFilters = Arrays.asList(v), p -> p.activeSetFilters.toArray(new String[0])).add()
+            .append(new KeyedCodec<>("ActiveMaterialGroups", new ArrayCodec<>(Codec.STRING, String[]::new), true),
+                    (p, v) -> p.activeMaterialGroups = Arrays.asList(v), p -> p.activeMaterialGroups.toArray(new String[0])).add()
             .append(new KeyedCodec<>("AffordabilityEnabled", Codec.BOOLEAN, true), (p, v) -> p.affordabilityEnabled = v, p -> p.affordabilityEnabled).add()
             .append(new KeyedCodec<>("ShowUncategorized", Codec.BOOLEAN, true), (p, v) -> p.showUncategorized = v, p -> p.showUncategorized).add()
             .append(new KeyedCodec<>("SearchQuery", Codec.STRING, true), (p, v) -> p.searchQuery = v, p -> p.searchQuery).add()
@@ -20,6 +22,7 @@ public class BlueprintBenchPrefs {
 
     String activeTab = "All";
     List<String> activeSetFilters = new ArrayList<>();
+    List<String> activeMaterialGroups = new ArrayList<>();
     boolean affordabilityEnabled = true;
     boolean showUncategorized = false;
     String searchQuery = "";

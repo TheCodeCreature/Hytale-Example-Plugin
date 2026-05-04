@@ -49,7 +49,8 @@ public final class RecipeFilterPipeline {
             String outputItemId,
             String blockTypeId,
             String benchId,
-            @Nullable String set
+            @Nullable String set,
+            List<String> categoryIds
     ) {}
 
     /**
@@ -70,7 +71,30 @@ public final class RecipeFilterPipeline {
             String blockTypeId,
             String benchId,
             String effectiveSet,
-            boolean affordable
+            boolean affordable,
+            List<String> categoryIds
+    ) {}
+
+    public record CategoryInfo(
+            String categoryId,
+            String displayName,
+            String iconPath,
+            int sortOrder
+    ) {}
+
+    /**
+     * A material group derived from ItemCategory metadata.
+     *
+     * @param categoryId  the category asset ID
+     * @param displayName human-readable name
+     * @param iconPath    icon asset path
+     * @param sortOrder   sort priority
+     */
+    public record MaterialGroup(
+            String categoryId,
+            String displayName,
+            String iconPath,
+            int sortOrder
     ) {}
 
     /**
@@ -78,10 +102,12 @@ public final class RecipeFilterPipeline {
      *
      * @param displayedRecipes recipes to render in the grid, sorted and filtered
      * @param currentSets      set names to show in the sidebar, sorted case-insensitive
+     * @param currentGroups    all available material groups (for group bar)
      */
     public record PipelineResult(
             List<TaggedRecipe> displayedRecipes,
-            List<String> currentSets
+            List<String> currentSets,
+            List<MaterialGroup> currentGroups
     ) {}
 
     /**
@@ -117,56 +143,66 @@ public final class RecipeFilterPipeline {
      * <p>Stages run sequentially with no backtracking:
      * <pre>
      * allRecipes → filterByTab → filterBySearch → tagAffordability
-     *            → extractSets (→ currentSets)
+     *            → extractMaterialGroups (→ currentGroups)
+     *            → filterByMaterialGroups (→ groupFiltered)
+     *            → extractSets (→ visibleSets)
      *            → filterBySets → sort (→ displayedRecipes)
      * </pre>
      *
-     * @param allRecipes       complete recipe list from the registry (unmodified)
-     * @param activeTab        current bench tab; {@code "All"} = no tab filter
-     * @param activeSetFilters selected set names for sidebar filtering;
-     *                         empty = show all sets
-     * @param searchQuery      search text; empty or null = no search filter
-     * @param checker          affordability checker; {@code null} = all recipes
-     *                         are considered affordable
-     * @param affordableOnly   when true, unaffordable recipes are removed before
-     *                         extracting sets and building the display list;
-     *                         sets with zero affordable recipes will not appear
-     * @param showUncategorized when false, recipes with effectiveSet equal to
-     *                          {@link #UNCATEGORIZED_SET} are excluded from results;
-     *                          when true, they are included
-     * @return pipeline result containing displayed recipes and sidebar sets
+     * @param allRecipes             complete recipe list from the registry (unmodified)
+     * @param activeTab              current bench tab; {@code "All"} = no tab filter
+     * @param activeMaterialGroups   selected material group prefixes; empty = show all groups
+     * @param activeSetFilters       selected set names for sidebar filtering;
+     *                               empty = show all sets
+     * @param searchQuery            search text; empty or null = no search filter
+     * @param checker                affordability checker; {@code null} = all recipes
+     *                               are considered affordable
+     * @param affordableOnly         when true, unaffordable recipes are removed before
+     *                               extracting sets and building the display list;
+     *                               sets with zero affordable recipes will not appear
+     * @param showUncategorized      when false, recipes with effectiveSet equal to
+     *                               {@link #UNCATEGORIZED_SET} are excluded from results;
+     *                               when true, they are included
+     * @return pipeline result containing displayed recipes, sidebar sets, and material groups
      */
     public PipelineResult execute(
             List<InputRecipe> allRecipes,
             String activeTab,
+            Set<String> activeMaterialGroups,
             Set<String> activeSetFilters,
             String searchQuery,
             @Nullable AffordabilityChecker checker,
             boolean affordableOnly,
-            boolean showUncategorized
+            boolean showUncategorized,
+            Map<String, CategoryInfo> categoryInfoMap
     ) {
         List<InputRecipe> tabFiltered = filterByTab(allRecipes, activeTab);
         List<InputRecipe> searchFiltered = filterBySearch(tabFiltered, searchQuery);
         List<TaggedRecipe> tagged = tagAffordability(searchFiltered, checker);
 
-        // Sets are driven by affordability: only sets with ≥1 affordable recipe appear.
-        // When affordability is OFF, all sets qualify (all items treated as affordable).
-        List<String> currentSets = affordableOnly
-                ? extractSets(filterByAffordability(tagged))
-                : extractSets(tagged);
+        // Derive material groups from category metadata.
+        // When affordability is on, only show categories that contain ≥1 affordable recipe.
+        List<TaggedRecipe> categorySource = affordableOnly ? filterByAffordability(tagged) : tagged;
+        List<MaterialGroup> currentGroups = extractMaterialGroups(categorySource, categoryInfoMap, 25);
 
-        // Restrict items to qualifying sets. When the user selects specific sets,
-        // filter to those; when "All" is selected (empty), restrict to currentSets
-        // so items from non-qualifying sets never appear.
+        // Filter by active material groups (category-based)
+        List<TaggedRecipe> groupFiltered = filterByMaterialGroups(tagged, activeMaterialGroups);
+
+        // Sets are derived from category-filtered recipes
+        List<String> visibleSets = affordableOnly
+                ? extractSets(filterByAffordability(groupFiltered))
+                : extractSets(groupFiltered);
+
+        // Restrict to selected sets or all visible sets
         Set<String> effectiveSetFilter = (activeSetFilters != null && !activeSetFilters.isEmpty())
                 ? activeSetFilters
-                : new TreeSet<>(currentSets);
-        List<TaggedRecipe> setFiltered = filterBySets(tagged, effectiveSetFilter);
+                : new TreeSet<>(visibleSets);
+        List<TaggedRecipe> setFiltered = filterBySets(groupFiltered, effectiveSetFilter);
         if (!showUncategorized) {
             setFiltered.removeIf(r -> UNCATEGORIZED_SET.equals(r.effectiveSet()));
         }
         List<TaggedRecipe> sorted = sort(setFiltered);
-        return new PipelineResult(sorted, currentSets);
+        return new PipelineResult(sorted, visibleSets, currentGroups);
     }
 
     // ─── Individual stages (package-private for testing) ────────
@@ -251,7 +287,8 @@ public final class RecipeFilterPipeline {
                     recipe.blockTypeId(),
                     recipe.benchId(),
                     effectiveSet,
-                    affordable
+                    affordable,
+                    recipe.categoryIds()
             ));
         }
         return result;
@@ -347,6 +384,71 @@ public final class RecipeFilterPipeline {
                 .thenComparing(r -> !r.affordable())
                 .thenComparing(TaggedRecipe::recipeId, String.CASE_INSENSITIVE_ORDER));
         return sorted;
+    }
+
+    /**
+     * Derives material groups from category metadata on the tagged recipes.
+     *
+     * @param recipes         tagged recipes (post-affordability, pre-set-filtering)
+     * @param categoryInfoMap category metadata keyed by category ID
+     * @param maxGroups       maximum number of groups to return
+     * @return sorted list of material groups
+     */
+    List<MaterialGroup> extractMaterialGroups(List<TaggedRecipe> recipes,
+                                              Map<String, CategoryInfo> categoryInfoMap,
+                                              int maxGroups) {
+        // Collect distinct category IDs present on any recipe
+        Set<String> seenCategories = new LinkedHashSet<>();
+        for (TaggedRecipe recipe : recipes) {
+            if (recipe.categoryIds() != null) {
+                seenCategories.addAll(recipe.categoryIds());
+            }
+        }
+
+        // Build groups from categories that exist in the info map (top-level only)
+        List<MaterialGroup> groups = new ArrayList<>();
+        for (String catId : seenCategories) {
+            CategoryInfo info = categoryInfoMap.get(catId);
+            if (info != null) {
+                groups.add(new MaterialGroup(info.categoryId(), info.displayName(),
+                        info.iconPath(), info.sortOrder()));
+            }
+        }
+
+        // Sort by sortOrder, then categoryId as tiebreaker
+        groups.sort(Comparator.comparingInt(MaterialGroup::sortOrder)
+                .thenComparing(MaterialGroup::categoryId, String.CASE_INSENSITIVE_ORDER));
+        if (groups.size() > maxGroups) {
+            groups = new ArrayList<>(groups.subList(0, maxGroups));
+        }
+        return groups;
+    }
+
+    /**
+     * Filters recipes to only include those with at least one category
+     * matching the active material groups.
+     *
+     * @param recipes              tagged recipe list
+     * @param activeMaterialGroups selected category IDs; empty = no filtering
+     * @return new list containing only matching recipes
+     */
+    List<TaggedRecipe> filterByMaterialGroups(List<TaggedRecipe> recipes,
+                                              Set<String> activeMaterialGroups) {
+        if (activeMaterialGroups == null || activeMaterialGroups.isEmpty()) {
+            return new ArrayList<>(recipes);
+        }
+        List<TaggedRecipe> result = new ArrayList<>();
+        for (TaggedRecipe recipe : recipes) {
+            if (recipe.categoryIds() != null) {
+                for (String catId : recipe.categoryIds()) {
+                    if (activeMaterialGroups.contains(catId)) {
+                        result.add(recipe);
+                        break;
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     /**
