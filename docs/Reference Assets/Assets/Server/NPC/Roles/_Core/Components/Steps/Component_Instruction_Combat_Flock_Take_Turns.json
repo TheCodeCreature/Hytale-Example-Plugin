@@ -1,0 +1,332 @@
+{
+  "Class": "Instruction",
+  "Parameters": {
+    "Enabled": {
+      "Value": true,
+      "Description": "Whether the component is enabled."
+    },
+    "AlertedRange": {
+      "Value": 45,
+      "Description": "The alerted range of the NPC."
+    },
+    "CombatTurnTargetRange": {
+      "Value": 8,
+      "Description": "The target range at which the turn-taking behavior is enabled."
+    },
+    "CombatTurnAttackWeight": {
+      "Value": 30,
+      "Description": "The likelihood an NPC will choose to attack when a new turn is triggered, in percentage."
+    },
+    "CombatTurnDuration": {
+      "Value": [ 4, 6 ],
+      "Description": "The timeout between attack turns."
+    },
+    "CombatTurnDistanceRange": {
+      "Value": [ 6, 8 ],
+      "Description": "The distance range inside which flock NPCs will wait their turn."
+    },
+    "CombatTurnFlockMaxRange": {
+      "Value": [ 0, 18 ],
+      "Description": "The distance range where an NPC will query for flock members. If none are found, the NPC will go back to combat. The upper bound should be equal or greater than twice the upper bound of CombatTurnDistanceRange."
+    },
+    "CombatTurnStrafingDurationRange": {
+      "Value": [ 4, 6 ],
+      "Description": "The strafing duration range of flock NPCs waiting their turn."
+    },
+    "CombatTurnStrafingFrequencyRange": {
+      "Value": [ 2, 4 ],
+      "Description": "The strafing frequency range of flock NPCs waiting their turn."
+    },
+    "CombatTurnStrafingHealthRange": {
+      "Value": [ 0, 0.35 ],
+      "Description": "The range of the health value in which an attack will immediately trigger the NPC to back-off, as a percentage of the NPC's max health"
+    },
+    "CombatMovingRelativeSpeed": {
+      "Value": 0.6,
+      "Description": "Relative speed to use during combat specific movement (e.g. to achieve slower strafing)."
+    }
+  },
+  "Content": {
+    "Enabled": { "Compute": "Enabled" },
+    "Continue": true,
+    "Sensor": {
+      "Type": "And",
+      "Sensors": [
+        {
+          "Type": "Target",
+          "Filters": [ ],
+          "Range": { "Compute": "CombatTurnTargetRange" }
+        },
+        {
+          "$Comment": "The NPC isn't alone. TODO: replace this with a FlockCount sensor?",
+          "Type": "Not",
+          "Sensor": {
+            "Type": "Count",
+            "Count": [ 0, 0 ],
+            "IncludeGroups": [ "Self" ],
+            "Range": { "Compute": "CombatTurnFlockMaxRange" }
+          }
+        }
+      ]
+    },
+    "Instructions": [
+      {
+        "Sensor": {
+          "Type": "Flag",
+          "Name": "Retreat",
+          "Set": true
+        },
+        "Instructions": [
+          {
+            "$Comment": "Start a timer to switch attackers",
+            "Sensor": {
+              "Type": "Any",
+              "Once": true
+            },
+            "Actions": [
+              {
+                "Type": "TimerStart",
+                "Name": "TurnTimer",
+                "StartValueRange": { "Compute": "CombatTurnDuration" },
+                "RestartValueRange": { "Compute": "CombatTurnDuration" }
+              },
+              {
+                "Type": "TimerRestart",
+                "Name": "TurnTimer"
+              }
+            ]
+          },
+          {
+            "Sensor": {
+              "Type": "Beacon",
+              "Message": "Message_Attack",
+              "TargetSlot": "LockedTarget"
+            },
+            "Type": "Random",
+            "ExecuteFor": [ 1, 1 ],
+            "Instructions": [
+              {
+                "$Comment": "If told to attack, go back to the Default combat state",
+                "Weight": { "Compute": "CombatTurnAttackWeight" },
+                "Actions": [
+                  {
+                    "Type": "SetFlag",
+                    "Name": "Retreat",
+                    "SetTo": false
+                  }
+                ]
+              },
+              {
+                "$Comment": "If told to back off, restart turn timer",
+                "Enabled": { "Compute": "CombatTurnAttackWeight < 100" },
+                "Weight": { "Compute": "100 - CombatTurnAttackWeight" },
+                "Actions": [
+                  {
+                    "Type": "TimerRestart",
+                    "Name": "TurnTimer"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "$Comment": "Conditions that always trigger a retreat: timer ended, target was flanked, target is standing still or NPC was damaged",
+            "Sensor": {
+              "Type": "Or",
+              "Sensors": [
+                {
+                  "$Comment": "Target is attacking the NPC",
+                  "Type": "Damage"
+                },
+                {
+                  "$Comment": "Target has been flanked",
+                  "Type": "Target",
+                  "Filters": [
+                    {
+                      "Type": "Not",
+                      "Filter": {
+                        "Type": "SpotsMe",
+                        "ViewAngle": 220
+                      }
+                    }
+                  ]
+                },
+                {
+                  "$Comment": "Timer has ended",
+                  "Type": "Timer",
+                  "Name": "TurnTimer",
+                  "State": "Stopped"
+                },
+                {
+                  "Type": "Target",
+                  "Filters": [
+                    {
+                      "Type": "MovementState",
+                      "State": "Idle"
+                    }
+                  ]
+                }
+              ]
+            },
+            "Actions": [
+              {
+                "Type": "FlockBeacon",
+                "Message": "Message_Attack",
+                "SendTargetSlot": "LockedTarget",
+                "SendToSelf": false
+              },
+              {
+                "Type": "SetFlag",
+                "Name": "Retreat",
+                "SetTo": false
+              }
+            ]
+          },
+          {
+            "$Comment": "Retreat combat movement: strafe around the target at a distance",
+            "Sensor": {
+              "Type": "Target",
+              "Range": { "Compute": "AlertedRange" },
+              "Filters": [
+                {
+                  "Type": "LineOfSight"
+                }
+              ]
+            },
+            "BodyMotion": {
+              "Type": "MaintainDistance",
+              "DesiredDistanceRange": { "Compute": "CombatTurnDistanceRange" },
+              "StrafingDurationRange": { "Compute": "CombatTurnStrafingDurationRange" },
+              "StrafingFrequencyRange": { "Compute": "CombatTurnStrafingFrequencyRange" },
+              "RelativeForwardsSpeed": { "Compute": "CombatMovingRelativeSpeed" },
+              "RelativeBackwardsSpeed": { "Compute": "CombatMovingRelativeSpeed" }
+            }
+          },
+          {
+            "Actions": [
+              {
+                "Type": "SetFlag",
+                "Name": "Retreat",
+                "SetTo": false
+              }
+            ],
+            "$Comment": "Target was lost, reset flag"
+          }
+        ],
+        "$Comment": "Behaviors when retreating"
+      },
+      {
+        "Sensor": {
+          "Type": "Flag",
+          "Name": "Retreat",
+          "Set": false
+        },
+        "Instructions": [
+          {
+            "$Comment": "Start a timer to switch attackers",
+            "Sensor": {
+              "Type": "Any",
+              "Once": true
+            },
+            "Actions": [
+              {
+                "Type": "TimerStart",
+                "Name": "TurnTimer",
+                "StartValueRange": { "Compute": "CombatTurnDuration" },
+                "RestartValueRange": { "Compute": "CombatTurnDuration" }
+              },
+              {
+                "Type": "TimerRestart",
+                "Name": "TurnTimer"
+              }
+            ]
+          },
+          {
+            "Sensor": {
+              "Type": "Beacon",
+              "Message": "Message_Attack",
+              "TargetSlot": "LockedTarget"
+            },
+            "Type": "Random",
+            "ExecuteFor": [ 1, 1 ],
+            "Instructions": [
+              {
+                "$Comment": "If told to attack, keep attacking",
+                "Weight": { "Compute": "CombatTurnAttackWeight" },
+                "Actions": [
+                  {
+                    "Type": "TimerRestart",
+                    "Name": "TurnTimer"
+                  }
+                ]
+              },
+              {
+                "Enabled": { "Compute": "CombatTurnAttackWeight < 100" },
+                "Weight": { "Compute": "100 - CombatTurnAttackWeight" },
+                "Actions": [
+                  {
+                    "Type": "SetFlag",
+                    "Name": "Retreat",
+                    "SetTo": true
+                  }
+                ],
+                "$Comment": "If told to retreat, do that"
+              }
+            ]
+          },
+          {
+            "$Comment": "Conditions that always trigger a retreat: timer ended or was damaged at low health",
+            "Sensor": {
+              "Type": "Or",
+              "Sensors": [
+                {
+                  "$Comment": "NPC was attacked and has low health",
+                  "Type": "And",
+                  "Sensors": [
+                    {
+                      "Type": "Damage"
+                    },
+                    {
+                      "Type": "Self",
+                      "Filters": [
+                        {
+                          "Type": "Stat",
+                          "StatTarget": "Value",
+                          "RelativeTo": "Health",
+                          "Stat": "Health",
+                          "RelativeToTarget": "Max",
+                          "ValueRange": { "Compute": "CombatTurnStrafingHealthRange" }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "$Comment": "Timer ended and the NPC should retreat",
+                  "Type": "Timer",
+                  "Name": "TurnTimer",
+                  "State": "Stopped"
+                }
+              ]
+            },
+            "Actions": [
+              {
+                "Type": "FlockBeacon",
+                "Message": "Message_Attack",
+                "SendTargetSlot": "LockedTarget",
+                "SendToSelf": false
+              },
+              {
+                "Type": "SetFlag",
+                "Name": "Retreat",
+                "SetTo": true
+              }
+            ]
+          }
+        ],
+        "$Comment": "Regular combat behavior"
+      }
+    ]
+  },
+  "Type": "Component"
+}

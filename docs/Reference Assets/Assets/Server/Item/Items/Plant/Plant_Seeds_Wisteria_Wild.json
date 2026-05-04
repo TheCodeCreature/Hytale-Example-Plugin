@@ -1,0 +1,30 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Plant_Seeds_Wisteria_Wild.name"
+  },
+  "Parent": "Plant_Seeds_Oak",
+  "Texture": "Resources/Plants/SeedBag_Textures/Wisteria.png",
+  "InteractionVars": {
+    "SeedId": {
+      "Interactions": [
+        {
+          "Parent": "Seed_Place",
+          "BlockTypeToPlace": "Plant_Sapling_Wisteria_Wild"
+        }
+      ]
+    }
+  },
+  "Icon": "Icons/ItemsGenerated/Plant_Seeds_Wisteria_Wild.png",
+  "IconProperties": {
+    "Scale": 1.1,
+    "Rotation": [
+      0,
+      30,
+      15
+    ],
+    "Translation": [
+      2.5,
+      -11
+    ]
+  }
+}

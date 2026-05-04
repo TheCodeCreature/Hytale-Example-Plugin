@@ -1,0 +1,16 @@
+{
+  "Spawners": [
+    {
+      "SpawnerId": "Butterflies_Wide_GS",
+      "PositionOffset": {
+        "Z": 0.0
+      },
+      "FixedRotation": true
+    },
+    {
+      "SpawnerId": "Azure_Sparks"
+    }
+  ],
+  "IsImportant": false,
+  "CullDistance": 40.0
+}

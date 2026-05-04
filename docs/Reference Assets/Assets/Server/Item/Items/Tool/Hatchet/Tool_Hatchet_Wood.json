@@ -1,0 +1,83 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Tool_Hatchet_Wood.name"
+  },
+  "Parent": "Tool_Hatchet_Crude",
+  "Icon": "Icons/ItemsGenerated/Tool_Hatchet_Wood.png",
+  "Model": "Items/Tools/Hatchet/Wood.blockymodel",
+  "Texture": "Items/Tools/Hatchet/Wood_Texture.png",
+  "Tool": {
+    "Specs": [
+      {
+        "Power": 1,
+        "GatherType": "SoftBlocks"
+      },
+      {
+        "Power": 0.05,
+        "GatherType": "Soils"
+      },
+      {
+        "Power": 0.2,
+        "GatherType": "Woods"
+      },
+      {
+        "Power": 0.05,
+        "GatherType": "Rocks"
+      },
+      {
+        "Power": 0.5,
+        "GatherType": "Benches"
+      },
+      {
+        "Power": 0.017,
+        "GatherType": "VolcanicRocks"
+      },
+      {
+        "Power": 0.034,
+        "GatherType": "OreCopper"
+      },
+      {
+        "Power": 0.03,
+        "GatherType": "OreIron"
+      },
+      {
+        "Power": 0.03,
+        "GatherType": "OreSilver"
+      },
+      {
+        "Power": 0.03,
+        "GatherType": "OreGold"
+      },
+      {
+        "Power": 0.027,
+        "GatherType": "OreThorium"
+      },
+      {
+        "Power": 0.027,
+        "GatherType": "OreCobalt"
+      },
+      {
+        "Power": 0.024,
+        "GatherType": "OreAdamantite"
+      },
+      {
+        "Power": 0.022,
+        "GatherType": "OreMithril"
+      }
+    ],
+    "DurabilityLossBlockTypes": [
+      {
+        "BlockSets": [
+          "Stone",
+          "Rock",
+          "Ores",
+          "Soil",
+          "Wood"
+        ],
+        "DurabilityLossOnHit": 0.25
+      }
+    ]
+  },
+  "DroppedItemAnimation": "Items/Animations/Dropped/Dropped_Diagonal_Left.blockyanim",
+  "Quality": "Common"
+}

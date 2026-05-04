@@ -1,0 +1,149 @@
+{
+  "Particle": {
+    "Texture": "Particles/Textures/Rnd/Smoke_Cloud11.png",
+    "Animation": {
+      "0": {
+        "Opacity": 1,
+        "Scale": {
+          "X": {
+            "Min": 0.1,
+            "Max": 0.1
+          },
+          "Y": {
+            "Min": 0.1,
+            "Max": 0.1
+          }
+        }
+      },
+      "15": {
+        "Opacity": 1,
+        "Scale": {
+          "X": {
+            "Min": 3,
+            "Max": 3
+          },
+          "Y": {
+            "Min": 3,
+            "Max": 3
+          }
+        }
+      },
+      "40": {
+        "Scale": {
+          "X": {
+            "Min": 5,
+            "Max": 5
+          },
+          "Y": {
+            "Min": 5,
+            "Max": 5
+          }
+        },
+        "Opacity": 1
+      },
+      "80": {
+        "Scale": {
+          "X": {
+            "Min": 6,
+            "Max": 6
+          },
+          "Y": {
+            "Min": 6,
+            "Max": 6
+          }
+        },
+        "Opacity": 0.3
+      },
+      "100": {
+        "Scale": {
+          "X": {
+            "Min": 7,
+            "Max": 7
+          },
+          "Y": {
+            "Min": 7,
+            "Max": 7
+          }
+        },
+        "Opacity": 0
+      }
+    },
+    "InitialAnimationFrame": {
+      "Scale": {
+        "X": {
+          "Min": 0.06,
+          "Max": 0.12
+        },
+        "Y": {
+          "Min": 0.08,
+          "Max": 0.12
+        }
+      },
+      "Opacity": 0.732,
+      "Rotation": {
+        "Z": {
+          "Min": 180,
+          "Max": 180
+        }
+      },
+      "Color": "#ffffff"
+    },
+    "UVOption": "RandomFlipU",
+    "ScaleRatioConstraint": "OneToOne"
+  },
+  "ParticleLifeSpan": {
+    "Min": 0.2,
+    "Max": 0.5
+  },
+  "SpawnRate": {
+    "Min": 111,
+    "Max": 111
+  },
+  "MaxConcurrentParticles": 333,
+  "ParticleRotationInfluence": "BillboardVelocity",
+  "RenderMode": "Erosion",
+  "SpawnBurst": true,
+  "TotalParticles": {
+    "Min": 10,
+    "Max": 10
+  },
+  "LinearFiltering": false,
+  "UseEmitDirection": false,
+  "InitialVelocity": {
+    "Speed": {
+      "Min": 0.2,
+      "Max": 2
+    }
+  },
+  "Attractors": [
+    {
+      "RadialImpulse": 5,
+      "RadialAcceleration": -14,
+      "DampingMultiplier": {
+        "X": 0.6,
+        "Z": 0.6,
+        "Y": 1
+      }
+    }
+  ],
+  "EmitOffset": {
+    "X": {
+      "Max": 0.5,
+      "Min": 0.5
+    },
+    "Z": {
+      "Max": 0.5,
+      "Min": 0.5
+    }
+  },
+  "CameraOffset": -0.08,
+  "LightInfluence": 0.01,
+  "UVMotion": {
+    "Texture": "Particles/Textures/UVMotion/FlowMapSmoke.png",
+    "StrengthCurveType": "IncreaseLinear",
+    "SpeedX": 0,
+    "SpeedY": 1,
+    "Scale": 0.6,
+    "Strength": 8
+  }
+}

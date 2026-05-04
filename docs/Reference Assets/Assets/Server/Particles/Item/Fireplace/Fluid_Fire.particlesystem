@@ -1,0 +1,29 @@
+{
+  "Spawners": [
+    {
+      "SpawnerId": "Fluid_Fire_Smoke_Cartoon",
+      "PositionOffset": {
+        "X": 0,
+        "Y": 0.0,
+        "Z": 0
+      }
+    },
+    {
+      "SpawnerId": "Fluid_Fire_Up",
+      "PositionOffset": {
+        "X": 0,
+        "Y": -0.15,
+        "Z": 0
+      },
+      "Attractors": []
+    },
+    {
+      "SpawnerId": "Fireplace_Sparks_Up"
+    },
+    {
+      "SpawnerId": "Fireplace_Distortion"
+    }
+  ],
+  "$Comment": "Candidate to stay Cartoon",
+  "CullDistance": 60
+}

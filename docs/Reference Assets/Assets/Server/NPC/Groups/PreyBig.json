@@ -1,0 +1,23 @@
+{
+  "IncludeRoles": [
+    "*Bison*",
+    "*Boar",
+    "*Camel*",
+    "*Cow",
+    "*Goat",
+    "*Horse*",
+    "*Mouflon",
+    "Moose*",
+    "*Pig",
+    "*Pig_Wild",
+    "*Ram",
+    "*Sheep",
+    "*Mouflon",
+    "*Horse*",
+    "*Warthog",
+    "Deer*",
+    "Moose*",
+    "Antelope",
+    "Tetrabird"
+  ]
+}

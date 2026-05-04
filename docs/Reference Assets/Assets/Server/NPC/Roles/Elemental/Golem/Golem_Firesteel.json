@@ -1,0 +1,177 @@
+{
+  "Type": "Variant",
+  "Reference": "Template_Intelligent",
+  "Modify": {
+    "MaxHealth": 224,
+    "ViewSector": 150,
+    "DropList": "Drop_Golem_Firesteel",
+    "Appearance": "Golem_Firesteel",
+    "Weapons": [],
+    "OffHand": [],
+    "MaxSpeed": 5,
+    "ViewRange": 10,
+    "WakingPeriod": [ 0.0, 24.0 ],
+    "WakingIdleBehaviorComponent": "Component_Instruction_Stationary_Idle",
+    "Attack": "Root_NPC_Golem_Firesteel_Attack",
+    "AttackDistance": 2.5,
+    "TargetRange": 2.5,
+    "BlockProbability": 0,
+    "DesiredAttackDistanceRange": [
+      2,
+      2.4
+    ],
+    "CombatRelativeTurnSpeed": 0.25,
+    "LeashDistance": 10,
+    "HardLeashDistance": 15,
+    "AttitudeGroup": "Golem",
+    "_CombatConfig": {
+      "EntityEffect": "Immunity_Fire"
+    },
+    "IsMemory": true,
+    "MemoriesCategory": "Elemental",
+    "NameTranslationKey": {
+      "Compute": "NameTranslationKey"
+    },
+    "_InteractionVars": {
+      "Swing_Left_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Firesteel_Swing_Left_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      },
+      "Swing_Right_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Firesteel_Swing_Right_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      },
+      "Spin_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Firesteel_Spin_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      },
+      "Ground_Slam_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Firesteel_Ground_Slam_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      },
+      "Stomp_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Firesteel_Stomp_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      },
+      "Spin_Heavy_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Firesteel_Spin_Heavy_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      },
+      "Clap_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Firesteel_Clap_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Parameters": {
+    "NameTranslationKey": {
+      "Value": "server.npcRoles.Golem_Firesteel.name",
+      "Description": "Translation key for NPC name display"
+    }
+  }
+}

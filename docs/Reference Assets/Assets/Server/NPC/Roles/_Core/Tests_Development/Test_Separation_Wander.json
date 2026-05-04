@@ -1,0 +1,59 @@
+{
+  "Type": "Generic",
+  "Appearance": "Sheep",
+  "ApplySeparation": true,
+  "SeparationDistance": 2,
+  "SeparationMode": "Push",
+  "MotionControllerList": [
+    {
+      "Type": "Walk",
+      "MaxWalkSpeed": 3,
+      "Gravity": 10,
+      "MaxFallSpeed": 8,
+      "Acceleration": 10
+    }
+  ],
+  "MaxHealth": { "Compute": "MaxHealth" },
+  "Parameters": {
+    "MaxHealth": {
+      "Value": 100,
+      "Description": "Max health for the NPC"
+    }
+  },
+  "Instructions": [
+    {
+      "Continue": true,
+      "Instructions": [
+        {
+          "Sensor": {
+            "Type": "Any"
+          },
+          "BodyMotion": {
+            "Type": "Sequence",
+            "Looped": true,
+            "Motions": [
+              {
+                "Type": "Timer",
+                "Time": [ 2, 5 ],
+                "Motion": {
+                  "Type": "WanderInRect",
+                  "Width": 10,
+                  "Depth": 10,
+                  "MaxHeadingChange": 135
+                }
+              },
+              {
+                "Type": "Timer",
+                "Time": [ 3, 5 ],
+                "Motion": {
+                  "Type": "Nothing"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "NameTranslationKey": "server.npcRoles.Test_Separation_Wander.name"
+}

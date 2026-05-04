@@ -1,0 +1,62 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Plant_Crop_Corn.name",
+    "Description": "server.items.Plant_Crop_Corn_Item.description"
+  },
+  "Parent": "Template_Crop_Item",
+  "Icon": "Icons/ItemsGenerated/Plant_Crop_Corn.png",
+  "PlayerAnimationsId": {
+    "Parent": "Item",
+    "Animations": {
+      "Consume": {
+        "FirstPerson": "Characters/Animations/Items/Main_Handed/Item/Attacks/Eat_Side/Eat_Side_FPS.blockyanim",
+        "ThirdPerson": "Characters/Animations/Items/Main_Handed/Item/Attacks/Eat_Side/Eat_Side.blockyanim",
+        "Speed": 1,
+        "Looping": true
+      }
+    }
+  },
+  "IconProperties": {
+    "Scale": 0.675,
+    "Translation": [
+      -4.2,
+      -2.4
+    ],
+    "Rotation": [
+      48.935,
+      76.5,
+      25.9
+    ]
+  },
+  "Texture": "Resources/Ingredients/Corn_Texture.png",
+  "Model": "Resources/Ingredients/Corn.blockymodel",
+  "Scale": 1.5,
+  "Quality": "Common",
+  "BlockType": {
+    "InteractionHint": "server.interactionHints.harvest",
+    "Material": "Solid",
+    "DrawType": "Model",
+    "HitboxType": "Food_Medium",
+    "CustomModel": "Resources/Ingredients/Corn.blockymodel",
+    "CustomModelTexture": [
+      {
+        "Texture": "Resources/Ingredients/Corn_Texture.png",
+        "Weight": 1
+      }
+    ],
+    "Support": {
+      "Down": [
+        {
+          "FaceType": "Full"
+        }
+      ]
+    },
+    "ParticleColor": "#cabc3f",
+    "RandomRotation": "YawStep1",
+    "Gathering": {
+      "Harvest": {},
+      "Soft": {}
+    }
+  },
+  "DropOnDeath": true
+}

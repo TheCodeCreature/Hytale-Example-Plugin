@@ -1,0 +1,49 @@
+{
+  "Spawners": [
+    {
+      "SpawnerId": "Explosion_Small_Flash_Glow",
+      "PositionOffset": {
+        "Y": 0.5,
+        "X": 0.0,
+        "Z": 0.0
+      }
+    },
+    {
+      "SpawnerId": "Explosion_Small_Sparks_Out",
+      "PositionOffset": {
+        "Y": 0.5
+      },
+      "FixedRotation": false
+    },
+    {
+      "SpawnerId": "Explosion_Small_Sparks_Linger",
+      "PositionOffset": {
+        "Y": 0.5,
+        "X": 0.0,
+        "Z": 0.0
+      },
+      "FixedRotation": false
+    },
+    {
+      "SpawnerId": "Explosion_Small_Hot",
+      "PositionOffset": {
+        "Y": 0.5
+      }
+    },
+    {
+      "SpawnerId": "Explosion_Small_Shockwave",
+      "PositionOffset": {
+        "Y": 0.5
+      }
+    },
+    {
+      "SpawnerId": "Explosion_Small_Glow",
+      "PositionOffset": {
+        "Y": 0.5
+      }
+    }
+  ],
+  "BoundingRadius": 100.0,
+  "CullDistance": 100.0,
+  "IsImportant": false
+}

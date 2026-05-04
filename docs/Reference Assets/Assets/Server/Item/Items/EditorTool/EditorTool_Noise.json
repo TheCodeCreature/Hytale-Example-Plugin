@@ -1,0 +1,67 @@
+{
+  "TranslationProperties": {
+    "Name": "server.builderTools.tools.Noise.name",
+    "Description": "server.builderTools.tools.Noise.description"
+  },
+  "Icon": "Icons/Items/EditorTools/Noise.png",
+  "Categories": [
+    "Tool.BuilderToolSecondPage"
+  ],
+  "SubCategory": "SpecializedTools",
+  "Model": "Items/Tools/Brush/Brush.blockymodel",
+  "Texture": "Items/Tools/Brush/Brush_Texture.png",
+  "MaxStack": 1,
+  "PlayerAnimationsId": "Item",
+  "BuilderTool": {
+    "Id": "Noise",
+    "IsBrush": true,
+    "Args": [
+      {
+        "Type": "Block",
+        "Id": "builtin_Material",
+        "Default": "Rock_Stone",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Int",
+        "Id": "builtin_Width",
+        "Default": 5,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Int",
+        "Id": "builtin_Height",
+        "Default": 5,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Option",
+        "Id": "builtin_Shape",
+        "Default": "Sphere",
+        "Options": ["Cube", "Sphere", "Cylinder", "Cone", "InvertedCone", "Pyramid", "InvertedPyramid", "Dome", "InvertedDome", "Diamond", "Torus"]
+      },
+      {
+        "Type": "Int",
+        "Id": "builtin_Density",
+        "Default": 5,
+        "Min": 1,
+        "Max": 100
+      }
+    ]
+  },
+  "Interactions": {
+    "Primary": "Builder_Tool",
+    "Secondary": "Builder_Tool"
+  },
+  "InteractionConfig": {
+    "DebugOutlines": true,
+    "UseDistance": {
+      "Adventure": 128,
+      "Creative": 128
+    },
+    "AllEntities": true
+  },
+  "Quality": "Tool"
+}

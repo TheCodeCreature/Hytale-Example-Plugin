@@ -1,0 +1,46 @@
+{
+  "Type": "Variant",
+  "Reference": "Template_Goblin_Ogre_Tutorial",
+  "Modify": {
+    "Appearance": "Goblin",
+    "MaxHealth": 124,
+
+    "_InteractionVars": {
+      "Melee_SwingDown_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Goblin_Ogre_Swing_Down_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 20
+              }
+            }
+          }
+        ]
+      },
+      "Melee_SwingLeft_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Goblin_Ogre_Swing_Down_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 5
+              }
+            }
+          }
+        ]
+      }
+    },
+    "NameTranslationKey": {
+      "Compute": "NameTranslationKey"
+    }
+  },
+   "Parameters": {
+    "NameTranslationKey": {
+      "Value": "server.npcRoles.Goblin_Ogre.name",
+      "Description": "Translation key for NPC name display"
+    }
+  }
+}

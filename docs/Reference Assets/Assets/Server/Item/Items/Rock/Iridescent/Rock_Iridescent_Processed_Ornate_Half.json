@@ -1,0 +1,60 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Rock_Iridescent_Processed_Ornate_Half.name"
+  },
+  "Quality": "Developer",
+  "Icon": "Icons/ItemsGenerated/Rock_Iridescent_Processed_Ornate_Half.png",
+  "Set": "Rock_Iridescent",
+  "Categories": [
+    "Blocks.Rocks",
+    "Blocks.Rocks"
+  ],
+  "PlayerAnimationsId": "Block",
+  "Interactions": {
+    "Secondary": "Lantern_Cyan"
+  },
+  "BlockType": {
+    "Material": "Solid",
+    "HitboxType": "Full",
+    "Flags": {},
+    "Gathering": {
+      "Breaking": {
+        "DropList": "Rock_Crystal_Blue",
+        "GatherType": "Rocks"
+      }
+    },
+    "BlockParticleSetId": "Stone",
+    "ParticleColor": "#e2fdff",
+    "BlockSoundSetId": "Stone",
+    "CubeShadingMode": "Standard",
+    "VariantRotation": "DoublePipe",
+    "CustomModel": "Blocks/Structures/Base_Shapes/HalfBlock_CustomSide.blockymodel",
+    "DrawType": "Model",
+    "CustomModelTexture": [
+      {
+        "Texture": "Blocks/Structures/Base_Shapes/HalfBlock_CustomSide_Iridescent_Processed_Ornate.png"
+      }
+    ],
+    "FlipType": "Symmetric"
+  },
+  "Tags": {
+    "Type": [
+      "Rock"
+    ],
+    "Family": [
+      "Crystal"
+    ]
+  },
+  "IconProperties": {
+    "Scale": 0.58823,
+    "Rotation": [
+      22.5,
+      45.0,
+      22.5
+    ],
+    "Translation": [
+      0.0,
+      -13.5
+    ]
+  }
+}

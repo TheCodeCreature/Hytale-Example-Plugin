@@ -1,0 +1,21 @@
+{
+  "Type": "Variant",
+  "Reference": "Template_Animal_Neutral",
+  "Modify": {
+    "Appearance": "Tortoise",
+    "DropList": "Drop_Tortoise",
+    "MaxSpeed": 4,
+    "MaxHealth": 103,
+    "IsMemory": true,
+    "MemoriesCategory": "Reptile",
+    "NameTranslationKey": {
+      "Compute": "NameTranslationKey"
+    }
+  },
+  "Parameters": {
+    "NameTranslationKey": {
+      "Value": "server.npcRoles.Tortoise.name",
+      "Description": "Translation key for NPC name display"
+    }
+  }
+}

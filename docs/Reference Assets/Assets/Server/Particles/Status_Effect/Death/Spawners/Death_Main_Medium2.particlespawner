@@ -1,0 +1,135 @@
+{
+  "Particle": {
+    "Texture": "Particles/Textures/Smoke/Smoke_Impact_White.png",
+    "Animation": {
+      "0": {
+        "Opacity": 0,
+        "Scale": {
+          "X": {
+            "Min": 0.1,
+            "Max": 0.1
+          },
+          "Y": {
+            "Min": 0.1,
+            "Max": 0.1
+          }
+        }
+      },
+      "15": {
+        "Opacity": 1,
+        "Scale": {
+          "X": {
+            "Min": 2,
+            "Max": 2
+          },
+          "Y": {
+            "Min": 2,
+            "Max": 2
+          }
+        }
+      },
+      "40": {
+        "Scale": {
+          "X": {
+            "Min": 3,
+            "Max": 3
+          },
+          "Y": {
+            "Min": 2.7,
+            "Max": 2.7
+          }
+        },
+        "Opacity": 0.308
+      },
+      "60": {
+        "Scale": {
+          "X": {
+            "Min": 4,
+            "Max": 4
+          },
+          "Y": {
+            "Min": 2.9,
+            "Max": 2.9
+          }
+        },
+        "Opacity": 0.108
+      },
+      "100": {
+        "Opacity": 0,
+        "Scale": {
+          "X": {
+            "Min": 5,
+            "Max": 5
+          },
+          "Y": {
+            "Min": 3,
+            "Max": 3
+          }
+        }
+      }
+    },
+    "InitialAnimationFrame": {
+      "Scale": {
+        "X": {
+          "Min": 0.2,
+          "Max": 0.3
+        },
+        "Y": {
+          "Min": 0.2,
+          "Max": 0.3
+        }
+      },
+      "Opacity": 0.944,
+      "Color": "#ffffff"
+    },
+    "UVOption": "RandomFlipU",
+    "ScaleRatioConstraint": "None"
+  },
+  "ParticleLifeSpan": {
+    "Min": 0.4,
+    "Max": 0.6
+  },
+  "SpawnRate": {
+    "Min": 111,
+    "Max": 111
+  },
+  "MaxConcurrentParticles": 2,
+  "ParticleRotationInfluence": "BillboardY",
+  "RenderMode": "Erosion",
+  "SpawnBurst": true,
+  "TotalParticles": {
+    "Min": 2,
+    "Max": 2
+  },
+  "LinearFiltering": false,
+  "UseEmitDirection": true,
+  "Attractors": [
+    {
+      "DampingMultiplier": {
+        "X": 0.1,
+        "Y": 0.2,
+        "Z": 0.1
+      },
+      "RadialImpulse": 1
+    }
+  ],
+  "CameraOffset": -0.16,
+  "LightInfluence": 0.01,
+  "UVMotion": {
+    "Texture": "Particles/Textures/UVMotion/FlowMapThorus.png",
+    "StrengthCurveType": "IncreaseLinear",
+    "SpeedY": 0.32,
+    "Strength": 1,
+    "Scale": 1.76
+  },
+  "EmitOffset": {
+    "X": {
+      "Max": 1,
+      "Min": 1
+    },
+    "Z": {
+      "Max": 1,
+      "Min": 1
+    }
+  }
+}

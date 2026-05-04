@@ -1,0 +1,19 @@
+{
+  "Interactions": [
+    {
+      "Type": "Chaining",
+      "ChainId": "Slashes",
+      "ChainingAllowance": 15,
+      "Next": [
+        "Goblin_Ogre_Swing_Left",
+        "Goblin_Ogre_Swing_Right",
+        "Goblin_Ogre_Swing_Down"
+      ]
+    }
+  ],
+  "Tags": {
+    "Attack": [
+      "Melee"
+    ]
+  }
+}

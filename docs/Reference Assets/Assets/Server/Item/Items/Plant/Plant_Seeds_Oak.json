@@ -1,0 +1,50 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Plant_Seeds_Oak.name"
+  },
+  "Quality": "Junk",
+  "Categories": [
+    "Blocks.Plants"
+  ],
+  "Interactions": {
+    "Secondary": "Seed_Condition"
+  },
+  "InteractionVars": {
+    "SeedId": {
+      "Interactions": [
+        {
+          "Parent": "Seed_Place",
+          "BlockTypeToPlace": "Plant_Sapling_Oak"
+        }
+      ]
+    }
+  },
+  "Model": "Resources/Plants/SeedBag.blockymodel",
+  "Texture": "Resources/Plants/SeedBag_Textures/Oak.png",
+  "PlayerAnimationsId": "Item",
+  "Icon": "Icons/ItemsGenerated/Plant_Seeds_Oak.png",
+  "IconProperties": {
+    "Scale": 1.1,
+    "Rotation": [
+      0,
+      30,
+      15
+    ],
+    "Translation": [
+      2.5,
+      -11
+    ]
+  },
+  "Tags": {
+    "Type": [
+      "Plant"
+    ],
+    "Family": [
+      "Seeds"
+    ]
+  },
+  "ItemEntity": {
+    "ParticleSystemId": null
+  },
+  "ItemSoundSetId": "ISS_Items_Foliage"
+}

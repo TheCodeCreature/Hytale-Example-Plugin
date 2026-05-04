@@ -1,0 +1,26 @@
+{
+  "Name": "setTimeAndGoHome",
+  "Aliases": ["macrotest"],
+  "Description": "server.commands.setTimeAndGoHome.desc",
+  "Parameters": [
+    {
+      "Name": "timeOfDay",
+      "Description": "server.commands.setTimeAndGoHome.timeOfDay.desc",
+      "Requirement": "Required",
+      "ArgType": "Integer"
+    },
+    {
+      "Name": "world",
+      "Description": "server.commands.setTimeAndGoHome.world.desc",
+      "Requirement": "Default",
+      "ArgType": "World",
+      "DefaultValue": "Default",
+      "DefaultValueDescription": "server.commands.setTimeAndGoHome.world.default.desc"
+    }
+  ],
+  "Commands": [
+    "time set {timeOfDay}",
+    "wait 2",
+    "tp home --world={world}"
+  ]
+}

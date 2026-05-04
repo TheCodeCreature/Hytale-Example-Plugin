@@ -1,0 +1,126 @@
+{
+  "EmitOffset": {
+    "X": {
+      "Min": 0.3,
+      "Max": 0.4
+    },
+    "Y": {
+      "Min": 0.3,
+      "Max": 0.3
+    }
+  },
+  "ParticleRotationInfluence": "Billboard",
+  "LightInfluence": 0.8,
+  "MaxConcurrentParticles": 2,
+  "ParticleLifeSpan": {
+    "Min": 1.8,
+    "Max": 1.8
+  },
+  "SpawnRate": {
+    "Min": 4,
+    "Max": 4
+  },
+  "ParticleRotateWithSpawner": false,
+  "Particle": {
+    "Texture": "Particles/Textures/Basic/Star2.png",
+    "ScaleRatioConstraint": "OneToOne",
+    "UVOption": "RandomFlipU",
+    "Animation": {
+      "0": {
+        "Opacity": 1,
+        "Scale": {
+          "X": {
+            "Min": 0,
+            "Max": 0.0
+          }
+        }
+      },
+      "5": {
+        "Scale": {
+          "X": {
+            "Min": 0.7,
+            "Max": 0.7
+          }
+        }
+      },
+      "10": {
+        "Scale": {
+          "X": {
+            "Min": 1,
+            "Max": 1
+          }
+        }
+      },
+      "13": {
+        "Scale": {
+          "X": {
+            "Min": 1.2,
+            "Max": 1.2
+          }
+        }
+      },
+      "16": {
+        "Scale": {
+          "X": {
+            "Min": 0.9,
+            "Max": 0.9
+          }
+        }
+      },
+      "18": {
+        "Scale": {
+          "X": {
+            "Min": 1,
+            "Max": 1
+          }
+        }
+      },
+      "90": {
+        "Scale": {
+          "X": {
+            "Min": 1,
+            "Max": 1
+          }
+        }
+      },
+      "94": {
+        "Scale": {
+          "X": {
+            "Min": 1.2,
+            "Max": 1.2
+          }
+        }
+      },
+      "100": {
+        "Scale": {
+          "X": {
+            "Min": 0.01,
+            "Max": 0.01
+          }
+        }
+      }
+    },
+    "InitialAnimationFrame": {
+      "Scale": {
+        "X": {
+          "Min": 0.01,
+          "Max": 0.1
+        }
+      },
+      "Opacity": 0.72,
+      "Color": "#ffcc27",
+      "Rotation": {
+        "Z": {
+          "Max": 360
+        }
+      }
+    },
+    "SoftParticles": "Disable"
+  },
+  "RenderMode": "Erosion",
+  "SpawnBurst": false,
+  "TrailSpawnerPositionMultiplier": 0,
+  "TrailSpawnerRotationMultiplier": 1,
+  "LinearFiltering": false,
+  "CameraOffset": -0.88
+}

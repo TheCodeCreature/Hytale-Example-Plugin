@@ -1,0 +1,7 @@
+{
+  "Name": "unstuck",
+  "Description": "server.commands.unstuck.desc",
+  "Commands": [
+    "tp top"
+  ]
+}

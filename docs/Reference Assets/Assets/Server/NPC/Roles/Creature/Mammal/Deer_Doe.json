@@ -1,0 +1,30 @@
+{
+  "Type": "Variant",
+  "Reference": "Template_Animal_Neutral",
+  "Modify": {
+    "Appearance": "Deer_Doe",
+    "AttitudeGroup": "PreyBig",
+    "FlockArray": [
+      "Deer_Doe",
+      "Deer_Stag"
+    ],
+    "DropList": "Drop_Deer_Doe",
+    "MaxHealth": 81,
+    "MaxSpeed": 10,
+    "ViewRange": 10,
+    "AlertedRange": 12,
+    "Timid": true,
+    "IsMemory": true,
+    "MemoriesCategory": "Livestock",
+    "MemoriesNameOverride": "Deer_Doe",
+    "NameTranslationKey": {
+      "Compute": "NameTranslationKey"
+    }
+  },
+  "Parameters": {
+    "NameTranslationKey": {
+      "Value": "server.npcRoles.Deer_Doe.name",
+      "Description": "Translation key for NPC name display"
+    }
+  }
+}

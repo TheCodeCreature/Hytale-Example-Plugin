@@ -1,0 +1,30 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Plant_Seeds_Gumboab.name"
+  },
+  "Parent": "Plant_Seeds_Oak",
+  "Texture": "Resources/Plants/SeedBag_Textures/Gumboab.png",
+  "InteractionVars": {
+    "SeedId": {
+      "Interactions": [
+        {
+          "Parent": "Seed_Place",
+          "BlockTypeToPlace": "Plant_Sapling_Gumboab"
+        }
+      ]
+    }
+  },
+  "Icon": "Icons/ItemsGenerated/Plant_Seeds_Gumboab.png",
+  "IconProperties": {
+    "Scale": 1.1,
+    "Rotation": [
+      0,
+      30,
+      15
+    ],
+    "Translation": [
+      2.5,
+      -11
+    ]
+  }
+}

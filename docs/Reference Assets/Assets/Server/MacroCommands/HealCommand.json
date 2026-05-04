@@ -1,0 +1,8 @@
+{
+  "Name": "heal",
+  "Description": "server.commands.heal.desc",
+  "Commands": [
+    "player stat settomax Stamina",
+    "player stat settomax Health"
+  ]
+}

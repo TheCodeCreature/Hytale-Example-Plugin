@@ -1,0 +1,183 @@
+{
+  "Parent": "Template_Weapon_Daggers",
+  "TranslationProperties": {
+    "Name": "server.items.Weapon_Daggers_Bronze.name"
+  },
+  "Model": "Items/Weapons/Dagger/Bronze.blockymodel",
+  "Texture": "Items/Weapons/Dagger/Bronze_Texture.png",
+  "Icon": "Icons/ItemsGenerated/Weapon_Daggers_Bronze.png",
+  "Quality": "Uncommon",
+  "ItemLevel": 25,
+  "InteractionVars": {
+    "Swing_Left_Damage": {
+      "Interactions": [
+        {
+          "Parent": "Weapon_Daggers_Primary_Swing_Left_Damage",
+          "DamageCalculator": {
+            "BaseDamage": {
+              "Physical": 3
+            }
+          },
+          "DamageEffects": {
+            "WorldSoundEventId": "SFX_Daggers_T2_Slash_Impact",
+            "LocalSoundEventId": "SFX_Daggers_T2_Slash_Impact"
+          }
+        }
+      ]
+    },
+    "Swing_Right_Damage": {
+      "Interactions": [
+        {
+          "Parent": "Weapon_Daggers_Primary_Swing_Right_Damage",
+          "DamageCalculator": {
+            "BaseDamage": {
+              "Physical": 3
+            }
+          },
+          "DamageEffects": {
+            "WorldSoundEventId": "SFX_Daggers_T2_Slash_Impact",
+            "LocalSoundEventId": "SFX_Daggers_T2_Slash_Impact"
+          }
+        }
+      ]
+    },
+    "Stab_Left_Damage": {
+      "Interactions": [
+        {
+          "Parent": "Weapon_Daggers_Primary_Stab_Left_Damage",
+          "DamageCalculator": {
+            "BaseDamage": {
+              "Physical": 7
+            }
+          },
+          "DamageEffects": {
+            "WorldSoundEventId": "SFX_Daggers_T2_Slash_Impact",
+            "LocalSoundEventId": "SFX_Daggers_T2_Slash_Impact"
+          }
+        }
+      ]
+    },
+    "Stab_Right_Damage": {
+      "Interactions": [
+        {
+          "Parent": "Weapon_Daggers_Primary_Stab_Right_Damage",
+          "DamageCalculator": {
+            "BaseDamage": {
+              "Physical": 10
+            }
+          },
+          "DamageEffects": {
+            "WorldSoundEventId": "SFX_Daggers_T2_Slash_Impact",
+            "LocalSoundEventId": "SFX_Daggers_T2_Slash_Impact"
+          }
+        }
+      ]
+    },
+    "Pounce_Sweep_Damage": {
+      "Interactions": [
+        {
+          "Parent": "Weapon_Daggers_Primary_Pounce_Sweep_Damage",
+          "DamageCalculator": {
+            "BaseDamage": {
+              "Physical": 28
+            }
+          },
+          "EntityStatsOnHit": [
+            {
+              "EntityStatId": "SignatureEnergy",
+              "Amount": 1
+            }
+          ],
+          "DamageEffects": {
+            "WorldSoundEventId": "SFX_Daggers_T2_Slash_Impact",
+            "LocalSoundEventId": "SFX_Daggers_T2_Slash_Impact"
+          }
+        }
+      ]
+    },
+    "Pounce_Stab_Damage": {
+      "Interactions": [
+        {
+          "Parent": "Weapon_Daggers_Primary_Pounce_Stab_Damage",
+          "DamageCalculator": {
+            "BaseDamage": {
+              "Physical": 35
+            }
+          },
+          "EntityStatsOnHit": [
+            {
+              "EntityStatId": "SignatureEnergy",
+              "Amount": 6
+            }
+          ],
+          "DamageEffects": {
+            "WorldSoundEventId": "SFX_Daggers_T2_Slash_Impact",
+            "LocalSoundEventId": "SFX_Daggers_T2_Slash_Impact"
+          }
+        }
+      ]
+    },
+    "Razorstrike_Slash_Damage": {
+      "Interactions": [
+        {
+          "Parent": "Weapon_Daggers_Signature_Razorstrike_Slash_Damage",
+          "DamageCalculator": {
+            "BaseDamage": {
+              "Physical": 23
+            }
+          },
+          "EntityStatsOnHit": [],
+          "DamageEffects": {
+            "WorldSoundEventId": "SFX_Daggers_T2_Slash_Impact",
+            "LocalSoundEventId": "SFX_Daggers_T2_Slash_Impact"
+          }
+        }
+      ]
+    },
+    "Razorstrike_Sweep_Damage": {
+      "Interactions": [
+        {
+          "Parent": "Weapon_Daggers_Signature_Razorstrike_Sweep_Damage",
+          "DamageCalculator": {
+            "BaseDamage": {
+              "Physical": 29
+            }
+          },
+          "EntityStatsOnHit": [],
+          "DamageEffects": {
+            "WorldSoundEventId": "SFX_Daggers_T2_Slash_Impact",
+            "LocalSoundEventId": "SFX_Daggers_T2_Slash_Impact"
+          }
+        }
+      ]
+    },
+    "Razorstrike_Lunge_Damage": {
+      "Interactions": [
+        {
+          "Parent": "Weapon_Daggers_Signature_Razorstrike_Lunge_Damage",
+          "DamageCalculator": {
+            "BaseDamage": {
+              "Physical": 35
+            }
+          },
+          "EntityStatsOnHit": [],
+          "DamageEffects": {
+            "WorldSoundEventId": "SFX_Daggers_T2_Slash_Impact",
+            "LocalSoundEventId": "SFX_Daggers_T2_Slash_Impact"
+          }
+        }
+      ]
+    },
+    "Guard_Wield": {
+      "Interactions": [
+        {
+          "Parent": "Weapon_Daggers_Secondary_Guard_Wield",
+          "StaminaCost": {
+            "Value": 9.44,
+            "CostType": "Damage"
+          }
+        }
+      ]
+    }
+  }
+}

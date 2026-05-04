@@ -1,0 +1,19 @@
+{
+  "Spawners": [
+    {
+      "SpawnerId": "Butterflies_Harvest",
+      "PositionOffset": {
+        "Z": 0.0
+      },
+      "FixedRotation": true
+    },
+    {
+      "SpawnerId": "Harvest_Sparks",
+      "PositionOffset": {
+        "Y": -0.2
+      }
+    }
+  ],
+  "IsImportant": false,
+  "CullDistance": 40.0
+}

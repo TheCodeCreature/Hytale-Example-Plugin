@@ -1,0 +1,93 @@
+{
+  "TranslationProperties": {
+    "Name": "server.builderTools.tools.Revolve.name",
+    "Description": "server.builderTools.tools.Revolve.description"
+  },
+  "Icon": "Icons/Items/EditorTools/Revolve.png",
+  "Categories": [
+    "Tool.BuilderToolSecondPage"
+  ],
+  "SubCategory": "SpecializedTools",
+  "Model": "Items/Tools/Brush/Brush.blockymodel",
+  "Texture": "Items/Tools/Brush/Brush_Texture.png",
+  "MaxStack": 1,
+  "PlayerAnimationsId": "Item",
+  "HudUI": [
+    { "Path": "Hud/ToolsLegends/RevolveToolLegend.ui", "Type": "Legend" }
+  ],
+  "BuilderTool": {
+    "Id": "Revolve",
+    "IsBrush": true,
+    "Args": [
+      {
+        "Type": "Option",
+        "Id": "aSampling",
+        "Required": true,
+        "Default": "neighbour",
+        "Options": [
+          "neighbour",
+          "reverse",
+          "none"
+        ]
+      },
+      {
+        "Type": "Bool",
+        "Id": "cFullRevolve",
+        "Required": true,
+        "Default": false
+      },
+      {
+        "Type": "Int",
+        "Id": "bCount",
+        "Default": 6,
+        "Min": 1,
+        "Max": 50,
+        "Required": true
+      },
+      {
+        "Type": "Option",
+        "Id": "dCenter",
+        "Required": true,
+        "Default": "target",
+        "Options": [
+          "target",
+          "player"
+        ]
+      },
+      {
+        "Type": "Bool",
+        "Id": "eCopyEntities",
+        "Required": true,
+        "Default": false
+      },
+      {
+        "Type": "Bool",
+        "Id": "eUseDistance",
+        "Required": true,
+        "Default": false
+      },
+      {
+        "Type": "Int",
+        "Id": "fDistance",
+        "Default": 20,
+        "Min": 1,
+        "Max": 500,
+        "Required": false
+      }
+    ]
+  },
+  "Interactions": {
+    "Primary": "Builder_Tool",
+    "Secondary": "Builder_Tool"
+  },
+  "InteractionConfig": {
+    "DebugOutlines": true,
+    "UseDistance": {
+      "Adventure": 128,
+      "Creative": 128
+    },
+    "AllEntities": true
+  },
+  "Quality": "Tool",
+  "UsePlayerAnimations": true
+}

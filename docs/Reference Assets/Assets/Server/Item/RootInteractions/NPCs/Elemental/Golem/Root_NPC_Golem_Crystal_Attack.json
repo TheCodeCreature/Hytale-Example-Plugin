@@ -1,0 +1,24 @@
+{
+  "Interactions": [
+    {
+      "Type": "Chaining",
+      "ChainId": "Slashes",
+      "ChainingAllowance": 15,
+      "Next": [
+        "Golem_Crystal_Swing_Left",
+        "Golem_Crystal_Swing_Right",
+        "Golem_Crystal_Spin",
+        "Golem_Crystal_Ground_Slam",
+        "Golem_Crystal_Spin",
+        "Golem_Crystal_Stomp",
+        "Golem_Crystal_Spin_Heavy",
+        "Golem_Crystal_Clap"
+      ]
+    }
+  ],
+  "Tags": {
+    "Attack": [
+      "Melee"
+    ]
+  }
+}

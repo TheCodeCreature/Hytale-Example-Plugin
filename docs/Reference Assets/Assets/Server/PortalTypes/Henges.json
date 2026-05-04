@@ -1,0 +1,9 @@
+{
+  "InstanceId": "Portals_Henges",
+  "Description": {
+    "DisplayName": "server.portals.henges",
+    "FlavorText": "server.portals.henges.description",
+    "ThemeColor": "#81fdedff",
+    "SplashImage": "DefaultArtwork.png"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "TranslationProperties": {
+    "Name": "server.builderTools.tools.SelectPrefab.name",
+    "Description": "server.builderTools.tools.SelectPrefab.description"
+  },
+  "Icon": "Icons/Items/EditorTools/Prefab.png",
+  "Categories": [
+    "Tool.PrefabEditing"
+  ],
+  "SubCategory": "PrefabTools",
+  "Model": "Items/Tools/Brush/Brush.blockymodel",
+  "Texture": "Items/Tools/Brush/Brush_Texture.png",
+  "MaxStack": 1,
+  "PlayerAnimationsId": "Item",
+  "HudUI": [
+    { "Path": "Hud/ToolsLegends/SelectPrefabToolLegend.ui", "Type": "Legend" }
+  ],
+  "BuilderTool": {
+    "Id": "SelectPrefab",
+    "IsBrush": false
+  },
+  "Interactions": {
+    "Primary": {
+      "RequireNewClick": true,
+      "Interactions": [
+        {
+          "Type": "PrefabSelectionInteraction"
+        }
+      ]
+    },
+    "Secondary": {
+      "RequireNewClick": true,
+      "Interactions": [
+        {
+          "Type": "PrefabSelectionInteraction"
+        }
+      ]
+    }
+  },
+  "InteractionConfig": {
+    "DebugOutlines": true,
+    "UseDistance": {
+      "Adventure": 200,
+      "Creative": 200
+    },
+    "AllEntities": true
+  },
+  "Quality": "Tool"
+}

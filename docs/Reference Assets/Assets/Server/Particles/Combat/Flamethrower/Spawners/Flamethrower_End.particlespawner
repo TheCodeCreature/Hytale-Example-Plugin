@@ -1,0 +1,122 @@
+{
+  "RenderMode": "Erosion",
+  "ParticleRotationInfluence": "Billboard",
+  "LinearFiltering": false,
+  "LightInfluence": 0.0,
+  "ParticleRotateWithSpawner": false,
+  "MaxConcurrentParticles": 100,
+  "ParticleLifeSpan": {
+    "Min": 0.8,
+    "Max": 1
+  },
+  "SpawnRate": {
+    "Min": 100,
+    "Max": 100
+  },
+  "Particle": {
+    "Texture": "Particles/Textures/Fire/Fire_Erosion32.png",
+    "ScaleRatioConstraint": "None",
+    "Animation": {
+      "0": {
+        "FrameIndex": {
+          "Min": 0,
+          "Max": 3
+        },
+        "Scale": {
+          "X": {
+            "Min": 0.01,
+            "Max": 0.01
+          },
+          "Y": {
+            "Min": 0.01,
+            "Max": 0.01
+          }
+        },
+        "Opacity": 0.0,
+        "Color": "#ffffff"
+      },
+      "5": {
+        "Color": "#ffe92f"
+      },
+      "20": {
+        "Opacity": 1
+      },
+      "50": {
+        "Scale": {
+          "X": {
+            "Min": 0.2,
+            "Max": 0.2
+          },
+          "Y": {
+            "Max": 0.2,
+            "Min": 0.2
+          }
+        }
+      },
+      "80": {},
+      "100": {
+        "Opacity": 0.0,
+        "Scale": {
+          "X": {
+            "Min": 1.0,
+            "Max": 1.0
+          },
+          "Y": {
+            "Min": 1.2,
+            "Max": 1.5
+          }
+        },
+        "Color": "#ff2929"
+      }
+    },
+    "InitialAnimationFrame": {
+      "Opacity": 1,
+      "FrameIndex": {
+        "Min": 0,
+        "Max": 3
+      },
+      "Scale": {
+        "X": {
+          "Min": 0.3,
+          "Max": 0.4
+        },
+        "Y": {
+          "Min": 0.3,
+          "Max": 0.4
+        }
+      },
+      "Rotation": {
+        "Z": {
+          "Min": -180.0,
+          "Max": -180.0
+        }
+      }
+    },
+    "FrameSize": {
+      "Width": 32,
+      "Height": 32
+    },
+    "SoftParticles": "Require"
+  },
+  "SpawnBurst": false,
+  "InitialVelocity": {
+    "Speed": {
+      "Min": 5,
+      "Max": 8
+    }
+  },
+  "EmitOffset": {
+    "X": {
+      "Max": 0.5
+    },
+    "Y": {
+      "Max": 0.5
+    },
+    "Z": {
+      "Max": 1.0
+    }
+  },
+  "UseEmitDirection": false,
+  "TrailSpawnerPositionMultiplier": 1,
+  "TrailSpawnerRotationMultiplier": 1
+}

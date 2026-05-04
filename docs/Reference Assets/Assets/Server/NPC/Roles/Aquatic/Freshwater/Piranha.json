@@ -1,0 +1,25 @@
+{
+  "Type": "Variant",
+  "Reference": "Template_Swimming_Aggressive",
+  "Modify": {
+    "Appearance": "Piranha",
+    "FlockArray": [
+      "Piranha"
+    ],
+    "DropList": "Drop_Piranha",
+    "MaxHealth": 38,
+    "AlertedRange": 12,
+    "AttackRange": 1.5,
+    "IsMemory": true,
+    "MemoriesCategory": "Freshwater",
+    "NameTranslationKey": {
+      "Compute": "NameTranslationKey"
+    }
+  },
+  "Parameters": {
+    "NameTranslationKey": {
+      "Value": "server.npcRoles.Piranha.name",
+      "Description": "Translation key for NPC name display"
+    }
+  }
+}

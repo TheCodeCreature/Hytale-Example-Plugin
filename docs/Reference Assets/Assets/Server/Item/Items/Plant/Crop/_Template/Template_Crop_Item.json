@@ -1,0 +1,92 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Template_Crop.name"
+  },
+  "Consumable": true,
+  "Icon": "Icons/ItemsGenerated/Plant_Crop_Lettuce.png",
+  "IconProperties": {
+    "Scale": 0.7,
+    "Translation": [
+      -3,
+      -7.8
+    ],
+    "Rotation": [
+      42.8,
+      29.3,
+      0
+    ]
+  },
+  "Texture": "Resources/Ingredients/Cabbage_Lettuce.png",
+  "Model": "Resources/Ingredients/Cabbage.blockymodel",
+  "Quality": "Template",
+  "Categories": [
+    "Items.Foods"
+  ],
+  "ResourceTypes": [
+    {
+      "Id": "Vegetables"
+    }
+  ],
+  "PlayerAnimationsId": "Item",
+  "Tags": {
+    "Type": [
+      "Plant"
+    ],
+    "Family": [
+      "Crop"
+    ]
+  },
+  "ItemEntity": {
+    "ParticleSystemId": null
+  },
+  "Interactions": {
+    "Secondary": "Root_Secondary_Consume_Food_T1"
+  },
+  "InteractionVars": {
+    "Effect": {
+      "Interactions": [
+        {
+          "Type": "ApplyEffect",
+          "EffectId": "Food_Instant_Heal_T1"
+        },
+        "HealthRegen_TierCheck_T1"
+      ]
+    }
+  },
+  "Utility": {
+    "Compatible": true
+  },
+  "InteractionConfig": {
+    "Priorities": {
+      "Secondary": 1
+    }
+  },
+  "BlockType": {
+    "InteractionHint": "server.interactionHints.harvest",
+    "Material": "Solid",
+    "DrawType": "Model",
+    "HitboxType": "Food_Medium",
+    "CustomModel": "Resources/Ingredients/Cabbage.blockymodel",
+    "CustomModelScale": 0.7,
+    "CustomModelTexture": [
+      {
+        "Texture": "Resources/Ingredients/Cabbage_Lettuce.png",
+        "Weight": 1
+      }
+    ],
+    "Support": {
+      "Down": [
+        {
+          "FaceType": "Full"
+        }
+      ]
+    },
+    "ParticleColor": "#cabc3f",
+    "RandomRotation": "YawStep1",
+    "Gathering": {
+      "Harvest": {},
+      "Soft": {}
+    }
+  },
+  "ItemSoundSetId": "ISS_Items_Foliage"
+}

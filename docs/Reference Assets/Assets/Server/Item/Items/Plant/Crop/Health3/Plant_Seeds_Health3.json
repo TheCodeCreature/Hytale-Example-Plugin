@@ -1,0 +1,73 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Plant_Seeds_Health3.name"
+  },
+  "Quality": "Junk",
+  "Categories": [
+    "Blocks.Plants"
+  ],
+  "Interactions": {
+    "Secondary": "Seed_Condition_Crystal"
+  },
+  "InteractionVars": {
+    "SeedId": {
+      "Interactions": [
+        {
+          "Parent": "Seed_Place",
+          "BlockTypeToPlace": "Plant_Crop_Health3_Block"
+        }
+      ]
+    }
+  },
+  "Model": "Resources/Plants/SeedBag.blockymodel",
+  "Texture": "Resources/Plants/SeedBag_Textures/Blood_Leaf.png",
+  "PlayerAnimationsId": "Item",
+  "IconProperties": {
+    "Scale": 1.1,
+    "Translation": [
+      2.5,
+      -11
+    ],
+    "Rotation": [
+      0,
+      30,
+      15
+    ]
+  },
+  "Icon": "Icons/ItemsGenerated/Plant_Seeds_Health3.png",
+  "Tags": {
+    "Type": [
+      "Plant"
+    ],
+    "Family": [
+      "Seeds"
+    ]
+  },
+  "ItemEntity": {
+    "ParticleSystemId": null
+  },
+  "ItemSoundSetId": "ISS_Items_Foliage",
+  "Recipe": {
+    "Input": [
+      {
+        "ItemId": "Ingredient_Void_Essence",
+        "Quantity": 8
+      },
+      {
+        "ItemId": "Ingredient_Voidheart",
+        "Quantity": 1
+      }
+    ],
+    "BenchRequirement": [
+      {
+        "Type": "Crafting",
+        "Id": "Alchemybench",
+        "Categories": [
+          "Alchemy_Seeds"
+        ],
+        "RequiredTierLevel": 5
+      }
+    ]
+  },
+  "ItemLevel": 7
+}

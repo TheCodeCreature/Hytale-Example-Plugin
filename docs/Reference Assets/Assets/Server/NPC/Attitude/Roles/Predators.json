@@ -1,0 +1,11 @@
+{
+  "Groups": {
+    "Neutral": [
+      "Prey"
+    ],
+    "Ignore": [
+      "Predators",
+      "PreyBig"
+    ]
+  }
+}

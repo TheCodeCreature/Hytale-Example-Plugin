@@ -1,0 +1,12 @@
+{
+  "InstanceId": "Portals_Taiga",
+  "Description": {
+    "DisplayName": "server.portals.boreal",
+    "FlavorText": "server.portals.boreal.description",
+    "ThemeColor": "#23970cec",
+    "SplashImage": "DefaultArtwork.png",
+    "Tips": [
+      "server.portals.taiga.tip1"
+    ]
+  }
+}

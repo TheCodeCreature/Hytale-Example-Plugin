@@ -1,0 +1,168 @@
+{
+  "TranslationProperties": {
+    "Name": "server.builderTools.tools.Cave.name",
+    "Description": "server.builderTools.tools.Cave.description"
+  },
+  "Icon": "Icons/Items/EditorTools/Paint.png",
+  "Categories": [
+    "Tool.BuilderTool"
+  ],
+  "SubCategory": "Terrain",
+  "Model": "Items/Tools/Prototype_Teseract_2.blockymodel",
+  "Texture": "Items/Tools/Prototype_Teseract_3.png",
+  "MaxStack": 1,
+  "PlayerAnimationsId": "Item",
+  "HudUI": [
+    { "Path": "Hud/ToolsLegends/ScriptedBrushes/CaveBrushLegend.ui", "Type": "Legend" }
+  ],
+  "BuilderTool": {
+    "Id": "Paint",
+    "IsBrush": true,
+    "BrushConfigurationCommand": "CaveBrush",
+    "Args": [
+      {
+        "Type": "Int",
+        "Id": "builtin_Width",
+        "Default": 5,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Int",
+        "Id": "builtin_Height",
+        "Default": 5,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Option",
+        "Id": "builtin_Shape",
+        "Default": "Sphere",
+        "Options": ["Cube", "Sphere", "Cylinder", "Cone", "InvertedCone", "Pyramid", "InvertedPyramid", "Dome", "InvertedDome", "Diamond", "Torus"]
+      },
+      {
+        "Type": "Option",
+        "Id": "builtin_Origin",
+        "Default": "Center",
+        "Options": ["Center", "Bottom", "Top"]
+      },
+      {
+        "Type": "Block",
+        "Id": "aCaveBlocks",
+        "Default": "Rock_Stone",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Block",
+        "Id": "aCaveBlocksDecoration",
+        "Default": "Rock_Stone_Stalactite_Large,Rock_Stone_Stalactite_Small",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Int",
+        "Id": "aCaveBlocksDecorationDensity",
+        "Default": 9,
+        "Min": 0,
+        "Max": 100
+      },
+      {
+        "Type": "Block",
+        "Id": "bCaveTopBlocks",
+        "Default": "Plant_Moss_Cave_Green_Dark,Plant_Vine_Hanging,Plant_Moss_Cave_Green_Dark",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Int",
+        "Id": "bCaveTopBlocksDensity",
+        "Default": 18,
+        "Min": 0,
+        "Max": 100
+      },
+      {
+        "Type": "Block",
+        "Id": "cCaveFloorBlocks",
+        "Default": "Soil_Pathway,Soil_Pathway,Soil_Mud_Dry",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Int",
+        "Id": "cCaveFloorBlocksDensity",
+        "Default": 70,
+        "Min": 0,
+        "Max": 100
+      },
+      {
+        "Type": "Block",
+        "Id": "dCaveFloorDecorationBlocks",
+        "Default": "Rubble_Stone,Plant_Crop_Mushroom_Flatcap_Green",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Int",
+        "Id": "dCaveFloorDecorationBlocksDensity",
+        "Default": 5,
+        "Min": 0,
+        "Max": 100
+      },
+      {
+        "Type": "Block",
+        "Id": "eOreBlocks",
+        "Default": "Ore_Iron_Stone",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Int",
+        "Id": "eOreBlocksDensity",
+        "Default": 2,
+        "Min": 0,
+        "Max": 100
+      },
+      {
+        "Type": "Bool",
+        "Id": "xRandomizeDimensions",
+        "Default": true
+      },
+      {
+        "Type": "Int",
+        "Id": "yMeltStrength",
+        "Default": 4,
+        "Min": 1,
+        "Max": 10
+      },
+      {
+        "Type": "Int",
+        "Id": "zSmoothness",
+        "Default": 2,
+        "Min": 0,
+        "Max": 10
+      }
+    ]
+  },
+  "Interactions": {
+    "Primary": "Builder_Tool",
+    "Secondary": "Builder_Tool"
+  },
+  "InteractionConfig": {
+    "DebugOutlines": true,
+    "UseDistance": {
+      "Adventure": 128,
+      "Creative": 128
+    },
+    "AllEntities": true
+  },
+  "ItemAppearanceConditions": {
+    "Health": [
+      {
+        "Condition": [
+          0,
+          100.0
+        ],
+        "ConditionValueType": "Percent",
+        "ModelVFXId": "Prototype_CreativeTool_ModelVFX"
+      }
+    ]
+  },
+  "Scale": 0.75,
+  "Set": "AAAA10",
+  "Quality": "Tool"
+}

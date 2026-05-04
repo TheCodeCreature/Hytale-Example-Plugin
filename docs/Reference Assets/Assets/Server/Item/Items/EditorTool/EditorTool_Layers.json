@@ -1,0 +1,140 @@
+{
+  "TranslationProperties": {
+    "Name": "server.builderTools.tools.Layers.name",
+    "Description": "server.builderTools.tools.Layers.description"
+  },
+  "Icon": "Icons/Items/EditorTools/Layers.png",
+  "Categories": [
+    "Tool.BuilderToolSecondPage"
+  ],
+  "SubCategory": "SpecializedTools",
+  "Model": "Items/Tools/Brush/Brush.blockymodel",
+  "Texture": "Items/Tools/Brush/Brush_Texture.png",
+  "MaxStack": 1,
+  "PlayerAnimationsId": "Item",
+  "BuilderTool": {
+    "Id": "Layers",
+    "IsBrush": true,
+    "Args": [
+      {
+        "Type": "Int",
+        "Id": "builtin_Width",
+        "Default": 5,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Int",
+        "Id": "builtin_Height",
+        "Default": 5,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Option",
+        "Id": "builtin_Shape",
+        "Default": "Sphere",
+        "Options": ["Cube", "Sphere", "Cylinder", "Cone", "InvertedCone", "Pyramid", "InvertedPyramid", "Dome", "InvertedDome", "Diamond", "Torus"]
+      },
+      {
+        "Type": "Option",
+        "Id": "aDirection",
+        "Default": "Down",
+        "Options": [
+          "Up",
+          "Down",
+          "Camera",
+          "North",
+          "South",
+          "East",
+          "West"
+        ]
+      },
+      {
+        "Type": "Int",
+        "Id": "bLayerOneLength",
+        "Default": 1,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Block",
+        "Id": "cLayerOneMaterial",
+        "Default": "Soil_Grass_Full",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Bool",
+        "Id": "dEnableLayerTwo",
+        "Default": true
+      },
+      {
+        "Type": "Int",
+        "Id": "eLayerTwoLength",
+        "Default": 1,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Block",
+        "Id": "fLayerTwoMaterial",
+        "Default": "Soil_Dirt",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Bool",
+        "Id": "gEnableLayerThree",
+        "Default": true
+      },
+      {
+        "Type": "Int",
+        "Id": "hLayerThreeLength",
+        "Default": 1,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Block",
+        "Id": "iLayerThreeMaterial",
+        "Default": "Rock_Chalk",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Int",
+        "Id": "jBrushDensity",
+        "Default": 100,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Bool",
+        "Id": "kSkipLayerOne",
+        "Default": false
+      },
+      {
+        "Type": "Bool",
+        "Id": "lSkipLayerTwo",
+        "Default": false
+      },
+      {
+        "Type": "Bool",
+        "Id": "mSkipLayerThree",
+        "Default": false
+      }
+    ]
+  },
+  "Interactions": {
+    "Primary": "Builder_Tool",
+    "Secondary": "Builder_Tool"
+  },
+  "InteractionConfig": {
+    "DebugOutlines": true,
+    "UseDistance": {
+      "Adventure": 128,
+      "Creative": 128
+    },
+    "AllEntities": true
+  },
+  "Set": "AAAA20",
+  "Quality": "Tool"
+}

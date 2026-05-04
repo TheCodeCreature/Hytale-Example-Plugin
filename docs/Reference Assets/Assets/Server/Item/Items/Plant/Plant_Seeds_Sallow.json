@@ -1,0 +1,30 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Plant_Seeds_Sallow.name"
+  },
+  "Parent": "Plant_Seeds_Oak",
+  "Texture": "Resources/Plants/SeedBag_Textures/Sallow.png",
+  "InteractionVars": {
+    "SeedId": {
+      "Interactions": [
+        {
+          "Parent": "Seed_Place",
+          "BlockTypeToPlace": "Plant_Sapling_Sallow"
+        }
+      ]
+    }
+  },
+  "Icon": "Icons/ItemsGenerated/Plant_Seeds_Sallow.png",
+  "IconProperties": {
+    "Scale": 1.1,
+    "Rotation": [
+      0,
+      30,
+      15
+    ],
+    "Translation": [
+      2.5,
+      -11
+    ]
+  }
+}

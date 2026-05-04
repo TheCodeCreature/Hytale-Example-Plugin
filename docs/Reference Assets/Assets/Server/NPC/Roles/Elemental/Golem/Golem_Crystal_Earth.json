@@ -1,0 +1,178 @@
+{
+  "Type": "Variant",
+  "Reference": "Template_Intelligent",
+  "Modify": {
+    "MaxHealth": 160,
+    "ViewSector": 150,
+    "DropList": "Drop_Golem_Crystal_Earth",
+    "Appearance": "Golem_Crystal_Earth",
+    "Weapons": [],
+    "OffHand": [],
+    "MaxSpeed": 7,
+    "ViewRange": 10,
+    "WakingIdleBehaviorComponent": "Component_Instruction_Stationary_Idle",
+    "Attack": "Root_NPC_Golem_Crystal_Attack",
+    "AttackDistance": 3,
+    "TargetRange": 3,
+    "BlockProbability": 0,
+    "DesiredAttackDistanceRange": [
+      2,
+      2.6
+    ],
+    "CombatAttackPostDelay": [
+      1.0,
+      1.2
+    ],
+    "CombatBackOffAfterAttack": false,
+    "CombatRelativeTurnSpeed": 0.25,
+    "LeashDistance": 15,
+    "HardLeashDistance": 22,
+    "AttitudeGroup": "Golem",
+    "IsMemory": true,
+    "MemoriesCategory": "Elemental",
+    "NameTranslationKey": {
+      "Compute": "NameTranslationKey"
+    },
+    "_InteractionVars": {
+      "Swing_Left_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Crystal_Swing_Left_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      },
+      "Swing_Right_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Crystal_Swing_Right_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      },
+      "Spin_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Crystal_Spin_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      },
+      "Ground_Slam_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Crystal_Ground_Slam_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      },
+      "Stomp_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Crystal_Stomp_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      },
+      "Spin_Heavy_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Crystal_Spin_Heavy_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      },
+      "Clap_Damage": {
+        "Interactions": [
+          {
+            "Parent": "Golem_Crystal_Clap_Damage",
+            "DamageCalculator": {
+              "Type": "Absolute",
+              "BaseDamage": {
+                "Physical": 10
+              },
+              "RandomPercentageModifier": 0.1
+            },
+            "DamageEffects": {
+              "Knockback": {
+                "Force": -10
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Parameters": {
+    "NameTranslationKey": {
+      "Value": "server.npcRoles.Golem_Crystal_Earth.name",
+      "Description": "Translation key for NPC name display"
+    }
+  }
+}

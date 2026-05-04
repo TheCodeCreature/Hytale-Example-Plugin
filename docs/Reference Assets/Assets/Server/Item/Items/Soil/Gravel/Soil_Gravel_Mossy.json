@@ -1,0 +1,20 @@
+{
+  "Parent": "Soil_Gravel",
+  "TranslationProperties": {
+    "Name": "server.items.Soil_Gravel_Mossy.name"
+  },
+  "Icon": "Icons/ItemsGenerated/Soil_Gravel_Mossy.png",
+  "Categories": [
+    "Blocks.Rocks"
+  ],
+  "Set": "Rock_Stone",
+  "BlockType": {
+    "Textures": [
+      {
+        "All": "BlockTextures/Soil_Gravel_Mossy.png",
+        "Weight": 1
+      }
+    ],
+    "ParticleColor": "#7b8253"
+  }
+}

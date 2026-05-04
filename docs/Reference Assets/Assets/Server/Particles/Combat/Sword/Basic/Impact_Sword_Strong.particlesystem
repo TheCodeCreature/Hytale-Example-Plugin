@@ -1,0 +1,40 @@
+{
+  "Spawners": [
+    {
+      "SpawnerId": "Impact_Dagger_Slash_Sparks",
+      "PositionOffset": {
+        "Z": 0.1
+      },
+      "FixedRotation": false
+    },
+    {
+      "SpawnerId": "Impact_Dagger_Slash"
+    },
+    {
+      "SpawnerId": "Impact_Dagger_Slash_Sparks2"
+    },
+    {
+      "SpawnerId": "Impact_Basic_Flash_New"
+    },
+    {
+      "SpawnerId": "Impact_Basic_Distortion"
+    },
+    {
+      "SpawnerId": "Impact_Basic_Spike"
+    },
+    {
+      "FixedRotation": false,
+      "SpawnerId": "Impact_Basic_Spike2"
+    },
+    {
+      "SpawnerId": "Impact_Basic_SpikeLong"
+    },
+    {
+      "SpawnerId": "Impact_Basic_SpikeSmall"
+    },
+    {
+      "SpawnerId": "Impact_Basic_Glow"
+    }
+  ],
+  "IsImportant": false
+}

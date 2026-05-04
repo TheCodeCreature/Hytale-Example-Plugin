@@ -1,0 +1,28 @@
+{
+  "BoundingRadius": 10,
+  "IsImportant": true,
+  "Spawners": [
+    {
+      "SpawnerId": "Death_Cloud_Medium",
+      "FixedRotation": true
+    },
+    {
+      "SpawnerId": "Death_Main_Medium",
+      "FixedRotation": true
+    },
+    {
+      "SpawnerId": "Death_Shockwave_Medium"
+    },
+    {
+      "SpawnerId": "Death_Shockwave2_Medium"
+    },
+    {
+      "SpawnerId": "Death_Main_Medium2",
+      "FixedRotation": true
+    },
+    {
+      "SpawnerId": "Death_Debris",
+      "FixedRotation": true
+    }
+  ]
+}

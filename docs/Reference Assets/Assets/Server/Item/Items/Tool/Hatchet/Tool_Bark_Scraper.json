@@ -1,0 +1,9 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Tool_Bark_Scraper.name"
+  },
+  "Parent": "Tool_Hatchet_Crude",
+  "Icon": "Icons/ItemsGenerated/Tool_Bark_Scraper.png",
+  "Model": "Items/Tools/Bark_Scraper.blockymodel",
+  "Texture": "Items/Tools/Hatchet/Crude_Texture.png"
+}

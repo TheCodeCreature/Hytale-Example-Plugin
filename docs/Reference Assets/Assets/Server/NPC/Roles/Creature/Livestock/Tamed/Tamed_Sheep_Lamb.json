@@ -1,0 +1,35 @@
+{
+  "Type": "Variant",
+  "Reference": "Template_Livestock",
+  "Modify": {
+    "Appearance": "Lamb",
+    "FlockArray": [
+      "Sheep_Lamb",
+      "Sheep"
+    ],
+    "AttractiveItemSet": [
+      "Tool_Feedbag",
+      "Plant_Crop_Lettuce_Item"
+    ],
+    "FollowItemDistance": [ 1.75, 2 ],
+    "DropList": "Drop_Lamb",
+    "MaxHealth": 29,
+    "ViewRange": 10,
+    "ViewSector": 320,
+    "HearingRange": 6,
+    "AlertedRange": 11,
+    "AlertedActionRange": 3,
+    "AbsoluteDetectionRange": 1,
+    "IsMemory": true,
+    "MemoriesNameOverride": "Sheep_Lamb",
+    "NameTranslationKey": {
+      "Compute": "NameTranslationKey"
+    }
+  },
+  "Parameters": {
+    "NameTranslationKey": {
+      "Value": "server.npcRoles.Sheep_Lamb.name",
+      "Description": "Translation key for NPC name display"
+    }
+  }
+}

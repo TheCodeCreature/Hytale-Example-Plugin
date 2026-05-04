@@ -1,0 +1,171 @@
+{
+  "TranslationProperties": {
+    "Name": "server.builderTools.tools.Boulder.name",
+    "Description": "server.builderTools.tools.Boulder.description"
+  },
+  "Icon": "Icons/Items/EditorTools/Paint.png",
+  "Categories": [
+    "Tool.BuilderTool"
+  ],
+  "SubCategory": "Terrain",
+  "Model": "Items/Tools/Prototype_Teseract_2.blockymodel",
+  "Texture": "Items/Tools/Prototype_Teseract_3.png",
+  "MaxStack": 1,
+  "PlayerAnimationsId": "Item",
+  "HudUI": [
+    { "Path": "Hud/ToolsLegends/ScriptedBrushes/BoulderBrushLegend.ui", "Type": "Legend" }
+  ],
+  "BuilderTool": {
+    "Id": "Paint",
+    "IsBrush": true,
+    "BrushConfigurationCommand": "BoulderBrush",
+    "Args": [
+      {
+        "Type": "Int",
+        "Id": "builtin_Width",
+        "Default": 9,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Int",
+        "Id": "builtin_Height",
+        "Default": 9,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Option",
+        "Id": "builtin_Shape",
+        "Default": "Dome",
+        "Options": ["Cube", "Sphere", "Cylinder", "Cone", "InvertedCone", "Pyramid", "InvertedPyramid", "Dome", "InvertedDome", "Diamond", "Torus"]
+      },
+      {
+        "Type": "Option",
+        "Id": "builtin_RotationFace",
+        "Default": "Up",
+        "Options": ["Up", "Down", "North", "South", "East", "West"]
+      },
+      {
+        "Type": "Option",
+        "Id": "builtin_Origin",
+        "Default": "Bottom",
+        "Options": ["Center", "Bottom", "Top"]
+      },
+      {
+        "Type": "Block",
+        "Id": "aPrimaryBlocks",
+        "Default": "Rock_Stone",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Block",
+        "Id": "eDecorationBlocks",
+        "Default": "Plant_Moss_Block_Green",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Int",
+        "Id": "fDecorationBlocksDensity",
+        "Default": 50,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Block",
+        "Id": "gDecorationsAccent",
+        "Default": "Plant_Moss_Rug_Green",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Int",
+        "Id": "hDecorationAccentDensity",
+        "Default": 50,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Block",
+        "Id": "cDecorationsPrimary",
+        "Default": "Rubble_Stone",
+        "AllowPattern": true
+      },
+      {
+        "Type": "Int",
+        "Id": "dDecorationAccentPrimary",
+        "Default": 10,
+        "Min": 1,
+        "Max": 100
+      },
+      {
+        "Type": "Int",
+        "Id": "iCirclePoints",
+        "Default": 4,
+        "Min": 1,
+        "Max": 10
+      },
+      {
+        "Type": "Int",
+        "Id": "iCircleRadius",
+        "Default": 1,
+        "Min": 1,
+        "Max": 30
+      },
+      {
+        "Type": "Int",
+        "Id": "iJitterCircle",
+        "Default": 2,
+        "Min": 0,
+        "Max": 10
+      },
+      {
+        "Type": "Int",
+        "Id": "iSmoothness",
+        "Default": 1,
+        "Min": 0,
+        "Max": 10
+      },
+      {
+        "Type": "Int",
+        "Id": "jBoulderSize",
+        "Default": 0,
+        "Min": 0,
+        "Max": 30
+      },
+      {
+        "Type": "Int",
+        "Id": "kJitter",
+        "Default": 0,
+        "Min": 0,
+        "Max": 10
+      }
+    ]
+  },
+  "Interactions": {
+    "Primary": "Builder_Tool",
+    "Secondary": "Builder_Tool"
+  },
+  "InteractionConfig": {
+    "DebugOutlines": true,
+    "UseDistance": {
+      "Adventure": 128,
+      "Creative": 128
+    },
+    "AllEntities": true
+  },
+  "ItemAppearanceConditions": {
+    "Health": [
+      {
+        "Condition": [
+          0,
+          100.0
+        ],
+        "ConditionValueType": "Percent",
+        "ModelVFXId": "Prototype_CreativeTool_ModelVFX"
+      }
+    ]
+  },
+  "Scale": 0.75,
+  "Set": "AAAA10",
+  "Quality": "Tool"
+}

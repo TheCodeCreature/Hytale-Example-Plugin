@@ -1,0 +1,47 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Greenscreen.name",
+    "Description": "server.items.Greenscreen.description"
+  },
+  "Icon": "Icons/ItemsGenerated/Greenscreen.png",
+  "Quality": "Technical",
+  "Categories": [
+    "Tool.Machinima"
+  ],
+  "SubCategory": "MachinimaTools",
+  "BlockType": {
+    "Material": "Solid",
+    "DrawType": "Cube",
+    "Opacity": "Transparent",
+    "VariantRotation": "None",
+    "Flags": {},
+    "Gathering": {},
+    "BlockParticleSetId": "Grass",
+    "Textures": [
+      {
+        "All": "BlockTextures/Deco_Greenscreen.png"
+      }
+    ],
+    "CubeShadingMode": "Flat",
+    "RequiresAlphaBlending": false,
+    "ParticleColor": "#00ff00"
+  },
+  "PlayerAnimationsId": "Block",
+  "IconProperties": {
+    "Scale": 0.58823,
+    "Rotation": [
+      22.5,
+      45,
+      22.5
+    ],
+    "Translation": [
+      0,
+      -13.5
+    ]
+  },
+  "Tags": {
+    "Type": [
+      "Editor"
+    ]
+  }
+}

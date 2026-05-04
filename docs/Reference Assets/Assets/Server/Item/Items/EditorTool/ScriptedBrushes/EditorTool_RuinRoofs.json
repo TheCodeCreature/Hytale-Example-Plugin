@@ -1,0 +1,68 @@
+{
+  "TranslationProperties": {
+    "Name": "server.builderTools.tools.RuinRoofs.name",
+    "Description": "server.builderTools.tools.RuinRoofs.description"
+  },
+  "Icon": "Icons/Items/EditorTools/Paint.png",
+  "Categories": [
+    "Tool.BuilderTool"
+  ],
+  "SubCategory": "Buildings",
+  "Model": "Items/Tools/Prototype_Teseract_2.blockymodel",
+  "Texture": "Items/Tools/Prototype_Teseract_3.png",
+  "MaxStack": 1,
+  "PlayerAnimationsId": "Item",
+  "BuilderTool": {
+    "Id": "Paint",
+    "IsBrush": true,
+    "BrushConfigurationCommand": "RuinRoofsBrush",
+    "Args": [
+      {
+        "Type": "Option",
+        "Id": "builtin_Shape",
+        "Default": "Cube",
+        "Options": ["Cube", "Cylinder"]
+      },
+      {
+        "Type": "Option",
+        "Id": "builtin_Origin",
+        "Default": "Center",
+        "Options": ["Center", "Bottom", "Top"]
+      },
+      {
+        "Type": "Int",
+        "Id": "builtin_Density",
+        "Default": 100,
+        "Min": 1,
+        "Max": 100
+      }
+    ]
+  },
+  "Interactions": {
+    "Primary": "Builder_Tool",
+    "Secondary": "Builder_Tool"
+  },
+  "InteractionConfig": {
+    "DebugOutlines": true,
+    "UseDistance": {
+      "Adventure": 128,
+      "Creative": 128
+    },
+    "AllEntities": true
+  },
+  "ItemAppearanceConditions": {
+    "Health": [
+      {
+        "Condition": [
+          0,
+          100.0
+        ],
+        "ConditionValueType": "Percent",
+        "ModelVFXId": "Prototype_CreativeTool_ModelVFX"
+      }
+    ]
+  },
+  "Scale": 0.75,
+  "Set": "AAAA10",
+  "Quality": "Tool"
+}

@@ -1,0 +1,117 @@
+{
+  "Type": "Component",
+  "Class": "Instruction",
+  "Parameters": {
+    "TargetSwitchTimer": {
+      "Value": [ 5, 5 ],
+      "Description": "Minimum time the NPC will be locked onto a single target before switching"
+    },
+    "TargetRange": {
+      "Value": 4,
+      "Description": "The distance the target needs to be within to maintain priority over other targets while in combat"
+    },
+    "NextTargetRangeView": {
+      "Value": 16,
+      "Description": "The maximum distance within which the NPC will pick the next target, using the view sense"
+    },
+    "NextTargetRangeHearing": {
+      "Value": 8,
+      "Description": "The maximum distance within which the NPC will pick the next target, using the hear sense"
+    }
+  },
+  "Content": {
+    "TreeMode": true,
+    "Instructions": [
+      {
+        "$Comment": "We start a timer when entering attack mode to decide if we should switch targets.",
+        "Sensor": {
+          "Once": true,
+          "Type": "Any"
+        },
+        "Actions": [
+          {
+            "Type": "TimerStart",
+            "Name": "TargetSwitchTimer",
+            "StartValueRange": { "Compute": "TargetSwitchTimer" },
+            "RestartValueRange": { "Compute": "TargetSwitchTimer" }
+          },
+          {
+            "Type": "TimerRestart",
+            "Name": "TargetSwitchTimer"
+          }
+        ]
+      },
+      {
+        "$Comment": "Switch to a different target if there's another potential target in range and current target is not. Restart the timer regardless.",
+        "Sensor": {
+          "Type": "Timer",
+          "Name": "TargetSwitchTimer",
+          "State": "Stopped"
+        },
+        "Instructions": [
+          {
+            "Continue": true,
+            "Actions": [
+              {
+                "Type": "TimerRestart",
+                "Name": "TargetSwitchTimer"
+              }
+            ]
+          },
+          {
+            "Sensor": {
+              "Type": "And",
+              "Sensors": [
+                {
+                  "Type": "Not",
+                  "Sensor": {
+                    "Type": "Target",
+                    "Range": { "Compute": "TargetRange" }
+                  }
+                },
+                {
+                  "Type": "Or",
+                  "Sensors": [
+                    {
+                      "Type": "Mob",
+                      "Range": { "Compute": "NextTargetRangeView" },
+                      "GetPlayers": true,
+                      "GetNPCs": true,
+                      "ExcludeOwnType": true,
+                      "Filters": [
+                        {
+                          "Type": "LineOfSight"
+                        }
+                      ],
+                      "Prioritiser": {
+                        "Type": "Attitude",
+                        "AttitudesByPriority": [ "Hostile" ]
+                      }
+                    },
+                    {
+                      "Type": "Mob",
+                      "Range": { "Compute": "NextTargetRangeHearing" },
+                      "GetPlayers": true,
+                      "GetNPCs": true,
+                      "ExcludeOwnType": true,
+                      "Prioritiser": {
+                        "Type": "Attitude",
+                        "AttitudesByPriority": [ "Hostile" ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "Actions": [
+              {
+                "Type": "SetMarkedTarget",
+                "TargetSlot": "LockedTarget"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

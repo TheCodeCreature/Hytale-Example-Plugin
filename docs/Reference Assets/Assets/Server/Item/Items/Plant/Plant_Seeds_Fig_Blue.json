@@ -1,0 +1,30 @@
+{
+  "TranslationProperties": {
+    "Name": "server.items.Plant_Seeds_Fig_Blue.name"
+  },
+  "Parent": "Plant_Seeds_Oak",
+  "Texture": "Resources/Plants/SeedBag_Textures/Fig_Blue.png",
+  "InteractionVars": {
+    "SeedId": {
+      "Interactions": [
+        {
+          "Parent": "Seed_Place",
+          "BlockTypeToPlace": "Plant_Sapling_Fig_Blue"
+        }
+      ]
+    }
+  },
+  "Icon": "Icons/ItemsGenerated/Plant_Seeds_Fig_Blue.png",
+  "IconProperties": {
+    "Scale": 1.1,
+    "Rotation": [
+      0,
+      30,
+      15
+    ],
+    "Translation": [
+      2.5,
+      -11
+    ]
+  }
+}

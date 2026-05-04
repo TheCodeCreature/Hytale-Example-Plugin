@@ -1,0 +1,21 @@
+{
+  "IncludeRoles": [
+    "*Boar_Piglet",
+    "*Chicken*",
+    "*Turkey*",
+    "*Skrill*",
+    "*Cow_Calf",
+    "*Goat_Kid",
+    "*Mouflon_Lamb",
+    "*Pig_Piglet",
+    "*Pig_Wild_Piglet",
+    "*Ram_Lamb",
+    "*Sheep_Lamb",
+    "*Warthog_Piglet",
+    "*Rabbit",
+    "*Bunny",
+    "Mouse",
+    "Penguin",
+    "Flamingo"
+  ]
+}

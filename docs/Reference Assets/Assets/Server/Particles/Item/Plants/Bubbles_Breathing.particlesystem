@@ -1,0 +1,23 @@
+{
+  "Spawners": [
+    {
+      "SpawnerId": "Bubbles_Breathing",
+      "PositionOffset": {
+        "Z": 0.4
+      }
+    },
+    {
+      "SpawnerId": "Recover_Air",
+      "PositionOffset": {
+        "Y": -0.2,
+        "X": 0
+      }
+    },
+    {
+      "PositionOffset": {
+        "Y": -0.5
+      },
+      "SpawnerId": "Bubbles_Breathing_Spread"
+    }
+  ]
+}

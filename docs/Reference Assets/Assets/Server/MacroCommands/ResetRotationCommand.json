@@ -1,0 +1,7 @@
+{
+  "Name": "resetrotation",
+  "Description": "server.commands.resetRotation.desc",
+  "Commands": [
+    "tp ~ ~ ~ --pitch=0 --yaw=0 --roll=0"
+  ]
+}

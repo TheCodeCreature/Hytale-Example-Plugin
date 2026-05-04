@@ -1,0 +1,630 @@
+{
+  "Type": "Abstract",
+  "KnockbackScale": 0.5,
+  "StartState": "Idle",
+  "Parameters": {
+    "Appearance": {
+      "Value": "Shark_Hammerhead",
+      "Description": "Model to be used"
+    },
+    "DropList": {
+      "Value": "Empty",
+      "Description": "Drop Items"
+    },
+    "FlockArray": {
+      "Value": [ "Template_Swimming_Aggressive" ],
+      "Description": "Array containing NPCs for this flock type"
+    },
+    "ViewRange": {
+      "Value": 8,
+      "Description": "The view range of the NPC"
+    },
+    "ViewSector": {
+      "Value": 360,
+      "Description": "The view sector of the NPC"
+    },
+    "HearingRange": {
+      "Value": 4,
+      "Description": "The hearing range of the NPC"
+    },
+    "AlertedRange": {
+      "Value": 15,
+      "Description": "Range within which the NPC will keep following to attack or aggro if attacked"
+    },
+    "AbsoluteDetectionRange": {
+      "Value": 1,
+      "Description": "The range at which a target is guaranteed to be detected. If zero, abosulte detection will be disabled."
+    },
+    "AlertedTime": {
+      "Value": [ 3, 5 ],
+      "Description": "How long to wait in an alerted or threatening state before switching to active combat."
+    },
+    "MaxHealth": {
+      "Value": 100,
+      "Description": "Max health for the NPC"
+    },
+    "Attack": {
+      "Value": "Shark_Hammerhead_Bite",
+      "Description": "The attack sequence to use in combat"
+    },
+    "AttackRange": {
+      "Value": 3,
+      "Description": "The range at which the NPC will attack targets"
+    },
+    "AttackPauseRange": {
+      "Value": [ 1, 1.5 ],
+      "Description": "The time delay range between consecutive attacks"
+    },
+    "DefaultNPCAttitude": {
+      "Value": "Ignore",
+      "Description": "The default attitude towards players"
+    },
+    "DefaultPlayerAttitude": {
+      "Value": "Hostile",
+      "Description": "The default attitude towards NPCs"
+    },
+    "DeathParticles": {
+      "Value": "Effect_Death",
+      "Description": "The particle system that spawns when the NPC's corpse disappears."
+    },
+    "DropDeathItemsInstantly": {
+      "Value": false,
+      "Description": "Whether the NPC's drop list should be executed when the NPC dies. If set to false, items drop when the corpse disappears."
+    },
+    "DeathAnimationTime": {
+      "Value": 2,
+      "Description": "The time it takes for this NPC's corpse to disappear."
+    },
+    "IsMemory": {
+      "Value": false,
+      "Description": "Defines if the NPC is a memory"
+    },
+    "MemoriesCategory": {
+      "Value": "Other",
+      "Description": "Defines the category of the memory"
+    },
+    "MemoriesNameOverride": {
+      "Value": "",
+      "Description": "Overrides the memory name if set"
+    },
+    "NameTranslationKey": {
+      "Value": "server.npcRoles.Template.name",
+      "Description": "Translation key for NPC name display"
+    }
+  },
+  "IsMemory": { "Compute": "IsMemory" },
+  "MemoriesCategory": { "Compute": "MemoriesCategory" },
+  "MemoriesNameOverride": { "Compute": "MemoriesNameOverride" },
+  "DropList": { "Compute": "DropList" },
+  "FlockSpawnTypes": { "Compute": "FlockArray" },
+  "DisableDamageGroups": [ "Self" ],
+  "DefaultNPCAttitude": { "Compute": "DefaultNPCAttitude" },
+  "DefaultPlayerAttitude": { "Compute": "DefaultPlayerAttitude" },
+  "Appearance": { "Compute": "Appearance" },
+  "BreathesInWater": true,
+  "DeathParticles": { "Compute": "DeathParticles" },
+  "DropDeathItemsInstantly": { "Compute": "DropDeathItemsInstantly" },
+  "DeathAnimationTime": { "Compute": "DeathAnimationTime" },
+  "MotionControllerList": [
+    {
+      "Type": "Dive",
+      "MaxSwimSpeed": 8,
+      "Acceleration": 10,
+      "MaxDiveSpeed": 8,
+      "SwimDepth": 0.6,
+      "SinkRatio": 0.5,
+      "MinDiveDepth": 0,
+      "MaxDiveDepth": 100,
+      "MinDepthAboveGround": 0.5,
+      "MinDepthBelowSurface": 0.5,
+      "Gravity": 10,
+      "MaxRotationSpeed": 360,
+      "MaxSwimTurnAngle": 180
+    }
+  ],
+  "MaxHealth": { "Compute": "MaxHealth" },
+  "InteractionVars": {
+    "Melee_Damage": {
+      "Interactions": [
+        {
+          "$Comment": "Config for a successful melee hit, default values for Effects and HitShape are not overwritten here, see each NPC_ file",
+          "Parent": "NPC_Attack_Melee_Damage",
+          "DamageCalculator": {
+            "Type": "Absolute",
+            "BaseDamage": {
+              "Physical": 5
+            },
+            "RandomPercentageModifier": 0.1
+          }
+        }
+      ]
+    }
+  },
+  "Instructions": [
+    {
+      "Instructions": [
+        {
+          "Sensor": {
+            "Type": "State",
+            "State": "Idle"
+          },
+          "Instructions": [
+            {
+              "Reference": "Component_Instruction_Clear_Status_Animation",
+              "Modify": { }
+            },
+            {
+              "$Comment": "Switch to combat state if any flock member engages a target.",
+              "Enabled": { "Compute": "!isEmptyStringArray(FlockArray)" },
+              "Sensor": {
+                "Type": "Beacon",
+                "Message": "Flock_Attack",
+                "TargetSlot": "LockedTarget",
+                "Range": { "Compute": "ViewRange" }
+              },
+              "Actions": [
+                {
+                  "Type": "State",
+                  "State": "Combat.Default"
+                }
+              ]
+            },
+            {
+              "$Comment": "Motions",
+              "Continue": true,
+              "Sensor": {
+                "Type": "Any"
+              },
+              "Instructions": [
+                {
+                  "Sensor": {
+                    "Type": "Eval",
+                    "Expression": "blocked"
+                  },
+                  "BodyMotion": {
+                    "Type": "Timer",
+                    "Time": [ 2, 3 ],
+                    "Motion": {
+                      "Type": "Wander",
+                      "MaxHeadingChange": 45,
+                      "RelativeSpeed": 0.2
+                    }
+                  }
+                },
+                {
+                  "Reference": "Component_Instruction_Spread_Out",
+                  "Modify": {
+                    "Range": 1,
+                    "RelativeSpeed": 0.25
+                  }
+                },
+                {
+                  "Sensor": {
+                    "Type": "And",
+                    "Sensors": [
+                      {
+                        "Type": "Not",
+                        "Sensor": {
+                          "Reference": "Component_Sensor_Leads_Flock",
+                          "Modify": { }
+                        }
+                      },
+                      {
+                        "Type": "Leash",
+                        "Range": 4
+                      }
+                    ]
+                  },
+                  "BodyMotion": {
+                    "Type": "Seek",
+                    "SlowDownDistance": 1.5,
+                    "StopDistance": 1,
+                    "RelativeSpeed": 0.25
+                  }
+                },
+                {
+                  "Sensor": {
+                    "Type": "Any"
+                  },
+                  "BodyMotion": {
+                    "Type": "WanderInCircle",
+                    "Radius": 4,
+                    "MaxHeadingChange": 60,
+                    "RelativeSpeed": 0.25
+                  }
+                }
+              ]
+            },
+            {
+              "Sensor": {
+                "Type": "And",
+                "Sensors": [
+                  {
+                    "Reference": "Component_Sensor_Leads_Flock",
+                    "Modify": { }
+                  },
+                  {
+                    "Type": "Leash",
+                    "Range": 5
+                  }
+                ]
+              },
+              "Actions": [
+                {
+                  "Type": "FlockBeacon",
+                  "Message": "Flock_Pos",
+                  "SendToSelf": false,
+                  "ExpirationTime": 0.5
+                },
+                {
+                  "Type": "SetLeashPosition",
+                  "ToCurrent": true
+                }
+              ]
+            },
+            {
+              "$Comment": "React to sudden incoming damage.",
+              "Sensor": {
+                "Type": "Damage",
+                "Environment": true,
+                "Drowning": true,
+                "Combat": true,
+                "Other": true
+              },
+              "Instructions": [
+                {
+                  "$Comment": "If there's someone who could have caused the damage, target them.",
+                  "Sensor": {
+                    "Reference": "Component_Sensor_Standard_Detection",
+                    "Modify": {
+                      "ViewRange": { "Compute": "ViewRange" },
+                      "ViewSector": { "Compute": "ViewSector" },
+                      "HearingRange": { "Compute": "HearingRange" },
+                      "AbsoluteDetectionRange": { "Compute": "AbsoluteDetectionRange" },
+                      "Attitudes": [ "Hostile", "Neutral" ]
+                    }
+                  },
+                  "Actions": [
+                    {
+                      "Type": "State",
+                      "State": "Alerted"
+                    }
+                  ]
+                },
+                {
+                  "$Comment": "If the damage was from an unknown source, panic to try and get away.",
+                  "Actions": [
+                    {
+                      "Type": "State",
+                      "State": "Panic"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "$Comment": "Check if there are any potential targets nearby",
+              "Sensor": {
+                "Reference": "Component_Sensor_Standard_Detection",
+                "Modify": {
+                  "ViewRange": { "Compute": "ViewRange" },
+                  "ViewSector": { "Compute": "ViewSector" },
+                  "HearingRange": { "Compute": "HearingRange" },
+                  "AbsoluteDetectionRange": { "Compute": "AbsoluteDetectionRange" },
+                  "Attitudes": [ "Hostile" ]
+                }
+              },
+              "Actions": [
+                {
+                  "Type": "State",
+                  "State": "Alerted"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Sensor": {
+            "Type": "State",
+            "State": "Alerted"
+          },
+          "Instructions": [
+            {
+              "Continue": true,
+              "Sensor": {
+                "Type": "Any",
+                "Once": true
+              },
+              "Actions": [
+                {
+                  "Type": "PlayAnimation",
+                  "Slot": "Status",
+                  "Animation": "Alerted"
+                },
+                {
+                  "Type": "SpawnParticles",
+                  "Offset": [ 0, 1, 0 ],
+                  "ParticleSystem": "Alerted"
+                }
+              ]
+            },
+            {
+              "Continue": true,
+              "Sensor": {
+                "Type": "Any"
+              },
+              "Instructions": [
+                {
+                  "Sensor": {
+                    "Type": "Target",
+                    "Range": { "Compute": "AlertedRange" }
+                  },
+                  "HeadMotion": {
+                    "Type": "Watch"
+                  }
+                }
+              ]
+            },
+            {
+              "$Comment": "React to sudden incoming damage.",
+              "Sensor": {
+                "Type": "Damage",
+                "Environment": true,
+                "Drowning": true,
+                "Combat": true,
+                "Other": true
+              },
+              "Instructions": [
+                {
+                  "$Comment": "If there's someone who could have caused the damage, target them.",
+                  "Sensor": {
+                    "Reference": "Component_Sensor_Standard_Detection",
+                    "Modify": {
+                      "ViewRange": { "Compute": "ViewRange" },
+                      "ViewSector": { "Compute": "ViewSector" },
+                      "HearingRange": { "Compute": "HearingRange" },
+                      "AbsoluteDetectionRange": { "Compute": "AbsoluteDetectionRange" },
+                      "Attitudes": [ "Hostile", "Neutral" ]
+                    }
+                  },
+                  "Actions": [
+                    {
+                      "Type": "State",
+                      "State": "Combat.Message"
+                    }
+                  ]
+                },
+                {
+                  "$Comment": "If the damage was from an unknown source, panic to try and get away.",
+                  "Actions": [
+                    {
+                      "Type": "State",
+                      "State": "Panic"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Sensor": {
+                "Type": "Target",
+                "Range": { "Compute": "AlertedRange" }
+              },
+              "Actions": [
+                {
+                  "Type": "Timeout",
+                  "Delay": { "Compute": "AlertedTime" },
+                  "Action": {
+                    "Type": "State",
+                    "State": "Combat.Message"
+                  }
+                }
+              ]
+            },
+            {
+              "Sensor": {
+                "Type": "Any"
+              },
+              "Actions": [
+                {
+                  "Type": "Timeout",
+                  "Delay": [ 2, 3 ],
+                  "Action": {
+                    "Type": "State",
+                    "State": "Idle"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Sensor": {
+            "Type": "State",
+            "State": "Combat"
+          },
+          "Instructions": [
+            {
+              "Continue": true,
+              "Sensor": {
+                "Type": "Target",
+                "Range": { "Compute": "AlertedRange" }
+              },
+              "HeadMotion": {
+                "Type": "Watch"
+              }
+            },
+            {
+              "Continue": true,
+              "Sensor": {
+                "Type": "State",
+                "State": ".Message"
+              },
+              "Actions": [
+                {
+                  "Type": "FlockBeacon",
+                  "Message": "Flock_Attack",
+                  "SendTargetSlot": "LockedTarget"
+                },
+                {
+                  "Type": "State",
+                  "State": ".Default"
+                }
+              ]
+            },
+            {
+              "Sensor": {
+                "Type": "Target",
+                "Range": { "Compute": "AttackRange" },
+                "Filters": [
+                  {
+                    "Type": "LineOfSight"
+                  }
+                ]
+              },
+              "BodyMotion": {
+                "Type": "MatchLook"
+              },
+              "Actions": [
+                {
+                  "Type": "Attack",
+                  "Attack": { "Compute": "Attack" },
+                  "AttackPauseRange": { "Compute": "AttackPauseRange" }
+                }
+              ]
+            },
+            {
+              "Sensor": {
+                "Type": "Target",
+                "Range": { "Compute": "AlertedRange" }
+              },
+              "BodyMotion": {
+                "Type": "Seek",
+                "SlowDownDistance": { "Compute": "AttackRange + 1"},
+                "StopDistance": { "Compute": "AttackRange * 0.5"}
+              }
+            },
+            {
+              "$Comment": "Return to the idle state if there's no target",
+              "Actions": [
+                {
+                  "Type": "Timeout",
+                  "Delay": [ 2, 3 ],
+                  "Action": {
+                    "Type": "State",
+                    "State": "Idle"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "Sensor": {
+            "Type": "State",
+            "State": "Panic"
+          },
+          "Instructions": [
+            {
+              "Reference": "Component_Instruction_Clear_Status_Animation",
+              "Modify": { }
+            },
+            {
+              "$Comment": "Motions",
+              "Continue": true,
+              "Sensor": {
+                "Type": "Any"
+              },
+              "Instructions": [
+                {
+                  "Sensor": {
+                    "Type": "Eval",
+                    "Expression": "blocked"
+                  },
+                  "BodyMotion": {
+                    "Type": "Timer",
+                    "Time": [ 1, 3 ],
+                    "Motion": {
+                      "Type": "Wander",
+                      "MaxHeadingChange": 45,
+                      "RelativeSpeed": 1
+                    }
+                  }
+                },
+                {
+                  "Reference": "Component_Instruction_Spread_Out",
+                  "Modify": {
+                    "Range": 1,
+                    "RelativeSpeed": 1
+                  }
+                },
+                {
+                  "Sensor": {
+                    "Type": "Any"
+                  },
+                  "BodyMotion": {
+                    "Type": "Sequence",
+                    "Looped": true,
+                    "Motions": [
+                      {
+                        "Type": "Timer",
+                        "Time": [ 1, 2 ],
+                        "Motion": {
+                          "Type": "WanderInCircle",
+                          "Radius": 10,
+                          "MaxHeadingChange": 45,
+                          "RelativeSpeed": 1
+                        }
+                      },
+                      {
+                        "Type": "Timer",
+                        "Time": [ 0.5, 1 ],
+                        "Motion": {
+                          "Type": "WanderInCircle",
+                          "Radius": 10,
+                          "MaxHeadingChange": 90,
+                          "RelativeSpeed": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "Sensor": {
+                "Type": "Target",
+                "Range": { "Compute": "ViewRange" },
+                "Filters": [
+                  {
+                    "Type": "LineOfSight"
+                  }
+                ]
+              },
+              "Actions": [
+                {
+                  "Type": "State",
+                  "State": "Alerted"
+                }
+              ]
+            },
+            {
+              "$Comment": "Return to the idle state if there's no target after a while",
+              "Actions": [
+                {
+                  "Type": "Timeout",
+                  "Delay": [ 3, 6 ],
+                  "Action": {
+                    "Type": "State",
+                    "State": "Idle"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "NameTranslationKey": { "Compute": "NameTranslationKey" }
+}

@@ -1,0 +1,24 @@
+{
+  "Type": "Variant",
+  "Reference": "Template_Animal_Neutral",
+  "Modify": {
+    "Appearance": "Penguin",
+    "FlockArray": [
+      "Penguin"
+    ],
+    "DropList": "Drop_Penguin",
+    "MaxHealth": 38,
+    "WanderRadius": 12,
+    "IsMemory": true,
+    "MemoriesCategory": "Avian",
+    "NameTranslationKey": {
+      "Compute": "NameTranslationKey"
+    }
+  },
+  "Parameters": {
+    "NameTranslationKey": {
+      "Value": "server.npcRoles.Penguin.name",
+      "Description": "Translation key for NPC name display"
+    }
+  }
+}

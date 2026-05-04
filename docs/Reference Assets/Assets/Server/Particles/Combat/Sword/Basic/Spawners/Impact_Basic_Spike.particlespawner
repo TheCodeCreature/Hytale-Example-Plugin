@@ -1,0 +1,84 @@
+{
+  "RenderMode": "Erosion",
+  "ParticleRotationInfluence": "Billboard",
+  "LinearFiltering": true,
+  "ParticleRotateWithSpawner": true,
+  "TrailSpawnerPositionMultiplier": 1,
+  "TrailSpawnerRotationMultiplier": 1,
+  "MaxConcurrentParticles": 1,
+  "ParticleLifeSpan": {
+    "Min": 0.1,
+    "Max": 0.1
+  },
+  "TotalParticles": {
+    "Min": 1,
+    "Max": 1
+  },
+  "Particle": {
+    "Texture": "Particles/Textures/Rnd/SwordImpact.png",
+    "ScaleRatioConstraint": "OneToOne",
+    "UVOption": "None",
+    "Animation": {
+      "0": {
+        "FrameIndex": {
+          "Min": 0,
+          "Max": 0
+        },
+        "Scale": {
+          "X": {
+            "Min": 1,
+            "Max": 1
+          },
+          "Y": {
+            "Min": 1,
+            "Max": 1
+          }
+        }
+      },
+      "20": {
+        "Color": "#ffffff"
+      },
+      "50": {
+        "Opacity": 1,
+        "Color": "#ffffff"
+      },
+      "75": {},
+      "100": {
+        "Opacity": 0,
+        "Scale": {
+          "X": {
+            "Min": 3,
+            "Max": 3
+          }
+        },
+        "Color": "#ffffff"
+      }
+    },
+    "InitialAnimationFrame": {
+      "FrameIndex": {
+        "Min": 0,
+        "Max": 0
+      },
+      "Scale": {
+        "X": {
+          "Min": 0.2,
+          "Max": 0.2
+        }
+      },
+      "Rotation": {
+        "Z": {
+          "Min": -360.0,
+          "Max": 360.0
+        }
+      },
+      "Color": "#ffffff",
+      "Opacity": 0.572
+    },
+    "SoftParticles": "Enable"
+  },
+  "SpawnBurst": true,
+  "SpawnRate": {
+    "Min": 1,
+    "Max": 1
+  }
+}

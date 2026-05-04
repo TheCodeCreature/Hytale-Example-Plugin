@@ -1,0 +1,20 @@
+{
+  "BoundingRadius": 10,
+  "IsImportant": false,
+  "Spawners": [
+    {
+      "SpawnerId": "Death_Cloud",
+      "FixedRotation": true
+    },
+    {
+      "SpawnerId": "Death_Main",
+      "FixedRotation": true
+    },
+    {
+      "SpawnerId": "Death_Shockwave"
+    },
+    {
+      "SpawnerId": "Death_Shockwave2"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "Input": [
+    {
+      "ItemId": "Plant_Flower_Hemlock",
+      "Quantity": 1
+    }
+  ],
+  "PrimaryOutput": {
+    "ItemId": "Plant_Petals_Green",
+    "Quantity": 4
+  },
+  "Output": [
+    {
+      "ItemId": "Plant_Petals_Green",
+      "Quantity": 4
+    }
+  ],
+  "BenchRequirement": [
+    {
+      "Type": "Processing",
+      "Id": "Salvagebench"
+    }
+  ],
+  "TimeSeconds": 0.5
+}

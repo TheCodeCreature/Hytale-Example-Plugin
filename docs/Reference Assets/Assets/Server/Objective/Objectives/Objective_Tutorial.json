@@ -1,0 +1,70 @@
+{
+  "TaskSets": [
+    {
+      "Tasks": [
+        {
+          "Type": "Gather",
+          "BlockTagOrItemId": {
+            "ItemId": "Ingredient_Stick"
+          },
+          "Count": 2
+        },
+        {
+          "Type": "Gather",
+          "BlockTagOrItemId": {
+            "BlockTag": "Rubble"
+          },
+          "Count": 2
+        },
+        {
+          "Type": "Gather",
+          "BlockTagOrItemId": {
+            "ItemId": "Ingredient_Fibre"
+          },
+          "Count": 2
+        },
+        {
+          "Type": "Craft",
+          "ItemId": "Tool_Hatchet_Crude",
+          "Count": 1
+        }
+      ]
+    },
+    {
+      "Tasks": [
+        {
+          "Type": "Craft",
+          "ItemId": "Tool_Pickaxe_Crude",
+          "Count": 1
+        }
+      ]
+    },
+    {
+      "Tasks": [
+        {
+          "Type": "Craft",
+          "ItemId": "Furniture_Crude_Brazier",
+          "Count": 1
+        }
+      ]
+    },
+    {
+      "Tasks": [
+        {
+          "Type": "Craft",
+          "ItemId": "Furniture_Crude_Bed",
+          "Count": 1
+        }
+      ]
+    },
+    {
+      "Tasks": [
+        {
+          "Type": "Craft",
+          "ItemId": "Bench_WorkBench",
+          "Count": 1
+        }
+      ]
+    }
+  ]
+}

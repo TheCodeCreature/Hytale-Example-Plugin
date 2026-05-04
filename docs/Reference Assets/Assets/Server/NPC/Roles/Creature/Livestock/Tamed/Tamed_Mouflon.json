@@ -1,0 +1,36 @@
+{
+  "Type": "Variant",
+  "Reference": "Template_Livestock",
+  "Modify": {
+    "Appearance": "Mouflon",
+    "AttitudeGroup": "PreyBig",
+    "FlockArray": [
+      "Mouflon",
+      "Mouflon_Lamb"
+    ],
+    "AttractiveItemSet": [
+      "Tool_Feedbag",
+      "Plant_Fruit_Apple"
+    ],
+    "DropList": "Drop_Mouflon",
+    "MaxHealth": 81,
+    "ViewRange": 15,
+    "ViewSector": 340,
+    "HearingRange": 9,
+    "AlertedRange": 17,
+    "AlertedActionRange": 4,
+    "AbsoluteDetectionRange": 2,
+    "ProduceItem": "Ingredient_Poop",
+    "IsMemory": true,
+    "MemoriesNameOverride": "Mouflon",
+    "NameTranslationKey": {
+      "Compute": "NameTranslationKey"
+    }
+  },
+  "Parameters": {
+    "NameTranslationKey": {
+      "Value": "server.npcRoles.Mouflon.name",
+      "Description": "Translation key for NPC name display"
+    }
+  }
+}

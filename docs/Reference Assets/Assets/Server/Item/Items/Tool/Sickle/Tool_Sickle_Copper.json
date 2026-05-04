@@ -1,0 +1,139 @@
+{
+  "Parent": "Tool_Sickle_Crude",
+  "TranslationProperties": {
+    "Name": "server.items.Tool_Sickle_Copper.name",
+    "Description": "server.items.Tool_Sickle.description"
+  },
+  "Categories": [
+    "Items.Tools"
+  ],
+  "Set": "Tool_Copper",
+  "PlayerAnimationsId": "Sickle",
+  "Model": "Items/Tools/Sickle/Copper.blockymodel",
+  "Texture": "Items/Tools/Sickle/Copper_Texture.png",
+  "Icon": "Icons/ItemsGenerated/Tool_Sickle_Copper.png",
+  "Quality": "Common",
+  "ItemLevel": 10,
+  "MaxDurability": 200,
+  "Recipe": {
+    "TimeSeconds": 1.5,
+    "Input": [
+      {
+        "ResourceTypeId": "Wood_Trunk",
+        "Quantity": 2
+      },
+      {
+        "ItemId": "Ingredient_Bar_Copper",
+        "Quantity": 1
+      }
+    ],
+    "BenchRequirement": [
+      {
+        "Type": "Crafting",
+        "Categories": [
+          "Farming"
+        ],
+        "Id": "Farmingbench",
+        "RequiredTierLevel": 4
+      }
+    ]
+  },
+  "InteractionVars": {
+    "Swing_Left": {
+      "Interactions": [
+        {
+          "Parent": "Sickle_Swing_Left",
+          "Effects": {
+            "ItemAnimationId": "SwingLeftMedium"
+          },
+          "RunTime": 0.23
+        }
+      ]
+    },
+    "Swing_Left_Effect": {
+      "Interactions": [
+        {
+          "Parent": "Sickle_Swing_Left_Effect",
+          "WorldSoundEventId": "SFX_Light_Melee_T1_Swing"
+        }
+      ]
+    },
+    "Swing_Left_Damage": {
+      "Interactions": [
+        {
+          "Parent": "Sickle_Swing_Left_Damage",
+          "DamageEffects": {
+            "WorldSoundEventId": "SFX_Light_Melee_T1_Impact"
+          }
+        }
+      ]
+    },
+    "Swing_Left_Selector": {
+      "Interactions": [
+        {
+          "Parent": "Sickle_Swing_Left_Selector",
+          "RunTime": 0.2,
+          "Selector": {
+            "EndDistance": 3.0,
+            "Length": 75,
+            "YawStartOffset": -30
+          }
+        }
+      ]
+    },
+    "Swing_Right": {
+      "Interactions": [
+        {
+          "Parent": "Sickle_Swing_Right",
+          "Effects": {
+            "ItemAnimationId": "SwingRightMedium"
+          },
+          "RunTime": 0.23
+        }
+      ]
+    },
+    "Swing_Right_Effect": {
+      "Interactions": [
+        {
+          "Parent": "Sickle_Swing_Right_Effect",
+          "WorldSoundEventId": "SFX_Light_Melee_T2_Swing"
+        }
+      ]
+    },
+    "Swing_Right_Damage": {
+      "Interactions": [
+        {
+          "Parent": "Sickle_Swing_Right_Damage",
+          "DamageEffects": {
+            "WorldSoundEventId": "SFX_Sword_T2_Impact"
+          }
+        }
+      ]
+    },
+    "Swing_Right_Selector": {
+      "Interactions": [
+        {
+          "Parent": "Sickle_Swing_Right_Selector",
+          "RunTime": 0.2,
+          "Selector": {
+            "EndDistance": 3.0,
+            "Length": 75,
+            "YawStartOffset": -30
+          }
+        }
+      ]
+    }
+  },
+  "IconProperties": {
+    "Scale": 0.37,
+    "Rotation": [
+      45,
+      270,
+      0
+    ],
+    "Translation": [
+      34,
+      -38
+    ]
+  }
+}

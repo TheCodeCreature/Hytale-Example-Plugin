@@ -1,0 +1,136 @@
+{
+  "RenderMode": "Erosion",
+  "EmitOffset": {
+    "X": {
+      "Min": 0.0,
+      "Max": 0.8
+    },
+    "Y": {
+      "Min": 0,
+      "Max": 0.8
+    },
+    "Z": {
+      "Min": 0.0,
+      "Max": 0.8
+    }
+  },
+  "ParticleRotationInfluence": "BillboardVelocity",
+  "LinearFiltering": false,
+  "LightInfluence": 0.1,
+  "ParticleRotateWithSpawner": false,
+  "TrailSpawnerPositionMultiplier": 0.0,
+  "TrailSpawnerRotationMultiplier": 0.0,
+  "MaxConcurrentParticles": 4,
+  "ParticleLifeSpan": {
+    "Min": 8,
+    "Max": 8
+  },
+  "SpawnRate": {
+    "Min": 60.0,
+    "Max": 60.0
+  },
+  "InitialVelocity": {
+    "Speed": {
+      "Min": 1.0,
+      "Max": 4.0
+    },
+    "Yaw": {
+      "Min": -180,
+      "Max": 180
+    },
+    "Pitch": {
+      "Min": 10.0,
+      "Max": 160.0
+    }
+  },
+  "Attractors": [
+    {
+      "DampingMultiplier": {
+        "Y": 0.7,
+        "Z": 0.85,
+        "X": 0.85
+      },
+      "LinearAcceleration": {
+        "Y": -17
+      },
+      "LinearImpulse": {
+        "Y": 4
+      },
+      "RadialTangentAcceleration": -1,
+      "RadialAxis": {
+        "Y": 1
+      },
+      "RadialAcceleration": -1
+    }
+  ],
+  "Particle": {
+    "Texture": "Particles/Textures/Rnd/Feather.png",
+    "ScaleRatioConstraint": "None",
+    "Animation": {
+      "0": {
+        "FrameIndex": {
+          "Min": 0,
+          "Max": 0
+        }
+      },
+      "95": {
+        "Scale": {
+          "X": {
+            "Min": 1,
+            "Max": 1
+          },
+          "Y": {
+            "Max": 1,
+            "Min": 1
+          }
+        }
+      },
+      "100": {
+        "Scale": {
+          "X": {
+            "Min": 0.01,
+            "Max": 0.01
+          },
+          "Y": {
+            "Min": 0.01,
+            "Max": 0.01
+          }
+        }
+      }
+    },
+    "UVOption": "RandomFlipU",
+    "InitialAnimationFrame": {
+      "Scale": {
+        "X": {
+          "Min": 0.2,
+          "Max": 0.7
+        },
+        "Y": {
+          "Min": 0.2,
+          "Max": 0.7
+        }
+      },
+      "Opacity": 1,
+      "FrameIndex": {
+        "Min": 0,
+        "Max": 0
+      },
+      "Rotation": {
+        "Z": {
+          "Max": 360
+        }
+      },
+      "Color": "#ffffff"
+    }
+  },
+  "SpawnBurst": true,
+  "TotalParticles": {
+    "Min": 2,
+    "Max": 4
+  },
+  "Shape": "Sphere",
+  "ParticleCollision": {
+    "BlockType": "Solid",
+    "Action": "Linger"
+  }
+}
