@@ -101,39 +101,7 @@ Group {
                 MaskTexturePath: $C.@TextHighlightGradientMask;
             }
 
-            // Material group filter tabs — inline in header bar
-            TabNavigation #MaterialGroups {
-                Anchor: (Height: 34, Left: 4);
-                Style: $C.@HeaderTabsStyle;
-                SelectedTab: "All";
 
-                TabButton { Id: "All"; Icon: "../../Common/RecipesIcon.png"; TooltipText: "All"; }
-                TabButton { Id: "G1"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G2"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G3"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G4"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G5"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G6"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G7"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G8"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G9"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G10"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G11"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G12"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G13"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G14"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G15"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G16"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G17"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G18"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G19"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G20"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G21"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G22"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G23"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G24"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-                TabButton { Id: "G25"; Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Visible: false; }
-            }
 
             $C.@HeaderSearch {}
         }
@@ -181,9 +149,30 @@ Group {
                     Padding: (Left: 6, Right: 6);
                 }
 
-                Group { Anchor: (Height: 2); }
+                Group { Anchor: (Height: 6); }
+
+                // Category group icon buttons — server appends GroupFilterButton.ui instances
+                Label {
+                    Text: "Categories";
+                    Anchor: (Height: 16, Left: 6);
+                    Style: (FontSize: 11, TextColor: #6e7da1, RenderBold: true,
+                            HorizontalAlignment: Start, VerticalAlignment: Center);
+                }
+
+                Group #MaterialGroups {
+                    LayoutMode: LeftCenterWrap;
+                }
+
+                Group { Anchor: (Height: 6); }
 
                 // Set filter buttons — server appends SetFilterButton.ui instances during build()
+                Label {
+                    Text: "Sets";
+                    Anchor: (Height: 16, Left: 6);
+                    Style: (FontSize: 11, TextColor: #6e7da1, RenderBold: true,
+                            HorizontalAlignment: Start, VerticalAlignment: Center);
+                }
+
                 Group #SetFilters {
                     LayoutMode: Top;
                 }

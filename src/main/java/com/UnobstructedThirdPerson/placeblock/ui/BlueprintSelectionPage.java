@@ -24,6 +24,7 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
+import com.hypixel.hytale.server.core.ui.Anchor;
 import com.hypixel.hytale.server.core.ui.PatchStyle;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
@@ -47,6 +48,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static final int MAX_GROUP_BUTTONS = 25;
     private static final int MAX_COST_CELLS = 8;
     private static final int MAX_RECIPE_CELLS = 81;  // 9 columns × 9 rows
+    private static final int RECIPE_CELLS_PER_ROW = 9;
+    private static final int RECIPE_CELL_HEIGHT = 72; // from RecipeIconCell.ui Anchor
 
     private static final Value<String> FILTER_ACTIVE =
             Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "FilterActiveStyle");
@@ -184,7 +187,14 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         // Set "All" text on the first filter button
         cmd.set("#SetFilters[0].Text", "All");
 
-        // Material group tabs are pre-defined in BlueprintBenchPage.ui
+        // Material group icon buttons: 1 "All" + MAX_GROUP_BUTTONS
+        for (int i = 0; i < 1 + MAX_GROUP_BUTTONS; i++) {
+            cmd.append("#MaterialGroups", "Pages/BlueprintBench/GroupFilterButton.ui");
+        }
+        // "All" button is always visible with a generic icon
+        cmd.set("#MaterialGroups[0].Visible", true);
+        cmd.set("#MaterialGroups[0] #GroupIcon.Background", "Common/RecipesIcon.png");
+        cmd.set("#MaterialGroups[0].TooltipText", "All");
 
         // Recipe icon cells
         for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
@@ -328,19 +338,21 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             savePrefs();
             sendUpdate(cmd, null, false);
 
-        } else if (data.materialGroupTab != null) {
-            String tabId = data.materialGroupTab;
-            if ("All".equals(tabId)) {
+        } else if (data.action != null && data.action.startsWith("MaterialGroup:")) {
+            String payload = data.action.substring("MaterialGroup:".length());
+            if ("All".equals(payload)) {
                 activeMaterialGroups.clear();
-            } else {
-                // Parse "G1", "G2", etc. to get the group index
+            } else if (payload.startsWith("idx:")) {
                 int idx = -1;
-                try { idx = Integer.parseInt(tabId.substring(1)) - 1; } catch (Exception ignored) {}
+                try { idx = Integer.parseInt(payload.substring(4)); } catch (Exception ignored) {}
                 if (idx >= 0 && idx < currentGroups.size()) {
                     String groupName = currentGroups.get(idx).categoryId();
-                    // Tab selection is single-select: clear others and set this one
-                    activeMaterialGroups.clear();
-                    activeMaterialGroups.add(groupName);
+                    // Multi-select toggle: add if absent, remove if present
+                    if (activeMaterialGroups.contains(groupName)) {
+                        activeMaterialGroups.remove(groupName);
+                    } else {
+                        activeMaterialGroups.add(groupName);
+                    }
                 }
             }
             pruneIncompatibleSetFilters();
@@ -481,6 +493,14 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 cmd.set(sel + ".Visible", false);
             }
         }
+
+        // Force explicit height on #RecipeGrid so the TopScrolling parent
+        // computes correct scroll extent (hidden cells still occupy layout space).
+        int visibleCount = Math.min(displayedRecipes.size(), MAX_RECIPE_CELLS);
+        int rows = (int) Math.ceil((double) visibleCount / RECIPE_CELLS_PER_ROW);
+        Anchor gridAnchor = new Anchor();
+        gridAnchor.setHeight(Value.of(rows * RECIPE_CELL_HEIGHT));
+        cmd.setObject("#RecipeGrid.Anchor", gridAnchor);
     }
 
     private void updateDetailPanel(UICommandBuilder cmd) {
@@ -540,49 +560,44 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     // ─── Placeholder list ─────────────────────────────────────
 
     private void buildMaterialGroupBindings(UIEventBuilder evt) {
+        // Index 0 is the "All" button
         evt.addEventBinding(
-                CustomUIEventBindingType.SelectedTabChanged, "#MaterialGroups",
-                EventData.of("@MaterialGroupTab", "#MaterialGroups.SelectedTab"),
-                false
+                CustomUIEventBindingType.Activating, "#MaterialGroups[0] #GroupBtn",
+                EventData.of("Action", "MaterialGroup:All")
         );
+        // Indices 1..MAX_GROUP_BUTTONS are per-group buttons
+        for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
+            evt.addEventBinding(
+                    CustomUIEventBindingType.Activating, "#MaterialGroups[" + (i + 1) + "] #GroupBtn",
+                    EventData.of("Action", "MaterialGroup:idx:" + i)
+            );
+        }
     }
 
     private void updateMaterialGroups(UICommandBuilder cmd) {
-        // Show/hide pre-defined TabButtons by index (0=All, 1=G1, 2=G2, ...)
+        // "All" button — active overlay when no groups selected
+        cmd.set("#MaterialGroups[0] #ActiveOverlay.Visible", activeMaterialGroups.isEmpty());
+
+        // Per-group icon buttons (indices 1..N)
         for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
-            int childIndex = i + 1; // offset by 1 because index 0 is "All"
+            int childIndex = i + 1;
+            String sel = "#MaterialGroups[" + childIndex + "]";
             if (i < currentGroups.size()) {
                 RecipeFilterPipeline.MaterialGroup group = currentGroups.get(i);
-                cmd.set("#MaterialGroups[" + childIndex + "].Visible", true);
-                cmd.set("#MaterialGroups[" + childIndex + "].TooltipText", group.displayName());
-                // Extract filename from engine icon path (e.g. "Icons/ItemCategories/Build-Beds.png" → "Build-Beds.png")
+                boolean active = activeMaterialGroups.contains(group.categoryId());
+                cmd.set(sel + ".Visible", true);
+                cmd.set(sel + ".TooltipText", group.displayName());
+                cmd.set(sel + " #ActiveOverlay.Visible", active);
+                // Set icon
                 String iconFile = group.iconPath();
-                LOGGER.info("[BlueprintBench] Group " + i + ": categoryId=" + group.categoryId()
-                        + " displayName=" + group.displayName()
-                        + " rawIconPath=" + iconFile);
                 if (iconFile != null && iconFile.contains("/")) {
                     iconFile = iconFile.substring(iconFile.lastIndexOf('/') + 1);
                 }
-                String iconPath = "Common/GroupIcons/" + iconFile;
-                LOGGER.info("[BlueprintBench] Group " + i + ": resolved iconFile=" + iconFile
-                        + " → " + iconPath);
                 if (iconFile != null && !iconFile.isEmpty()) {
-                    cmd.set("#MaterialGroups[" + childIndex + "].Icon", iconPath);
+                    cmd.set(sel + " #GroupIcon.Background", "Common/GroupIcons/" + iconFile);
                 }
             } else {
-                cmd.set("#MaterialGroups[" + childIndex + "].Visible", false);
-            }
-        }
-        // Set selected tab
-        if (activeMaterialGroups.isEmpty()) {
-            cmd.set("#MaterialGroups.SelectedTab", "All");
-        } else {
-            // Find the first active group's tab ID
-            for (int i = 0; i < currentGroups.size(); i++) {
-                if (activeMaterialGroups.contains(currentGroups.get(i).categoryId())) {
-                    cmd.set("#MaterialGroups.SelectedTab", "G" + (i + 1));
-                    break;
-                }
+                cmd.set(sel + ".Visible", false);
             }
         }
     }
@@ -737,7 +752,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 .append(new KeyedCodec<>("@SelectedTab", Codec.STRING), (e, s) -> e.selectedTab = s, e -> e.selectedTab).add()
                 .append(new KeyedCodec<>("RecipeId", Codec.STRING), (e, s) -> e.recipeId = s, e -> e.recipeId).add()
                 .append(new KeyedCodec<>("Action", Codec.STRING), (e, s) -> e.action = s, e -> e.action).add()
-                .append(new KeyedCodec<>("@MaterialGroupTab", Codec.STRING), (e, s) -> e.materialGroupTab = s, e -> e.materialGroupTab).add()
                 .append(new KeyedCodec<>("ItemStackId", Codec.STRING), (e, s) -> e.itemStackId = s, e -> e.itemStackId).add()
                 .append(new KeyedCodec<>("SlotIndex", Codec.INTEGER), (e, i) -> e.slotIndex = i, e -> e.slotIndex).add()
                 .build();
@@ -746,7 +760,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         String selectedTab;
         String recipeId;
         String action;
-        String materialGroupTab;
         String itemStackId;
         Integer slotIndex;
     }

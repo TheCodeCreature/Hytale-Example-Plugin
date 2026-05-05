@@ -1,0 +1,40 @@
+// GroupFilterButton — category group icon button with multi-select support
+// Server sets #GroupIcon.Background to category icon path
+// Server sets #ActiveOverlay.Visible for active state
+// Click events target #GroupBtn (transparent TextButton overlay)
+
+@TransparentGroupBtnStyle = TextButtonStyle(
+    Default: (Background: #000000(0.0), LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
+    Hovered: (Background: #ffffff(0.15), LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
+    Pressed: (Background: #ffffff(0.25), LabelStyle: (FontSize: 1, TextColor: #000000(0.0)))
+);
+
+Group {
+    Anchor: (Width: 36, Height: 36);
+    Padding: (Left: 2, Right: 2, Top: 2, Bottom: 2);
+    Visible: false;
+
+    Group {
+        Anchor: (Full: 0);
+        Background: "../../Common/BlockSelectorSlotBackground.png";
+
+        // Icon — background set dynamically to category icon path
+        Group #GroupIcon {
+            Anchor: (Full: 4);
+        }
+
+        // Active highlight overlay
+        Group #ActiveOverlay {
+            Anchor: (Full: 0);
+            Background: #2a4a6a(0.6);
+            Visible: false;
+        }
+
+        // Transparent click target
+        TextButton #GroupBtn {
+            Text: "";
+            Anchor: (Full: 0);
+            Style: @TransparentGroupBtnStyle;
+        }
+    }
+}
