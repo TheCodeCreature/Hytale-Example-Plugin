@@ -24,7 +24,6 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
-import com.hypixel.hytale.server.core.ui.Anchor;
 import com.hypixel.hytale.server.core.ui.PatchStyle;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
@@ -48,8 +47,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static final int MAX_GROUP_BUTTONS = 25;
     private static final int MAX_COST_CELLS = 8;
     private static final int MAX_RECIPE_CELLS = 81;  // 9 columns × 9 rows
-    private static final int RECIPE_CELLS_PER_ROW = 9;
-    private static final int RECIPE_CELL_HEIGHT = 72; // from RecipeIconCell.ui Anchor
 
     private static final Value<String> FILTER_ACTIVE =
             Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "FilterActiveStyle");
@@ -517,14 +514,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 cmd.set(sel + ".Visible", false);
             }
         }
-
-        // Force explicit height on #RecipeGrid so the TopScrolling parent
-        // computes correct scroll extent (hidden cells still occupy layout space).
-        int visibleCount = Math.min(displayedRecipes.size(), MAX_RECIPE_CELLS);
-        int rows = (int) Math.ceil((double) visibleCount / RECIPE_CELLS_PER_ROW);
-        Anchor gridAnchor = new Anchor();
-        gridAnchor.setHeight(Value.of(rows * RECIPE_CELL_HEIGHT));
-        cmd.setObject("#RecipeGrid.Anchor", gridAnchor);
     }
 
     private void updateDetailPanel(UICommandBuilder cmd) {

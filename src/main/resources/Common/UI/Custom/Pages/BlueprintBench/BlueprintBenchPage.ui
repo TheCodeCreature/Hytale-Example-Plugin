@@ -90,8 +90,8 @@ Group {
 
     // Main container
     $C.@Container {
-    @Anchor = (Left: 50, Top: 0, Width: 1060, Bottom: 10);
     @ContentPadding = 0;
+    Anchor: (Left: 50, Width: 1060, Height: 644, Bottom: 10);
 
     #Title {
         Group {
@@ -194,7 +194,7 @@ Group {
     // CENTER COLUMN — Recipe browser
     // ══════════════════════════════
 
-            // Scrollable recipe item grid — ItemGrid for drag support
+            // Scrollable recipe item grid
             Group {
                 FlexWeight: 1;
                 LayoutMode: TopScrolling;
