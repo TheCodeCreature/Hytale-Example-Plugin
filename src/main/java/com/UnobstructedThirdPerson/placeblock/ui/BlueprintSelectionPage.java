@@ -68,6 +68,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private final Set<String> activeSetFilters = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     private boolean affordabilityEnabled = true;
     private boolean showUncategorized = false;
+    private boolean categoriesExpanded = true;
+    private boolean setsExpanded = true;
     private final Set<String> activeMaterialGroups = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     private List<RecipeFilterPipeline.MaterialGroup> currentGroups = new ArrayList<>();
     private List<RecipeFilterPipeline.TaggedRecipe> displayedRecipes = new ArrayList<>();
@@ -224,6 +226,16 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         evt.addEventBinding(
                 CustomUIEventBindingType.Activating, "#UncategorizedToggle",
                 EventData.of("Action", "ToggleUncategorized")
+        );
+
+        // Section expand/collapse headers
+        evt.addEventBinding(
+                CustomUIEventBindingType.Activating, "#CategoriesHeader",
+                EventData.of("Action", "ToggleCategories")
+        );
+        evt.addEventBinding(
+                CustomUIEventBindingType.Activating, "#SetsHeader",
+                EventData.of("Action", "ToggleSets")
         );
 
         // Give Blueprint button
@@ -400,6 +412,18 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             updateRecipeGrid(cmd);
             updateDetailPanel(cmd);
             savePrefs();
+            sendUpdate(cmd, null, false);
+
+        } else if ("ToggleCategories".equals(data.action)) {
+            this.categoriesExpanded = !this.categoriesExpanded;
+            cmd.set("#CategoriesHeader.Text", (categoriesExpanded ? "v " : "> ") + "Categories");
+            cmd.set("#MaterialGroups.Visible", categoriesExpanded);
+            sendUpdate(cmd, null, false);
+
+        } else if ("ToggleSets".equals(data.action)) {
+            this.setsExpanded = !this.setsExpanded;
+            cmd.set("#SetsHeader.Text", (setsExpanded ? "v " : "> ") + "Sets");
+            cmd.set("#SetFilters.Visible", setsExpanded);
             sendUpdate(cmd, null, false);
 
         } else if (data.action != null && data.action.startsWith("RecipeSelect:idx:")) {

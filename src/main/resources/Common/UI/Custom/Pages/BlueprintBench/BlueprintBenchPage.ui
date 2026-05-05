@@ -48,6 +48,15 @@ $C = "../../Common.ui";
               HorizontalAlignment: Center, VerticalAlignment: Center))
 );
 
+@SectionHeaderStyle = TextButtonStyle(
+    Default: (Background: #141c26(0.0), LabelStyle: (FontSize: 11, TextColor: #6e7da1, RenderBold: true,
+              HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Hovered: (Background: #1e2a3a, LabelStyle: (FontSize: 11, TextColor: #96a9be, RenderBold: true,
+              HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Pressed: (Background: #1a2535, LabelStyle: (FontSize: 11, TextColor: #96a9be, RenderBold: true,
+              HorizontalAlignment: Start, VerticalAlignment: Center))
+);
+
 // ── Page Root ──
 
 Group {
@@ -151,12 +160,12 @@ Group {
 
                 Group { Anchor: (Height: 6); }
 
-                // Category group icon buttons — server appends GroupFilterButton.ui instances
-                Label {
-                    Text: "Categories";
-                    Anchor: (Height: 16, Left: 6);
-                    Style: (FontSize: 11, TextColor: #6e7da1, RenderBold: true,
-                            HorizontalAlignment: Start, VerticalAlignment: Center);
+                // Category group icon buttons — collapsible section
+                TextButton #CategoriesHeader {
+                    Text: "v Categories";
+                    Anchor: (Height: 20, Left: 0, Right: 0);
+                    Padding: (Left: 6, Right: 6);
+                    Style: @SectionHeaderStyle;
                 }
 
                 Group #MaterialGroups {
@@ -165,12 +174,12 @@ Group {
 
                 Group { Anchor: (Height: 6); }
 
-                // Set filter buttons — server appends SetFilterButton.ui instances during build()
-                Label {
-                    Text: "Sets";
-                    Anchor: (Height: 16, Left: 6);
-                    Style: (FontSize: 11, TextColor: #6e7da1, RenderBold: true,
-                            HorizontalAlignment: Start, VerticalAlignment: Center);
+                // Set filter buttons — collapsible section
+                TextButton #SetsHeader {
+                    Text: "v Sets";
+                    Anchor: (Height: 20, Left: 0, Right: 0);
+                    Padding: (Left: 6, Right: 6);
+                    Style: @SectionHeaderStyle;
                 }
 
                 Group #SetFilters {
