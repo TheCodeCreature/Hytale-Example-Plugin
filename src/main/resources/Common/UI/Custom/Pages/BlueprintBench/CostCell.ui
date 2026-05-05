@@ -4,15 +4,18 @@
 $C = "../../Common.ui";
 
 Group {
-    Anchor: (Width: 56, Height: 56);
+    Anchor: (Width: 62, Height: 62);
     Visible: false;
-    Padding: (Left: 4, Right: 4, Top: 4, Bottom: 4);
-    Background: "../../Common/BlockSelectorSlotBackground.png";
+    Padding: (Full: 6);
 
+Group {
+    // Padding: (Left: 3, Right: 3, Top: 3, Bottom: 3);
+    Background: "../../Common/BlockSelectorSlotBackground.png";
     ItemIcon #CostIcon {
         Anchor: (Full: 2);
         ShowItemTooltip: true;
     }
+}
 
     Label #CostQty {
         Text: "";

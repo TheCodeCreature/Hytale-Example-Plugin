@@ -1,10 +1,23 @@
 // SetFilterButton — single set filter toggle button
 // Reusable component: server appends N instances into #SetFilters during build()
-// Server updates via cmd.set() on indexed selectors: #SetFilters[N].Visible, .Text, .Style
+// Server updates via cmd.set() on indexed selectors: #SetFilters[N].Visible, #Btn.Text, #Btn.Style, #Check.Value
 
-TextButton {
-    Text: "";
+$C = "../../Common.ui";
+
+Group {
     Anchor: (Height: 24);
-    Padding: (Left: 6, Right: 6);
     Visible: false;
+
+    TextButton #Btn {
+        Text: "";
+        Anchor: (Full: 0);
+        Padding: (Left: 22, Right: 6);
+    }
+
+    CheckBox #Check {
+        Anchor: (Width: 16, Height: 16, Left: 4, Top: 4);
+        Background: (TexturePath: "../../Common/CheckBoxFrame.png", Border: 7);
+        Padding: (Full: 2);
+        Style: $C.@DefaultCheckBoxStyle;
+    }
 }

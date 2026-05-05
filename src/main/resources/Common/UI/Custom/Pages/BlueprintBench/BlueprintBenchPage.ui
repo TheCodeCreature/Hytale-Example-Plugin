@@ -49,11 +49,11 @@ $C = "../../Common.ui";
 );
 
 @SectionHeaderStyle = TextButtonStyle(
-    Default: (Background: #141c26(0.0), LabelStyle: (FontSize: 11, TextColor: #6e7da1, RenderBold: true,
+    Default: (Background: #141c26(0.0), LabelStyle: (FontSize: 18, TextColor: #6e7da1, RenderBold: true,
               HorizontalAlignment: Start, VerticalAlignment: Center)),
-    Hovered: (Background: #1e2a3a, LabelStyle: (FontSize: 11, TextColor: #96a9be, RenderBold: true,
+    Hovered: (Background: #1e2a3a, LabelStyle: (FontSize: 18, TextColor: #96a9be, RenderBold: true,
               HorizontalAlignment: Start, VerticalAlignment: Center)),
-    Pressed: (Background: #1a2535, LabelStyle: (FontSize: 11, TextColor: #96a9be, RenderBold: true,
+    Pressed: (Background: #1a2535, LabelStyle: (FontSize: 18, TextColor: #96a9be, RenderBold: true,
               HorizontalAlignment: Start, VerticalAlignment: Center))
 );
 
@@ -90,8 +90,8 @@ Group {
 
     // Main container
     $C.@Container {
-        // @ContentPadding = 0;
-        Anchor: (Left: 50, Width: 1180, Height: 644, Bottom: 10);
+        @ContentPadding = (Left: 0, Right: 0, Top: 10, Bottom: 0);
+        Anchor: (Width: 1180, Height: 644);
 
         #Title {
             Group {
@@ -143,34 +143,65 @@ Group {
                     // Set filter sidebar — single scrollable column
                     Group {
                         Anchor: (Width: 164);
-                        LayoutMode: TopScrolling;
+                        LayoutMode: Top;
                         ScrollbarStyle: $C.@DefaultScrollbarStyle;
                         FlexWeight: 1;
 
                         // Category group icon buttons — collapsible section
-                        TextButton #CategoriesHeader {
-                            Text: "v Categories";
-                            Anchor: (Height: 20, Left: 0, Right: 0);
-                            Padding: (Left: 6, Right: 6);
-                            Style: @SectionHeaderStyle;
+                        Group {
+                            Anchor: (Height: 30, Left: 0, Right: 0);
+
+                            TextButton #CategoriesHeader {
+                                Text: "v Categories";
+                                Anchor: (Full: 0);
+                                Padding: (Left: 6, Right: 22);
+                                Style: @SectionHeaderStyle;
+                            }
+
+                            Group {
+                                Anchor: (Width: 24, Height: 24, Right: 2);
+                                Background: "../../Common/Icons/AssetNotifications/Trash.png";
+
+                                TextButton #ClearCategoriesBtn {
+                                    Text: "";
+                                    Anchor: (Full: 0);
+                                }
+                            }
                         }
 
                         Group #MaterialGroups {
+                            Anchor: (Height: 135);
                             LayoutMode: LeftCenterWrap;
                         }
 
                         Group { Anchor: (Height: 6); }
 
                         // Set filter buttons — collapsible section
-                        TextButton #SetsHeader {
-                            Text: "v Sets";
-                            Anchor: (Height: 20, Left: 0, Right: 0);
-                            Padding: (Left: 6, Right: 6);
-                            Style: @SectionHeaderStyle;
+                        Group {
+                            Anchor: (Height: 30, Left: 0, Right: 0);
+
+                            TextButton #SetsHeader {
+                                Text: "v Sets";
+                                Anchor: (Full: 0);
+                                Padding: (Left: 6, Right: 22);
+                                Style: @SectionHeaderStyle;
+                            }
+
+                            Group {
+                                Anchor: (Width: 24, Height: 24, Right: 2);
+                                Background: "../../Common/Icons/AssetNotifications/Trash.png";
+
+                                TextButton #ClearSetsBtn {
+                                    Text: "";
+                                    Anchor: (Full: 0);
+                                }
+                            }
                         }
 
                         Group #SetFilters {
-                            LayoutMode: Top;
+                            FlexWeight: 1;
+                            LayoutMode: TopScrolling;
+                            ScrollbarStyle: $C.@DefaultScrollbarStyle;
                         }
                     }
                     // Horizontal divider between

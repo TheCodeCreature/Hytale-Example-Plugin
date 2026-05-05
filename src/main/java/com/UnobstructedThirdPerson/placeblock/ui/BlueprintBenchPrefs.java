@@ -18,6 +18,8 @@ public class BlueprintBenchPrefs {
             .append(new KeyedCodec<>("ShowUncategorized", Codec.BOOLEAN, true), (p, v) -> p.showUncategorized = v, p -> p.showUncategorized).add()
             .append(new KeyedCodec<>("SearchQuery", Codec.STRING, true), (p, v) -> p.searchQuery = v, p -> p.searchQuery).add()
             .append(new KeyedCodec<>("SelectedRecipeId", Codec.STRING, true), (p, v) -> p.selectedRecipeId = v, p -> p.selectedRecipeId).add()
+            .append(new KeyedCodec<>("SelectAllSets", Codec.BOOLEAN, true), (p, v) -> p.selectAllSets = v, p -> p.selectAllSets).add()
+            .append(new KeyedCodec<>("SelectAllCategories", Codec.BOOLEAN, true), (p, v) -> p.selectAllCategories = v, p -> p.selectAllCategories).add()
             .build();
 
     String activeTab = "All";
@@ -27,4 +29,6 @@ public class BlueprintBenchPrefs {
     boolean showUncategorized = false;
     String searchQuery = "";
     String selectedRecipeId;
+    boolean selectAllSets = false;
+    boolean selectAllCategories = false;
 }

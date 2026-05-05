@@ -69,6 +69,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private boolean showUncategorized = false;
     private boolean categoriesExpanded = true;
     private boolean setsExpanded = true;
+    private boolean selectAllSets = false;
+    private boolean selectAllCategories = false;
     private final Set<String> activeMaterialGroups = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     private List<RecipeFilterPipeline.MaterialGroup> currentGroups = new ArrayList<>();
     private List<RecipeFilterPipeline.TaggedRecipe> displayedRecipes = new ArrayList<>();
@@ -147,8 +149,10 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         }
 
         // Execute pipeline
+        Set<String> effectiveSets = selectAllSets ? Set.of() : activeSetFilters;
+        Set<String> effectiveGroups = selectAllCategories ? Set.of() : activeMaterialGroups;
         RecipeFilterPipeline.PipelineResult result = pipeline.execute(
-                inputs, activeTab, activeMaterialGroups, activeSetFilters, searchQuery, checker,
+                inputs, activeTab, effectiveGroups, effectiveSets, searchQuery, checker,
                 affordabilityEnabled, showUncategorized, categoryInfoMap);
 
         this.displayedRecipes = result.displayedRecipes();
@@ -176,6 +180,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         this.showUncategorized = prefs.showUncategorized;
         this.searchQuery = prefs.searchQuery != null ? prefs.searchQuery : "";
         this.selectedRecipeId = prefs.selectedRecipeId;
+        this.selectAllSets = prefs.selectAllSets;
+        this.selectAllCategories = prefs.selectAllCategories;
 
         loadRecipes();
 
@@ -184,21 +190,15 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         // ── Append reusable components into empty containers (one-time init) ──
 
-        // Set filter buttons: 1 "All" + MAX_SET_FILTERS indexed buttons
-        for (int i = 0; i < 1 + MAX_SET_FILTERS; i++) {
+        // Set filter buttons
+        for (int i = 0; i < MAX_SET_FILTERS; i++) {
             cmd.append("#SetFilters", "Pages/BlueprintBench/SetFilterButton.ui");
         }
-        // Set "All" text on the first filter button
-        cmd.set("#SetFilters[0].Text", "All");
 
-        // Material group icon buttons: 1 "All" + MAX_GROUP_BUTTONS
-        for (int i = 0; i < 1 + MAX_GROUP_BUTTONS; i++) {
+        // Material group icon buttons
+        for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
             cmd.append("#MaterialGroups", "Pages/BlueprintBench/GroupFilterButton.ui");
         }
-        // "All" button is always visible with a generic icon
-        cmd.set("#MaterialGroups[0].Visible", true);
-        cmd.set("#MaterialGroups[0] #GroupIcon.Background", "Common/RecipesIcon.png");
-        cmd.set("#MaterialGroups[0].TooltipText", "All");
 
         // Per-set group containers (each contains a label + wrapping cell grid)
         for (int g = 0; g < MAX_SET_GROUPS; g++) {
@@ -294,6 +294,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         prefs.showUncategorized = this.showUncategorized;
         prefs.searchQuery = this.searchQuery;
         prefs.selectedRecipeId = this.selectedRecipeId;
+        prefs.selectAllSets = this.selectAllSets;
+        prefs.selectAllCategories = this.selectAllCategories;
         BlueprintBenchPrefsStore.save(this.playerRef.getUuid(), prefs);
     }
 
@@ -313,6 +315,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             String tab = data.selectedTab;
             if (!tab.equals(this.activeTab)) {
                 this.activeTab = tab;
+                this.selectAllSets = false;
+                this.selectAllCategories = false;
                 this.activeSetFilters.clear();
                 this.activeMaterialGroups.clear();
                 this.searchQuery = "";
@@ -332,6 +336,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             // Set filter toggle — index-based resolution
             String filterPayload = data.action.substring("SetFilter:".length());
             if (ALL_FILTER.equals(filterPayload)) {
+                // Clear all set filters
+                selectAllSets = false;
                 activeSetFilters.clear();
             } else if (filterPayload.startsWith("idx:")) {
                 int idx = -1;
@@ -340,10 +346,19 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 } catch (NumberFormatException ignored) {}
                 if (idx >= 0 && idx < currentSets.size()) {
                     String setName = currentSets.get(idx);
-                    if (activeSetFilters.contains(setName)) {
+                    if (selectAllSets) {
+                        // Transitioning from Select All to individual: populate all EXCEPT toggled
+                        selectAllSets = false;
+                        activeSetFilters.clear();
+                        activeSetFilters.addAll(currentSets);
                         activeSetFilters.remove(setName);
                     } else {
-                        activeSetFilters.add(setName);
+                        // Normal toggle
+                        if (activeSetFilters.contains(setName)) {
+                            activeSetFilters.remove(setName);
+                        } else {
+                            activeSetFilters.add(setName);
+                        }
                     }
                 }
             }
@@ -360,17 +375,29 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         } else if (data.action != null && data.action.startsWith("MaterialGroup:")) {
             String payload = data.action.substring("MaterialGroup:".length());
             if ("All".equals(payload)) {
+                // Clear all category filters
+                selectAllCategories = false;
                 activeMaterialGroups.clear();
             } else if (payload.startsWith("idx:")) {
                 int idx = -1;
                 try { idx = Integer.parseInt(payload.substring(4)); } catch (Exception ignored) {}
                 if (idx >= 0 && idx < currentGroups.size()) {
                     String groupName = currentGroups.get(idx).categoryId();
-                    // Multi-select toggle: add if absent, remove if present
-                    if (activeMaterialGroups.contains(groupName)) {
+                    if (selectAllCategories) {
+                        // Transitioning from Select All to individual: populate all EXCEPT toggled
+                        selectAllCategories = false;
+                        activeMaterialGroups.clear();
+                        for (RecipeFilterPipeline.MaterialGroup g : currentGroups) {
+                            activeMaterialGroups.add(g.categoryId());
+                        }
                         activeMaterialGroups.remove(groupName);
                     } else {
-                        activeMaterialGroups.add(groupName);
+                        // Normal toggle
+                        if (activeMaterialGroups.contains(groupName)) {
+                            activeMaterialGroups.remove(groupName);
+                        } else {
+                            activeMaterialGroups.add(groupName);
+                        }
                     }
                 }
             }
@@ -473,34 +500,39 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     }
 
     private void buildSetFilterBindings(UIEventBuilder evt) {
-        // Index 0 is the "All" button
+        // "Clear Filters" trash icon button in the section header row
         evt.addEventBinding(
-                CustomUIEventBindingType.Activating, "#SetFilters[0]",
+                CustomUIEventBindingType.Activating, "#ClearSetsBtn",
                 EventData.of("Action", "SetFilter:" + ALL_FILTER)
         );
-        // Indices 1..MAX_SET_FILTERS are the per-set buttons
+        // Per-set filter buttons (indices 0..MAX_SET_FILTERS-1)
         for (int i = 0; i < MAX_SET_FILTERS; i++) {
+            String idx = String.valueOf(i);
+            EventData action = EventData.of("Action", "SetFilter:idx:" + i);
             evt.addEventBinding(
-                    CustomUIEventBindingType.Activating, "#SetFilters[" + (i + 1) + "]",
-                    EventData.of("Action", "SetFilter:idx:" + i)
+                    CustomUIEventBindingType.Activating, "#SetFilters[" + idx + "] #Btn",
+                    action
+            );
+            // Bind checkbox so toggling it fires the same action as the button
+            evt.addEventBinding(
+                    CustomUIEventBindingType.ValueChanged, "#SetFilters[" + idx + "] #Check",
+                    action
             );
         }
     }
 
     private void updateSetFilters(UICommandBuilder cmd) {
-        // "All" filter button — index 0
-        cmd.set("#SetFilters[0].Visible", !currentSets.isEmpty());
-        cmd.set("#SetFilters[0].Style", activeSetFilters.isEmpty() ? FILTER_ACTIVE : FILTER_INACTIVE);
-
-        // Per-set filter buttons — indices 1..MAX_SET_FILTERS
+        // Per-set filter buttons (indices 0..MAX_SET_FILTERS-1)
         for (int i = 0; i < MAX_SET_FILTERS; i++) {
-            String sel = "#SetFilters[" + (i + 1) + "]";
+            String sel = "#SetFilters[" + i + "]";
             if (i < currentSets.size()) {
                 String setName = currentSets.get(i);
                 String label = RecipeFilterPipeline.setDisplayLabel(setName);
+                boolean checked = selectAllSets || activeSetFilters.contains(setName);
                 cmd.set(sel + ".Visible", true);
-                cmd.set(sel + ".Text", label);
-                cmd.set(sel + ".Style", activeSetFilters.contains(setName) ? FILTER_ACTIVE : FILTER_INACTIVE);
+                cmd.set(sel + " #Btn.Text", label);
+                cmd.set(sel + " #Btn.Style", checked ? FILTER_ACTIVE : FILTER_INACTIVE);
+                cmd.set(sel + " #Check.Value", checked);
             } else {
                 cmd.set(sel + ".Visible", false);
             }
@@ -565,7 +597,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         }
 
         // Hide remaining cells in the last populated group
-        if (groupIdx >= 0) {
+        if (groupIdx >= 0 && groupIdx < MAX_SET_GROUPS) {
             hideRemainingCells(cmd, groupIdx, cellInGroup);
         }
 
@@ -639,31 +671,27 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     // ─── Placeholder list ─────────────────────────────────────
 
     private void buildMaterialGroupBindings(UIEventBuilder evt) {
-        // Index 0 is the "All" button
+        // "Clear Filters" text button above the icon grid
         evt.addEventBinding(
-                CustomUIEventBindingType.Activating, "#MaterialGroups[0] #GroupBtn",
+                CustomUIEventBindingType.Activating, "#ClearCategoriesBtn",
                 EventData.of("Action", "MaterialGroup:All")
         );
-        // Indices 1..MAX_GROUP_BUTTONS are per-group buttons
+        // Per-group icon buttons (indices 0..MAX_GROUP_BUTTONS-1)
         for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
             evt.addEventBinding(
-                    CustomUIEventBindingType.Activating, "#MaterialGroups[" + (i + 1) + "] #GroupBtn",
+                    CustomUIEventBindingType.Activating, "#MaterialGroups[" + i + "] #GroupBtn",
                     EventData.of("Action", "MaterialGroup:idx:" + i)
             );
         }
     }
 
     private void updateMaterialGroups(UICommandBuilder cmd) {
-        // "All" button — active overlay when no groups selected
-        cmd.set("#MaterialGroups[0] #ActiveOverlay.Visible", activeMaterialGroups.isEmpty());
-
-        // Per-group icon buttons (indices 1..N)
+        // Per-group icon buttons (indices 0..N-1)
         for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
-            int childIndex = i + 1;
-            String sel = "#MaterialGroups[" + childIndex + "]";
+            String sel = "#MaterialGroups[" + i + "]";
             if (i < currentGroups.size()) {
                 RecipeFilterPipeline.MaterialGroup group = currentGroups.get(i);
-                boolean active = activeMaterialGroups.contains(group.categoryId());
+                boolean active = selectAllCategories || activeMaterialGroups.contains(group.categoryId());
                 cmd.set(sel + ".Visible", true);
                 cmd.set(sel + ".TooltipText", group.displayName());
                 cmd.set(sel + " #ActiveOverlay.Visible", active);
@@ -682,7 +710,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     }
 
     private void pruneIncompatibleSetFilters() {
-        if (activeMaterialGroups.isEmpty()) return;
+        if (selectAllSets || activeMaterialGroups.isEmpty()) return;
         // A set filter is compatible if any recipe with that set also has an active category
         activeSetFilters.removeIf(setName -> {
             for (RecipeEntry entry : allRecipes) {
@@ -697,7 +725,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     }
 
     private void pruneInvalidMaterialGroups() {
-        if (activeMaterialGroups.isEmpty()) return;
+        if (selectAllCategories || activeMaterialGroups.isEmpty()) return;
         Set<String> validCats = new HashSet<>();
         for (RecipeFilterPipeline.MaterialGroup g : currentGroups) {
             validCats.add(g.categoryId());

@@ -21,14 +21,14 @@ Group {
     // Content area with tinted background
     Group {
         LayoutMode: Top;
-        Background: #1d2435(0.85);
-        Padding: (Left: 4, Right: 4, Top: 2, Bottom: 24);
+        Background: #232f4e(0.35);
+        Padding: (Left: 4, Right: 4, Top: 4, Bottom: 12);
 
         Label #SetGroupLabel {
             Text: "";
             Style: @SetGroupLabelStyle;
             Anchor: (Height: 24, Left: 0, Right: 0);
-            Padding: (Left: 4, Top: 4, Bottom: 2);
+            Padding: (Left: 4, Top: 4, Bottom: 10);
         }
 
         Group #GroupCells {
