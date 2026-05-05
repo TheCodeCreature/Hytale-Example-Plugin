@@ -1,0 +1,43 @@
+// SetGroupContainer — per-set group with label header and wrapping cell grid
+// Server appends CELLS_PER_GROUP RecipeIconCell.ui instances into #GroupCells during build()
+// Server shows/hides the entire group and sets #SetGroupLabel.Text via cmd.set()
+//
+// Addressing pattern:
+//   Group root  → #RecipeGridArea[g]
+//   Label       → #RecipeGridArea[g] #SetGroupLabel
+//   Cell grid   → #RecipeGridArea[g] #GroupCells
+//   Cell i      → #RecipeGridArea[g] #GroupCells[i]
+//   Cell button → #RecipeGridArea[g] #GroupCells[i] #CellBtn
+
+@SetGroupLabelStyle = LabelStyle(
+    FontSize: 18, TextColor: #8b9bb5, RenderBold: true,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+Group {
+    LayoutMode: Top;
+    Visible: false;
+
+    // Content area with tinted background
+    Group {
+        LayoutMode: Top;
+        Background: #1d2435(0.85);
+        Padding: (Left: 4, Right: 4, Top: 2, Bottom: 24);
+
+        Label #SetGroupLabel {
+            Text: "";
+            Style: @SetGroupLabelStyle;
+            Anchor: (Height: 24, Left: 0, Right: 0);
+            Padding: (Left: 4, Top: 4, Bottom: 2);
+        }
+
+        Group #GroupCells {
+            LayoutMode: LeftCenterWrap;
+        }
+    }
+
+    // Spacer between set groups (no background — shows base UI)
+    Group {
+        Anchor: (Height: 24); 
+    }
+}

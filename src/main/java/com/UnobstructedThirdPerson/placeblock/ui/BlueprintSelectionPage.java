@@ -46,7 +46,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static final int MAX_SET_FILTERS = 20;
     private static final int MAX_GROUP_BUTTONS = 25;
     private static final int MAX_COST_CELLS = 8;
-    private static final int MAX_RECIPE_CELLS = 81;  // 9 columns × 9 rows
+    private static final int MAX_SET_GROUPS = 20;      // matches MAX_SET_FILTERS
+    private static final int CELLS_PER_GROUP = 9;       // one row of 9 columns per group
+    private static final int MAX_RECIPE_CELLS = MAX_SET_GROUPS * CELLS_PER_GROUP;  // 180
 
     private static final Value<String> FILTER_ACTIVE =
             Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "FilterActiveStyle");
@@ -71,6 +73,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private List<RecipeFilterPipeline.MaterialGroup> currentGroups = new ArrayList<>();
     private List<RecipeFilterPipeline.TaggedRecipe> displayedRecipes = new ArrayList<>();
     private List<String> currentSets = new ArrayList<>();  // sets for active tab
+
+    /** Maps cell slot index (0..MAX_RECIPE_CELLS-1) to displayedRecipes index. -1 = unused. */
+    private final int[] cellSlotToRecipeIndex = new int[MAX_RECIPE_CELLS];
     private Map<String, RecipeFilterPipeline.CategoryInfo> categoryInfoMap = Map.of();
 
     private Ref<EntityStore> playerRef_ref;
@@ -195,9 +200,13 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         cmd.set("#MaterialGroups[0] #GroupIcon.Background", "Common/RecipesIcon.png");
         cmd.set("#MaterialGroups[0].TooltipText", "All");
 
-        // Recipe icon cells
-        for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
-            cmd.append("#RecipeGrid", "Pages/BlueprintBench/RecipeIconCell.ui");
+        // Per-set group containers (each contains a label + wrapping cell grid)
+        for (int g = 0; g < MAX_SET_GROUPS; g++) {
+            cmd.append("#RecipeGridArea", "Pages/BlueprintBench/SetGroupContainer.ui");
+            for (int c = 0; c < CELLS_PER_GROUP; c++) {
+                cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
+                           "Pages/BlueprintBench/RecipeIconCell.ui");
+            }
         }
 
         // Cost cells
@@ -266,8 +275,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         // so we must explicitly remove the data that drives tooltips.
         UICommandBuilder cmd = new UICommandBuilder();
         cmd.set("#OutputIcon.ItemId", "");
-        for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
-            cmd.set("#RecipeGrid[" + i + "].Visible", false);
+        for (int g = 0; g < MAX_SET_GROUPS; g++) {
+            cmd.set("#RecipeGridArea[" + g + "].Visible", false);
         }
         for (int i = 0; i < MAX_COST_CELLS; i++) {
             cmd.set("#CostGrid[" + i + "].Visible", false);
@@ -425,14 +434,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             sendUpdate(cmd, null, false);
 
         } else if (data.action != null && data.action.startsWith("RecipeSelect:idx:")) {
-            int idx = -1;
-            try { idx = Integer.parseInt(data.action.substring("RecipeSelect:idx:".length())); } catch (NumberFormatException ignored) {}
-            if (idx >= 0 && idx < displayedRecipes.size()) {
-                RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(idx);
-                this.selectedRecipeId = entry.recipeId();
-                updateRecipeGrid(cmd);
-                updateDetailPanel(cmd);
-                savePrefs();
+            int slotIdx = -1;
+            try { slotIdx = Integer.parseInt(data.action.substring("RecipeSelect:idx:".length())); } catch (NumberFormatException ignored) {}
+            if (slotIdx >= 0 && slotIdx < MAX_RECIPE_CELLS) {
+                int recipeIdx = cellSlotToRecipeIndex[slotIdx];
+                if (recipeIdx >= 0 && recipeIdx < displayedRecipes.size()) {
+                    RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(recipeIdx);
+                    this.selectedRecipeId = entry.recipeId();
+                    updateRecipeGrid(cmd);
+                    updateDetailPanel(cmd);
+                    savePrefs();
+                }
             }
             sendUpdate(cmd, null, false);
 
@@ -496,24 +508,77 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     }
 
     private void buildRecipeGridBindings(UIEventBuilder evt) {
-        for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
-            evt.addEventBinding(CustomUIEventBindingType.Activating,
-                    "#RecipeGrid[" + i + "] #CellBtn",
-                    EventData.of("Action", "RecipeSelect:idx:" + i));
+        int flatIdx = 0;
+        for (int g = 0; g < MAX_SET_GROUPS; g++) {
+            for (int c = 0; c < CELLS_PER_GROUP; c++) {
+                evt.addEventBinding(CustomUIEventBindingType.Activating,
+                        "#RecipeGridArea[" + g + "] #GroupCells[" + c + "] #CellBtn",
+                        EventData.of("Action", "RecipeSelect:idx:" + flatIdx));
+                flatIdx++;
+            }
         }
     }
 
     private void updateRecipeGrid(UICommandBuilder cmd) {
-        for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
-            String sel = "#RecipeGrid[" + i + "]";
-            if (i < displayedRecipes.size()) {
-                RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(i);
-                cmd.set(sel + ".Visible", true);
-                cmd.set(sel + " #CellIcon.ItemId", entry.outputItemId());
-                cmd.set(sel + " #CellDim.Visible", !entry.affordable());
-            } else {
-                cmd.set(sel + ".Visible", false);
+        // Reset indirection map
+        Arrays.fill(cellSlotToRecipeIndex, -1);
+
+        // Walk displayedRecipes (sorted by effectiveSet) and detect set boundaries
+        int groupIdx = -1;
+        int cellInGroup = 0;
+        String currentSet = null;
+
+        for (int recipeIdx = 0; recipeIdx < displayedRecipes.size(); recipeIdx++) {
+            RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(recipeIdx);
+
+            // Set boundary → advance to next group
+            if (!entry.effectiveSet().equals(currentSet)) {
+                // Hide remaining cells in the previous group
+                if (groupIdx >= 0) {
+                    hideRemainingCells(cmd, groupIdx, cellInGroup);
+                }
+                groupIdx++;
+                if (groupIdx >= MAX_SET_GROUPS) break;  // overflow — no more group slots
+
+                currentSet = entry.effectiveSet();
+                cellInGroup = 0;
+
+                // Show group and set its label
+                String groupSel = "#RecipeGridArea[" + groupIdx + "]";
+                cmd.set(groupSel + ".Visible", true);
+                cmd.set(groupSel + " #SetGroupLabel.Text",
+                        RecipeFilterPipeline.setDisplayLabel(currentSet));
             }
+
+            // Overflow within group — skip recipe (no cell slot available)
+            if (cellInGroup >= CELLS_PER_GROUP) continue;
+
+            // Populate cell
+            int globalIdx = groupIdx * CELLS_PER_GROUP + cellInGroup;
+            String cellSel = "#RecipeGridArea[" + groupIdx + "] #GroupCells[" + cellInGroup + "]";
+            cmd.set(cellSel + ".Visible", true);
+            cmd.set(cellSel + " #CellIcon.ItemId", entry.outputItemId());
+            cmd.set(cellSel + " #CellDim.Visible", !entry.affordable());
+
+            cellSlotToRecipeIndex[globalIdx] = recipeIdx;
+            cellInGroup++;
+        }
+
+        // Hide remaining cells in the last populated group
+        if (groupIdx >= 0) {
+            hideRemainingCells(cmd, groupIdx, cellInGroup);
+        }
+
+        // Hide all unused groups
+        for (int g = groupIdx + 1; g < MAX_SET_GROUPS; g++) {
+            cmd.set("#RecipeGridArea[" + g + "].Visible", false);
+        }
+    }
+
+    /** Hide cells [startCell..CELLS_PER_GROUP) in the given group. */
+    private void hideRemainingCells(UICommandBuilder cmd, int groupIdx, int startCell) {
+        for (int c = startCell; c < CELLS_PER_GROUP; c++) {
+            cmd.set("#RecipeGridArea[" + groupIdx + "] #GroupCells[" + c + "].Visible", false);
         }
     }
 

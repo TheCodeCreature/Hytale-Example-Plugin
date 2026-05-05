@@ -60,7 +60,7 @@ $C = "../../Common.ui";
 // ── Page Root ──
 
 Group {
-    Anchor: (Width: 1060, Height: 720);
+    Anchor: (Width: 1180, Height: 720);
     LayoutMode: Top;
 
     // Bench tabs above the container
@@ -90,8 +90,8 @@ Group {
 
     // Main container
     $C.@Container {
-        @ContentPadding = 0;
-        Anchor: (Left: 50, Width: 1060, Height: 644, Bottom: 10);
+        // @ContentPadding = 0;
+        Anchor: (Left: 50, Width: 1180, Height: 644, Bottom: 10);
 
         #Title {
             Group {
@@ -206,8 +206,8 @@ Group {
                     ScrollbarStyle: $C.@DefaultScrollbarStyle;
                     Padding: (Left: 8);
 
-                    Group #RecipeGrid {
-                        LayoutMode: LeftCenterWrap;
+                    Group #RecipeGridArea {
+                        LayoutMode: Top;
                     }
                 }
             }
