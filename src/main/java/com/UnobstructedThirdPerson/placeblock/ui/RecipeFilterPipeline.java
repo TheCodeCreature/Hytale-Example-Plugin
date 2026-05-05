@@ -180,18 +180,19 @@ public final class RecipeFilterPipeline {
         List<InputRecipe> searchFiltered = filterBySearch(tabFiltered, searchQuery);
         List<TaggedRecipe> tagged = tagAffordability(searchFiltered, checker);
 
-        // Derive material groups from category metadata.
-        // When affordability is on, only show categories that contain ≥1 affordable recipe.
-        List<TaggedRecipe> categorySource = affordableOnly ? filterByAffordability(tagged) : tagged;
-        List<MaterialGroup> currentGroups = extractMaterialGroups(categorySource, categoryInfoMap, 25);
+        // Base for sidebar extraction: optionally filter by affordability
+        List<TaggedRecipe> affordableBase = affordableOnly ? filterByAffordability(tagged) : tagged;
+
+        // Categories: derived from set-filtered base (selecting a set narrows categories)
+        List<TaggedRecipe> setOnlyFiltered = filterBySets(affordableBase, activeSetFilters);
+        List<MaterialGroup> currentGroups = extractMaterialGroups(setOnlyFiltered, categoryInfoMap, 25);
 
         // Filter by active material groups (category-based)
         List<TaggedRecipe> groupFiltered = filterByMaterialGroups(tagged, activeMaterialGroups);
 
-        // Sets are derived from category-filtered recipes
-        List<String> visibleSets = affordableOnly
-                ? extractSets(filterByAffordability(groupFiltered))
-                : extractSets(groupFiltered);
+        // Sets: derived from category-filtered base (selecting a category narrows sets)
+        List<TaggedRecipe> groupOnlyBase = filterByMaterialGroups(affordableBase, activeMaterialGroups);
+        List<String> visibleSets = extractSets(groupOnlyBase);
 
         // Restrict to selected sets or all visible sets
         Set<String> effectiveSetFilter = (activeSetFilters != null && !activeSetFilters.isEmpty())

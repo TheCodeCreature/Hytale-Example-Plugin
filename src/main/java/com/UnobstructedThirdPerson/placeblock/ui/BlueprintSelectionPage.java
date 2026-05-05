@@ -340,6 +340,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             }
             this.selectedRecipeId = null;
             applyFilter();
+            pruneInvalidMaterialGroups();
             updateSetFilters(cmd);
             updateMaterialGroups(cmd);
             updateRecipeGrid(cmd);
