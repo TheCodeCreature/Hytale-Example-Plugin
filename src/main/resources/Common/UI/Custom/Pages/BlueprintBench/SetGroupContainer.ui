@@ -9,10 +9,7 @@
 //   Cell i      → #RecipeGridArea[g] #GroupCells[i]
 //   Cell button → #RecipeGridArea[g] #GroupCells[i] #CellBtn
 
-@SetGroupLabelStyle = LabelStyle(
-    FontSize: 18, TextColor: #8b9bb5, RenderBold: true,
-    HorizontalAlignment: Start, VerticalAlignment: Center
-);
+$S = "BlueprintBenchStyles.ui";
 
 Group {
     LayoutMode: Top;
@@ -26,7 +23,7 @@ Group {
 
         Label #SetGroupLabel {
             Text: "";
-            Style: @SetGroupLabelStyle;
+            Style: $S.@SetGroupLabelStyle;
             Anchor: (Height: 24, Left: 0, Right: 0);
             Padding: (Left: 4, Top: 4, Bottom: 10);
         }

@@ -2,11 +2,7 @@
 // Group root for background, ItemIcon for display, TextButton overlay for clicks
 // Server sets #CellIcon.ItemId and #CellDim.Visible via #RecipeGrid[i]
 
-@TransparentBtnStyle = TextButtonStyle(
-    Default: (Background: #000000(0.0), LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
-    Hovered: (Background: #ffffff(0.1), LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
-    Pressed: (Background: #ffffff(0.2), LabelStyle: (FontSize: 1, TextColor: #000000(0.0)))
-);
+$S = "BlueprintBenchStyles.ui";
 
 Group {
     Anchor: (Width: 72, Height: 72);
@@ -31,7 +27,7 @@ Group {
         TextButton #CellBtn {
             Text: "";
             Anchor: (Full: 2);
-            Style: @TransparentBtnStyle;
+            Style: $S.@TransparentButtonStyle;
         }
     }
 }

@@ -1,7 +1,8 @@
 // Cost cell — single ingredient icon with quantity overlay
 // Reusable component: server appends N instances into #CostGrid during build()
 // Server updates via cmd.set() on indexed selectors: #CostGrid[N] #CostIcon, #CostGrid[N] #CostQty
-$C = "../../Common.ui";
+
+$S = "BlueprintBenchStyles.ui";
 
 Group {
     Anchor: (Width: 62, Height: 62);
@@ -20,10 +21,6 @@ Group {
     Label #CostQty {
         Text: "";
         Anchor: (Height: 14, Bottom: 0, Right: 2);
-        Style: LabelStyle(
-            ...$C.@DefaultLabelStyle,
-            FontSize: 11, TextColor: #ffffff,
-            HorizontalAlignment: End, VerticalAlignment: End
-        );
+        Style: $S.@CostQuantityStyle;
     }
 }

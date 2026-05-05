@@ -3,59 +3,7 @@
 // Server updates via cmd.set() only in handleDataEvent() — no append/clear after build()
 
 $C = "../../Common.ui";
-
-// ── Styles ──
-
-@HeaderStyle = LabelStyle(
-    ...$C.@DefaultLabelStyle,
-    FontSize: 22, RenderBold: true,
-    HorizontalAlignment: Start, VerticalAlignment: Center
-);
-
-@DetailLabelStyle = LabelStyle(
-    ...$C.@DefaultLabelStyle,
-    FontSize: 16, RenderBold: true,
-    HorizontalAlignment: Start, VerticalAlignment: Center
-);
-
-@SubtextStyle = LabelStyle(
-    ...$C.@DefaultLabelStyle,
-    FontSize: 12, TextColor: #6e7da1,
-    HorizontalAlignment: Start, VerticalAlignment: Center
-);
-
-@SectionLabelStyle = LabelStyle(
-    ...$C.@DefaultLabelStyle,
-    FontSize: 13, TextColor: #6e7da1, RenderBold: true,
-    HorizontalAlignment: Start, VerticalAlignment: Center
-);
-
-@FilterActiveStyle = TextButtonStyle(
-    Default: (Background: #2a4a6a, LabelStyle: (FontSize: 11, TextColor: #ffffff,
-              HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Hovered: (Background: #3a5a7a, LabelStyle: (FontSize: 11, TextColor: #ffffff,
-              HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Pressed: (Background: #1a3a5a, LabelStyle: (FontSize: 11, TextColor: #ffffff,
-              HorizontalAlignment: Center, VerticalAlignment: Center))
-);
-
-@FilterInactiveStyle = TextButtonStyle(
-    Default: (Background: #141c26(0.0), LabelStyle: (FontSize: 11, TextColor: #6e7da1,
-              HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Hovered: (Background: #1e2a3a, LabelStyle: (FontSize: 11, TextColor: #96a9be,
-              HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Pressed: (Background: #1a2535, LabelStyle: (FontSize: 11, TextColor: #96a9be,
-              HorizontalAlignment: Center, VerticalAlignment: Center))
-);
-
-@SectionHeaderStyle = TextButtonStyle(
-    Default: (Background: #141c26(0.0), LabelStyle: (FontSize: 18, TextColor: #6e7da1, RenderBold: true,
-              HorizontalAlignment: Start, VerticalAlignment: Center)),
-    Hovered: (Background: #1e2a3a, LabelStyle: (FontSize: 18, TextColor: #96a9be, RenderBold: true,
-              HorizontalAlignment: Start, VerticalAlignment: Center)),
-    Pressed: (Background: #1a2535, LabelStyle: (FontSize: 18, TextColor: #96a9be, RenderBold: true,
-              HorizontalAlignment: Start, VerticalAlignment: Center))
-);
+$S = "BlueprintBenchStyles.ui";
 
 // ── Page Root ──
 
@@ -155,7 +103,7 @@ Group {
                                 Text: "v Categories";
                                 Anchor: (Full: 0);
                                 Padding: (Left: 6, Right: 22);
-                                Style: @SectionHeaderStyle;
+                                Style: $S.@SectionHeaderStyle;
                             }
 
                             Group {
@@ -184,7 +132,7 @@ Group {
                                 Text: "v Sets";
                                 Anchor: (Full: 0);
                                 Padding: (Left: 6, Right: 22);
-                                Style: @SectionHeaderStyle;
+                                Style: $S.@SectionHeaderStyle;
                             }
 
                             Group {
@@ -258,7 +206,7 @@ Group {
             // ── Output Name ──
             Label #OutputName {
                 Text: "No recipe selected";
-                Style: @DetailLabelStyle;
+                Style: $S.@DetailLabelStyle;
             }
 
             Group { Anchor: (Height: 10); }
@@ -269,12 +217,27 @@ Group {
                 LayoutMode: Left;
 
                 Group {
-                    Anchor: (Width: 96, Height: 96, Top: 0);
-                    Background: "../../Common/BlockSelectorSlotBackground.png";
+                    LayoutMode: Top;
+                    Group {
+                        Anchor: (Height: 96, Width: 96, Top: 0);
+                        Background: "../../Common/BlockSelectorSlotBackground.png";
 
-                    ItemIcon #OutputIcon {
-                        Anchor: (Full: 4);
-                        ShowItemTooltip: true;
+                        ItemIcon #OutputIcon {
+                            Anchor: (Full: 4);
+                            ShowItemTooltip: true;
+                        }
+                    }
+
+                    Group {
+                        FlexWeight: 1;
+                    }
+
+                    // ── Give Stencil Button ──
+                    TextButton #GetPlaceholderBtn {
+                        Text: "Give Stencil";
+                        Anchor: (Height: 46, Width: 96, Right: 0, Left: 0);
+                        Padding: (Left: 12, Right: 12);
+                        Style: $S.@WrapSecondaryButtonStyle;
                     }
                 }
 
@@ -296,7 +259,7 @@ Group {
             Label #InputSlotLabel {
                 Text: "Placeholders";
                 Anchor: (Height: 20);
-                Style: @DetailLabelStyle;
+                Style: $S.@DetailLabelStyle;
             }
 
             Group { Anchor: (Height: 4); }
@@ -312,10 +275,7 @@ Group {
                     Text: "No placeholders in hotbar";
                     Anchor: (Height: 32);
                     Visible: false;
-                    Style: LabelStyle(
-                        FontSize: 11, TextColor: #6e7da1,
-                        HorizontalAlignment: Center, VerticalAlignment: Center
-                    );
+                    Style: $S.@EmptyStateStyle;
                 }
 
                 Group #PlaceholderList {
@@ -326,13 +286,6 @@ Group {
 
             Group { Anchor: (Height: 4); }
             $C.@PanelSeparatorFancy {}
-            Group { Anchor: (Height: 4); }
-
-            // ── Give Stencil Button ──
-            $C.@SecondaryTextButton #GetPlaceholderBtn {
-                @Text = "Give Stencil";
-                Anchor: (Height: 82);
-            }
         }
 
         } // two-column layout

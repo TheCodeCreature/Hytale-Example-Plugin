@@ -1,10 +1,6 @@
 // MaterialGroupButton — material group icon button for filter bar
 
-@GroupBtnStyle = TextButtonStyle(
-    Default: (Background: #000000(0.0), LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
-    Hovered: (Background: #ffffff(0.1), LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
-    Pressed: (Background: #ffffff(0.2), LabelStyle: (FontSize: 1, TextColor: #000000(0.0)))
-);
+$S = "BlueprintBenchStyles.ui";
 
 Group {
     Anchor: (Width: 30, Height: 30);
@@ -20,6 +16,6 @@ Group {
     TextButton #GroupBtn {
         Text: "";
         Anchor: (Full: 0);
-        Style: @GroupBtnStyle;
+        Style: $S.@TransparentButtonStyle;
     }
 }

@@ -3,11 +3,7 @@
 // Server sets #ActiveOverlay.Visible for active state
 // Click events target #GroupBtn (transparent TextButton overlay)
 
-@TransparentGroupBtnStyle = TextButtonStyle(
-    Default: (Background: #000000(0.0), LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
-    Hovered: (Background: #ffffff(0.15), LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
-    Pressed: (Background: #ffffff(0.25), LabelStyle: (FontSize: 1, TextColor: #000000(0.0)))
-);
+$S = "BlueprintBenchStyles.ui";
 
 Group {
     Anchor: (Width: 36, Height: 36);
@@ -34,7 +30,7 @@ Group {
         TextButton #GroupBtn {
             Text: "";
             Anchor: (Full: 0);
-            Style: @TransparentGroupBtnStyle;
+            Style: $S.@TransparentButtonStyle;
         }
     }
 }

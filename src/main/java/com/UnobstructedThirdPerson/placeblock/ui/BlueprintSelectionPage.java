@@ -51,9 +51,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static final int MAX_RECIPE_CELLS = MAX_SET_GROUPS * CELLS_PER_GROUP;  // 180
 
     private static final Value<String> FILTER_ACTIVE =
-            Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "FilterActiveStyle");
+            Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "FilterActiveStyle");
     private static final Value<String> FILTER_INACTIVE =
-            Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "FilterInactiveStyle");
+            Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "FilterInactiveStyle");
 
     private static final String ALL_TAB = "All";
     private static final String ALL_FILTER = "All";
