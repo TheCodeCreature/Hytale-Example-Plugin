@@ -173,6 +173,9 @@ Group {
                             LayoutMode: Top;
                         }
                     }
+                    // Horizontal divider between
+                    Group { Anchor: (Height: 1); Background: #2b3542; }
+                    Group { Anchor: (Height: 4); }
                     // Filter toggles
                     TextButton #AffordableToggle {
                         Text: "Inventory Driven";
