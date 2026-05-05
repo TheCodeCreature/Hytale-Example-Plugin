@@ -117,9 +117,14 @@ Group {
                             }
                         }
 
-                        Group #MaterialGroups {
-                            Anchor: (Height: 135);
-                            LayoutMode: LeftCenterWrap;
+                        Group {
+                            Anchor: (Height: 80);
+                            LayoutMode: TopScrolling;
+                            ScrollbarStyle: $C.@DefaultScrollbarStyle;
+
+                            Group #MaterialGroups {
+                                LayoutMode: LeftCenterWrap;
+                            }
                         }
 
                         Group { Anchor: (Height: 6); }
@@ -214,7 +219,7 @@ Group {
             // ── Output Icon + Cost Grid ──
             Group {
                 Anchor: (Height: 150);
-                LayoutMode: Left;
+                LayoutMode: LeftScrolling;
 
                 Group {
                     LayoutMode: Top;
@@ -228,14 +233,10 @@ Group {
                         }
                     }
 
-                    Group {
-                        FlexWeight: 1;
-                    }
-
                     // ── Give Stencil Button ──
                     TextButton #GetPlaceholderBtn {
                         Text: "Give Stencil";
-                        Anchor: (Height: 46, Width: 96, Right: 0, Left: 0);
+                        Anchor: (Height: 40, Width: 96, Right: 0, Left: 0, Top: 10);
                         Padding: (Left: 12, Right: 12);
                         Style: $S.@WrapSecondaryButtonStyle;
                     }
