@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blueprint Bench — Full Layout Mockup</title>
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: #0c1018;
+    color: #c8d6e5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 16px;
+}
+
+/* ── Page root — matches Hytale's 1180×720 anchor ── */
+.bench-page {
+    width: 1180px;
+    height: 720px;
+    display: flex;
+    flex-direction: column;
+    background: #0e1520;
+    border: 1px solid #2b3542;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+/* ── Tab Bar ── */
+.tab-bar {
+    height: 46px;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 8px;
+    background: #0e1520;
+    border-bottom: 1px solid #2b3542;
+}
+.tab-btn {
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4a5a6c;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    background: transparent;
+    margin-right: 2px;
+}
+.tab-btn.active {
+    color: #c8d6e5;
+    background: #141c26;
+    border-color: #2b3542;
+}
+
+/* ── Title Bar ── */
+.title-bar {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    background: #141c26;
+    border-bottom: 1px solid #1a2332;
+    font-size: 14px;
+    font-weight: 700;
+    color: #96a9be;
+}
+.title-bar span { color: #4a5a6c; font-weight: 400; margin-left: 6px; }
+
+/* ── Main Content — 3-column layout ── */
+.main-content {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+}
+
+/* ── Column Divider ── */
+.col-divider {
+    width: 1px;
+    background: #2b3542;
+    flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════ */
+/* LEFT COLUMN — Category Filters + Set Filters */
+/* ═══════════════════════════════════════════ */
+.left-col {
+    width: 164px;
+    display: flex;
+    flex-direction: column;
+    background: #141c26;
+    flex-shrink: 0;
+}
+
+.filter-section {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.filter-section.top-section { flex: 0 0 auto; }
+.filter-section.bottom-section { flex: 1; min-height: 0; }
+
+.section-header {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #6e7da1;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 1px solid #1a2332;
+    cursor: pointer;
+    user-select: none;
+}
+.section-header:hover { background: #1a2332; }
+.section-header .arrow { margin-right: 4px; font-size: 8px; color: #4a5a6c; }
+.section-header .clear-icon {
+    margin-left: auto;
+    width: 16px; height: 16px;
+    display: flex; align-items: center; justify-content: center;
+    color: #4a5a6c; font-size: 10px; cursor: pointer;
+}
+.section-header .clear-icon:hover { color: #c8d6e5; }
+
+/* Category icon grid */
+.cat-grid {
+    padding: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+.cat-grid::-webkit-scrollbar { width: 4px; }
+.cat-grid::-webkit-scrollbar-thumb { background: #3a4a5c; border-radius: 2px; }
+
+/* Set filter list */
+.set-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2px 4px;
+    min-height: 0;
+}
+.set-list::-webkit-scrollbar { width: 4px; }
+.set-list::-webkit-scrollbar-thumb { background: #3a4a5c; border-radius: 2px; }
+
+.set-item {
+    padding: 4px 6px;
+    font-size: 11px;
+    color: #6e7da1;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.set-item:hover { background: #1a2332; color: #96a9be; }
+.set-item.active { background: #1a2d45; color: #c8d6e5; }
+
+.left-separator {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #2b3542, transparent);
+    margin: 2px 8px;
+    flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════ */
+/* CENTER COLUMN — Item Grid                   */
+/* ═══════════════════════════════════════════ */
+.center-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #141c26;
+}
+
+.recipe-grid-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    min-height: 0;
+}
+.recipe-grid-scroll::-webkit-scrollbar { width: 6px; }
+.recipe-grid-scroll::-webkit-scrollbar-thumb { background: #3a4a5c; border-radius: 3px; }
+
+.set-group { margin-bottom: 8px; }
+.set-group-label {
+    font-size: 11px; font-weight: 600; color: #4a5a6c;
+    padding: 2px 4px 4px; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.set-group-grid {
+    display: flex; flex-wrap: wrap; gap: 3px;
+}
+
+.recipe-cell {
+    width: 44px; height: 44px;
+    background: #1a2332; border: 1px solid #2b3542; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.15s; position: relative;
+}
+.recipe-cell:hover { border-color: #4a5a6c; }
+.recipe-cell.selected { border-color: #2d7dd2; background: #1a2d45; }
+.recipe-cell.dimmed { opacity: 0.15; }
+
+.cell-icon {
+    width: 32px; height: 32px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.7);
+}
+
+/* ═══════════════════════════════════════════ */
+/* RIGHT COLUMN — Details (top) + Ingredients (bottom) */
+/* ═══════════════════════════════════════════ */
+.right-col {
+    width: 270px;
+    display: flex;
+    flex-direction: column;
+    background: #141c26;
+    flex-shrink: 0;
+}
+
+/* ── Top: Crafting Details (40%) ── */
+.details-section {
+    flex: 0 0 40%;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    border-bottom: 1px solid #2b3542;
+    overflow: hidden;
+}
+
+.detail-output-name {
+    font-size: 13px; font-weight: 700; color: #96a9be;
+    margin-bottom: 8px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.detail-row {
+    display: flex;
+    gap: 8px;
+}
+
+.output-frame {
+    width: 80px; height: 80px; flex-shrink: 0;
+    background: #1a2332; border: 1px solid #2b3542; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+}
+.output-icon {
+    width: 64px; height: 64px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.7);
+}
+
+.cost-grid {
+    flex: 1;
+    display: flex; flex-wrap: wrap; gap: 3px;
+    align-content: flex-start;
+}
+
+.cost-cell {
+    width: 36px; height: 36px;
+    background: #1a2332; border: 1px solid #2b3542; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+}
+.cost-cell .cost-icon {
+    width: 26px; height: 26px; border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 7px; font-weight: 700; color: rgba(255,255,255,0.7);
+}
+.cost-cell .cost-qty {
+    position: absolute; bottom: 1px; right: 2px;
+    font-size: 8px; font-weight: 700; color: #96a9be;
+}
+.cost-cell.insufficient .cost-qty { color: #e74c3c; }
+
+.give-btn {
+    margin-top: 8px;
+    padding: 6px 12px;
+    font-size: 11px; font-weight: 600;
+    color: #96a9be;
+    background: #1a2332; border: 1px solid #2b3542; border-radius: 4px;
+    cursor: pointer; text-align: center;
+}
+.give-btn:hover { background: #1f2b3a; border-color: #4a5a6c; }
+
+/* ── Bottom: Ingredient Filters (60%) ── */
+.ingredient-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.ingredient-header {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-bottom: 1px solid #1a2332;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.ingredient-header-label {
+    font-size: 11px; font-weight: 700; color: #6e7da1;
+    text-transform: uppercase; letter-spacing: 0.3px;
+    flex: 1;
+}
+
+/* Affordability toggle pill */
+.affordability-toggle {
+    padding: 3px 8px;
+    font-size: 10px; font-weight: 600;
+    color: #6e7da1;
+    background: #1a2332; border: 1px solid #2b3542; border-radius: 10px;
+    cursor: pointer; user-select: none;
+    white-space: nowrap;
+}
+.affordability-toggle:hover { border-color: #4a5a6c; color: #96a9be; }
+.affordability-toggle.active { border-color: #2d7dd2; color: #c8d6e5; background: #1a2d45; }
+
+.ingredient-clear {
+    font-size: 10px; color: #4a5a6c; cursor: pointer;
+    padding: 2px 6px; border-radius: 3px;
+}
+.ingredient-clear:hover { color: #c8d6e5; background: #1a2332; }
+
+/* ── Ingredient Tree ── */
+.tree-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 2px 0;
+    min-height: 0;
+}
+.tree-scroll::-webkit-scrollbar { width: 5px; }
+.tree-scroll::-webkit-scrollbar-track { background: #0f1620; }
+.tree-scroll::-webkit-scrollbar-thumb { background: #3a4a5c; border-radius: 3px; }
+
+/* Group Header (Tier 1) */
+.group-header {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid #1a2332;
+    transition: background 0.12s;
+}
+.group-header:hover { background: #1a2332; }
+
+/* Three-state checkbox */
+.checkbox {
+    width: 14px; height: 14px;
+    border: 2px solid #4a5a6c; border-radius: 2px;
+    margin-right: 5px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.12s; position: relative;
+}
+.checkbox:hover { border-color: #7a8a9c; }
+.checkbox[data-state="none"] { background: transparent; border-color: #4a5a6c; }
+.checkbox[data-state="all"] { background: #2d7dd2; border-color: #2d7dd2; }
+.checkbox[data-state="all"]::after {
+    content: '✓'; color: #fff; font-size: 9px; font-weight: 700; line-height: 1;
+}
+.checkbox[data-state="some"] { background: transparent; border-color: #2d7dd2; }
+.checkbox[data-state="some"]::after {
+    content: ''; width: 6px; height: 2px; background: #2d7dd2; border-radius: 1px;
+}
+
+/* Group icon */
+.group-icon {
+    width: 18px; height: 18px; border-radius: 2px;
+    margin-right: 5px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: #fff;
+}
+
+/* Group label */
+.group-label {
+    flex: 1; font-size: 11px; font-weight: 600; color: #96a9be;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.group-count {
+    font-size: 9px; color: #4a5a6c; margin-left: 3px; font-weight: 400;
+}
+
+/* Expand arrow */
+.expand-arrow {
+    width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    color: #4a5a6c; font-size: 8px; transition: transform 0.15s; flex-shrink: 0;
+}
+.expand-arrow.collapsed { transform: rotate(-90deg); }
+
+/* Group body */
+.group-body {
+    padding: 3px 3px 3px 24px;
+    display: flex; flex-wrap: wrap; gap: 2px;
+}
+.group-body.collapsed { display: none; }
+
+/* ResourceType sub-header */
+.restype-header {
+    display: flex; align-items: center;
+    padding: 2px 3px; cursor: pointer; user-select: none;
+    width: 100%; border-radius: 2px; transition: background 0.12s;
+}
+.restype-header:hover { background: #1a2332; }
+
+.restype-subgrid {
+    width: 100%; padding: 2px 0 2px 20px;
+    display: flex; flex-wrap: wrap; gap: 2px;
+}
+.restype-subgrid.collapsed { display: none; }
+
+/* Icon button (Tier 2 + Tier 3) */
+.icon-btn {
+    width: 32px; height: 32px;
+    background: #1a2332; border: 1px solid #2b3542; border-radius: 3px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    position: relative; transition: all 0.12s;
+}
+.icon-btn:hover { border-color: #4a5a6c; background: #1f2b3a; }
+.icon-btn.selected { border-color: #2d7dd2; background: #1a2d45; }
+.icon-btn.selected::after {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(42, 74, 106, 0.35); border-radius: 2px; pointer-events: none;
+}
+
+.icon-placeholder {
+    width: 22px; height: 22px; border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 7px; font-weight: 700; color: rgba(255,255,255,0.7);
+}
+
+.icon-btn.tier3 { width: 28px; height: 28px; }
+.icon-btn.tier3 .icon-placeholder { width: 18px; height: 18px; font-size: 6px; }
+
+/* Tooltip */
+.icon-btn[data-tooltip]:hover::before, .recipe-cell[data-tooltip]:hover::before {
+    content: attr(data-tooltip);
+    position: absolute; bottom: calc(100% + 4px); left: 50%;
+    transform: translateX(-50%);
+    background: #0c1018; border: 1px solid #2b3542; color: #c8d6e5;
+    padding: 3px 6px; border-radius: 3px; font-size: 10px;
+    white-space: nowrap; z-index: 100; pointer-events: none;
+}
+
+/* Tree separator */
+.tree-separator {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #2b3542 30%, #2b3542 70%, transparent);
+    margin: 2px 8px;
+}
+
+/* ── Status bar ── */
+.status-bar {
+    padding: 4px 10px;
+    border-top: 1px solid #1a2332;
+    font-size: 10px; color: #4a5a6c;
+    display: flex; justify-content: space-between;
+    flex-shrink: 0;
+}
+.status-bar .count { color: #96a9be; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="bench-page">
+
+    <!-- ── Tab Bar ── -->
+    <div class="tab-bar">
+        <div class="tab-btn active">All</div>
+        <div class="tab-btn">Builders</div>
+        <div class="tab-btn">Furniture</div>
+    </div>
+
+    <!-- ── Title Bar ── -->
+    <div class="title-bar">Blueprint Bench:<span>All</span></div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- MAIN CONTENT — 3 columns                  -->
+    <!-- ══════════════════════════════════════════ -->
+    <div class="main-content">
+
+        <!-- ═══ LEFT COLUMN ═══ -->
+        <div class="left-col">
+            <!-- Category Filters (top) -->
+            <div class="filter-section top-section">
+                <div class="section-header" onclick="toggleSection('cat')">
+                    <span class="arrow" id="catArrow">▼</span> Categories
+                    <div class="clear-icon" onclick="event.stopPropagation();" title="Clear categories">✕</div>
+                </div>
+                <div class="cat-grid" id="catGrid"></div>
+            </div>
+
+            <div class="left-separator"></div>
+
+            <!-- Set Filters (bottom) -->
+            <div class="filter-section bottom-section">
+                <div class="section-header" onclick="toggleSection('sets')">
+                    <span class="arrow" id="setsArrow">▼</span> Sets
+                    <div class="clear-icon" onclick="event.stopPropagation();" title="Clear sets">✕</div>
+                </div>
+                <div class="set-list" id="setList"></div>
+            </div>
+        </div>
+
+        <div class="col-divider"></div>
+
+        <!-- ═══ CENTER COLUMN — Item Grid ═══ -->
+        <div class="center-col">
+            <div class="recipe-grid-scroll">
+                <div id="recipeArea"></div>
+            </div>
+            <div class="status-bar">
+                <span>Showing: <span class="count" id="visibleCount">0</span> / <span class="count" id="totalCount">0</span></span>
+                <span id="filterStatusCenter">No filter active</span>
+            </div>
+        </div>
+
+        <div class="col-divider"></div>
+
+        <!-- ═══ RIGHT COLUMN — Details + Ingredients ═══ -->
+        <div class="right-col">
+
+            <!-- ── Top: Crafting Details (40%) ── -->
+            <div class="details-section">
+                <div class="detail-output-name" id="detailName">Rock Stone Cobble Wall</div>
+                <div class="detail-row">
+                    <div>
+                        <div class="output-frame">
+                            <div class="output-icon" id="outputIcon" style="background:#95a5a6;">OUT</div>
+                        </div>
+                        <div class="give-btn">Give Stencil</div>
+                    </div>
+                    <div class="cost-grid" id="costGrid"></div>
+                </div>
+            </div>
+
+            <!-- ── Bottom: Ingredient Filters (60%) ── -->
+            <div class="ingredient-section">
+                <div class="ingredient-header">
+                    <span class="ingredient-header-label">Ingredients</span>
+                    <div class="affordability-toggle active" id="affordToggle" onclick="cycleAffordability()">Resource Driven</div>
+                    <span class="ingredient-clear" onclick="clearAllIngredients()">Clear</span>
+                </div>
+                <div class="tree-scroll" id="treeContainer"></div>
+                <div class="status-bar">
+                    <span>Selected: <span class="count" id="selectedCount">0</span></span>
+                    <span>Groups: <span class="count" id="groupCount">0</span></span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// MOCK DATA
+// ══════════════════════════════════════════════════════════════
+
+const CATEGORIES = [
+    { id: "Wood", color: "#6d4c2a", label: "WD" },
+    { id: "Rock", color: "#7f8c8d", label: "RK" },
+    { id: "Metal", color: "#5a6a7a", label: "MT" },
+    { id: "Fabric", color: "#8e44ad", label: "FB" },
+    { id: "Bone", color: "#f5f0e0", label: "BN" },
+    { id: "Glass", color: "#3498db", label: "GL" },
+    { id: "Organic", color: "#27ae60", label: "OR" },
+    { id: "Crystal", color: "#9b59b6", label: "CR" },
+];
+
+const SETS = [
+    "Hardwood", "Softwood", "Oak", "Birch", "Redwood",
+    "Basalt", "Calcite", "Marble", "Sandstone", "Slate",
+    "Iron", "Copper", "Gold", "Steel",
+    "Wool", "Silk", "Linen",
+    "Crystal Shard", "Emerald"
+];
+
+const TREE_DATA = [
+    {
+        id: "All_Rock", name: "All Rock", color: "#7f8c8d", icon: "🪨",
+        children: [
+            { id: "Rock", name: "Rock", color: "#95a5a6",
+              children: [
+                  { id: "Rock_Stone", name: "Rock Stone", color: "#bdc3c7" },
+                  { id: "Rock_Basalt_Block", name: "Basalt Block", color: "#7f8c8d" },
+              ]},
+            { id: "Rock_Stone_Brick", name: "Stone Brick", color: "#a0a8b0",
+              children: [{ id: "Rock_Stone_Brick_Item", name: "Stone Brick", color: "#b0b8c0" }]},
+            { id: "Rock_Basalt_Brick", name: "Basalt Brick", color: "#4a4a5a", children: [] },
+            { id: "Rock_Calcite_Brick", name: "Calcite Brick", color: "#d4c5a9", children: [] },
+            { id: "Clays", name: "Clays", color: "#c0846a",
+              children: [
+                  { id: "Soil_Clay_Block", name: "Clay Block", color: "#c0846a" },
+                  { id: "Soil_Clay_Ocean", name: "Ocean Clay", color: "#6a8a9a" },
+              ]},
+            { id: "Sands", name: "Sands", color: "#e8d5a0", children: [] },
+        ]
+    },
+    {
+        id: "All_Trunk", name: "All Trunk", color: "#6d4c2a", icon: "🪵",
+        children: [
+            { id: "Wood_Trunk", name: "Wood Trunk", color: "#8b6914",
+              children: [
+                  { id: "Wood_Log_Oak", name: "Oak Log", color: "#a0784a" },
+                  { id: "Wood_Log_Birch", name: "Birch Log", color: "#d4c8a0" },
+              ]},
+            { id: "Wood_Hardwood_Trunk", name: "Hardwood Trunk", color: "#6d4c2a",
+              children: [{ id: "Wood_Log_Hardwood", name: "Hardwood Log", color: "#7a5a3a" }]},
+            { id: "Wood_Softwood_Trunk", name: "Softwood Trunk", color: "#a08050", children: [] },
+        ]
+    },
+    {
+        id: "All_Bone", name: "All Bone", color: "#f5f0e0", icon: "🦴",
+        children: [
+            { id: "Bone", name: "Bone", color: "#e8e0d0",
+              children: [
+                  { id: "Ingredient_Bone_Fragment", name: "Bone Fragment", color: "#d8d0c0" },
+                  { id: "Deco_Bone_Full", name: "Full Bone", color: "#f0e8d8" },
+              ]},
+        ]
+    },
+    {
+        id: "All_Meat", name: "All Meat", color: "#c0392b", icon: "🥩",
+        children: [
+            { id: "Meats", name: "Meats", color: "#e74c3c",
+              children: [
+                  { id: "Food_Beef_Raw", name: "Raw Beef", color: "#c0392b" },
+                  { id: "Food_Pork_Raw", name: "Raw Pork", color: "#d4564a" },
+              ]},
+        ]
+    },
+    {
+        id: "Hardwood", name: "Hardwood", color: "#6d4c2a", icon: "🪓",
+        children: [
+            { id: "rt_Hardwood", name: "Hardwood", color: "#7a5a3a",
+              children: [
+                  { id: "Wood_Hardwood_Planks", name: "Hardwood Planks", color: "#8a6a4a" },
+                  { id: "Wood_Hardwood_Deco", name: "Hardwood Decorative", color: "#9a7a5a" },
+              ]},
+        ]
+    },
+    {
+        id: "Softwood", name: "Softwood", color: "#a08050", icon: "🌲",
+        children: [
+            { id: "rt_Softwood", name: "Softwood", color: "#b09060",
+              children: [{ id: "Wood_Softwood_Planks", name: "Softwood Planks", color: "#c0a070" }]},
+        ]
+    },
+    {
+        id: "Fuel", name: "Fuel", color: "#e67e22", icon: "🔥",
+        children: [
+            { id: "rt_Fuel", name: "Fuel", color: "#f39c12",
+              children: [{ id: "Charcoal_Item", name: "Charcoal", color: "#2c3e50" }]},
+        ]
+    },
+    {
+        id: "All_Mushroom", name: "All Mushroom", color: "#8e44ad", icon: "🍄",
+        children: [
+            { id: "Mushrooms", name: "Mushrooms", color: "#9b59b6",
+              children: [
+                  { id: "Mushroom_Red", name: "Red Mushroom", color: "#c0392b" },
+                  { id: "Mushroom_Purple", name: "Purple Mushroom", color: "#8e44ad" },
+              ]},
+        ]
+    },
+];
+
+// Generate mock recipes grouped by sets
+const SET_RECIPES = {};
+(function() {
+    const allResTypes = [];
+    TREE_DATA.forEach(g => g.children.forEach(rt => allResTypes.push(rt)));
+    const setNames = ["Hardwood", "Softwood", "Basalt", "Calcite", "Iron", "Bone"];
+    setNames.forEach(setName => {
+        SET_RECIPES[setName] = [];
+        const count = 8 + Math.floor(Math.random() * 8);
+        for (let i = 0; i < count; i++) {
+            const rt = allResTypes[(setName.length + i) % allResTypes.length];
+            SET_RECIPES[setName].push({
+                id: `${setName}_r${i}`,
+                color: rt.color,
+                name: `${setName} Item ${i + 1}`,
+                resourceTypeIds: [rt.id],
+                exactItemIds: rt.children.length > 0 ? [rt.children[0].id] : [],
+            });
+        }
+    });
+})();
+
+const MOCK_COSTS = [
+    { icon: "#95a5a6", label: "RK", qty: 48, has: 36 },
+    { icon: "#8b6914", label: "WD", qty: 24, has: 24 },
+    { icon: "#e74c3c", label: "MT", qty: 12, has: 12 },
+    { icon: "#f39c12", label: "FL", qty: 6, has: 6 },
+];
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+
+const selectedNodes = new Set();
+const expandedGroups = new Set(TREE_DATA.map(g => g.id));
+const expandedResTypes = new Set();
+const activeSets = new Set();
+const activeCats = new Set();
+let affordMode = 2;
+const AFFORD_LABELS = ["All", "Inventory Driven", "Resource Driven"];
+let selectedRecipe = null;
+
+// ══════════════════════════════════════════════════════════════
+// SELECTION MODEL
+// ══════════════════════════════════════════════════════════════
+
+function getCheckState(nodeId, treeNode) {
+    if (treeNode.children !== undefined && treeNode.children.length === 0)
+        return selectedNodes.has(nodeId) ? 'all' : 'none';
+    if (treeNode.children) {
+        let allSel = true, anySel = false;
+        treeNode.children.forEach(child => {
+            if (selectedNodes.has(child.id)) anySel = true; else allSel = false;
+            if (child.children) child.children.forEach(gc => {
+                if (selectedNodes.has(gc.id)) anySel = true; else allSel = false;
+            });
+        });
+        if (allSel && anySel) return 'all';
+        if (anySel) return 'some';
+        return 'none';
+    }
+    return selectedNodes.has(nodeId) ? 'all' : 'none';
+}
+
+function selectAllDesc(node) {
+    if (node.children) node.children.forEach(c => {
+        selectedNodes.add(c.id);
+        if (c.children) c.children.forEach(gc => selectedNodes.add(gc.id));
+    });
+}
+function deselectAllDesc(node) {
+    if (node.children) node.children.forEach(c => {
+        selectedNodes.delete(c.id);
+        if (c.children) c.children.forEach(gc => selectedNodes.delete(gc.id));
+    });
+}
+
+function toggleGroupCheckbox(groupId) {
+    const g = TREE_DATA.find(x => x.id === groupId);
+    if (!g) return;
+    getCheckState(groupId, g) === 'all' ? deselectAllDesc(g) : selectAllDesc(g);
+    updateAll();
+}
+function toggleResTypeCheckbox(groupId, rtId) {
+    const g = TREE_DATA.find(x => x.id === groupId);
+    const rt = g?.children.find(c => c.id === rtId);
+    if (!rt) return;
+    if (selectedNodes.has(rtId)) {
+        selectedNodes.delete(rtId); rt.children.forEach(c => selectedNodes.delete(c.id));
+    } else {
+        selectedNodes.add(rtId); rt.children.forEach(c => selectedNodes.add(c.id));
+    }
+    updateAll();
+}
+function toggleExactItem(id) {
+    selectedNodes.has(id) ? selectedNodes.delete(id) : selectedNodes.add(id);
+    updateAll();
+}
+function toggleIconBtn(groupId, rtId) {
+    const g = TREE_DATA.find(x => x.id === groupId);
+    const rt = g?.children.find(c => c.id === rtId);
+    if (selectedNodes.has(rtId)) {
+        selectedNodes.delete(rtId);
+        if (rt) rt.children.forEach(c => selectedNodes.delete(c.id));
+    } else {
+        selectedNodes.add(rtId);
+        if (rt) rt.children.forEach(c => selectedNodes.add(c.id));
+    }
+    updateAll();
+}
+function clearAllIngredients() { selectedNodes.clear(); updateAll(); }
+
+function toggleGroupExpand(id) {
+    expandedGroups.has(id) ? expandedGroups.delete(id) : expandedGroups.add(id);
+    updateAll();
+}
+function toggleResTypeExpand(id) {
+    expandedResTypes.has(id) ? expandedResTypes.delete(id) : expandedResTypes.add(id);
+    updateAll();
+}
+function cycleAffordability() {
+    affordMode = (affordMode + 1) % 3;
+    updateAll();
+}
+function toggleSection(which) {
+    const arrow = document.getElementById(which + 'Arrow');
+    if (arrow) arrow.textContent = arrow.textContent === '▼' ? '▶' : '▼';
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════════════
+
+function renderLeftCol() {
+    const catGrid = document.getElementById('catGrid');
+    catGrid.innerHTML = '';
+    CATEGORIES.forEach(cat => {
+        const btn = document.createElement('div');
+        btn.className = `icon-btn ${activeCats.has(cat.id) ? 'selected' : ''}`;
+        btn.setAttribute('data-tooltip', cat.id);
+        btn.innerHTML = `<div class="icon-placeholder" style="background:${cat.color};">${cat.label}</div>`;
+        btn.onclick = () => { activeCats.has(cat.id) ? activeCats.delete(cat.id) : activeCats.add(cat.id); updateAll(); };
+        catGrid.appendChild(btn);
+    });
+
+    const setList = document.getElementById('setList');
+    setList.innerHTML = '';
+    SETS.forEach(s => {
+        const item = document.createElement('div');
+        item.className = `set-item ${activeSets.has(s) ? 'active' : ''}`;
+        item.textContent = s;
+        item.onclick = () => { activeSets.has(s) ? activeSets.delete(s) : activeSets.add(s); updateAll(); };
+        setList.appendChild(item);
+    });
+}
+
+function renderCenter() {
+    const area = document.getElementById('recipeArea');
+    area.innerHTML = '';
+
+    const selRT = new Set(), selEI = new Set();
+    TREE_DATA.forEach(g => g.children.forEach(rt => {
+        if (selectedNodes.has(rt.id)) selRT.add(rt.id);
+        rt.children.forEach(it => { if (selectedNodes.has(it.id)) selEI.add(it.id); });
+    }));
+    const hasFilter = (affordMode === 2) && (selRT.size > 0 || selEI.size > 0);
+
+    let total = 0, visible = 0;
+    Object.keys(SET_RECIPES).forEach(setName => {
+        const group = document.createElement('div');
+        group.className = 'set-group';
+        group.innerHTML = `<div class="set-group-label">${setName}</div>`;
+        const grid = document.createElement('div');
+        grid.className = 'set-group-grid';
+
+        SET_RECIPES[setName].forEach(recipe => {
+            total++;
+            const cell = document.createElement('div');
+            cell.className = 'recipe-cell';
+            if (selectedRecipe === recipe.id) cell.classList.add('selected');
+            cell.setAttribute('data-tooltip', recipe.name);
+
+            let dimmed = false;
+            if (hasFilter) {
+                const rm = recipe.resourceTypeIds.some(id => selRT.has(id));
+                const em = recipe.exactItemIds.some(id => selEI.has(id));
+                if (!rm && !em) dimmed = true;
+            }
+            if (dimmed) cell.classList.add('dimmed'); else visible++;
+
+            cell.innerHTML = `<div class="cell-icon" style="background:${recipe.color};">${recipe.name.replace(/.*Item /, '#')}</div>`;
+            cell.onclick = () => { selectedRecipe = recipe.id; updateAll(); };
+            grid.appendChild(cell);
+        });
+
+        group.appendChild(grid);
+        area.appendChild(group);
+    });
+
+    document.getElementById('visibleCount').textContent = visible;
+    document.getElementById('totalCount').textContent = total;
+    document.getElementById('filterStatusCenter').textContent = hasFilter
+        ? `Filtering by ${selRT.size} types + ${selEI.size} items` : 'No filter active';
+}
+
+function renderDetails() {
+    const cg = document.getElementById('costGrid');
+    cg.innerHTML = '';
+    MOCK_COSTS.forEach(cost => {
+        const cell = document.createElement('div');
+        cell.className = `cost-cell ${cost.has < cost.qty ? 'insufficient' : ''}`;
+        cell.innerHTML = `<div class="cost-icon" style="background:${cost.icon};">${cost.label}</div><span class="cost-qty">${cost.qty}</span>`;
+        cg.appendChild(cell);
+    });
+}
+
+function renderTree() {
+    const container = document.getElementById('treeContainer');
+    container.innerHTML = '';
+
+    TREE_DATA.forEach(group => {
+        const header = document.createElement('div');
+        header.className = 'group-header';
+        const gState = getCheckState(group.id, group);
+        const isExp = expandedGroups.has(group.id);
+
+        header.innerHTML = `
+            <div class="checkbox" data-state="${gState}"
+                 onclick="event.stopPropagation(); toggleGroupCheckbox('${group.id}')"></div>
+            <div class="group-icon" style="background:${group.color};">${group.icon || '?'}</div>
+            <span class="group-label">${group.name}<span class="group-count">(${group.children.length})</span></span>
+            <div class="expand-arrow ${isExp ? '' : 'collapsed'}">▼</div>
+        `;
+        header.onclick = e => { if (!e.target.classList.contains('checkbox')) toggleGroupExpand(group.id); };
+        container.appendChild(header);
+
+        const body = document.createElement('div');
+        body.className = `group-body ${isExp ? '' : 'collapsed'}`;
+
+        group.children.forEach(rt => {
+            const hasKids = rt.children && rt.children.length > 0;
+            const rtExp = expandedResTypes.has(rt.id);
+
+            if (hasKids) {
+                const wrap = document.createElement('div');
+                wrap.style.cssText = 'width:100%;';
+                const rtH = document.createElement('div');
+                rtH.className = 'restype-header';
+                const rtState = getCheckState(rt.id, rt);
+                rtH.innerHTML = `
+                    <div class="checkbox" data-state="${rtState}" style="width:12px;height:12px;"
+                         onclick="event.stopPropagation(); toggleResTypeCheckbox('${group.id}','${rt.id}')"></div>
+                    <div class="icon-btn ${selectedNodes.has(rt.id) ? 'selected' : ''}"
+                         data-tooltip="${rt.name}"
+                         onclick="event.stopPropagation(); toggleIconBtn('${group.id}','${rt.id}')"
+                         style="width:24px;height:24px;margin:0 3px;">
+                        <div class="icon-placeholder" style="background:${rt.color};width:16px;height:16px;font-size:6px;">
+                            ${rt.name.substring(0, 3).toUpperCase()}
+                        </div>
+                    </div>
+                    <span class="group-label" style="font-size:10px;font-weight:500;">${rt.name}
+                        <span class="group-count">(${rt.children.length})</span>
+                    </span>
+                    <div class="expand-arrow ${rtExp ? '' : 'collapsed'}" style="font-size:7px;">▼</div>
+                `;
+                rtH.onclick = e => {
+                    if (!e.target.classList.contains('checkbox') && !e.target.closest('.icon-btn'))
+                        toggleResTypeExpand(rt.id);
+                };
+                wrap.appendChild(rtH);
+
+                const sub = document.createElement('div');
+                sub.className = `restype-subgrid ${rtExp ? '' : 'collapsed'}`;
+                rt.children.forEach(item => {
+                    const btn = document.createElement('div');
+                    btn.className = `icon-btn tier3 ${selectedNodes.has(item.id) ? 'selected' : ''}`;
+                    btn.setAttribute('data-tooltip', item.name);
+                    btn.innerHTML = `<div class="icon-placeholder" style="background:${item.color};">${item.name.substring(0, 2).toUpperCase()}</div>`;
+                    btn.onclick = () => toggleExactItem(item.id);
+                    sub.appendChild(btn);
+                });
+                wrap.appendChild(sub);
+                body.appendChild(wrap);
+            } else {
+                const btn = document.createElement('div');
+                btn.className = `icon-btn ${selectedNodes.has(rt.id) ? 'selected' : ''}`;
+                btn.setAttribute('data-tooltip', rt.name);
+                btn.innerHTML = `<div class="icon-placeholder" style="background:${rt.color};">${rt.name.substring(0, 3).toUpperCase()}</div>`;
+                btn.onclick = () => toggleIconBtn(group.id, rt.id);
+                body.appendChild(btn);
+            }
+        });
+
+        container.appendChild(body);
+        const sep = document.createElement('div');
+        sep.className = 'tree-separator';
+        container.appendChild(sep);
+    });
+
+    document.getElementById('groupCount').textContent = TREE_DATA.length;
+    const toggle = document.getElementById('affordToggle');
+    toggle.textContent = AFFORD_LABELS[affordMode];
+    toggle.className = 'affordability-toggle' + (affordMode > 0 ? ' active' : '');
+}
+
+function updateAll() {
+    renderLeftCol();
+    renderCenter();
+    renderDetails();
+    renderTree();
+    document.getElementById('selectedCount').textContent = selectedNodes.size;
+}
+
+updateAll();
+</script>
+
+</body>
+</html>

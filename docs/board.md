@@ -1,14 +1,14 @@
 # Product Board
 
-> Last updated: 2026-05-05 12:05
+> Last updated: 2026-05-06 12:30
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 28
-    "In Progress" : 1
-    "Done" : 27
+    "Backlog" : 32
+    "In Progress" : 2
+    "Done" : 33
     "Cancelled" : 8
 ```
 
@@ -18,12 +18,14 @@ pie title Backlog Distribution
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
 | F2604262300 | Feature | Custom Interaction Placement | E2604221030 | critical |
+| E2605061200 | Epic | Ingredient Filter Grid Refactor | — | high |
 
 ### Backlog
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
 | S2605051200 | Story | Dynamic Cells Per Set Group | E2604221030 | high |
 | S2605051205 | Story | Fix Uncategorized Recipe Visibility | E2604221030 | high |
+
 | F2604272100 | Feature | Simplified Economy Pipeline | E2604201200 | critical |
 | S2604272105 | Story | Fix NaturalResourceRegistry Init and Simplify | E2604201200 | critical |
 | S2604272110 | Story | Remove Base-Block Classification | E2604201200 | critical |
@@ -83,6 +85,11 @@ pie title Backlog Distribution
 | S2604240920 | Story | Custom UI Feasibility Spike | E2604221030 | high |
 | S2604240910 | Story | Custom Blueprint Selection UI | E2604221030 | high |
 | S2604271300 | Story | Placeholder Acquisition Button (Life Essence) | E2604221030 | high |
+| F2605051500 | Feature | Resource Type Input Filter | E2604221030 | high |
+| S2605051505 | Story | Replace Placeholder Section with Resource Type Grid UI | E2604221030 | high |
+| S2605051510 | Story | Three-State Affordability Toggle | E2604221030 | high |
+| S2605051515 | Story | Resource Type Filter Build/Bind/Update Logic | E2604221030 | high |
+| S2605051520 | Story | Resource Type Recipe Filtering in Pipeline | E2604221030 | high |
 
 ### Cancelled
 | ID | Type | Title | Epic | Reason |

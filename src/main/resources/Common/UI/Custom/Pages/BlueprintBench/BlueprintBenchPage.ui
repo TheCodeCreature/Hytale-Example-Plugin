@@ -1,5 +1,5 @@
 // Blueprint Bench — main page layout
-// Server appends reusable .ui components (SetFilterButton, CostCell, PlaceholderRow) during build()
+// Server appends reusable .ui components (SetFilterButton, CostCell, ResourceTypeFilterButton) during build()
 // Server updates via cmd.set() only in handleDataEvent() — no append/clear after build()
 
 $C = "../../Common.ui";
@@ -156,15 +156,6 @@ Group {
                             ScrollbarStyle: $C.@DefaultScrollbarStyle;
                         }
                     }
-                    // Horizontal divider between
-                    Group { Anchor: (Height: 1); Background: #2b3542; }
-                    Group { Anchor: (Height: 4); }
-                    // Filter toggles
-                    TextButton #AffordableToggle {
-                        Text: "Inventory Driven";
-                        Anchor: (Height: 24, Left: 0, Right: 0);
-                        Padding: (Left: 6, Right: 6);
-                    }
                 }
 
                 // Vertical divider between filters and grid
@@ -248,37 +239,50 @@ Group {
                     FlexWeight: 1;
                 }
             }
+            Group { Anchor: (Height: 8); }
+            $C.@PanelSeparatorFancy {}
+            Group { Anchor: (Height: 8); }
+                    // Filter toggles
+                    TextButton #AffordableToggle {
+                        Text: "Inventory Driven";
+                        Anchor: (Height: 24, Left: 0, Right: 0);
+                        Padding: (Left: 6, Right: 6);
+                    }
 
             Group { Anchor: (Height: 8); }
             $C.@PanelSeparatorFancy {}
             Group { Anchor: (Height: 8); }
 
-            // ── Placeholder List ──
-            Label #InputSlotLabel {
-                Text: "Placeholders";
-                Anchor: (Height: 20);
-                Style: $S.@DetailLabelStyle;
+            // ── Resource Type Filter Grid ──
+            Group {
+                Anchor: (Height: 24, Left: 0, Right: 0);
+
+                TextButton #ResourceTypesHeader {
+                    Text: "v Resource Types";
+                    Anchor: (Full: 0);
+                    Padding: (Left: 6, Right: 22);
+                    Style: $S.@SectionHeaderStyle;
+                }
+
+                Group {
+                    Anchor: (Width: 24, Height: 24, Right: 2);
+                    Background: "../../Common/Icons/AssetNotifications/Trash.png";
+
+                    TextButton #ClearResourceTypesBtn {
+                        Text: "";
+                        Anchor: (Full: 0);
+                    }
+                }
             }
 
-            Group { Anchor: (Height: 4); }
-
-            // Scrollable list of placeholder rows — server appends PlaceholderRow.ui instances during build()
-            Group {
+            Group #ResourceTypeGridContainer {
                 FlexWeight: 1;
                 LayoutMode: TopScrolling;
                 ScrollbarStyle: $C.@DefaultScrollbarStyle;
+                Visible: false;
 
-                // ── Empty state label (outside PlaceholderList to avoid index offset) ──
-                Label #NoPlaceholdersLabel {
-                    Text: "No placeholders in hotbar";
-                    Anchor: (Height: 32);
-                    Visible: false;
-                    Style: $S.@EmptyStateStyle;
-                }
-
-                Group #PlaceholderList {
-                    Padding: (Top: 20);
-                    LayoutMode: Top;
+                Group #ResourceTypeGrid {
+                    LayoutMode: LeftCenterWrap;
                 }
             }
 
@@ -286,7 +290,7 @@ Group {
             $C.@PanelSeparatorFancy {}
         }
 
-        } // two-column layout
+        } // three-column layout
         } // #Content
     } // $C.@Container
 } // Page Root

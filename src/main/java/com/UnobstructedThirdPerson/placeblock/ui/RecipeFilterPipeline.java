@@ -135,6 +135,20 @@ public final class RecipeFilterPipeline {
         boolean isAffordable(InputRecipe recipe);
     }
 
+    /**
+     * Functional interface for resource type matching.
+     *
+     * <p>Implementations check whether a recipe's inputs match any of the
+     * currently selected resource types. Used in Resource Driven affordability
+     * mode to tag recipes as matching/non-matching.
+     *
+     * <p>The pipeline calls this exactly once per recipe per execution.
+     */
+    @FunctionalInterface
+    public interface ResourceTypeChecker {
+        boolean matchesResourceType(InputRecipe recipe);
+    }
+
     // ─── Pipeline execution ─────────────────────────────────────
 
     /**
@@ -170,11 +184,19 @@ public final class RecipeFilterPipeline {
             String searchQuery,
             @Nullable AffordabilityChecker checker,
             boolean affordableOnly,
-            Map<String, CategoryInfo> categoryInfoMap
+            Map<String, CategoryInfo> categoryInfoMap,
+            @Nullable ResourceTypeChecker resourceTypeChecker
     ) {
         List<InputRecipe> tabFiltered = filterByTab(allRecipes, activeTab);
         List<InputRecipe> searchFiltered = filterBySearch(tabFiltered, searchQuery);
-        List<TaggedRecipe> tagged = tagAffordability(searchFiltered, checker);
+
+        // Route to the appropriate tagging method based on which checker is provided
+        List<TaggedRecipe> tagged;
+        if (resourceTypeChecker != null && checker == null) {
+            tagged = tagResourceTypeMatch(searchFiltered, resourceTypeChecker);
+        } else {
+            tagged = tagAffordability(searchFiltered, checker);
+        }
 
         // Base for sidebar extraction: optionally filter by affordability
         List<TaggedRecipe> affordableBase = affordableOnly ? filterByAffordability(tagged) : tagged;
@@ -276,6 +298,37 @@ public final class RecipeFilterPipeline {
      * @param checker affordability checker; null = all affordable
      * @return new list of TaggedRecipe with affordability set
      */
+    /**
+     * Stage 3 (alt): Convert InputRecipes to TaggedRecipes with resource type matching.
+     *
+     * <p>Mirrors {@link #tagAffordability} but uses a {@link ResourceTypeChecker}
+     * to determine the {@code affordable} flag based on whether the recipe's
+     * inputs match any selected resource type.
+     *
+     * @param recipes input recipe list
+     * @param checker resource type checker; null = all matching
+     * @return new list of TaggedRecipe with affordable set based on resource type match
+     */
+    List<TaggedRecipe> tagResourceTypeMatch(List<InputRecipe> recipes,
+                                            @Nullable ResourceTypeChecker checker) {
+        List<TaggedRecipe> result = new ArrayList<>();
+        for (InputRecipe recipe : recipes) {
+            String effectiveSet = (recipe.set() != null && !recipe.set().isEmpty())
+                    ? recipe.set() : UNCATEGORIZED_SET;
+            boolean affordable = (checker != null) ? checker.matchesResourceType(recipe) : true;
+            result.add(new TaggedRecipe(
+                    recipe.recipeId(),
+                    recipe.outputItemId(),
+                    recipe.blockTypeId(),
+                    recipe.benchId(),
+                    effectiveSet,
+                    affordable,
+                    recipe.categoryIds()
+            ));
+        }
+        return result;
+    }
+
     List<TaggedRecipe> tagAffordability(List<InputRecipe> recipes,
                                         @Nullable AffordabilityChecker checker) {
         List<TaggedRecipe> result = new ArrayList<>();

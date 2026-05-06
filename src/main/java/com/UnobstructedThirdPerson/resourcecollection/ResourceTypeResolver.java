@@ -1,6 +1,7 @@
 package com.UnobstructedThirdPerson.resourcecollection;
 
 import com.hypixel.hytale.protocol.ItemResourceType;
+import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
@@ -10,6 +11,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -182,6 +184,96 @@ public final class ResourceTypeResolver {
         } catch (IllegalAccessException e) {
             return null;
         }
+    }
+
+    // ─── Resource type filter matching ──────────────────────────
+
+    /**
+     * Checks whether any input of the given recipe matches any of the
+     * specified resource type IDs.
+     *
+     * <p>Handles both input types:
+     * <ul>
+     *   <li><strong>{@code ResourceTypeId}-based inputs</strong>: checks if
+     *       {@code input.getResourceTypeId()} is contained in
+     *       {@code resourceTypeIds}</li>
+     *   <li><strong>{@code ItemId}-based inputs</strong>: resolves the item
+     *       via the asset map, then checks if any entry in
+     *       {@link Item#getResourceTypes()} has an ID present in
+     *       {@code resourceTypeIds}</li>
+     * </ul>
+     *
+     * <p>Short-circuits on first match. Does NOT apply
+     * {@link BenchCategory} preference — this is a filter predicate,
+     * not a resolution operation.
+     *
+     * <p>This method is <strong>thread-safe</strong> — it reads only
+     * immutable post-init data.
+     *
+     * @param recipe          the crafting recipe to check
+     * @param resourceTypeIds the set of engine ResourceTypeId values to
+     *                        match against (already resolved from meta-filters)
+     * @return {@code true} if at least one recipe input matches any of
+     *         the given resource type IDs; {@code false} if recipe has
+     *         no inputs or none match
+     */
+    public static boolean recipeMatchesAnyResourceType(
+            @Nonnull CraftingRecipe recipe,
+            @Nonnull Set<String> resourceTypeIds) {
+        MaterialQuantity[] inputs = recipe.getInput();
+        if (inputs == null || inputs.length == 0) {
+            return false;
+        }
+        for (MaterialQuantity input : inputs) {
+            if (inputMatchesAnyResourceType(input, resourceTypeIds)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether a single recipe input matches any of the specified
+     * resource type IDs.
+     *
+     * <p>Resolution order:
+     * <ol>
+     *   <li>If {@code input.getResourceTypeId()} is non-null, check direct
+     *       membership in {@code resourceTypeIds}</li>
+     *   <li>If {@code input.getItemId()} is non-null and not {@code "Empty"},
+     *       look up the item in {@link Item#getAssetMap()}, then check if any
+     *       of the item's {@link Item#getResourceTypes()} entries has an ID
+     *       present in {@code resourceTypeIds}</li>
+     *   <li>Otherwise return {@code false}</li>
+     * </ol>
+     *
+     * @param input           a single recipe input (MaterialQuantity)
+     * @param resourceTypeIds the set of resource type IDs to match against
+     * @return {@code true} if this input matches any of the given IDs
+     */
+    private static boolean inputMatchesAnyResourceType(
+            @Nonnull MaterialQuantity input,
+            @Nonnull Set<String> resourceTypeIds) {
+        // Path 1: ResourceTypeId-based input
+        String resTypeId = input.getResourceTypeId();
+        if (resTypeId != null && resourceTypeIds.contains(resTypeId)) {
+            return true;
+        }
+
+        // Path 2: ItemId-based input — resolve to Item, check its ResourceTypes
+        String itemId = input.getItemId();
+        if (itemId != null && !"Empty".equals(itemId)) {
+            Item item = Item.getAssetMap().getAsset(itemId);
+            if (item != null && item.getResourceTypes() != null) {
+                for (var rt : item.getResourceTypes()) {
+                    if (rt != null && resourceTypeIds.contains(rt.id)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
 }

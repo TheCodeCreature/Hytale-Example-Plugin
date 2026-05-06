@@ -19,12 +19,9 @@ import com.hypixel.hytale.server.core.asset.type.item.config.BlockGroup;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
-import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
-import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
-import com.hypixel.hytale.server.core.ui.PatchStyle;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
@@ -44,6 +41,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("BlueprintSelectionPage");
 
     private static final int MAX_GROUP_BUTTONS = 30;
+    private static final int MAX_RESOURCE_TYPE_BUTTONS = 80;
     private static final int MAX_COST_CELLS = 8;
 
     private static final Value<String> FILTER_ACTIVE =
@@ -83,7 +81,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private String selectedRecipeId;
     private String activeTab = ALL_TAB;
     private final Set<String> activeSetFilters = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-    private boolean affordabilityEnabled = true;
+    private AffordabilityMode affordabilityMode = AffordabilityMode.INVENTORY_DRIVEN;
+    private final Set<String> activeResourceTypes = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    private boolean resourceTypesExpanded = true;
     private boolean categoriesExpanded = true;
     private boolean setsExpanded = true;
     private boolean selectAllSets = false;
@@ -123,7 +123,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         // Run pipeline with NO filtering — discover all sets and recipe counts
         RecipeFilterPipeline.PipelineResult maxResult = pipeline.execute(
-                inputs, ALL_TAB, Set.of(), Set.of(), "", null, false, categoryInfoMap);
+                inputs, ALL_TAB, Set.of(), Set.of(), "", null, false, categoryInfoMap, null);
 
         // The result is sorted by effectiveSet — walk it to count recipes per set
         List<String> setNames = new ArrayList<>();
@@ -167,7 +167,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             benchSet.addAll(fe.benchIds());
 
             allRecipes.add(new RecipeEntry(fe.recipeId(), fe.outputItemId(), fe.blockTypeId(),
-                    primaryBench, fe.set(), true, fe.categoryIds()));
+                    primaryBench, fe.set(), fe.categoryIds()));
         }
         allRecipes.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.recipeId, b.recipeId));
 
@@ -203,9 +203,31 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         // Build affordability checker — null when disabled or no inventory
         RecipeFilterPipeline.AffordabilityChecker checker = null;
-        if (affordabilityEnabled && container != null) {
-            final var inv = container;
-            checker = recipe -> isAffordable(recipe, inv);
+        boolean affordableOnly = false;
+        RecipeFilterPipeline.ResourceTypeChecker resourceTypeChecker = null;
+        switch (affordabilityMode) {
+            case ALL -> { checker = null; affordableOnly = false; }
+            case INVENTORY_DRIVEN -> {
+                if (container != null) {
+                    final var inv = container;
+                    checker = recipe -> isAffordable(recipe, inv);
+                }
+                affordableOnly = true;
+            }
+            case RESOURCE_DRIVEN -> {
+                if (!activeResourceTypes.isEmpty()) {
+                    Set<String> resolvedTypes = new HashSet<>();
+                    for (String typeId : activeResourceTypes) {
+                        resolvedTypes.addAll(ResourceTypeRegistry.resolveFilterIds(typeId));
+                    }
+                    resourceTypeChecker = recipe -> {
+                        CraftingRecipe cr = CraftingRecipe.getAssetMap().getAsset(recipe.recipeId());
+                        return cr != null && ResourceTypeResolver.recipeMatchesAnyResourceType(cr, resolvedTypes);
+                    };
+                    affordableOnly = true;
+                }
+                // If no resource types selected, show all (affordableOnly stays false)
+            }
         }
 
         // Convert allRecipes to InputRecipe list
@@ -221,11 +243,26 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         Set<String> effectiveGroups = selectAllCategories ? Set.of() : activeMaterialGroups;
         RecipeFilterPipeline.PipelineResult result = pipeline.execute(
                 inputs, activeTab, effectiveGroups, effectiveSets, searchQuery, checker,
-                affordabilityEnabled, categoryInfoMap);
+                affordableOnly, categoryInfoMap, resourceTypeChecker);
 
         this.displayedRecipes = result.displayedRecipes();
         this.currentSets = result.currentSets();
         this.currentGroups = result.currentGroups();
+    }
+
+    private static List<String> migrateResourceTypes(List<String> saved) {
+        Map<String, String> migrationMap = ResourceTypeRegistry.getLegacyIdMigrationMap();
+        List<String> migrated = new ArrayList<>(saved.size());
+        for (String id : saved) {
+            String mapped = migrationMap.get(id);
+            if (mapped == null) {
+                migrated.add(id);
+            } else if (!mapped.isEmpty()) {
+                migrated.add(mapped);
+            }
+            // mapped == "" → entry was removed, skip it
+        }
+        return migrated;
     }
 
     @Override
@@ -244,11 +281,14 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         this.activeSetFilters.addAll(prefs.activeSetFilters);
         this.activeMaterialGroups.clear();
         this.activeMaterialGroups.addAll(prefs.activeMaterialGroups);
-        this.affordabilityEnabled = prefs.affordabilityEnabled;
+        this.affordabilityMode = AffordabilityMode.fromString(prefs.affordabilityMode);
         this.searchQuery = prefs.searchQuery != null ? prefs.searchQuery : "";
         this.selectedRecipeId = prefs.selectedRecipeId;
         this.selectAllSets = prefs.selectAllSets;
         this.selectAllCategories = prefs.selectAllCategories;
+        this.activeResourceTypes.clear();
+        this.activeResourceTypes.addAll(migrateResourceTypes(prefs.activeResourceTypes));
+        this.resourceTypesExpanded = prefs.resourceTypesExpanded;
 
         loadRecipes();
 
@@ -287,6 +327,11 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         // Material group icon buttons (keep MAX_GROUP_BUTTONS)
         for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
             cmd.append("#MaterialGroups", "Pages/BlueprintBench/GroupFilterButton.ui");
+        }
+
+        // Resource type icon buttons
+        for (int i = 0; i < MAX_RESOURCE_TYPE_BUTTONS; i++) {
+            cmd.append("#ResourceTypeGrid", "Pages/BlueprintBench/GroupFilterButton.ui");
         }
 
         // Per-set group containers with VARIABLE cell counts
@@ -338,13 +383,18 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         buildBenchTabs(evt);
         buildSetFilterBindings(evt);
         buildMaterialGroupBindings(evt);
+        buildResourceTypeBindings(evt);
         buildRecipeGridBindings(evt);
 
         // ── Set initial state ──
-        cmd.set("#AffordableToggle.Style", affordabilityEnabled ? FILTER_ACTIVE : FILTER_INACTIVE);
+        updateAffordabilityToggle(cmd);
+
+        // Resource type grid — starts hidden unless Resource Driven mode
+        cmd.set("#ResourceTypeGridContainer.Visible", resourceTypesExpanded && affordabilityMode == AffordabilityMode.RESOURCE_DRIVEN);
 
         updateBenchTabs(cmd);
         updateMaterialGroups(cmd);
+        updateResourceTypes(cmd);
         updateSetFilters(cmd);
         updateRecipeGrid(cmd);
         updateDetailPanel(cmd);
@@ -374,11 +424,13 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         prefs.activeTab = this.activeTab;
         prefs.activeSetFilters = new ArrayList<>(this.activeSetFilters);
         prefs.activeMaterialGroups = new ArrayList<>(this.activeMaterialGroups);
-        prefs.affordabilityEnabled = this.affordabilityEnabled;
+        prefs.affordabilityMode = this.affordabilityMode.name();
         prefs.searchQuery = this.searchQuery;
         prefs.selectedRecipeId = this.selectedRecipeId;
         prefs.selectAllSets = this.selectAllSets;
         prefs.selectAllCategories = this.selectAllCategories;
+        prefs.activeResourceTypes = new ArrayList<>(this.activeResourceTypes);
+        prefs.resourceTypesExpanded = this.resourceTypesExpanded;
         BlueprintBenchPrefsStore.save(this.playerRef.getUuid(), prefs);
     }
 
@@ -508,11 +560,15 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             sendUpdate(cmd, null, false);
 
         } else if ("ToggleAffordable".equals(data.action)) {
-            this.affordabilityEnabled = !this.affordabilityEnabled;
+            this.affordabilityMode = this.affordabilityMode.next();
             applyFilter();
             // Prune stale categories that no longer exist after affordability change
             pruneInvalidMaterialGroups();
-            cmd.set("#AffordableToggle.Style", affordabilityEnabled ? FILTER_ACTIVE : FILTER_INACTIVE);
+            // Show/hide resource type grid based on mode
+            boolean showResourceGrid = affordabilityMode == AffordabilityMode.RESOURCE_DRIVEN && resourceTypesExpanded;
+            cmd.set("#ResourceTypeGridContainer.Visible", showResourceGrid);
+            updateAffordabilityToggle(cmd);
+            updateResourceTypes(cmd);
             updateMaterialGroups(cmd);
             updateSetFilters(cmd);
             updateRecipeGrid(cmd);
@@ -531,6 +587,47 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             this.setsExpanded = !this.setsExpanded;
             cmd.set("#SetsHeader.Text", (setsExpanded ? "v " : "> ") + "Sets");
             cmd.set("#SetFilters.Visible", setsExpanded);
+            sendUpdate(cmd, null, false);
+
+        } else if ("ToggleResourceTypes".equals(data.action)) {
+            resourceTypesExpanded = !resourceTypesExpanded;
+            cmd.set("#ResourceTypesHeader.Text", (resourceTypesExpanded ? "v " : "> ") + "Resource Types");
+            cmd.set("#ResourceTypeGridContainer.Visible", resourceTypesExpanded && affordabilityMode == AffordabilityMode.RESOURCE_DRIVEN);
+            savePrefs();
+            sendUpdate(cmd, null, false);
+
+        } else if ("ResourceType:All".equals(data.action)) {
+            activeResourceTypes.clear();
+            applyFilter();
+            pruneInvalidMaterialGroups();
+            updateResourceTypes(cmd);
+            updateMaterialGroups(cmd);
+            updateSetFilters(cmd);
+            updateRecipeGrid(cmd);
+            updateDetailPanel(cmd);
+            savePrefs();
+            sendUpdate(cmd, null, false);
+
+        } else if (data.action != null && data.action.startsWith("ResourceType:idx:")) {
+            int idx = -1;
+            try { idx = Integer.parseInt(data.action.substring("ResourceType:idx:".length())); } catch (NumberFormatException ignored) {}
+            List<ResourceTypeRegistry.ResourceTypeEntry> allTypes = ResourceTypeRegistry.getAll();
+            if (idx >= 0 && idx < allTypes.size()) {
+                String typeId = allTypes.get(idx).resourceTypeId();
+                if (activeResourceTypes.contains(typeId)) {
+                    activeResourceTypes.remove(typeId);
+                } else {
+                    activeResourceTypes.add(typeId);
+                }
+                applyFilter();
+                pruneInvalidMaterialGroups();
+                updateResourceTypes(cmd);
+                updateMaterialGroups(cmd);
+                updateSetFilters(cmd);
+                updateRecipeGrid(cmd);
+                updateDetailPanel(cmd);
+                savePrefs();
+            }
             sendUpdate(cmd, null, false);
 
         } else if (data.action != null && data.action.startsWith("RecipeSelect:idx:")) {
@@ -702,6 +799,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                         ? entry.blockTypeId.replace('_', ' ') : entry.outputItemId);
 
                 // Get inventory container for per-ingredient checks
+                boolean checkInventory = (affordabilityMode == AffordabilityMode.INVENTORY_DRIVEN);
                 Player player = playerStore != null
                         ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
                 CombinedItemContainer container = player != null
@@ -738,8 +836,13 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                                 cmd.set(sel + ".Visible", true);
                                 cmd.set(sel + " #CostIcon.ItemId", itemId);
                                 cmd.set(sel + " #CostQty.Text", "x" + requiredQty);
-                                cmd.set(sel + " #CostDim.Visible", !sufficient);
-                                cmd.set(sel + " #CostQty.Style", sufficient ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
+                                if (checkInventory) {
+                                    cmd.set(sel + " #CostDim.Visible", !sufficient);
+                                    cmd.set(sel + " #CostQty.Style", sufficient ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
+                                } else {
+                                    cmd.set(sel + " #CostDim.Visible", false);
+                                    cmd.set(sel + " #CostQty.Style", COST_QTY_NORMAL);
+                                }
                                 costIdx++;
                             }
                         }
@@ -757,9 +860,15 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 }
 
                 // Output frame state — affordable vs unaffordable
-                cmd.set("#OutputFrame.Background", allAffordable ? OUTPUT_BG_NORMAL : OUTPUT_BG_UNAFFORDABLE);
-                cmd.set("#OutputDim.Visible", !allAffordable);
-                cmd.set("#OutputName.Style", allAffordable ? DETAIL_LABEL_NORMAL : DETAIL_LABEL_MUTED);
+                if (checkInventory) {
+                    cmd.set("#OutputFrame.Background", allAffordable ? OUTPUT_BG_NORMAL : OUTPUT_BG_UNAFFORDABLE);
+                    cmd.set("#OutputDim.Visible", !allAffordable);
+                    cmd.set("#OutputName.Style", allAffordable ? DETAIL_LABEL_NORMAL : DETAIL_LABEL_MUTED);
+                } else {
+                    cmd.set("#OutputFrame.Background", OUTPUT_BG_NORMAL);
+                    cmd.set("#OutputDim.Visible", false);
+                    cmd.set("#OutputName.Style", DETAIL_LABEL_NORMAL);
+                }
                 return;
             }
         }
@@ -777,7 +886,44 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         }
     }
 
-    // ─── Placeholder list ─────────────────────────────────────
+    // ─── Resource type grid ─────────────────────────────────────
+
+    private void buildResourceTypeBindings(UIEventBuilder evt) {
+        evt.addEventBinding(CustomUIEventBindingType.Activating, "#ClearResourceTypesBtn",
+                EventData.of("Action", "ResourceType:All"));
+        evt.addEventBinding(CustomUIEventBindingType.Activating, "#ResourceTypesHeader",
+                EventData.of("Action", "ToggleResourceTypes"));
+        for (int i = 0; i < MAX_RESOURCE_TYPE_BUTTONS; i++) {
+            evt.addEventBinding(CustomUIEventBindingType.Activating,
+                    "#ResourceTypeGrid[" + i + "] #GroupBtn",
+                    EventData.of("Action", "ResourceType:idx:" + i));
+        }
+    }
+
+    private void updateResourceTypes(UICommandBuilder cmd) {
+        List<ResourceTypeRegistry.ResourceTypeEntry> allTypes = ResourceTypeRegistry.getAll();
+        for (int i = 0; i < MAX_RESOURCE_TYPE_BUTTONS; i++) {
+            String sel = "#ResourceTypeGrid[" + i + "]";
+            if (i < allTypes.size()) {
+                ResourceTypeRegistry.ResourceTypeEntry entry = allTypes.get(i);
+                boolean active = activeResourceTypes.contains(entry.resourceTypeId());
+                cmd.set(sel + ".Visible", true);
+                cmd.set(sel + ".TooltipText", entry.resourceTypeId());
+                cmd.set(sel + " #ActiveOverlay.Visible", active);
+                cmd.set(sel + " #GroupIcon.Background",
+                        "Common/Icons/ResourceTypes/" + entry.iconFilename());
+            } else {
+                cmd.set(sel + ".Visible", false);
+            }
+        }
+    }
+
+    private void updateAffordabilityToggle(UICommandBuilder cmd) {
+        cmd.set("#AffordableToggle.Text", affordabilityMode.label());
+        cmd.set("#AffordableToggle.Style",
+                affordabilityMode != AffordabilityMode.ALL ? FILTER_ACTIVE : FILTER_INACTIVE);
+    }
+
 
     private void buildMaterialGroupBindings(UIEventBuilder evt) {
         // "Clear Filters" text button above the icon grid
@@ -905,16 +1051,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         LOGGER.info("[BlueprintUI] Gave player stencil for " + entry.outputItemId() + " (recipe: " + entry.recipeId() + ")");
     }
 
-    private boolean selectRecipeByItemId(String itemId) {
-        for (RecipeEntry entry : allRecipes) {
-            if (itemId.equals(entry.outputItemId())) {
-                this.selectedRecipeId = entry.recipeId();
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Nullable
     private RecipeEntry findEntry(String recipeId) {
         for (RecipeEntry entry : allRecipes) {
@@ -964,7 +1100,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     }
 
     private record RecipeEntry(String recipeId, String outputItemId, String blockTypeId,
-                               String benchId, String set, boolean affordable,
+                               String benchId, String set,
                                List<String> categoryIds) {}
 
     public static class EventPayload {
