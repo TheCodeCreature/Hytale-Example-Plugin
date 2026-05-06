@@ -160,9 +160,6 @@ public final class RecipeFilterPipeline {
      * @param affordableOnly         when true, unaffordable recipes are removed before
      *                               extracting sets and building the display list;
      *                               sets with zero affordable recipes will not appear
-     * @param showUncategorized      when false, recipes with effectiveSet equal to
-     *                               {@link #UNCATEGORIZED_SET} are excluded from results;
-     *                               when true, they are included
      * @return pipeline result containing displayed recipes, sidebar sets, and material groups
      */
     public PipelineResult execute(
@@ -173,7 +170,6 @@ public final class RecipeFilterPipeline {
             String searchQuery,
             @Nullable AffordabilityChecker checker,
             boolean affordableOnly,
-            boolean showUncategorized,
             Map<String, CategoryInfo> categoryInfoMap
     ) {
         List<InputRecipe> tabFiltered = filterByTab(allRecipes, activeTab);
@@ -193,15 +189,20 @@ public final class RecipeFilterPipeline {
         // Sets: derived from category-filtered base (selecting a category narrows sets)
         List<TaggedRecipe> groupOnlyBase = filterByMaterialGroups(affordableBase, activeMaterialGroups);
         List<String> visibleSets = extractSets(groupOnlyBase);
+        // Always include uncategorized if present
+        {
+            boolean hasUncategorized = groupOnlyBase.stream()
+                    .anyMatch(r -> UNCATEGORIZED_SET.equals(r.effectiveSet()));
+            if (hasUncategorized) {
+                visibleSets.add(UNCATEGORIZED_SET);
+            }
+        }
 
         // Restrict to selected sets or all visible sets
         Set<String> effectiveSetFilter = (activeSetFilters != null && !activeSetFilters.isEmpty())
                 ? activeSetFilters
                 : new TreeSet<>(visibleSets);
         List<TaggedRecipe> setFiltered = filterBySets(groupFiltered, effectiveSetFilter);
-        if (!showUncategorized) {
-            setFiltered.removeIf(r -> UNCATEGORIZED_SET.equals(r.effectiveSet()));
-        }
         List<TaggedRecipe> sorted = sort(setFiltered);
         return new PipelineResult(sorted, visibleSets, currentGroups);
     }
@@ -453,16 +454,11 @@ public final class RecipeFilterPipeline {
     }
 
     /**
-     * Converts a raw set name to a display-friendly label by stripping
-     * any prefix before the first underscore and replacing remaining
+     * Converts a raw set name to a display-friendly label by replacing
      * underscores with spaces.
      */
     static String setDisplayLabel(String setName) {
         if (setName == null) return "";
-        String label = setName;
-        if (label.contains("_")) {
-            label = label.substring(label.indexOf('_') + 1).replace('_', ' ');
-        }
-        return label;
+        return setName.replace('_', ' ');
     }
 }

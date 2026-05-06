@@ -128,3 +128,23 @@ $C = "../../Common.ui";
     FontSize: 11, TextColor: #6e7da1,
     HorizontalAlignment: Center, VerticalAlignment: Center
 );
+
+// ── Visual State Styles ──
+
+@SelectedCellButtonStyle = TextButtonStyle(
+    Default: (Background: $C.@TertiaryActiveButtonBackground, LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
+    Hovered: (Background: $C.@TertiaryActiveButtonBackground, LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
+    Pressed: (Background: $C.@TertiaryActiveButtonBackground, LabelStyle: (FontSize: 1, TextColor: #000000(0.0)))
+);
+
+@CostQuantityInsufficientStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
+    FontSize: 11, TextColor: #ff4444,
+    HorizontalAlignment: End, VerticalAlignment: End
+);
+
+@DetailLabelMutedStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
+    FontSize: 16, TextColor: #6e7da1, RenderBold: true,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);

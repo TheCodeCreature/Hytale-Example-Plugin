@@ -15,7 +15,6 @@ public class BlueprintBenchPrefs {
             .append(new KeyedCodec<>("ActiveMaterialGroups", new ArrayCodec<>(Codec.STRING, String[]::new), true),
                     (p, v) -> p.activeMaterialGroups = Arrays.asList(v), p -> p.activeMaterialGroups.toArray(new String[0])).add()
             .append(new KeyedCodec<>("AffordabilityEnabled", Codec.BOOLEAN, true), (p, v) -> p.affordabilityEnabled = v, p -> p.affordabilityEnabled).add()
-            .append(new KeyedCodec<>("ShowUncategorized", Codec.BOOLEAN, true), (p, v) -> p.showUncategorized = v, p -> p.showUncategorized).add()
             .append(new KeyedCodec<>("SearchQuery", Codec.STRING, true), (p, v) -> p.searchQuery = v, p -> p.searchQuery).add()
             .append(new KeyedCodec<>("SelectedRecipeId", Codec.STRING, true), (p, v) -> p.selectedRecipeId = v, p -> p.selectedRecipeId).add()
             .append(new KeyedCodec<>("SelectAllSets", Codec.BOOLEAN, true), (p, v) -> p.selectAllSets = v, p -> p.selectAllSets).add()
@@ -26,7 +25,6 @@ public class BlueprintBenchPrefs {
     List<String> activeSetFilters = new ArrayList<>();
     List<String> activeMaterialGroups = new ArrayList<>();
     boolean affordabilityEnabled = true;
-    boolean showUncategorized = false;
     String searchQuery = "";
     String selectedRecipeId;
     boolean selectAllSets = false;

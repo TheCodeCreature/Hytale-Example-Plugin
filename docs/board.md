@@ -1,12 +1,12 @@
 # Product Board
 
-> Last updated: 2026-05-02 03:00
+> Last updated: 2026-05-05 12:05
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 26
+    "Backlog" : 28
     "In Progress" : 1
     "Done" : 27
     "Cancelled" : 8
@@ -22,6 +22,8 @@ pie title Backlog Distribution
 ### Backlog
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
+| S2605051200 | Story | Dynamic Cells Per Set Group | E2604221030 | high |
+| S2605051205 | Story | Fix Uncategorized Recipe Visibility | E2604221030 | high |
 | F2604272100 | Feature | Simplified Economy Pipeline | E2604201200 | critical |
 | S2604272105 | Story | Fix NaturalResourceRegistry Init and Simplify | E2604201200 | critical |
 | S2604272110 | Story | Remove Base-Block Classification | E2604201200 | critical |

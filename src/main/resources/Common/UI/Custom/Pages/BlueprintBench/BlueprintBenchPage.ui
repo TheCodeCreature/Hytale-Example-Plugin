@@ -85,7 +85,6 @@ Group {
                 FlexWeight: 1;
                 LayoutMode: Left;
 
-
                 Group {
                     LayoutMode: Top;
                     // Set filter sidebar — single scrollable column
@@ -97,7 +96,7 @@ Group {
 
                         // Category group icon buttons — collapsible section
                         Group {
-                            Anchor: (Height: 30, Left: 0, Right: 0);
+                            Anchor: (Height: 24, Left: 0, Right: 0);
 
                             TextButton #CategoriesHeader {
                                 Text: "v Categories";
@@ -118,7 +117,7 @@ Group {
                         }
 
                         Group {
-                            Anchor: (Height: 80);
+                            Anchor: (Height: 100);
                             LayoutMode: TopScrolling;
                             ScrollbarStyle: $C.@DefaultScrollbarStyle;
 
@@ -166,14 +165,6 @@ Group {
                         Anchor: (Height: 24, Left: 0, Right: 0);
                         Padding: (Left: 6, Right: 6);
                     }
-
-                    Group { Anchor: (Height: 2); }
-
-                    TextButton #UncategorizedToggle {
-                        Text: "Uncategorized";
-                        Anchor: (Height: 24, Left: 0, Right: 0);
-                        Padding: (Left: 6, Right: 6);
-                    }
                 }
 
                 // Vertical divider between filters and grid
@@ -204,7 +195,7 @@ Group {
         // RIGHT COLUMN — Recipe Details
         // ══════════════════════════════
         Group {
-            Anchor: (Width: 260);
+            Anchor: (Width: 270);
             LayoutMode: Top;
             Padding: (Left: 12);
 
@@ -218,18 +209,24 @@ Group {
 
             // ── Output Icon + Cost Grid ──
             Group {
-                Anchor: (Height: 150);
-                LayoutMode: LeftScrolling;
+                Anchor: (Height: 175);
+                LayoutMode: Left;
 
                 Group {
                     LayoutMode: Top;
-                    Group {
+                    Group #OutputFrame {
                         Anchor: (Height: 96, Width: 96, Top: 0);
                         Background: "../../Common/BlockSelectorSlotBackground.png";
 
                         ItemIcon #OutputIcon {
                             Anchor: (Full: 4);
                             ShowItemTooltip: true;
+                        }
+
+                        Group #OutputDim {
+                            Anchor: (Full: 2);
+                            Background: #000000(0.5);
+                            Visible: false;
                         }
                     }
 
@@ -246,7 +243,7 @@ Group {
 
                 // ── Ingredient cost grid (wrapping, full width) ──
                 Group #CostGrid {
-                    Anchor: (Height: 128, Top: 0);
+                    // Anchor: (Height: 128, Top: 0);
                     LayoutMode: LeftCenterWrap;
                     FlexWeight: 1;
                 }

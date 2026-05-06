@@ -1,22 +1,26 @@
 // Cost cell — single ingredient icon with quantity overlay
 // Reusable component: server appends N instances into #CostGrid during build()
-// Server updates via cmd.set() on indexed selectors: #CostGrid[N] #CostIcon, #CostGrid[N] #CostQty
+// Server updates via cmd.set() on indexed selectors: #CostGrid[N] #CostIcon, #CostGrid[N] #CostQty, #CostGrid[N] #CostDim
 
 $S = "BlueprintBenchStyles.ui";
 
 Group {
-    Anchor: (Width: 62, Height: 62);
+    Anchor: (Width: 60, Height: 60);
     Visible: false;
-    Padding: (Full: 6);
+    Padding: (Full: 4);
 
-Group {
-    // Padding: (Left: 3, Right: 3, Top: 3, Bottom: 3);
-    Background: "../../Common/BlockSelectorSlotBackground.png";
-    ItemIcon #CostIcon {
-        Anchor: (Full: 2);
-        ShowItemTooltip: true;
+    Group {
+        Background: "../../Common/BlockSelectorSlotBackground.png";
+        ItemIcon #CostIcon {
+            Anchor: (Full: 2);
+            ShowItemTooltip: true;
+        }
+        Group #CostDim {
+            Anchor: (Full: 2);
+            Background: #000000(0.5);
+            Visible: false;
+        }
     }
-}
 
     Label #CostQty {
         Text: "";
