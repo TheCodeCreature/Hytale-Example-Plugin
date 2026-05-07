@@ -1,0 +1,25 @@
+// Single radial segment — Group wrapper for positioning + Button for interaction
+// Server sets Anchor on this Group for circular positioning
+// Button handles hover/pressed visuals natively via Style states
+
+$C = "../../Common.ui";
+
+Group #SegRoot {
+    Anchor: (Width: 56, Height: 56);
+    LayoutMode: Full;
+
+    Button #SegBtn {
+        Anchor: (Full: 0);
+        Background: #1a2030(0.7);
+        Style: (
+            Hovered: (Background: #3a7bd5(0.8)),
+            Pressed: (Background: #2a5ba0(0.9))
+        );
+
+        ItemIcon #SegIcon {
+            Anchor: (Full: 4);
+            ItemId: "";
+            ShowItemTooltip: false;
+        }
+    }
+}

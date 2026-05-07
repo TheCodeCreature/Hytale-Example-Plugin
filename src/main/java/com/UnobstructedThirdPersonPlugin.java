@@ -13,7 +13,9 @@ import com.UnobstructedThirdPerson.portablebench.PortableBenchInteraction;
 import com.UnobstructedThirdPerson.resourcecollection.BreakBlockDiagnostic;
 import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
 import com.UnobstructedThirdPerson.resourcecollection.PlacementCostScaler;
+import com.UnobstructedThirdPerson.stencil.StencilDropDestroySystem;
 import com.UnobstructedThirdPerson.stencil.StencilPlacementSystem;
+import com.UnobstructedThirdPerson.stencil.StencilRadialInputListener;
 import com.UnobstructedThirdPerson.stencil.StencilSyncSystem;
 import com.UnobstructedThirdPerson.stencil.StencilVisualManager;
 import com.UnobstructedThirdPerson.placeblock.BlueprintBenchRecipeMutator;
@@ -30,6 +32,8 @@ import com.hypixel.hytale.server.core.modules.interaction.interaction.config.Int
 import com.hypixel.hytale.server.core.asset.LoadAssetEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
+import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
+import com.hypixel.hytale.server.core.io.adapter.PlayerPacketWatcher;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
@@ -55,6 +59,9 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, UnobstructedThirdPersonPlugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, UnobstructedThirdPersonPlugin::onPlayerDisconnect);
 
+        // Stencil radial input — detect Pick interaction while holding a stencil (POC)
+        PacketAdapters.registerOutbound((PlayerPacketWatcher) StencilRadialInputListener::onOutboundPacket);
+
         // Boost stack sizes after assets are loaded
         this.getEventRegistry().register(LoadAssetEvent.class, UnobstructedThirdPersonPlugin::onAssetsLoaded);
         
@@ -63,6 +70,9 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
         // Blueprint stencil placement — intercepts PlaceBlockEvent for BSON-tagged block items
         this.getEntityStoreRegistry().registerSystem(new StencilPlacementSystem());
+
+        // Stencil drop destroy — cancel world item spawn when dropping stencils (G key / drag-out)
+        this.getEntityStoreRegistry().registerSystem(new StencilDropDestroySystem());
 
         // Diagnostic: log block drop config on break (toggle via /Debug BreakLog)
         this.getEntityStoreRegistry().registerSystem(new BreakBlockDiagnostic());

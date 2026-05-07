@@ -86,6 +86,9 @@ public final class RecipeFilterRegistry {
     /** Bench ID → entries matching that bench. */
     private static Map<String, List<FilteredRecipeEntry>> byBenchId = Collections.emptyMap();
 
+    /** Set name → entries belonging to that set. */
+    private static Map<String, List<FilteredRecipeEntry>> bySet = Collections.emptyMap();
+
     private RecipeFilterRegistry() {}
 
     // ═══════════════════════════════════════════════════════════════
@@ -115,6 +118,7 @@ public final class RecipeFilterRegistry {
         List<FilteredRecipeEntry> result = new ArrayList<>();
         Map<String, FilteredRecipeEntry> idMap = new HashMap<>();
         Map<String, List<FilteredRecipeEntry>> benchMap = new HashMap<>();
+        Map<String, List<FilteredRecipeEntry>> setMap = new HashMap<>();
 
         for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()) {
             if (recipe == null) continue;
@@ -162,6 +166,9 @@ public final class RecipeFilterRegistry {
             for (String benchId : matchedBenchIds) {
                 benchMap.computeIfAbsent(benchId, k -> new ArrayList<>()).add(entry);
             }
+            if (itemSet != null && !itemSet.isEmpty()) {
+                setMap.computeIfAbsent(itemSet, k -> new ArrayList<>()).add(entry);
+            }
         }
 
         result.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.recipeId(), b.recipeId()));
@@ -174,6 +181,11 @@ public final class RecipeFilterRegistry {
             immutableBenchMap.put(e.getKey(), Collections.unmodifiableList(e.getValue()));
         }
         byBenchId = Collections.unmodifiableMap(immutableBenchMap);
+        Map<String, List<FilteredRecipeEntry>> immutableSetMap = new HashMap<>();
+        for (var e : setMap.entrySet()) {
+            immutableSetMap.put(e.getKey(), Collections.unmodifiableList(e.getValue()));
+        }
+        bySet = Collections.unmodifiableMap(immutableSetMap);
 
         log("Initialized: " + result.size() + " entries, "
                 + benchMap.size() + " bench IDs");
@@ -219,6 +231,18 @@ public final class RecipeFilterRegistry {
     @Nonnull
     public static List<FilteredRecipeEntry> getEntriesForBench(@Nonnull String benchId) {
         return byBenchId.getOrDefault(benchId, Collections.emptyList());
+    }
+
+    /**
+     * Returns all entries that belong to the given item set.
+     * The returned list is unmodifiable.
+     *
+     * @param set the item set name (e.g. {@code "Wood_Hardwood_Planks"})
+     * @return entries for that set, or an empty list if none match
+     */
+    @Nonnull
+    public static List<FilteredRecipeEntry> getEntriesForSet(@Nonnull String set) {
+        return bySet.getOrDefault(set, Collections.emptyList());
     }
 
     // ═══════════════════════════════════════════════════════════════

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stencil Radial Menu — Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="%23263238"/><rect x="0" y="0" width="20" height="20" fill="%232a373d"/><rect x="20" y="20" width="20" height="20" fill="%232a373d"/></svg>');
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; font-family: 'Segoe UI', Arial, sans-serif;
+    color: #fff;
+  }
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .radial-root {
+    position: relative;
+    width: 500px; height: 500px;
+  }
+  .segment {
+    position: absolute;
+    width: 56px; height: 56px;
+    background: rgba(26, 32, 48, 0.85);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  }
+  .segment:hover {
+    background: rgba(58, 123, 213, 0.8);
+    border-color: rgba(58, 123, 213, 1);
+    transform: scale(1.12);
+  }
+  .segment.empty { opacity: 0.2; cursor: default; }
+  .segment.empty:hover { background: rgba(26,32,48,0.85); border-color: rgba(255,255,255,0.15); transform: none; }
+  .segment .icon {
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .center-nav {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(26, 32, 48, 0.92);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+  .nav-btn {
+    width: 34px; height: 34px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    color: #fff; font-size: 16px; font-weight: bold;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .nav-btn:hover { background: rgba(58, 123, 213, 0.6); }
+  .page-label {
+    font-size: 13px; color: #aaa;
+    min-width: 48px; text-align: center;
+    user-select: none;
+  }
+  .hover-label {
+    position: absolute;
+    bottom: 10px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px; color: #fff;
+    background: rgba(26, 32, 48, 0.85);
+    padding: 5px 18px;
+    border-radius: 5px;
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .hover-label.visible { opacity: 1; }
+  .controls {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 12px; align-items: center;
+    background: rgba(26,32,48,0.9);
+    padding: 10px 20px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.15);
+    z-index: 10;
+  }
+  .controls label { font-size: 13px; color: #aaa; }
+  .controls input[type=range] { width: 120px; }
+  .controls .val { font-size: 14px; color: #fff; min-width: 24px; text-align: center; }
+  .legend {
+    position: fixed; bottom: 20px; left: 20px;
+    font-size: 12px; color: #666; line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <label>Segments per page:</label>
+  <input type="range" id="segCountSlider" min="2" max="12" value="6">
+  <span class="val" id="segCountVal">6</span>
+  <span style="color:#555; margin: 0 6px;">|</span>
+  <label>Radius:</label>
+  <input type="range" id="radiusSlider" min="80" max="220" value="160">
+  <span class="val" id="radiusVal">160</span>
+</div>
+
+<div class="overlay">
+  <div class="radial-root" id="radialRoot">
+    <div class="center-nav">
+      <button class="nav-btn" id="prevBtn">&lt;</button>
+      <span class="page-label" id="pageLabel">1 / 2</span>
+      <button class="nav-btn" id="nextBtn">&gt;</button>
+    </div>
+    <div class="hover-label" id="hoverLabel"></div>
+  </div>
+</div>
+
+<div class="legend">
+  <strong>Stencil Radial Menu — Mockup</strong><br>
+  Drag sliders to change segment count &amp; radius<br>
+  Hover for labels · Click to select · &lt; &gt; to page
+</div>
+
+<script>
+const ALL_ITEMS = [
+  { id: 'Oak Log',     icon: '🪵' },
+  { id: 'Birch Log',   icon: '🌳' },
+  { id: 'Spruce Log',  icon: '🌲' },
+  { id: 'Stone',       icon: '🪨' },
+  { id: 'Cobblestone', icon: '🧱' },
+  { id: 'Sandstone',   icon: '🏜️' },
+  { id: 'Granite',     icon: '⛰️' },
+  { id: 'Slate',       icon: '🔲' },
+  { id: 'Clay',        icon: '🟤' },
+  { id: 'Marble',      icon: '⬜' },
+  { id: 'Basalt',      icon: '⬛' },
+  { id: 'Obsidian',    icon: '🟪' },
+];
+
+const SEG_W = 56, SEG_H = 56;
+let segCount = 6;
+let radius = 160;
+let currentPage = 0;
+
+const root = document.getElementById('radialRoot');
+const hoverLabel = document.getElementById('hoverLabel');
+const pageLabel = document.getElementById('pageLabel');
+
+let segmentEls = [];
+
+function getTotalPages() {
+  return Math.max(1, Math.ceil(ALL_ITEMS.length / segCount));
+}
+function getPageItems() {
+  const from = currentPage * segCount;
+  return ALL_ITEMS.slice(from, from + segCount);
+}
+
+function buildSegments() {
+  segmentEls.forEach(el => el.remove());
+  segmentEls = [];
+  const cx = root.offsetWidth / 2;
+  const cy = root.offsetHeight / 2;
+
+  for (let i = 0; i < segCount; i++) {
+    const angle = (2 * Math.PI * i / segCount) - (Math.PI / 2);
+    const left = cx + Math.round(radius * Math.cos(angle)) - SEG_W / 2;
+    const top  = cy + Math.round(radius * Math.sin(angle)) - SEG_H / 2;
+
+    const seg = document.createElement('div');
+    seg.className = 'segment';
+    seg.style.left = left + 'px';
+    seg.style.top = top + 'px';
+    seg.innerHTML = '<div class="icon"></div>';
+    seg.dataset.slot = i;
+
+    seg.addEventListener('mouseenter', () => {
+      const item = getPageItems()[i];
+      if (item) { hoverLabel.textContent = item.id; hoverLabel.classList.add('visible'); }
+    });
+    seg.addEventListener('mouseleave', () => hoverLabel.classList.remove('visible'));
+    seg.addEventListener('click', () => {
+      const item = getPageItems()[i];
+      if (item) alert('Selected: ' + item.id + ' (page ' + currentPage + ', slot ' + i + ')');
+    });
+
+    root.appendChild(seg);
+    segmentEls.push(seg);
+  }
+  updateItems();
+}
+
+function updateItems() {
+  const items = getPageItems();
+  for (let i = 0; i < segCount; i++) {
+    const seg = segmentEls[i];
+    const item = items[i];
+    const iconEl = seg.querySelector('.icon');
+    if (item) {
+      iconEl.textContent = item.icon;
+      seg.classList.remove('empty');
+    } else {
+      iconEl.textContent = '';
+      seg.classList.add('empty');
+    }
+  }
+  pageLabel.textContent = (currentPage + 1) + ' / ' + getTotalPages();
+  hoverLabel.classList.remove('visible');
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  currentPage = (currentPage + 1) % getTotalPages();
+  updateItems();
+});
+document.getElementById('prevBtn').addEventListener('click', () => {
+  currentPage = (currentPage - 1 + getTotalPages()) % getTotalPages();
+  updateItems();
+});
+
+document.getElementById('segCountSlider').addEventListener('input', function() {
+  segCount = parseInt(this.value);
+  document.getElementById('segCountVal').textContent = segCount;
+  currentPage = 0;
+  buildSegments();
+});
+document.getElementById('radiusSlider').addEventListener('input', function() {
+  radius = parseInt(this.value);
+  document.getElementById('radiusVal').textContent = radius;
+  buildSegments();
+});
+
+buildSegments();
+</script>
+</body>
+</html>
