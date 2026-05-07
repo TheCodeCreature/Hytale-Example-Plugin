@@ -3,7 +3,8 @@
 //              #CheckboxIcon.Background (checkbox state), #ExpandArrow.Background
 // Events: #GroupHeaderBtn (expand/collapse), #CheckboxBtn (toggle selection)
 
-$S = "BlueprintBenchStyles.ui";
+$B = "../../Styles/Buttons.ui";
+$L = "../../Styles/Labels.ui";
 $C = "../../Common.ui";
 
 Group {
@@ -35,7 +36,7 @@ Group {
             Label #GroupHeaderLabel {
                 Text: "Group Name";
                 Anchor: (Full: 0);
-                Style: $S.@SectionLabelStyle;
+                Style: $L.@SectionLabelStyle;
             }
         }
 
@@ -50,7 +51,7 @@ Group {
     TextButton #GroupHeaderBtn {
         Text: "";
         Anchor: (Full: 0);
-        Style: $S.@TransparentButtonStyle;
+        Style: $B.@TransparentButtonStyle;
     }
 
     // Checkbox — last in tree, wins over GroupHeaderBtn in this area

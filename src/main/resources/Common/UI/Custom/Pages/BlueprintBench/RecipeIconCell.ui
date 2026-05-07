@@ -2,14 +2,15 @@
 // Group root for background, ItemIcon for display, TextButton overlay for clicks
 // Server sets #CellIcon.ItemId and #CellDim.Visible via #RecipeGrid[i]
 
-$S = "BlueprintBenchStyles.ui";
+$B = "../../Styles/Buttons.ui";
+$BG = "../../Styles/Backgrounds.ui";
 
 Group {
     Anchor: (Width: 72, Height: 72);
     Padding: (Left: 4, Right: 4, Top: 4, Bottom: 4);
     Group {
         Anchor: (Full: 0);
-        Background: "../../Common/BlockSelectorSlotBackground.png";
+        Background: $BG.@ItemSlotFrame;
 
         ItemIcon #CellIcon {
             Anchor: (Full: 4);
@@ -19,7 +20,7 @@ Group {
         // Dimming overlay — toggled via #CellDim.Visible for unaffordable items
         Group #CellDim {
             Anchor: (Full: 2);
-            Background: #000000(0.5);
+            Background: $BG.@DimOverlay;
             Visible: false;
         }
 
@@ -27,7 +28,7 @@ Group {
         TextButton #CellBtn {
             Text: "";
             Anchor: (Full: 2);
-            Style: $S.@TransparentButtonStyle;
+            Style: $B.@TransparentButtonStyle;
         }
     }
 }

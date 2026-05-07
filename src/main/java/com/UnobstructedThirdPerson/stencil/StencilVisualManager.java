@@ -1,6 +1,6 @@
 package com.UnobstructedThirdPerson.stencil;
 
-import com.UnobstructedThirdPerson.placeblock.PlaceBlockCostUtil;
+import com.UnobstructedThirdPerson.placeblock.RecipeAffordabilityResolver;
 import com.hypixel.hytale.protocol.ItemBase;
 import com.hypixel.hytale.protocol.ItemTranslationProperties;
 import com.hypixel.hytale.protocol.UpdateType;
@@ -11,7 +11,6 @@ import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemQuality;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
-import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 
@@ -219,7 +218,7 @@ public final class StencilVisualManager {
                                     @Nonnull Player player,
                                     @Nonnull PlayerVisualState state) {
         ItemContainer hotbar = player.getInventory().getHotbar();
-        ItemContainer container = player.getInventory().getCombinedBackpackStorageHotbar();
+        var container = player.getInventory().getCombinedBackpackStorageHotbar();
 
         Set<String> currentStencils = new HashSet<>();
         Map<String, ItemVisualState> changedItems = new HashMap<>();
@@ -244,8 +243,7 @@ public final class StencilVisualManager {
             CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(recipeId);
             if (recipe == null) continue;
 
-            List<MaterialQuantity> materials = PlaceBlockCostUtil.getPerUnitCost(recipe);
-            boolean affordable = materials.isEmpty() || container.canRemoveMaterials(materials);
+            boolean affordable = RecipeAffordabilityResolver.isAffordable(recipe, container);
 
             if (state.updateItem(itemId, affordable)) {
                 changedItems.put(itemId, state.getTrackedItems().get(itemId));

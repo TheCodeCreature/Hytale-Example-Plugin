@@ -1,0 +1,37 @@
+// List/grid entry styles — used for recipe list items and selection states
+// Referenced by .ui templates and Java Value.ref("Styles/Entries.ui", "TokenName")
+
+$C = "../Common.ui";
+
+// ── Default Entry ──
+
+@EntryStyle = TextButtonStyle(
+    Default:  (Background: $C.@TertiaryDefaultButtonBackground, LabelStyle: (FontSize: 14, TextColor: #96a9be,
+              HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Hovered:  (Background: $C.@TertiaryHoveredButtonBackground, LabelStyle: (FontSize: 14, TextColor: #ffffff,
+              HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Pressed:  (Background: $C.@TertiaryPressedButtonBackground, LabelStyle: (FontSize: 14, TextColor: #ffffff,
+              HorizontalAlignment: Start, VerticalAlignment: Center))
+);
+
+// ── Selected Entry ──
+
+@SelectedEntryStyle = TextButtonStyle(
+    Default:  (Background: $C.@DefaultSquareButtonDefaultBackground, LabelStyle: (FontSize: 14, TextColor: #ffffff,
+              RenderBold: true, HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Hovered:  (Background: $C.@DefaultSquareButtonHoveredBackground, LabelStyle: (FontSize: 14, TextColor: #ffffff,
+              RenderBold: true, HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Pressed:  (Background: $C.@DefaultSquareButtonPressedBackground, LabelStyle: (FontSize: 14, TextColor: #ffffff,
+              RenderBold: true, HorizontalAlignment: Start, VerticalAlignment: Center))
+);
+
+// ── Unaffordable Entry (dimmed) ──
+
+@UnaffordableEntryStyle = TextButtonStyle(
+    Default:  (Background: $C.@TertiaryDefaultButtonBackground, LabelStyle: (FontSize: 14, TextColor: #4a5568,
+              HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Hovered:  (Background: $C.@TertiaryHoveredButtonBackground, LabelStyle: (FontSize: 14, TextColor: #5a6578,
+              HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Pressed:  (Background: $C.@TertiaryPressedButtonBackground, LabelStyle: (FontSize: 14, TextColor: #5a6578,
+              HorizontalAlignment: Start, VerticalAlignment: Center))
+);

@@ -1,12 +1,13 @@
 // MaterialGroupButton — material group icon button for filter bar
 
-$S = "BlueprintBenchStyles.ui";
+$B = "../../Styles/Buttons.ui";
+$BG = "../../Styles/Backgrounds.ui";
 
 Group {
     Anchor: (Width: 30, Height: 30);
     Padding: (Left: 1, Right: 1, Top: 1, Bottom: 1);
     Visible: false;
-    Background: #141c26;
+    Background: $BG.@CategoryCellBg;
 
     ItemIcon #GroupIcon {
         Anchor: (Full: 3);
@@ -16,6 +17,6 @@ Group {
     TextButton #GroupBtn {
         Text: "";
         Anchor: (Full: 0);
-        Style: $S.@TransparentButtonStyle;
+        Style: $B.@TransparentButtonStyle;
     }
 }

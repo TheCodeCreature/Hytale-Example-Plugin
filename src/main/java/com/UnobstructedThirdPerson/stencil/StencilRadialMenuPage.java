@@ -20,14 +20,13 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
-import com.UnobstructedThirdPerson.placeblock.PlaceBlockCostUtil;
+import com.UnobstructedThirdPerson.placeblock.RecipeAffordabilityResolver;
+import com.UnobstructedThirdPerson.placeblock.ResolvedIngredient;
 import com.UnobstructedThirdPerson.resourcecollection.BenchCategory;
 import com.UnobstructedThirdPerson.resourcecollection.FilteredRecipeEntry;
-import com.UnobstructedThirdPerson.resourcecollection.NaturalResourceRegistry;
 import com.UnobstructedThirdPerson.resourcecollection.RecipeFilterRegistry;
-import com.UnobstructedThirdPerson.resourcecollection.ResourceTypeResolver;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
+import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -102,10 +101,17 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
     /** Maximum number of cost icon slots pre-allocated. */
     private static final int MAX_COST_SLOTS = 9;
 
+    private static final Value<String> COST_QTY_NORMAL =
+            Value.ref("Styles/Overlays.ui", "CostQuantityOverlayStyle");
+    private static final Value<String> COST_QTY_INSUFFICIENT =
+            Value.ref("Styles/Overlays.ui", "CostQuantityOverlayInsufficientStyle");
+
     // ── State ──
 
     private int currentPage = 0;
     private final List<RadialSegmentItem> allItems;
+    private Ref<EntityStore> playerRef_ref;
+    private Store<EntityStore> playerStore;
 
     /**
      * Creates a new radial menu page for the given player.
@@ -164,6 +170,8 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
                       @NonNull UICommandBuilder cmd,
                       @NonNull UIEventBuilder evt,
                       @NonNull Store<EntityStore> store) {
+        this.playerRef_ref = ref;
+        this.playerStore = store;
         cmd.append("Pages/StencilRadial/StencilRadialMenu.ui");
         appendSegments(cmd, evt, currentPage);
         evt.addEventBinding(CustomUIEventBindingType.Activating, "#PrevBtn",
@@ -352,12 +360,19 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
         CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(item.recipeId());
         if (recipe == null) { hideCostArc(cmd); return; }
 
-        List<MaterialQuantity> costs = PlaceBlockCostUtil.getPerUnitCost(recipe);
-        int count = Math.min(costs.size(), MAX_COST_SLOTS);
-        if (count == 0) { hideCostArc(cmd); return; }
-
         FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(item.recipeId());
         BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
+
+        // Get player inventory for affordability checking
+        Player player = playerStore != null ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
+        CombinedItemContainer container = null;
+        if (player != null) {
+            container = player.getInventory().getCombinedBackpackStorageHotbar();
+        }
+
+        List<ResolvedIngredient> ingredients = RecipeAffordabilityResolver.resolveIngredientCosts(recipe, category, container);
+        int count = Math.min(ingredients.size(), MAX_COST_SLOTS);
+        if (ingredients.isEmpty()) { hideCostArc(cmd); return; }
 
         double segAngle = (2 * Math.PI * slotIndex / SEGMENTS_PER_PAGE) - (Math.PI / 2);
 
@@ -383,17 +398,13 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
                 anchor.setTop(Value.of(top));
                 cmd.setObject("#CostSlots[" + j + "].Anchor", anchor);
 
-                MaterialQuantity mq = costs.get(j);
-                String itemId = ResourceTypeResolver.resolveInputItemId(mq, category);
-                if (itemId != null && !itemId.isEmpty()) {
-                    itemId = NaturalResourceRegistry.resolveToGatherableForm(itemId);
-                } else {
-                    itemId = "";
-                }
-                String costName = itemId.replace('_', ' ');
-                cmd.set("#CostSlots[" + j + "] #CostIcon.ItemId", itemId);
-                cmd.set("#CostSlots[" + j + "] #CostQty.Text", "x" + mq.getQuantity());
+                ResolvedIngredient ing = ingredients.get(j);
+                String costName = ing.resolvedItemId().replace('_', ' ');
+                cmd.set("#CostSlots[" + j + "] #CostIcon.ItemId", ing.resolvedItemId());
+                cmd.set("#CostSlots[" + j + "] #CostQty.Text", "x" + ing.requiredQty());
                 cmd.set("#CostSlots[" + j + "] #CostName.Text", costName);
+                cmd.set("#CostSlots[" + j + "] #CostDim.Visible", !ing.sufficient());
+                cmd.set("#CostSlots[" + j + "] #CostQty.Style", ing.sufficient() ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
                 cmd.set("#CostSlots[" + j + "].Visible", true);
             } else {
                 cmd.set("#CostSlots[" + j + "].Visible", false);
@@ -407,6 +418,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
     private void hideCostArc(UICommandBuilder cmd) {
         for (int j = 0; j < MAX_COST_SLOTS; j++) {
             cmd.set("#CostSlots[" + j + "].Visible", false);
+            cmd.set("#CostSlots[" + j + "] #CostDim.Visible", false);
         }
     }
 

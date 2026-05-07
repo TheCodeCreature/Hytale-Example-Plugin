@@ -3,7 +3,9 @@
 // Server updates via cmd.set() only in handleDataEvent() — no append/clear after build()
 
 $C = "../../Common.ui";
-$S = "BlueprintBenchStyles.ui";
+$B = "../../Styles/Buttons.ui";
+$L = "../../Styles/Labels.ui";
+$BG = "../../Styles/Backgrounds.ui";
 
 // ── Page Root ──
 
@@ -54,7 +56,7 @@ Group {
                     FlexWeight: 1;
                     Anchor: (Left: 0, Top: 4);
                     Text: "All";
-                    Style: (FontSize: 18, TextColor: $C.@ColorDefault, RenderBold: true);
+                    Style: $L.@SubheaderStyle;
                     MaskTexturePath: $C.@TextHighlightGradientMask;
                 }
 
@@ -102,12 +104,12 @@ Group {
                                 Text: "v Categories";
                                 Anchor: (Full: 0);
                                 Padding: (Left: 6, Right: 22);
-                                Style: $S.@SectionHeaderStyle;
+                                Style: $B.@SectionHeaderStyle;
                             }
 
                             Group {
                                 Anchor: (Width: 24, Height: 24, Right: 2);
-                                Background: "../../Common/Icons/AssetNotifications/Trash.png";
+                                Background: $BG.@TrashIcon;
 
                                 TextButton #ClearCategoriesBtn {
                                     Text: "";
@@ -136,12 +138,12 @@ Group {
                                 Text: "v Sets";
                                 Anchor: (Full: 0);
                                 Padding: (Left: 6, Right: 22);
-                                Style: $S.@SectionHeaderStyle;
+                                Style: $B.@SectionHeaderStyle;
                             }
 
                             Group {
                                 Anchor: (Width: 24, Height: 24, Right: 2);
-                                Background: "../../Common/Icons/AssetNotifications/Trash.png";
+                                Background: $BG.@TrashIcon;
 
                                 TextButton #ClearSetsBtn {
                                     Text: "";
@@ -159,7 +161,7 @@ Group {
                 }
 
                 // Vertical divider between filters and grid
-                Group { Anchor: (Width: 1); Background: #2b3542; }
+                Group { Anchor: (Width: 1); Background: $BG.@DividerColor; }
 
         // ══════════════════════════════
         // CENTER COLUMN — Recipe browser
@@ -180,7 +182,7 @@ Group {
         }
 
         // Vertical divider
-        Group { Anchor: (Width: 1); Background: #2b3542; }
+        Group { Anchor: (Width: 1); Background: $BG.@DividerColor; }
 
         // ══════════════════════════════
         // RIGHT COLUMN — Recipe Details
@@ -193,7 +195,7 @@ Group {
             // ── Output Name ──
             Label #OutputName {
                 Text: "No recipe selected";
-                Style: $S.@DetailLabelStyle;
+                Style: $L.@DetailLabelStyle;
             }
 
             Group { Anchor: (Height: 10); }
@@ -207,7 +209,7 @@ Group {
                     LayoutMode: Top;
                     Group #OutputFrame {
                         Anchor: (Height: 96, Width: 96, Top: 0);
-                        Background: "../../Common/BlockSelectorSlotBackground.png";
+                        Background: $BG.@ItemSlotFrame;
 
                         ItemIcon #OutputIcon {
                             Anchor: (Full: 4);
@@ -216,7 +218,7 @@ Group {
 
                         Group #OutputDim {
                             Anchor: (Full: 2);
-                            Background: #000000(0.5);
+                            Background: $BG.@DimOverlay;
                             Visible: false;
                         }
                     }
@@ -226,7 +228,7 @@ Group {
                         Text: "Give Stencil";
                         Anchor: (Height: 40, Width: 96, Right: 0, Left: 0, Top: 10);
                         Padding: (Left: 12, Right: 12);
-                        Style: $S.@WrapSecondaryButtonStyle;
+                        Style: $B.@WrapSecondaryButtonStyle;
                     }
                 }
 
@@ -251,14 +253,14 @@ Group {
 
                 Label {
                     Text: "INGREDIENTS";
-                    Style: $S.@SectionLabelStyle;
+                    Style: $L.@SectionLabelStyle;
                     FlexWeight: 1;
                     Padding: (Left: 6);
                 }
 
                 Group {
                     Anchor: (Width: 24, Height: 24, Right: 2);
-                    Background: "../../Common/Icons/AssetNotifications/Trash.png";
+                    Background: $BG.@TrashIcon;
 
                     TextButton #ClearIngredientsBtn {
                         Text: "";

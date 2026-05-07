@@ -3,11 +3,14 @@
 // Server positions each segment absolutely via Left/Top on the appended child
 
 $C = "../../Common.ui";
+$B = "../../Styles/Buttons.ui";
+$L = "../../Styles/Labels.ui";
+$BG = "../../Styles/Backgrounds.ui";
 
 Group {
     Anchor: (Full: 0);
     LayoutMode: Full;
-    Background: #000000(0.5);
+    Background: $BG.@DimOverlay;
 
     // Centered container for the radial layout
     Group #RadialRoot {
@@ -36,14 +39,7 @@ Group {
             TextButton #CloseBtn {
                 Anchor: (Width: 30, Height: 30);
                 Text: "X";
-                Style: TextButtonStyle(
-                    Default: (Background: #8b2020(0.9),
-                             LabelStyle: (FontSize: 18, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center)),
-                    Hovered: (Background: #cc3333(0.9),
-                             LabelStyle: (FontSize: 18, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center)),
-                    Pressed: (Background: #661515(0.9),
-                             LabelStyle: (FontSize: 18, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center))
-                );
+                Style: $B.@DestructiveButtonStyle;
             }
 
             // Page navigation row
@@ -55,40 +51,26 @@ Group {
                 TextButton #PrevBtn {
                     Anchor: (Width: 32, Height: 32);
                     Text: "<";
-                    Style: TextButtonStyle(
-                        Default: (Background: $C.@TertiaryDefaultButtonBackground,
-                                 LabelStyle: (FontSize: 16, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center)),
-                        Hovered: (Background: $C.@TertiaryHoveredButtonBackground,
-                                 LabelStyle: (FontSize: 16, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center)),
-                        Pressed: (Background: $C.@TertiaryPressedButtonBackground,
-                                 LabelStyle: (FontSize: 16, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center))
-                    );
+                    Style: $B.@NavButtonStyle;
                 }
 
                 Label #PageLabel {
                     Anchor: (Width: 48, Height: 32);
-                    Style: (FontSize: 14, TextColor: #aaaaaa, HorizontalAlignment: Center, VerticalAlignment: Center);
+                    Style: $L.@PageIndicatorLabelStyle;
                     Text: "1 / 1";
                 }
 
                 TextButton #NextBtn {
                     Anchor: (Width: 32, Height: 32);
                     Text: ">";
-                    Style: TextButtonStyle(
-                        Default: (Background: $C.@TertiaryDefaultButtonBackground,
-                                 LabelStyle: (FontSize: 16, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center)),
-                        Hovered: (Background: $C.@TertiaryHoveredButtonBackground,
-                                 LabelStyle: (FontSize: 16, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center)),
-                        Pressed: (Background: $C.@TertiaryPressedButtonBackground,
-                                 LabelStyle: (FontSize: 16, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center))
-                    );
+                    Style: $B.@NavButtonStyle;
                 }
             }
 
             // Delete button (trash icon)
             Group #DeleteBtn {
                 Anchor: (Width: 32, Height: 32);
-                Background: "../../Common/Icons/AssetNotifications/Trash.png";
+                Background: $BG.@TrashIcon;
 
                 TextButton #DeleteBtnHit {
                     Text: "";

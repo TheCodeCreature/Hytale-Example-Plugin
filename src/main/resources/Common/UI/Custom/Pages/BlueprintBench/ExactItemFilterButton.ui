@@ -2,7 +2,8 @@
 // Server sets: #ItemIconEl.ItemId, #ActiveOverlay.Visible, .Visible
 // Events: #ItemBtn (toggle selection)
 
-$S = "BlueprintBenchStyles.ui";
+$B = "../../Styles/Buttons.ui";
+$BG = "../../Styles/Backgrounds.ui";
 
 Group {
     Anchor: (Width: 36, Height: 36);
@@ -11,7 +12,7 @@ Group {
 
     Group {
         Anchor: (Full: 0);
-        Background: "../../Common/BlockSelectorSlotBackground.png";
+        Background: $BG.@ItemSlotFrame;
 
         ItemIcon #ItemIconEl {
             Anchor: (Full: 4);
@@ -19,14 +20,14 @@ Group {
 
         Group #ActiveOverlay {
             Anchor: (Full: 0);
-            Background: #2a4a6a(0.6);
+            Background: $BG.@FilterActiveHighlight;
             Visible: false;
         }
 
         TextButton #ItemBtn {
             Text: "";
             Anchor: (Full: 0);
-            Style: $S.@TransparentButtonStyle;
+            Style: $B.@TransparentButtonStyle;
         }
     }
 }

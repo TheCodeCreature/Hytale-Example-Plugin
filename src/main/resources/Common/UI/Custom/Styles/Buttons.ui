@@ -1,0 +1,88 @@
+// Shared button styles — all TextButtonStyle tokens
+// Referenced by .ui templates and Java Value.ref("Styles/Buttons.ui", "TokenName")
+
+$C = "../Common.ui";
+
+// ── Filter State ──
+
+@FilterActiveStyle = TextButtonStyle(
+    Default: (Background: $C.@DefaultSquareButtonDefaultBackground, LabelStyle: (FontSize: 11, TextColor: #ffffff,
+              HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: $C.@DefaultSquareButtonHoveredBackground, LabelStyle: (FontSize: 11, TextColor: #ffffff,
+              HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: $C.@DefaultSquareButtonPressedBackground, LabelStyle: (FontSize: 11, TextColor: #ffffff,
+              HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@FilterInactiveStyle = TextButtonStyle(
+    Default: (Background: $C.@TertiaryDefaultButtonBackground, LabelStyle: (FontSize: 11, TextColor: #6e7da1,
+              HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: $C.@TertiaryHoveredButtonBackground, LabelStyle: (FontSize: 11, TextColor: #96a9be,
+              HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: $C.@TertiaryPressedButtonBackground, LabelStyle: (FontSize: 11, TextColor: #96a9be,
+              HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+// ── Section Headers ──
+
+@SectionHeaderStyle = TextButtonStyle(
+    Default: (Background: $C.@TertiaryDefaultButtonBackground, LabelStyle: (FontSize: 18, TextColor: #6e7da1, RenderBold: true,
+              HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Hovered: (Background: $C.@TertiaryHoveredButtonBackground, LabelStyle: (FontSize: 18, TextColor: #96a9be, RenderBold: true,
+              HorizontalAlignment: Start, VerticalAlignment: Center)),
+    Pressed: (Background: $C.@TertiaryPressedButtonBackground, LabelStyle: (FontSize: 18, TextColor: #96a9be, RenderBold: true,
+              HorizontalAlignment: Start, VerticalAlignment: Center))
+);
+
+@WrapSecondaryButtonStyle = TextButtonStyle(
+    Default: (Background: PatchStyle(TexturePath: "../Common/Buttons/Secondary.png", Border: $C.@ButtonBorder),
+             LabelStyle: (Wrap: true, FontSize: 12, TextColor: #bdcbd3, RenderBold: true, RenderUppercase: true,
+             HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: PatchStyle(TexturePath: "../Common/Buttons/Secondary_Hovered.png", Border: $C.@ButtonBorder),
+             LabelStyle: (Wrap: true, FontSize: 12, TextColor: #bdcbd3, RenderBold: true, RenderUppercase: true,
+             HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: PatchStyle(TexturePath: "../Common/Buttons/Secondary_Pressed.png", Border: $C.@ButtonBorder),
+             LabelStyle: (Wrap: true, FontSize: 12, TextColor: #bdcbd3, RenderBold: true, RenderUppercase: true,
+             HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+// ── Transparent / Invisible Hit Targets ──
+
+@TransparentButtonStyle = TextButtonStyle(
+    Default: (Background: $C.@TertiaryDefaultButtonBackground, LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
+    Hovered: (Background: $C.@TertiaryHoveredButtonBackground, LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
+    Pressed: (Background: $C.@TertiaryPressedButtonBackground, LabelStyle: (FontSize: 1, TextColor: #000000(0.0)))
+);
+
+@SelectedCellButtonStyle = TextButtonStyle(
+    Default: (Background: $C.@TertiaryActiveButtonBackground, LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
+    Hovered: (Background: $C.@TertiaryActiveButtonBackground, LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
+    Pressed: (Background: $C.@TertiaryActiveButtonBackground, LabelStyle: (FontSize: 1, TextColor: #000000(0.0)))
+);
+
+// ── Destructive / Navigation ──
+
+@DestructiveButtonStyle = TextButtonStyle(
+    Default: (Background: #8b2020(0.9),
+             LabelStyle: (FontSize: 18, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: #cc3333(0.9),
+             LabelStyle: (FontSize: 18, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: #661515(0.9),
+             LabelStyle: (FontSize: 18, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@NavButtonStyle = TextButtonStyle(
+    Default: (Background: $C.@TertiaryDefaultButtonBackground,
+             LabelStyle: (FontSize: 16, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: $C.@TertiaryHoveredButtonBackground,
+             LabelStyle: (FontSize: 16, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: $C.@TertiaryPressedButtonBackground,
+             LabelStyle: (FontSize: 16, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+// ── Radial Segment ──
+
+@RadialSegmentButtonStyle = ButtonStyle(
+    Hovered: (Background: #3a7bd5(0.8)),
+    Pressed: (Background: #2a5ba0(0.9))
+);

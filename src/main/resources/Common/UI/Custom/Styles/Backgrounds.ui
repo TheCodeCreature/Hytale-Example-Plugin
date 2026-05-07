@@ -1,0 +1,22 @@
+// Shared background tokens — colors and asset paths for Background: properties
+// Referenced from .ui layout files via $BG = "../../Styles/Backgrounds.ui";
+
+// ── Dividers ──
+
+@DividerColor = #2b3542;
+
+// ── Overlays ──
+
+@DimOverlay = #000000(0.5);
+
+// ── Container Backgrounds ──
+
+@IconContainerDark = #0d1520(0.85);
+@SegmentDefaultBg = #1a2030(0.7);
+@CategoryCellBg = #141c26;
+@FilterActiveHighlight = #2a4a6a(0.6);
+
+// ── Asset Paths ──
+
+@ItemSlotFrame = "../Common/BlockSelectorSlotBackground.png";
+@TrashIcon = "../Common/Icons/AssetNotifications/Trash.png";

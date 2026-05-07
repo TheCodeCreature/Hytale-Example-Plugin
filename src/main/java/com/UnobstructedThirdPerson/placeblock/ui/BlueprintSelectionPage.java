@@ -1,12 +1,12 @@
 package com.UnobstructedThirdPerson.placeblock.ui;
 
 import com.UnobstructedThirdPerson.placeblock.PlaceBlockCostUtil;
+import com.UnobstructedThirdPerson.placeblock.RecipeAffordabilityResolver;
+import com.UnobstructedThirdPerson.placeblock.ResolvedIngredient;
 import com.UnobstructedThirdPerson.stencil.StencilMetadata;
 import com.UnobstructedThirdPerson.resourcecollection.BenchCategory;
 import com.UnobstructedThirdPerson.resourcecollection.FilteredRecipeEntry;
-import com.UnobstructedThirdPerson.resourcecollection.NaturalResourceRegistry;
 import com.UnobstructedThirdPerson.resourcecollection.RecipeFilterRegistry;
-import com.UnobstructedThirdPerson.resourcecollection.ResourceTypeResolver;
 import com.UnobstructedThirdPerson.placeblock.ui.ingredienttree.IngredientTree;
 import com.UnobstructedThirdPerson.placeblock.ui.ingredienttree.IngredientTreeBuilder;
 import com.UnobstructedThirdPerson.placeblock.ui.ingredienttree.IngredientTreeGridController;
@@ -47,27 +47,27 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static final int MAX_COST_CELLS = 8;
 
     private static final Value<String> FILTER_ACTIVE =
-            Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "FilterActiveStyle");
+            Value.ref("Styles/Buttons.ui", "FilterActiveStyle");
     private static final Value<String> FILTER_INACTIVE =
-            Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "FilterInactiveStyle");
+            Value.ref("Styles/Buttons.ui", "FilterInactiveStyle");
 
     // Selected cell highlight
     private static final Value<String> CELL_SELECTED_STYLE =
-            Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "SelectedCellButtonStyle");
+            Value.ref("Styles/Buttons.ui", "SelectedCellButtonStyle");
     private static final Value<String> CELL_UNSELECTED_STYLE =
-            Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "TransparentButtonStyle");
+            Value.ref("Styles/Buttons.ui", "TransparentButtonStyle");
 
     // Per-ingredient cost affordability
     private static final Value<String> COST_QTY_NORMAL =
-            Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "CostQuantityStyle");
+            Value.ref("Styles/Labels.ui", "CostQuantityStyle");
     private static final Value<String> COST_QTY_INSUFFICIENT =
-            Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "CostQuantityInsufficientStyle");
+            Value.ref("Styles/Labels.ui", "CostQuantityInsufficientStyle");
 
     // Output detail panel states
     private static final Value<String> DETAIL_LABEL_NORMAL =
-            Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "DetailLabelStyle");
+            Value.ref("Styles/Labels.ui", "DetailLabelStyle");
     private static final Value<String> DETAIL_LABEL_MUTED =
-            Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "DetailLabelMutedStyle");
+            Value.ref("Styles/Labels.ui", "DetailLabelMutedStyle");
 
     private static final String OUTPUT_BG_NORMAL = "Common/BlockSelectorSlotBackground.png";
     private static final String OUTPUT_BG_EMPTY = "Common/UnknownItemIcon.png";
@@ -790,27 +790,19 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 try {
                     CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
                     if (recipe != null) {
-                        List<MaterialQuantity> perUnitInputs = PlaceBlockCostUtil.getPerUnitCost(recipe);
-                        if (!perUnitInputs.isEmpty()) {
-                            FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(entry.recipeId);
-                            BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
+                        FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(entry.recipeId);
+                        BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
 
-                            Map<String, Integer> ingredientMap = new LinkedHashMap<>();
-                            for (MaterialQuantity mq : perUnitInputs) {
-                                if (mq == null) continue;
-                                String itemId = ResourceTypeResolver.resolveInputItemId(mq, category);
-                                if (itemId == null || itemId.isEmpty()) continue;
-                                itemId = NaturalResourceRegistry.resolveToGatherableForm(itemId);
-                                ingredientMap.merge(itemId, mq.getQuantity(), Integer::sum);
-                            }
+                        List<ResolvedIngredient> ingredients =
+                            RecipeAffordabilityResolver.resolveIngredientCosts(recipe, category, container);
 
-                            for (var e : ingredientMap.entrySet()) {
+                        if (!ingredients.isEmpty()) {
+                            for (ResolvedIngredient ing : ingredients) {
                                 if (costIdx >= MAX_COST_CELLS) break;
                                 String sel = "#CostGrid[" + costIdx + "]";
-                                String itemId = e.getKey();
-                                int requiredQty = e.getValue();
-                                int playerHas = countItemInInventory(container, itemId);
-                                boolean sufficient = playerHas >= requiredQty;
+                                String itemId = ing.resolvedItemId();
+                                int requiredQty = ing.requiredQty();
+                                boolean sufficient = ing.sufficient();
                                 if (!sufficient) allAffordable = false;
 
                                 cmd.set(sel + ".Visible", true);
@@ -1018,11 +1010,6 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
      *       member of that group in inventory (free conversion)</li>
      * </ol>
      */
-    private int countItemInInventory(@Nullable CombinedItemContainer container, String itemId) {
-        if (container == null || itemId == null) return 0;
-        return container.countItemStacks(stack -> itemId.equals(stack.getItemId()));
-    }
-
     private boolean isAffordable(RecipeFilterPipeline.InputRecipe entry, CombinedItemContainer container) {
         CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId());
         if (recipe != null) {

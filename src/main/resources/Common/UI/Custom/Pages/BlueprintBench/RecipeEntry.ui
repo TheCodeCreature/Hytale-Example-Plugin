@@ -2,11 +2,11 @@
 // Server sets TextSpans and applies @SelectedEntryStyle or @UnaffordableEntryStyle
 // See docs/Plans/design-blueprint-bench-ui.md for design spec
 
-$S = "BlueprintBenchStyles.ui";
+$E = "../../Styles/Entries.ui";
 
 TextButton {
     Text: "";
     Anchor: (Height: 30);
-    Style: $S.@EntryStyle;
+    Style: $E.@EntryStyle;
     Padding: (Left: 12, Right: 12);
 }

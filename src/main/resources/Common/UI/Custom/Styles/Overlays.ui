@@ -1,0 +1,32 @@
+// Overlay label styles — bold + outline for readability over images/backgrounds
+// Referenced by .ui templates and Java Value.ref("Styles/Overlays.ui", "TokenName")
+
+$C = "../Common.ui";
+
+// ── General Overlay Labels ──
+
+@OverlayLabelStyle = LabelStyle(
+    FontSize: 10, TextColor: #ffffff,
+    HorizontalAlignment: Center, Wrap: true,
+    RenderBold: true, OutlineColor: #000000
+);
+
+@OverlayCostNameStyle = LabelStyle(
+    FontSize: 9, TextColor: #ffffff,
+    HorizontalAlignment: Center, Wrap: true,
+    RenderBold: true, OutlineColor: #000000
+);
+
+// ── Cost Quantity (overlay variant — bold + outline) ──
+
+@CostQuantityOverlayStyle = LabelStyle(
+    FontSize: 11, TextColor: #ffcc00,
+    HorizontalAlignment: End,
+    RenderBold: true, OutlineColor: #000000
+);
+
+@CostQuantityOverlayInsufficientStyle = LabelStyle(
+    FontSize: 11, TextColor: #ff4444,
+    HorizontalAlignment: End,
+    RenderBold: true, OutlineColor: #000000
+);

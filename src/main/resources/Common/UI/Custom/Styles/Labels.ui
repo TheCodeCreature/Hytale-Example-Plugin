@@ -1,0 +1,73 @@
+// Shared label styles — all LabelStyle tokens
+// Referenced by .ui templates and Java Value.ref("Styles/Labels.ui", "TokenName")
+
+$C = "../Common.ui";
+
+// ── Headings ──
+
+@HeaderStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
+    FontSize: 22, RenderBold: true,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+@SubheaderStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
+    FontSize: 18, RenderBold: true,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+@DetailLabelStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
+    FontSize: 16, RenderBold: true,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+@DetailLabelMutedStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
+    FontSize: 16, TextColor: #6e7da1, RenderBold: true,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+// ── Body / Section ──
+
+@SubtextStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
+    FontSize: 12, TextColor: #6e7da1,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+@SectionLabelStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
+    FontSize: 13, TextColor: #6e7da1, RenderBold: true,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+@SetGroupLabelStyle = LabelStyle(
+    FontSize: 18, TextColor: #8b9bb5, RenderBold: true,
+    HorizontalAlignment: Start, VerticalAlignment: Center
+);
+
+@EmptyStateStyle = LabelStyle(
+    FontSize: 11, TextColor: #6e7da1,
+    HorizontalAlignment: Center, VerticalAlignment: Center
+);
+
+@PageIndicatorLabelStyle = LabelStyle(
+    FontSize: 14, TextColor: #aaaaaa,
+    HorizontalAlignment: Center, VerticalAlignment: Center
+);
+
+// ── Cost Quantity (panel variant — no outline) ──
+
+@CostQuantityStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
+    FontSize: 11, TextColor: #ffffff,
+    HorizontalAlignment: End, VerticalAlignment: End
+);
+
+@CostQuantityInsufficientStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
+    FontSize: 11, TextColor: #ff4444,
+    HorizontalAlignment: End, VerticalAlignment: End
+);
