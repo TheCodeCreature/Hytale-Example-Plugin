@@ -26,6 +26,8 @@ public class BlueprintBenchPrefs {
             .append(new KeyedCodec<>("SelectedRecipeId", Codec.STRING, true), (p, v) -> p.selectedRecipeId = v, p -> p.selectedRecipeId).add()
             .append(new KeyedCodec<>("SelectAllSets", Codec.BOOLEAN, true), (p, v) -> p.selectAllSets = v, p -> p.selectAllSets).add()
             .append(new KeyedCodec<>("SelectAllCategories", Codec.BOOLEAN, true), (p, v) -> p.selectAllCategories = v, p -> p.selectAllCategories).add()
+            .append(new KeyedCodec<>("SelectedIngredientNodes", new ArrayCodec<>(Codec.STRING, String[]::new), true),
+                    (p, v) -> p.selectedIngredientNodes = Arrays.asList(v), p -> p.selectedIngredientNodes.toArray(new String[0])).add()
             .build();
 
     String activeTab = "All";
@@ -38,4 +40,5 @@ public class BlueprintBenchPrefs {
     String selectedRecipeId;
     boolean selectAllSets = false;
     boolean selectAllCategories = false;
+    List<String> selectedIngredientNodes = new ArrayList<>();
 }

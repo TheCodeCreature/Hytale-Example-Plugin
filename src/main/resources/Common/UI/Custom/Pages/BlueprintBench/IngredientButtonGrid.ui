@@ -1,0 +1,11 @@
+// IngredientButtonGrid — wrapping container for resource type leaf buttons
+// Server appends GroupFilterButton.ui instances into #GridCells
+// Addressing: #IngredientTreeContainer[n] #GridCells[i] #GroupBtn
+
+Group {
+    Anchor: (Left: 0, Right: 0);
+
+    Group #GridCells {
+        LayoutMode: LeftCenterWrap;
+    }
+}

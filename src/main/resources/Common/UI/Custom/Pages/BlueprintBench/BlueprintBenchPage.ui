@@ -239,6 +239,41 @@ Group {
                     FlexWeight: 1;
                 }
             }
+
+            Group { Anchor: (Height: 8); }
+            $C.@PanelSeparatorFancy {}
+            Group { Anchor: (Height: 8); }
+
+            // ── Ingredient Filter Section Header ──
+            Group {
+                Anchor: (Height: 26, Left: 0, Right: 0);
+                LayoutMode: Left;
+
+                Label {
+                    Text: "INGREDIENTS";
+                    Style: $S.@SectionLabelStyle;
+                    FlexWeight: 1;
+                    Padding: (Left: 6);
+                }
+
+                Group {
+                    Anchor: (Width: 24, Height: 24, Right: 2);
+                    Background: "../../Common/Icons/AssetNotifications/Trash.png";
+
+                    TextButton #ClearIngredientsBtn {
+                        Text: "";
+                        Anchor: (Full: 0);
+                    }
+                }
+            }
+
+            // ── Ingredient Tree Grid ──
+            Group #IngredientTreeContainer {
+                FlexWeight: 1;
+                LayoutMode: TopScrolling;
+                ScrollbarStyle: $C.@DefaultScrollbarStyle;
+            }
+            
             Group { Anchor: (Height: 8); }
             $C.@PanelSeparatorFancy {}
             Group { Anchor: (Height: 8); }
@@ -248,46 +283,6 @@ Group {
                         Anchor: (Height: 24, Left: 0, Right: 0);
                         Padding: (Left: 6, Right: 6);
                     }
-
-            Group { Anchor: (Height: 8); }
-            $C.@PanelSeparatorFancy {}
-            Group { Anchor: (Height: 8); }
-
-            // ── Resource Type Filter Grid ──
-            Group {
-                Anchor: (Height: 24, Left: 0, Right: 0);
-
-                TextButton #ResourceTypesHeader {
-                    Text: "v Resource Types";
-                    Anchor: (Full: 0);
-                    Padding: (Left: 6, Right: 22);
-                    Style: $S.@SectionHeaderStyle;
-                }
-
-                Group {
-                    Anchor: (Width: 24, Height: 24, Right: 2);
-                    Background: "../../Common/Icons/AssetNotifications/Trash.png";
-
-                    TextButton #ClearResourceTypesBtn {
-                        Text: "";
-                        Anchor: (Full: 0);
-                    }
-                }
-            }
-
-            Group #ResourceTypeGridContainer {
-                FlexWeight: 1;
-                LayoutMode: TopScrolling;
-                ScrollbarStyle: $C.@DefaultScrollbarStyle;
-                Visible: false;
-
-                Group #ResourceTypeGrid {
-                    LayoutMode: LeftCenterWrap;
-                }
-            }
-
-            Group { Anchor: (Height: 4); }
-            $C.@PanelSeparatorFancy {}
         }
 
         } // three-column layout
