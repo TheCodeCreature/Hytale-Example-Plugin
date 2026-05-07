@@ -1,0 +1,35 @@
+// Single cost icon slot — positioned absolutely by server
+// Non-interactive, display only
+
+Group {
+    Anchor: (Width: 80, Height: 90);
+    Visible: false;
+    LayoutMode: Full;
+
+    Group {
+        Anchor: (Width: 64, Height: 64, Left: 8, Top: 0);
+        Background: #0d1520(0.85);
+        ItemIcon #CostIcon {
+            Anchor: (Full: 4);
+            ShowItemTooltip: false;
+        }
+
+        // Quantity badge — bottom-right of the icon
+        Label #CostQty {
+            Text: "";
+            Anchor: (Width: 32, Height: 14, Left: 32, Top: 49);
+            Style: (FontSize: 11, TextColor: #ffcc00, HorizontalAlignment: End);
+        }
+    }
+
+    Group #CostLabel {
+        Anchor: (Width: 80, Height: 24, Left: 0, Top: 65);
+        Background: #0d1520(0.8);
+
+        Label #CostName {
+            Text: "";
+            Anchor: (Full: 0);
+            Style: (FontSize: 9, TextColor: #cccccc, HorizontalAlignment: Center, Wrap: true);
+        }
+    }
+}

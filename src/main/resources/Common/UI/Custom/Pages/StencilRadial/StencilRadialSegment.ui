@@ -5,11 +5,11 @@
 $C = "../../Common.ui";
 
 Group #SegRoot {
-    Anchor: (Width: 56, Height: 56);
+    Anchor: (Width: 116, Height: 126);
     LayoutMode: Full;
 
     Button #SegBtn {
-        Anchor: (Full: 0);
+        Anchor: (Width: 96, Height: 96, Left: 10, Top: 0);
         Background: #1a2030(0.7);
         Style: (
             Hovered: (Background: #3a7bd5(0.8)),
@@ -20,6 +20,17 @@ Group #SegRoot {
             Anchor: (Full: 4);
             ItemId: "";
             ShowItemTooltip: false;
+        }
+    }
+
+    Group #SegLabel {
+        Anchor: (Width: 116, Height: 28, Left: 0, Top: 97);
+        Background: #0d1520(0.8);
+
+        Label #SegLabelText {
+            Text: "";
+            Anchor: (Full: 0);
+            Style: (FontSize: 10, TextColor: #cccccc, HorizontalAlignment: Center, Wrap: true);
         }
     }
 }

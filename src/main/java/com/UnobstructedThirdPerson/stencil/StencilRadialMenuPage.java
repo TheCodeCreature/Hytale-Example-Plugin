@@ -20,8 +20,14 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
+import com.UnobstructedThirdPerson.placeblock.PlaceBlockCostUtil;
+import com.UnobstructedThirdPerson.resourcecollection.BenchCategory;
 import com.UnobstructedThirdPerson.resourcecollection.FilteredRecipeEntry;
+import com.UnobstructedThirdPerson.resourcecollection.NaturalResourceRegistry;
 import com.UnobstructedThirdPerson.resourcecollection.RecipeFilterRegistry;
+import com.UnobstructedThirdPerson.resourcecollection.ResourceTypeResolver;
+import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
+import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +68,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
     private static final int SEGMENTS_PER_PAGE = 6;
 
     /** Radius in pixels from the container center to each segment center. */
-    private static final int RADIUS = 140;
+    private static final int RADIUS = 170;
 
     /** Container center X (half of 400px container width). */
     private static final int CENTER_X = 200;
@@ -71,10 +77,30 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
     private static final int CENTER_Y = 200;
 
     /** Segment button width in pixels. */
-    private static final int SEGMENT_W = 56;
+    private static final int SEGMENT_W = 116;
 
-    /** Segment button height in pixels. */
-    private static final int SEGMENT_H = 56;
+    /** Segment button height in pixels (icon + label). */
+    private static final int SEGMENT_H = 126;
+
+    // ── Cost arc constants ──
+
+    /** Radii for cost icon rings (inner, middle, outer). */
+    private static final int[] COST_RADII = {290, 395, 500};
+
+    /** Size of each cost icon slot in pixels. */
+    private static final int COST_SIZE = 80;
+
+    /** Height of cost slot including label. */
+    private static final int COST_H = 90;
+
+    /** Half angular spread within a ring (±25° from segment center). */
+    private static final double ARC_HALF_SPREAD = Math.toRadians(25);
+
+    /** Maximum items per ring. */
+    private static final int MAX_PER_RING = 3;
+
+    /** Maximum number of cost icon slots pre-allocated. */
+    private static final int MAX_COST_SLOTS = 9;
 
     // ── State ──
 
@@ -146,7 +172,14 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
                 EventData.of("Action", "nextPage"), false);
         evt.addEventBinding(CustomUIEventBindingType.Activating, "#DeleteBtnHit",
                 EventData.of("Action", "delete"), false);
+        evt.addEventBinding(CustomUIEventBindingType.Activating, "#CloseBtn",
+                EventData.of("Action", "close"), false);
         cmd.set("#PageLabel.Text", (currentPage + 1) + " / " + getTotalPages());
+
+        // Pre-append cost icon slots (hidden by default)
+        for (int i = 0; i < MAX_COST_SLOTS; i++) {
+            cmd.append("#CostSlots", "Pages/StencilRadial/StencilRadialCostSlot.ui");
+        }
     }
 
     /**
@@ -188,10 +221,10 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
             int slot = Integer.parseInt(action.substring("hover:".length()));
             List<RadialSegmentItem> items = getPageItems(currentPage);
             if (slot < items.size()) {
-                cmd.set("#HoverLabel.Text", items.get(slot).label());
+                showCostArc(cmd, slot, items.get(slot));
             }
         } else if (action.startsWith("unhover:")) {
-            cmd.set("#HoverLabel.Text", "");
+            hideCostArc(cmd);
         } else if ("nextPage".equals(action)) {
             currentPage = (currentPage + 1) % getTotalPages();
             updateSegments(cmd, currentPage);
@@ -208,6 +241,9 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
                     player.getInventory().getHotbar().removeItemStackFromSlot(activeSlot);
                 }
             }
+            this.close();
+            return;
+        } else if ("close".equals(action)) {
             this.close();
             return;
         }
@@ -245,6 +281,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
 
             if (i < items.size()) {
                 cmd.set("#Segments[" + i + "] #SegIcon.ItemId", items.get(i).itemId());
+                cmd.set("#Segments[" + i + "] #SegLabelText.Text", items.get(i).label());
                 cmd.set("#Segments[" + i + "].Visible", true);
                 evt.addEventBinding(CustomUIEventBindingType.Activating, "#Segments[" + i + "] #SegBtn",
                         EventData.of("Action", "select:" + items.get(i).index()), false);
@@ -273,9 +310,11 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
         for (int i = 0; i < SEGMENTS_PER_PAGE; i++) {
             if (i < items.size()) {
                 cmd.set("#Segments[" + i + "] #SegIcon.ItemId", items.get(i).itemId());
+                cmd.set("#Segments[" + i + "] #SegLabelText.Text", items.get(i).label());
                 cmd.set("#Segments[" + i + "].Visible", true);
             } else {
                 cmd.set("#Segments[" + i + "] #SegIcon.ItemId", "");
+                cmd.set("#Segments[" + i + "] #SegLabelText.Text", "");
                 cmd.set("#Segments[" + i + "].Visible", false);
             }
         }
@@ -300,6 +339,75 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
      */
     private int getTotalPages() {
         return (int) Math.ceil((double) allItems.size() / SEGMENTS_PER_PAGE);
+    }
+
+    // ── Cost Arc ──
+
+    /**
+     * Shows ingredient cost icons stacked in concentric rings radiating outward
+     * from the hovered segment. Up to {@link #MAX_PER_RING} items per ring,
+     * distributed across {@link #COST_RADII} rings.
+     */
+    private void showCostArc(UICommandBuilder cmd, int slotIndex, RadialSegmentItem item) {
+        CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(item.recipeId());
+        if (recipe == null) { hideCostArc(cmd); return; }
+
+        List<MaterialQuantity> costs = PlaceBlockCostUtil.getPerUnitCost(recipe);
+        int count = Math.min(costs.size(), MAX_COST_SLOTS);
+        if (count == 0) { hideCostArc(cmd); return; }
+
+        FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(item.recipeId());
+        BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
+
+        double segAngle = (2 * Math.PI * slotIndex / SEGMENTS_PER_PAGE) - (Math.PI / 2);
+
+        for (int j = 0; j < MAX_COST_SLOTS; j++) {
+            if (j < count) {
+                int ring = j / MAX_PER_RING;
+                int posInRing = j % MAX_PER_RING;
+                int itemsInThisRing = Math.min(MAX_PER_RING, count - ring * MAX_PER_RING);
+
+                int radius = COST_RADII[Math.min(ring, COST_RADII.length - 1)];
+
+                double offset = (itemsInThisRing == 1) ? 0.0
+                        : ARC_HALF_SPREAD * (2.0 * posInRing / (itemsInThisRing - 1) - 1.0);
+                double costAngle = segAngle + offset;
+
+                int left = CENTER_X + (int) (radius * Math.cos(costAngle)) - COST_SIZE / 2;
+                int top  = CENTER_Y + (int) (radius * Math.sin(costAngle)) - COST_H / 2;
+
+                Anchor anchor = new Anchor();
+                anchor.setWidth(Value.of(COST_SIZE));
+                anchor.setHeight(Value.of(COST_H));
+                anchor.setLeft(Value.of(left));
+                anchor.setTop(Value.of(top));
+                cmd.setObject("#CostSlots[" + j + "].Anchor", anchor);
+
+                MaterialQuantity mq = costs.get(j);
+                String itemId = ResourceTypeResolver.resolveInputItemId(mq, category);
+                if (itemId != null && !itemId.isEmpty()) {
+                    itemId = NaturalResourceRegistry.resolveToGatherableForm(itemId);
+                } else {
+                    itemId = "";
+                }
+                String costName = itemId.replace('_', ' ');
+                cmd.set("#CostSlots[" + j + "] #CostIcon.ItemId", itemId);
+                cmd.set("#CostSlots[" + j + "] #CostQty.Text", "x" + mq.getQuantity());
+                cmd.set("#CostSlots[" + j + "] #CostName.Text", costName);
+                cmd.set("#CostSlots[" + j + "].Visible", true);
+            } else {
+                cmd.set("#CostSlots[" + j + "].Visible", false);
+            }
+        }
+    }
+
+    /**
+     * Hides all cost icon slots.
+     */
+    private void hideCostArc(UICommandBuilder cmd) {
+        for (int j = 0; j < MAX_COST_SLOTS; j++) {
+            cmd.set("#CostSlots[" + j + "].Visible", false);
+        }
     }
 
     // ── Event Payload ──
