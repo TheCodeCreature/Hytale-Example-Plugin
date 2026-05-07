@@ -1,12 +1,12 @@
 # Product Board
 
-> Last updated: 2026-05-06 12:30
+> Last updated: 2026-05-07 15:00
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 32
+    "Backlog" : 44
     "In Progress" : 2
     "Done" : 33
     "Cancelled" : 8
@@ -52,6 +52,19 @@ pie title Backlog Distribution
 | S2604221135 | Story | Atomic Resource Consumption from Inventory | E2604221030 | high |
 | S2604221140 | Story | PlacementCostScaler Mutual Exclusion | E2604221030 | high |
 | S2604221200 | Story | Inventory Resource Availability Check | E2604221030 | high |
+| E2605071500 | Epic | Unified Style & Affordability System | — | high |
+| F2605071510 | Feature | Plugin-Wide Shared Style Tokens | E2605071500 | high |
+| S2605071511 | Story | Create SharedStyles.ui with Universal Tokens | E2605071500 | high |
+| S2605071512 | Story | Migrate BlueprintBenchStyles.ui to Import Shared | E2605071500 | high |
+| F2605071520 | Feature | StencilRadial Style Extraction | E2605071500 | high |
+| S2605071521 | Story | Create StencilRadialStyles.ui | E2605071500 | high |
+| S2605071522 | Story | Replace Inline Styles in Radial UI Files | E2605071500 | high |
+| F2605071530 | Feature | Unified Affordability Resolver | E2605071500 | high |
+| S2605071531 | Story | Extract RecipeAffordabilityResolver | E2605071500 | high |
+| S2605071532 | Story | Migrate Callers to Shared Resolver | E2605071500 | high |
+| F2605071540 | Feature | Radial Cost Arc Affordability Feedback | E2605071500 | high |
+| S2605071541 | Story | Add CostDim Overlay to StencilRadialCostSlot.ui | E2605071500 | high |
+| S2605071542 | Story | Wire Affordability Check into showCostArc | E2605071500 | high |
 
 ### Done
 | ID | Type | Title | Epic | Priority |
