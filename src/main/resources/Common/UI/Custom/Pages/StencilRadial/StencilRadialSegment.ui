@@ -25,12 +25,11 @@ Group #SegRoot {
 
     Group #SegLabel {
         Anchor: (Width: 116, Height: 28, Left: 0, Top: 97);
-        Background: #0d1520(0.8);
 
         Label #SegLabelText {
             Text: "";
             Anchor: (Full: 0);
-            Style: (FontSize: 10, TextColor: #cccccc, HorizontalAlignment: Center, Wrap: true);
+            Style: (FontSize: 10, TextColor: #ffffff, HorizontalAlignment: Center, Wrap: true, RenderBold: true, OutlineColor: #000000);
         }
     }
 }
