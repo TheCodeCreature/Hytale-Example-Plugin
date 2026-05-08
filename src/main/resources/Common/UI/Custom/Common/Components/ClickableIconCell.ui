@@ -1,0 +1,19 @@
+// Shared clickable icon cell — icon frame with dim overlay and click target
+// Appended N times via cmd.append("#GroupCells", "Common/Components/ClickableIconCell.ui")
+// Java selectors: #GroupCells[N] #Icon, #GroupCells[N] #Dim, #GroupCells[N] #Btn
+
+$CP = "Components.ui";
+$B = "../../Styles/Buttons.ui";
+
+Group {
+    Anchor: (Width: 72, Height: 72);
+    Padding: (Left: 4, Right: 4, Top: 4, Bottom: 4);
+
+    $CP.@ItemIconCell { @IconPadding = 4; }
+
+    TextButton #Btn {
+        Text: "";
+        Anchor: (Full: 2);
+        Style: $B.@TransparentButtonStyle;
+    }
+}

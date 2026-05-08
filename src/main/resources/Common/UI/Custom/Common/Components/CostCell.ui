@@ -1,0 +1,23 @@
+// Shared cost cell — icon frame with quantity badge
+// Appended N times via cmd.append("#CostGrid", "Common/Components/CostCell.ui")
+// Java selectors: #CostGrid[N] #Icon, #CostGrid[N] #Qty, #CostGrid[N] #Dim
+
+$CP = "Components.ui";
+$L = "../../Styles/Labels.ui";
+$BG = "../../Styles/Backgrounds.ui";
+
+Group {
+    Anchor: (Width: 60, Height: 60);
+    Visible: false;
+    Padding: (Full: 4);
+
+    $CP.@ItemIconCell {
+        @Background = $BG.@OutputSlotFrame;
+    }
+
+    Label #Qty {
+        Text: "";
+        Anchor: (Height: 14, Bottom: 0, Right: 2);
+        Style: $L.@CostQuantityStyle;
+    }
+}

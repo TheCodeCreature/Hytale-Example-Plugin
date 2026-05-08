@@ -1,9 +1,9 @@
-// ExactItemFilterButton — exact item filter button using engine ItemIcon
-// Server sets: #ItemIconEl.ItemId, #ActiveOverlay.Visible, .Visible
-// Events: #ItemBtn (toggle selection)
+// Item-icon filter toggle — follows @FilterToggleButton convention with ItemIcon
+// cmd.append() path unchanged: Pages/BlueprintBench/ExactItemFilterButton.ui
+// Cannot compose @FilterToggleButton directly because icon element is ItemIcon, not Group
 
-$B = "../../Styles/Buttons.ui";
 $BG = "../../Styles/Backgrounds.ui";
+$B = "../../Styles/Buttons.ui";
 
 Group {
     Anchor: (Width: 36, Height: 36);
@@ -13,18 +13,15 @@ Group {
     Group {
         Anchor: (Full: 0);
         Background: $BG.@ItemSlotFrame;
-
-        ItemIcon #ItemIconEl {
+        ItemIcon #FilterItemIcon {
             Anchor: (Full: 4);
         }
-
         Group #ActiveOverlay {
             Anchor: (Full: 0);
             Background: $BG.@FilterActiveHighlight;
             Visible: false;
         }
-
-        TextButton #ItemBtn {
+        TextButton #Btn {
             Text: "";
             Anchor: (Full: 0);
             Style: $B.@TransparentButtonStyle;

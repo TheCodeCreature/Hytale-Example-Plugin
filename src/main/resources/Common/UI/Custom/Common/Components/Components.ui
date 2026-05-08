@@ -1,0 +1,81 @@
+// Shared UI component tokens
+// Referenced from standalone .ui files via $CP = "Components.ui";
+// Referenced from page files via $CP = "../../Common/Components/Components.ui";
+
+$BG = "../../Styles/Backgrounds.ui";
+$B = "../../Styles/Buttons.ui";
+
+// ── Base Icon Cell ──
+// Framed ItemIcon with dim overlay. Compose into standalone files
+// that add extra elements (quantity labels, click buttons, etc.).
+//
+// Canonical IDs:
+//   #Icon    — ItemIcon, set via cmd.set("#Icon.ItemId", ...)
+//   #Dim     — Group overlay, set via cmd.set("#Dim.Visible", ...)
+//
+// @Params:
+//   @Anchor       — override to set explicit size/position (default: fill parent)
+//   @Background   — frame background token (default: $BG.@ItemSlotFrame)
+//   @IconPadding  — inset from frame edge in px (default: 2)
+//   @ShowTooltip  — whether ItemIcon shows native tooltip (default: true)
+
+@ItemIconCell = Group {
+    @Anchor = (Full: 0);
+    @Background = $BG.@ItemSlotFrame;
+    @IconPadding = 2;
+    @ShowTooltip = true;
+    Anchor: (...@Anchor);
+    Background: @Background;
+    ItemIcon #Icon {
+        Anchor: (Full: @IconPadding);
+        ShowItemTooltip: @ShowTooltip;
+    }
+    Group #Dim {
+        Anchor: (Full: 2);
+        Background: $BG.@DimOverlay;
+        Visible: false;
+    }
+};
+
+// ── Filter Toggle Button ──
+// Icon frame with active-state overlay and transparent click target.
+// Used for category/group filter buttons. The icon slot is a Group
+// whose Background is set at runtime via cmd.set().
+//
+// For ItemIcon-based filter buttons (ExactItemFilterButton.ui), use
+// the same structural convention and canonical IDs but replace the
+// Group #FilterIcon with ItemIcon #FilterItemIcon.
+//
+// Canonical IDs:
+//   #FilterIcon     — Group, set via cmd.set("#FilterIcon.Background", ...)
+//   #ActiveOverlay  — Group, set via cmd.set("#ActiveOverlay.Visible", ...)
+//   #Btn            — TextButton, bind via evt.addEventBinding(...)
+//
+// @Params:
+//   @Width   — outer width (default: 36)
+//   @Height  — outer height (default: 36)
+
+@FilterToggleButton = Group {
+    @Width = 36;
+    @Height = 36;
+    Anchor: (Width: @Width, Height: @Height);
+    Padding: (Left: 2, Right: 2, Top: 2, Bottom: 2);
+    Visible: false;
+    Group {
+        Anchor: (Full: 0);
+        Background: $BG.@ItemSlotFrame;
+        Group #FilterIcon {
+            Anchor: (Full: 4);
+        }
+        Group #ActiveOverlay {
+            Anchor: (Full: 0);
+            Background: $BG.@FilterActiveHighlight;
+            Visible: false;
+        }
+        TextButton #Btn {
+            Text: "";
+            Anchor: (Full: 0);
+            Style: $B.@TransparentButtonStyle;
+        }
+    }
+};

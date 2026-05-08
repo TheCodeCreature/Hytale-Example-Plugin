@@ -69,7 +69,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static final Value<String> DETAIL_LABEL_MUTED =
             Value.ref("Styles/Labels.ui", "DetailLabelMutedStyle");
 
-    private static final String OUTPUT_BG_NORMAL = "Common/BlockSelectorSlotBackground.png";
+    private static final String OUTPUT_BG_NORMAL = "Common/Buttons/Tertiary.png";
     private static final String OUTPUT_BG_EMPTY = "Common/UnknownItemIcon.png";
     private static final String OUTPUT_BG_UNAFFORDABLE = "Common/Buttons/Destructive.png";
 
@@ -322,13 +322,13 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             cmd.append("#RecipeGridArea", "Pages/BlueprintBench/SetGroupContainer.ui");
             for (int c = 0; c < cellsPerSet[g]; c++) {
                 cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
-                           "Pages/BlueprintBench/RecipeIconCell.ui");
+                           "Common/Components/ClickableIconCell.ui");
             }
         }
 
         // Cost cells (unchanged)
         for (int i = 0; i < MAX_COST_CELLS; i++) {
-            cmd.append("#CostGrid", "Pages/BlueprintBench/CostCell.ui");
+            cmd.append("#CostGrid", "Common/Components/CostCell.ui");
         }
 
         // ── Bind ALL events (one-time) ──
@@ -694,7 +694,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             for (int c = 0; c < cellsPerSet[g]; c++) {
                 int flatIdx = groupCellOffset[g] + c;
                 evt.addEventBinding(CustomUIEventBindingType.Activating,
-                        "#RecipeGridArea[" + g + "] #GroupCells[" + c + "] #CellBtn",
+                        "#RecipeGridArea[" + g + "] #GroupCells[" + c + "] #Btn",
                         EventData.of("Action", "RecipeSelect:idx:" + flatIdx));
             }
         }
@@ -742,10 +742,10 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             int globalIdx = groupCellOffset[currentGroupIdx] + cellInGroup;
             String cellSel = "#RecipeGridArea[" + currentGroupIdx + "] #GroupCells[" + cellInGroup + "]";
             cmd.set(cellSel + ".Visible", true);
-            cmd.set(cellSel + " #CellIcon.ItemId", entry.outputItemId());
-            cmd.set(cellSel + " #CellDim.Visible", !entry.affordable());
+            cmd.set(cellSel + " #Icon.ItemId", entry.outputItemId());
+            cmd.set(cellSel + " #Dim.Visible", !entry.affordable());
             boolean isSelected = entry.recipeId().equals(selectedRecipeId);
-            cmd.set(cellSel + " #CellBtn.Style", isSelected ? CELL_SELECTED_STYLE : CELL_UNSELECTED_STYLE);
+            cmd.set(cellSel + " #Btn.Style", isSelected ? CELL_SELECTED_STYLE : CELL_UNSELECTED_STYLE);
 
             cellSlotToRecipeIndex[globalIdx] = recipeIdx;
             cellsFilled[currentGroupIdx]++;
@@ -766,7 +766,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         for (int c = startCell; c < cellsPerSet[groupIdx]; c++) {
             String cellSel = "#RecipeGridArea[" + groupIdx + "] #GroupCells[" + c + "]";
             cmd.set(cellSel + ".Visible", false);
-            cmd.set(cellSel + " #CellBtn.Style", CELL_UNSELECTED_STYLE);
+            cmd.set(cellSel + " #Btn.Style", CELL_UNSELECTED_STYLE);
         }
     }
 
@@ -806,14 +806,14 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                                 if (!sufficient) allAffordable = false;
 
                                 cmd.set(sel + ".Visible", true);
-                                cmd.set(sel + " #CostIcon.ItemId", itemId);
-                                cmd.set(sel + " #CostQty.Text", "x" + requiredQty);
+                                cmd.set(sel + " #Icon.ItemId", itemId);
+                                cmd.set(sel + " #Qty.Text", "x" + requiredQty);
                                 if (checkInventory) {
-                                    cmd.set(sel + " #CostDim.Visible", !sufficient);
-                                    cmd.set(sel + " #CostQty.Style", sufficient ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
+                                    cmd.set(sel + " #Dim.Visible", !sufficient);
+                                    cmd.set(sel + " #Qty.Style", sufficient ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
                                 } else {
-                                    cmd.set(sel + " #CostDim.Visible", false);
-                                    cmd.set(sel + " #CostQty.Style", COST_QTY_NORMAL);
+                                    cmd.set(sel + " #Dim.Visible", false);
+                                    cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
                                 }
                                 costIdx++;
                             }
@@ -827,8 +827,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 for (int i = costIdx; i < MAX_COST_CELLS; i++) {
                     String sel = "#CostGrid[" + i + "]";
                     cmd.set(sel + ".Visible", false);
-                    cmd.set(sel + " #CostDim.Visible", false);
-                    cmd.set(sel + " #CostQty.Style", COST_QTY_NORMAL);
+                    cmd.set(sel + " #Dim.Visible", false);
+                    cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
                 }
 
                 // Output frame state — affordable vs unaffordable
@@ -853,8 +853,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         for (int i = 0; i < MAX_COST_CELLS; i++) {
             String sel = "#CostGrid[" + i + "]";
             cmd.set(sel + ".Visible", false);
-            cmd.set(sel + " #CostDim.Visible", false);
-            cmd.set(sel + " #CostQty.Style", COST_QTY_NORMAL);
+            cmd.set(sel + " #Dim.Visible", false);
+            cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
         }
     }
 
@@ -874,7 +874,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         // Per-group icon buttons (indices 0..MAX_GROUP_BUTTONS-1)
         for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
             evt.addEventBinding(
-                    CustomUIEventBindingType.Activating, "#MaterialGroups[" + i + "] #GroupBtn",
+                    CustomUIEventBindingType.Activating, "#MaterialGroups[" + i + "] #Btn",
                     EventData.of("Action", "MaterialGroup:idx:" + i)
             );
         }
@@ -896,7 +896,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                     iconFile = iconFile.substring(iconFile.lastIndexOf('/') + 1);
                 }
                 if (iconFile != null && !iconFile.isEmpty()) {
-                    cmd.set(sel + " #GroupIcon.Background", "Common/GroupIcons/" + iconFile);
+                    cmd.set(sel + " #FilterIcon.Background", "Common/GroupIcons/" + iconFile);
                 }
             } else {
                 cmd.set(sel + ".Visible", false);

@@ -106,9 +106,18 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
     private static final Value<String> COST_QTY_INSUFFICIENT =
             Value.ref("Styles/Overlays.ui", "CostQuantityOverlayInsufficientStyle");
 
+    private static final String SEG_FRAME_NORMAL = "Common/Buttons/Tertiary.png";
+    private static final String SEG_FRAME_UNAFFORDABLE = "Common/Buttons/Destructive.png";
+
+    private static final Value<String> SEG_SELECTED_STYLE =
+            Value.ref("Styles/Buttons.ui", "SelectedCellButtonStyle");
+    private static final Value<String> SEG_UNSELECTED_STYLE =
+            Value.ref("Styles/Buttons.ui", "TransparentButtonStyle");
+
     // ── State ──
 
     private int currentPage = 0;
+    private final String activeRecipeId;
     private final List<RadialSegmentItem> allItems;
     private Ref<EntityStore> playerRef_ref;
     private Store<EntityStore> playerStore;
@@ -123,6 +132,9 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
     public StencilRadialMenuPage(@NonNull PlayerRef playerRef, @NonNull Player player) {
         super(playerRef, CustomPageLifetime.CanDismissOrCloseThroughInteraction, EventPayload.CODEC);
         this.allItems = scanStencils(player);
+        ItemStack activeItem = player.getInventory().getActiveHotbarItem();
+        this.activeRecipeId = (activeItem != null && StencilMetadata.isStencil(activeItem))
+                ? StencilMetadata.getRecipeId(activeItem) : null;
     }
 
     /**
@@ -186,7 +198,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
 
         // Pre-append cost icon slots (hidden by default)
         for (int i = 0; i < MAX_COST_SLOTS; i++) {
-            cmd.append("#CostSlots", "Pages/StencilRadial/StencilRadialCostSlot.ui");
+            cmd.append("#CostSlots", "Common/Components/CostSlot.ui");
         }
     }
 
@@ -274,7 +286,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
     private void appendSegments(UICommandBuilder cmd, UIEventBuilder evt, int page) {
         List<RadialSegmentItem> items = getPageItems(page);
         for (int i = 0; i < SEGMENTS_PER_PAGE; i++) {
-            cmd.append("#Segments", "Pages/StencilRadial/StencilRadialSegment.ui");
+            cmd.append("#Segments", "Common/Components/SegmentButton.ui");
 
             double angle = (2 * Math.PI * i / SEGMENTS_PER_PAGE) - (Math.PI / 2);
             int left = CENTER_X + (int) (RADIUS * Math.cos(angle)) - SEGMENT_W / 2;
@@ -288,18 +300,21 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
             cmd.setObject("#Segments[" + i + "].Anchor", anchor);
 
             if (i < items.size()) {
-                cmd.set("#Segments[" + i + "] #SegIcon.ItemId", items.get(i).itemId());
+                cmd.set("#Segments[" + i + "] #Icon.ItemId", items.get(i).itemId());
                 cmd.set("#Segments[" + i + "] #SegLabelText.Text", items.get(i).label());
                 cmd.set("#Segments[" + i + "].Visible", true);
-                evt.addEventBinding(CustomUIEventBindingType.Activating, "#Segments[" + i + "] #SegBtn",
+                applySegmentAffordability(cmd, i, items.get(i));
+                boolean isActive = items.get(i).recipeId().equals(activeRecipeId);
+                cmd.set("#Segments[" + i + "] #Btn.Style", isActive ? SEG_SELECTED_STYLE : SEG_UNSELECTED_STYLE);
+                evt.addEventBinding(CustomUIEventBindingType.Activating, "#Segments[" + i + "] #Btn",
                         EventData.of("Action", "select:" + items.get(i).index()), false);
             } else {
                 cmd.set("#Segments[" + i + "].Visible", false);
             }
 
-            evt.addEventBinding(CustomUIEventBindingType.MouseEntered, "#Segments[" + i + "] #SegBtn",
+            evt.addEventBinding(CustomUIEventBindingType.MouseEntered, "#Segments[" + i + "] #Btn",
                     EventData.of("Action", "hover:" + i), false);
-            evt.addEventBinding(CustomUIEventBindingType.MouseExited, "#Segments[" + i + "] #SegBtn",
+            evt.addEventBinding(CustomUIEventBindingType.MouseExited, "#Segments[" + i + "] #Btn",
                     EventData.of("Action", "unhover:" + i), false);
         }
     }
@@ -317,11 +332,14 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
         List<RadialSegmentItem> items = getPageItems(page);
         for (int i = 0; i < SEGMENTS_PER_PAGE; i++) {
             if (i < items.size()) {
-                cmd.set("#Segments[" + i + "] #SegIcon.ItemId", items.get(i).itemId());
+                cmd.set("#Segments[" + i + "] #Icon.ItemId", items.get(i).itemId());
                 cmd.set("#Segments[" + i + "] #SegLabelText.Text", items.get(i).label());
                 cmd.set("#Segments[" + i + "].Visible", true);
+                applySegmentAffordability(cmd, i, items.get(i));
+                boolean isActive = items.get(i).recipeId().equals(activeRecipeId);
+                cmd.set("#Segments[" + i + "] #Btn.Style", isActive ? SEG_SELECTED_STYLE : SEG_UNSELECTED_STYLE);
             } else {
-                cmd.set("#Segments[" + i + "] #SegIcon.ItemId", "");
+                cmd.set("#Segments[" + i + "] #Icon.ItemId", "");
                 cmd.set("#Segments[" + i + "] #SegLabelText.Text", "");
                 cmd.set("#Segments[" + i + "].Visible", false);
             }
@@ -350,6 +368,31 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
     }
 
     // ── Cost Arc ──
+
+    /**
+     * Applies affordability styling to a single segment frame.
+     * Sets the frame background to destructive (red outline) and dims the icon
+     * when the player cannot afford the recipe.
+     */
+    private void applySegmentAffordability(UICommandBuilder cmd, int slotIndex, RadialSegmentItem item) {
+        CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(item.recipeId());
+        if (recipe == null) return;
+
+        FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(item.recipeId());
+        BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
+
+        Player player = playerStore != null ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
+        CombinedItemContainer container = null;
+        if (player != null) {
+            container = player.getInventory().getCombinedBackpackStorageHotbar();
+        }
+
+        boolean affordable = container != null
+                && RecipeAffordabilityResolver.resolveIngredientCosts(recipe, category, container)
+                        .stream().allMatch(ResolvedIngredient::sufficient);
+        cmd.set("#Segments[" + slotIndex + "] #SegFrame.Background", affordable ? SEG_FRAME_NORMAL : SEG_FRAME_UNAFFORDABLE);
+        cmd.set("#Segments[" + slotIndex + "] #Dim.Visible", !affordable);
+    }
 
     /**
      * Shows ingredient cost icons stacked in concentric rings radiating outward
@@ -400,11 +443,11 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
 
                 ResolvedIngredient ing = ingredients.get(j);
                 String costName = ing.resolvedItemId().replace('_', ' ');
-                cmd.set("#CostSlots[" + j + "] #CostIcon.ItemId", ing.resolvedItemId());
-                cmd.set("#CostSlots[" + j + "] #CostQty.Text", "x" + ing.requiredQty());
-                cmd.set("#CostSlots[" + j + "] #CostName.Text", costName);
-                cmd.set("#CostSlots[" + j + "] #CostDim.Visible", !ing.sufficient());
-                cmd.set("#CostSlots[" + j + "] #CostQty.Style", ing.sufficient() ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
+                cmd.set("#CostSlots[" + j + "] #Icon.ItemId", ing.resolvedItemId());
+                cmd.set("#CostSlots[" + j + "] #Qty.Text", "x" + ing.requiredQty());
+                cmd.set("#CostSlots[" + j + "] #Name.Text", costName);
+                cmd.set("#CostSlots[" + j + "] #Dim.Visible", !ing.sufficient());
+                cmd.set("#CostSlots[" + j + "] #Qty.Style", ing.sufficient() ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
                 cmd.set("#CostSlots[" + j + "].Visible", true);
             } else {
                 cmd.set("#CostSlots[" + j + "].Visible", false);
@@ -418,7 +461,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
     private void hideCostArc(UICommandBuilder cmd) {
         for (int j = 0; j < MAX_COST_SLOTS; j++) {
             cmd.set("#CostSlots[" + j + "].Visible", false);
-            cmd.set("#CostSlots[" + j + "] #CostDim.Visible", false);
+            cmd.set("#CostSlots[" + j + "] #Dim.Visible", false);
         }
     }
 

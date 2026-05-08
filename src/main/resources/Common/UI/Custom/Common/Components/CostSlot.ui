@@ -1,0 +1,35 @@
+// Shared cost slot — icon frame with quantity and name label (radial menu variant)
+// Appended N times via cmd.append("#CostSlots", "Common/Components/CostSlot.ui")
+// Java selectors: #CostSlots[N] #Icon, #CostSlots[N] #Dim, #CostSlots[N] #Qty, #CostSlots[N] #Name
+
+$CP = "Components.ui";
+$O = "../../Styles/Overlays.ui";
+$BG = "../../Styles/Backgrounds.ui";
+
+Group {
+    Anchor: (Width: 80, Height: 90);
+    Visible: false;
+    LayoutMode: Full;
+
+    $CP.@ItemIconCell {
+        @Anchor = (Width: 64, Height: 64, Left: 8, Top: 0);
+        @Background = $BG.@OutputSlotFrame;
+        @IconPadding = 4;
+        @ShowTooltip = false;
+    }
+
+    Label #Qty {
+        Text: "";
+        Anchor: (Width: 32, Height: 14, Left: 40, Top: 49);
+        Style: $O.@CostQuantityOverlayStyle;
+    }
+
+    Group #CostLabel {
+        Anchor: (Width: 80, Height: 24, Left: 0, Top: 65);
+        Label #Name {
+            Text: "";
+            Anchor: (Full: 0);
+            Style: $O.@OverlayCostNameStyle;
+        }
+    }
+}

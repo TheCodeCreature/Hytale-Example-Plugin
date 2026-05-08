@@ -11,7 +11,7 @@ Group {
 
     Group {
         Anchor: (Width: 64, Height: 64, Left: 8, Top: 0);
-        Background: $BG.@IconContainerDark;
+        Background: $BG.@ItemSlotFrame;
         ItemIcon #CostIcon {
             Anchor: (Full: 4);
             ShowItemTooltip: false;

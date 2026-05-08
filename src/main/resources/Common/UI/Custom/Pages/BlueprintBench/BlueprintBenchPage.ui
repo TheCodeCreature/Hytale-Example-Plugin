@@ -209,7 +209,7 @@ Group {
                     LayoutMode: Top;
                     Group #OutputFrame {
                         Anchor: (Height: 96, Width: 96, Top: 0);
-                        Background: $BG.@ItemSlotFrame;
+                        Background: $BG.@OutputSlotFrame;
 
                         ItemIcon #OutputIcon {
                             Anchor: (Full: 4);

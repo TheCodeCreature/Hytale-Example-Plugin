@@ -1,37 +1,7 @@
-// GroupFilterButton — category group icon button with multi-select support
-// Server sets #GroupIcon.Background to category icon path
-// Server sets #ActiveOverlay.Visible for active state
-// Click events target #GroupBtn (transparent TextButton overlay)
+// Group-icon filter toggle — composes @FilterToggleButton token directly
+// cmd.append() path unchanged: Pages/BlueprintBench/GroupFilterButton.ui
+// Java selectors: #FilterIcon, #ActiveOverlay, #Btn
 
-$B = "../../Styles/Buttons.ui";
-$BG = "../../Styles/Backgrounds.ui";
+$CP = "../../Common/Components/Components.ui";
 
-Group {
-    Anchor: (Width: 36, Height: 36);
-    Padding: (Left: 2, Right: 2, Top: 2, Bottom: 2);
-    Visible: false;
-
-    Group {
-        Anchor: (Full: 0);
-        Background: $BG.@ItemSlotFrame;
-
-        // Icon — background set dynamically to category icon path
-        Group #GroupIcon {
-            Anchor: (Full: 4);
-        }
-
-        // Active highlight overlay
-        Group #ActiveOverlay {
-            Anchor: (Full: 0);
-            Background: $BG.@FilterActiveHighlight;
-            Visible: false;
-        }
-
-        // Transparent click target
-        TextButton #GroupBtn {
-            Text: "";
-            Anchor: (Full: 0);
-            Style: $B.@TransparentButtonStyle;
-        }
-    }
-}
+$CP.@FilterToggleButton {}

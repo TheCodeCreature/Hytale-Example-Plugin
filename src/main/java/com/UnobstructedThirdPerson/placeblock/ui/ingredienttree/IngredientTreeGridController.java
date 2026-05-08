@@ -73,7 +73,7 @@ public class IngredientTreeGridController {
                 elements.add(new ElementInfo(rt.getId(), NodeType.RESOURCE_TYPE, kind, gridContainerIdx, leafIdx));
 
                 String rtSel = gridSel + "[" + leafIdx + "]";
-                String btnId = isDirectItem ? "#ItemBtn" : "#GroupBtn";
+                String btnId = "#Btn";
                 evt.addEventBinding(CustomUIEventBindingType.Activating,
                         rtSel + " " + btnId,
                         EventData.of("Action", "IngredientToggle:" + rt.getId()));
@@ -115,7 +115,7 @@ public class IngredientTreeGridController {
                     String sel = "#IngredientTreeContainer[" + info.containerIdx + "] #GridCells[" + info.leafIdx + "]";
                     IngredientResourceType rt = (IngredientResourceType) node;
                     boolean selected = selection.getState(info.nodeId) == CheckState.ALL;
-                    cmd.set(sel + " #GroupIcon.Background", rt.getIconPath());
+                    cmd.set(sel + " #FilterIcon.Background", rt.getIconPath());
                     cmd.set(sel + " #ActiveOverlay.Visible", selected);
                     cmd.set(sel + ".TooltipText", rt.getDisplayName());
                     cmd.set(sel + ".Visible", true);
@@ -124,7 +124,7 @@ public class IngredientTreeGridController {
                     String sel = "#IngredientTreeContainer[" + info.containerIdx + "] #GridCells[" + info.leafIdx + "]";
                     IngredientResourceType rt = (IngredientResourceType) node;
                     boolean selected = selection.getState(info.nodeId) == CheckState.ALL;
-                    cmd.set(sel + " #ItemIconEl.ItemId", rt.getId());
+                    cmd.set(sel + " #FilterItemIcon.ItemId", rt.getId());
                     cmd.set(sel + " #ActiveOverlay.Visible", selected);
                     cmd.set(sel + ".TooltipText", rt.getDisplayName());
                     cmd.set(sel + ".Visible", true);
