@@ -46,7 +46,7 @@ public class BlueprintBookParticleLoop {
     private static final long UPDATE_INTERVAL_MILLIS = 100;
     private static final String BLUEPRINT_BOOK_ITEM_ID = "BlueprintBook";
     private static final String EFFECT_ID_GREEN = "Drop_Uncommon";
-    private static final String EFFECT_ID_RED = "Red_Flash";
+    private static final String EFFECT_ID_RED = "BlockPlaceFail";
 
     private static final Map<UUID, BlueprintBookParticleLoop> INSTANCES = new ConcurrentHashMap<>();
 
