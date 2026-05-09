@@ -15,6 +15,7 @@
 	"Quality": "Tool",
 	"Set": "BlueprintBook",
 	"PlayerAnimationsId": "Spellbook",
+	"Weapon": {},
 	"Recipe": {
 		"Input": [
 			{

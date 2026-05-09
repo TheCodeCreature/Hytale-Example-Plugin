@@ -108,11 +108,8 @@ public class BlueprintBookParticleLoop {
                     ItemStack held = player.getInventory().getHotbar().getItemStack(activeSlot);
                     if (held == null || !held.getItemId().equals(BLUEPRINT_BOOK_ITEM_ID)) {
                         removeHighlightEntity(store);
-                        active = false;
                         return;
                     }
-
-                    active = true;
 
                     // Shape-aware raycast — checks actual interaction hitboxes, not full cubes
                     Vector3i target = ShapeAwareRaycast.getTargetBlock(ref, 8.0, store);

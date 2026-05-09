@@ -127,6 +127,7 @@ public class ShapeCompositorV2 {
         private String[] referenceIds;
         private TransformFlags transformFlags;
         private DebugStyle debugStyle;
+        private Integer priority;
         
         private OperationBuilder(String id, Shape shape, OperationTypeV2 type) {
             this.id = id;
@@ -146,6 +147,12 @@ public class ShapeCompositorV2 {
             return this;
         }
         
+        @Nonnull
+        public OperationBuilder withPriority(int priority) {
+            this.priority = priority;
+            return this;
+        }
+
         @Nonnull
         public OperationBuilder withDebugCube(@Nonnull DebugStyle debugStyle) {
             this.debugStyle = debugStyle.withVisualization(DebugVisualization.CUBE);
@@ -215,6 +222,11 @@ public class ShapeCompositorV2 {
             }
             
             ShapeOperationV2 operation = builder.build();
+
+            if (priority != null) {
+                operation.setPriority(priority);
+            }
+
             operations.put(id, operation);
             operationOrder.add(id);
             shapeCacheDirty = true;
@@ -646,152 +658,22 @@ public class ShapeCompositorV2 {
             rawPositions.put(id, arr);
         }
         
-        // Second pass: process timeline in priority order to build composite shapes
+        // Second pass: process timeline in two phases to ensure SHAPE-sourced ops
+        // are built before REFERENCE-sourced ops (UNION, FILL_REMAINING) look them up.
         List<ShapeOperationV2> timeline = getTimeline();
         
+        // Phase 2a: Process SHAPE-sourced operations first
         for (ShapeOperationV2 op : timeline) {
+            if (op.getType().getPositionSource() != OperationTypeV2.PositionSource.SHAPE) continue;
             if (!op.isEnabled()) continue;
-            OperationTypeV2 type = op.getType();
-            String opId = op.getId();
-            
-            BlockFillTypeV2 fillType = (type == OperationTypeV2.CUT) ? CUT_FILL : op.getFillType();
-            DebugStyle debugStyle = resolveDebugStyle(op, fillType);
-            
-            switch (type) {
-                case DEFINE, FILL -> {
-                    long[] positions = rawPositions.get(opId);
-                    if (positions == null) continue;
-                    CompositeShape.Builder builder = CompositeShape.builder();
-                    for (long pos : positions) {
-                        builder.addPoint(pos, fillType, opId, debugStyle);
-                    }
-                    compositeShapes.put(opId, builder.build());
-                }
-                case UNION -> {
-                    CompositeShape.Builder builder = CompositeShape.builder();
-                    for (String refId : op.getReferenceIds()) {
-                        CompositeShape ref = compositeShapes.get(refId);
-                        if (ref == null) {
-                            LOGGER.warning("UNION '" + opId + "' references unknown shape '" + refId + "'");
-                            continue;
-                        }
-                        ShapeOperationV2 refOp = operations.get(refId);
-                        boolean isExclude = refOp != null && refOp.getType() == OperationTypeV2.EXCLUDE;
-                        
-                        if (isExclude) {
-                            for (int i = 0; i < ref.size(); i++) {
-                                if (!builder.containsPoint(ref.getPosition(i))) {
-                                    builder.addExcludedPoint(ref.getPosition(i),
-                                            ref.getOriginId(i), ref.getDebugStyle(i));
-                                }
-                            }
-                        } else {
-                            for (int i = 0; i < ref.size(); i++) {
-                                if (!builder.containsPoint(ref.getPosition(i))) {
-                                    builder.addPoint(ref.getPosition(i), ref.getFill(i),
-                                            ref.getOriginId(i), ref.getDebugStyle(i));
-                                }
-                            }
-                        }
-                        unionConsumedOps.add(refId);
-                    }
-                    compositeShapes.put(opId, builder.build());
-                }
-                case CUT -> {
-                    long[] positions = rawPositions.get(opId);
-                    if (positions == null) continue;
-                    Set<Long> cutPositions = new HashSet<>();
-                    for (long pos : positions) {
-                        cutPositions.add(pos);
-                    }
-                    for (String refId : op.getReferenceIds()) {
-                        CompositeShape ref = compositeShapes.get(refId);
-                        if (ref == null) continue;
-                        
-                        // Rebuild the reference composite with CUT applied
-                        CompositeShape.Builder builder = CompositeShape.builder();
-                        for (int i = 0; i < ref.size(); i++) {
-                            long pos = ref.getPosition(i);
-                            if (cutPositions.contains(pos)) {
-                                builder.addPoint(pos, CUT_FILL, opId, debugStyle);
-                            } else {
-                                builder.addPoint(pos, ref.getFill(i), ref.getOriginId(i), ref.getDebugStyle(i));
-                            }
-                        }
-                        compositeShapes.put(refId, builder.build());
-                    }
-                    // CUT itself also gets a composite for its own positions
-                    CompositeShape.Builder cutBuilder = CompositeShape.builder();
-                    for (long pos : positions) {
-                        cutBuilder.addPoint(pos, CUT_FILL, opId, debugStyle);
-                    }
-                    compositeShapes.put(opId, cutBuilder.build());
-                }
-                case INTERSECT -> {
-                    long[] positions = rawPositions.get(opId);
-                    if (positions == null) continue;
-                    Set<Long> shapePositions = new HashSet<>();
-                    for (long pos : positions) {
-                        shapePositions.add(pos);
-                    }
-                    
-                    // Only keep positions that exist in both shape and all references
-                    CompositeShape.Builder builder = CompositeShape.builder();
-                    for (String refId : op.getReferenceIds()) {
-                        CompositeShape ref = compositeShapes.get(refId);
-                        if (ref == null) continue;
-                        for (int i = 0; i < ref.size(); i++) {
-                            long pos = ref.getPosition(i);
-                            if (shapePositions.contains(pos)) {
-                                builder.addPoint(pos, fillType != null ? fillType : ref.getFill(i),
-                                        opId, debugStyle);
-                            }
-                        }
-                    }
-                    compositeShapes.put(opId, builder.build());
-                }
-                case SUBTRACT -> {
-                    long[] positions = rawPositions.get(opId);
-                    if (positions == null) continue;
-                    Set<Long> subtractPositions = new HashSet<>();
-                    for (long pos : positions) {
-                        subtractPositions.add(pos);
-                    }
-                    
-                    for (String refId : op.getReferenceIds()) {
-                        CompositeShape ref = compositeShapes.get(refId);
-                        if (ref == null) continue;
-                        
-                        // Rebuild reference without the subtracted positions
-                        CompositeShape.Builder builder = CompositeShape.builder();
-                        for (int i = 0; i < ref.size(); i++) {
-                            long pos = ref.getPosition(i);
-                            if (!subtractPositions.contains(pos)) {
-                                builder.addPoint(pos, ref.getFill(i), ref.getOriginId(i), ref.getDebugStyle(i));
-                            }
-                        }
-                        compositeShapes.put(refId, builder.build());
-                    }
-                    // SUBTRACT itself stores its shape positions (for operationRegions)
-                    CompositeShape.Builder subBuilder = CompositeShape.builder();
-                    for (long pos : positions) {
-                        subBuilder.addPoint(pos, null, opId, debugStyle);
-                    }
-                    compositeShapes.put(opId, subBuilder.build());
-                }
-                case EXCLUDE -> {
-                    long[] positions = rawPositions.get(opId);
-                    if (positions == null) continue;
-                    CompositeShape.Builder builder = CompositeShape.builder();
-                    for (long pos : positions) {
-                        builder.addPoint(pos, null, opId, debugStyle);
-                    }
-                    compositeShapes.put(opId, builder.build());
-                }
-                case FILL_REMAINING -> {
-                    deferredOps.add(op);
-                }
-            }
+            processOperation(op, rawPositions);
+        }
+        
+        // Phase 2b: Process REFERENCE-sourced operations (UNION, FILL_REMAINING)
+        for (ShapeOperationV2 op : timeline) {
+            if (op.getType().getPositionSource() != OperationTypeV2.PositionSource.REFERENCE) continue;
+            if (!op.isEnabled()) continue;
+            processOperation(op, rawPositions);
         }
         
         // Build containment shape arrays for continuous-space testing in compose.
@@ -873,6 +755,145 @@ public class ShapeCompositorV2 {
         }
         
         shapeCacheDirty = false;
+    }
+
+    private void processOperation(ShapeOperationV2 op, Map<String, long[]> rawPositions) {
+        OperationTypeV2 type = op.getType();
+        String opId = op.getId();
+
+        BlockFillTypeV2 fillType = (type == OperationTypeV2.CUT) ? CUT_FILL : op.getFillType();
+        DebugStyle debugStyle = resolveDebugStyle(op, fillType);
+
+        switch (type) {
+            case DEFINE, FILL -> {
+                long[] positions = rawPositions.get(opId);
+                if (positions == null) return;
+                CompositeShape.Builder builder = CompositeShape.builder();
+                for (long pos : positions) {
+                    builder.addPoint(pos, fillType, opId, debugStyle);
+                }
+                compositeShapes.put(opId, builder.build());
+            }
+            case CUT -> {
+                long[] positions = rawPositions.get(opId);
+                if (positions == null) return;
+                Set<Long> cutPositions = new HashSet<>();
+                for (long pos : positions) {
+                    cutPositions.add(pos);
+                }
+                for (String refId : op.getReferenceIds()) {
+                    CompositeShape ref = compositeShapes.get(refId);
+                    if (ref == null) continue;
+
+                    CompositeShape.Builder builder = CompositeShape.builder();
+                    for (int i = 0; i < ref.size(); i++) {
+                        long pos = ref.getPosition(i);
+                        if (cutPositions.contains(pos)) {
+                            builder.addPoint(pos, CUT_FILL, opId, debugStyle);
+                        } else {
+                            builder.addPoint(pos, ref.getFill(i), ref.getOriginId(i), ref.getDebugStyle(i));
+                        }
+                    }
+                    compositeShapes.put(refId, builder.build());
+                }
+                CompositeShape.Builder cutBuilder = CompositeShape.builder();
+                for (long pos : positions) {
+                    cutBuilder.addPoint(pos, CUT_FILL, opId, debugStyle);
+                }
+                compositeShapes.put(opId, cutBuilder.build());
+            }
+            case INTERSECT -> {
+                long[] positions = rawPositions.get(opId);
+                if (positions == null) return;
+                Set<Long> shapePositions = new HashSet<>();
+                for (long pos : positions) {
+                    shapePositions.add(pos);
+                }
+
+                CompositeShape.Builder builder = CompositeShape.builder();
+                for (String refId : op.getReferenceIds()) {
+                    CompositeShape ref = compositeShapes.get(refId);
+                    if (ref == null) continue;
+                    for (int i = 0; i < ref.size(); i++) {
+                        long pos = ref.getPosition(i);
+                        if (shapePositions.contains(pos)) {
+                            builder.addPoint(pos, fillType != null ? fillType : ref.getFill(i),
+                                    opId, debugStyle);
+                        }
+                    }
+                }
+                compositeShapes.put(opId, builder.build());
+            }
+            case SUBTRACT -> {
+                long[] positions = rawPositions.get(opId);
+                if (positions == null) return;
+                Set<Long> subtractPositions = new HashSet<>();
+                for (long pos : positions) {
+                    subtractPositions.add(pos);
+                }
+
+                for (String refId : op.getReferenceIds()) {
+                    CompositeShape ref = compositeShapes.get(refId);
+                    if (ref == null) continue;
+
+                    CompositeShape.Builder builder = CompositeShape.builder();
+                    for (int i = 0; i < ref.size(); i++) {
+                        long pos = ref.getPosition(i);
+                        if (!subtractPositions.contains(pos)) {
+                            builder.addPoint(pos, ref.getFill(i), ref.getOriginId(i), ref.getDebugStyle(i));
+                        }
+                    }
+                    compositeShapes.put(refId, builder.build());
+                }
+                CompositeShape.Builder subBuilder = CompositeShape.builder();
+                for (long pos : positions) {
+                    subBuilder.addPoint(pos, null, opId, debugStyle);
+                }
+                compositeShapes.put(opId, subBuilder.build());
+            }
+            case EXCLUDE -> {
+                long[] positions = rawPositions.get(opId);
+                if (positions == null) return;
+                CompositeShape.Builder builder = CompositeShape.builder();
+                for (long pos : positions) {
+                    builder.addPoint(pos, null, opId, debugStyle);
+                }
+                compositeShapes.put(opId, builder.build());
+            }
+            case UNION -> {
+                CompositeShape.Builder builder = CompositeShape.builder();
+                for (String refId : op.getReferenceIds()) {
+                    CompositeShape ref = compositeShapes.get(refId);
+                    if (ref == null) {
+                        LOGGER.warning("UNION '" + opId + "' references unknown shape '" + refId + "'");
+                        continue;
+                    }
+                    ShapeOperationV2 refOp = operations.get(refId);
+                    boolean isExclude = refOp != null && refOp.getType() == OperationTypeV2.EXCLUDE;
+
+                    if (isExclude) {
+                        for (int i = 0; i < ref.size(); i++) {
+                            if (!builder.containsPoint(ref.getPosition(i))) {
+                                builder.addExcludedPoint(ref.getPosition(i),
+                                        ref.getOriginId(i), ref.getDebugStyle(i));
+                            }
+                        }
+                    } else {
+                        for (int i = 0; i < ref.size(); i++) {
+                            if (!builder.containsPoint(ref.getPosition(i))) {
+                                builder.addPoint(ref.getPosition(i), ref.getFill(i),
+                                        ref.getOriginId(i), ref.getDebugStyle(i));
+                            }
+                        }
+                    }
+                    unionConsumedOps.add(refId);
+                }
+                compositeShapes.put(opId, builder.build());
+            }
+            case FILL_REMAINING -> {
+                deferredOps.add(op);
+            }
+        }
     }
 
     private DebugStyle resolveDebugStyle(ShapeOperationV2 operation, BlockFillTypeV2 fillType) {

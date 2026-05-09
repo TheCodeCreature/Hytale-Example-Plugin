@@ -170,6 +170,7 @@ public class ShapeCompositorPresetsV2 extends ShapeCompositorV2 {
                                         ignorePlayerFacingWallPlusId,
                                         IgnorePlayerFeetPlusId))
                                 .withTransformFlags(_ignorePitch)
+                                .withPriority(101) // Must run after EXCLUDE ops (priority 100)
                                 .build();
                 // #endregion
                 return this;
