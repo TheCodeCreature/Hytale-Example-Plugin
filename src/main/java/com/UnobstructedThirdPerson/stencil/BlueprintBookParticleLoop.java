@@ -30,7 +30,7 @@ import com.hypixel.hytale.server.core.asset.type.entityeffect.config.OverlapBeha
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.hypixel.hytale.server.core.util.TargetUtil;
+import com.UnobstructedThirdPerson.util.ShapeAwareRaycast;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -114,9 +114,8 @@ public class BlueprintBookParticleLoop {
 
                     active = true;
 
-                    // Raycast from player eye position — same approach as EyeSpy mod
-                    // TargetUtil.getLook() internally reads TransformComponent + HeadRotation + ModelComponent.eyeHeight
-                    Vector3i target = TargetUtil.getTargetBlock(ref, 8.0, store);
+                    // Shape-aware raycast — checks actual interaction hitboxes, not full cubes
+                    Vector3i target = ShapeAwareRaycast.getTargetBlock(ref, 8.0, store);
                     if (target == null) {
                         removeHighlightEntity(store);
                         return;

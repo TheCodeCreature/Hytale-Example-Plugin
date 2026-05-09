@@ -49,7 +49,7 @@
 	},
 	"Interactions": {
 		"Use": "BlueprintBench_OpenUI",
-		"Primary": "BlueprintBook_PickStencil"
+		"Secondary": "BlueprintBook_PickStencil"
 	},
 	"InteractionConfig": {
 		"DisplayOutlines": true
