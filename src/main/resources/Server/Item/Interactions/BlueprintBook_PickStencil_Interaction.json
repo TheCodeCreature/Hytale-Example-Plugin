@@ -1,0 +1,7 @@
+{
+  "Type": "BlueprintBook_PickStencil",
+  "Effects": {
+    "ItemAnimationId": "CastHurlCharging",
+    "WorldSoundEventId": "SFX_Skeleton_Mage_Spellbook_Charge"
+  }
+}

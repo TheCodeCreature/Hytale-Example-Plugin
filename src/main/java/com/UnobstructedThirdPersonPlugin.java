@@ -6,6 +6,7 @@ import com.UnobstructedThirdPerson.camera.v2.CameraTransparencyVolumeV2;
 import com.UnobstructedThirdPerson.command.debug.DebugCommand;
 import com.UnobstructedThirdPerson.command.PreviewCommand;
 import com.UnobstructedThirdPerson.command.placeblock.PlaceBlockCommand;
+import com.UnobstructedThirdPerson.command.ParticleCommand;
 import com.UnobstructedThirdPerson.movement.NewMovementSystem;
 import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
 import com.UnobstructedThirdPerson.portablebench.PortableBenchConfigLoader;
@@ -13,6 +14,7 @@ import com.UnobstructedThirdPerson.portablebench.PortableBenchInteraction;
 import com.UnobstructedThirdPerson.resourcecollection.BreakBlockDiagnostic;
 import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
 import com.UnobstructedThirdPerson.resourcecollection.PlacementCostScaler;
+import com.UnobstructedThirdPerson.stencil.BlueprintBookParticleLoop;
 import com.UnobstructedThirdPerson.stencil.StencilDropDestroySystem;
 import com.UnobstructedThirdPerson.stencil.StencilPlacementSystem;
 import com.UnobstructedThirdPerson.stencil.StencilRadialInputListener;
@@ -55,6 +57,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         this.getCommandRegistry().registerCommand(new DebugCommand());
         this.getCommandRegistry().registerCommand(new PreviewCommand());
         this.getCommandRegistry().registerCommand(new PlaceBlockCommand());
+        this.getCommandRegistry().registerCommand(new ParticleCommand());
 //        this.getCommandRegistry().registerCommand(new NewMovementCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, UnobstructedThirdPersonPlugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, UnobstructedThirdPersonPlugin::onPlayerDisconnect);
@@ -88,6 +91,12 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         // Register Blueprint Bench interaction type (opens custom UI page)
         this.getCodecRegistry(Interaction.CODEC)
                 .register("BlueprintBench_OpenUI", BlueprintBenchOpenUIInteraction.class, BlueprintBenchOpenUIInteraction.CODEC);
+
+        // Register Blueprint Book pick-stencil interaction type
+        this.getCodecRegistry(Interaction.CODEC)
+                .register("BlueprintBook_PickStencil",
+                        com.UnobstructedThirdPerson.stencil.BlueprintBookPickStencilInteraction.class,
+                        com.UnobstructedThirdPerson.stencil.BlueprintBookPickStencilInteraction.CODEC);
 
         // PlaceBlockPlacementSystem — DISABLED: replaced by PlaceBlockToolInteraction (direct dispatch)
         // this.getEntityStoreRegistry().registerSystem(new PlaceBlockPlacementSystem());
@@ -125,6 +134,8 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         CameraTransparencyVolumeV2.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresetsV2()
                       .DefaultViewField()
         );
+
+        BlueprintBookParticleLoop.start(playerRef, world);
     }
 
     private static void onPlayerDisconnect(PlayerDisconnectEvent event) {
@@ -134,6 +145,7 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         PreviewBlockManager.remove(playerRef.getUuid());
         StencilSyncSystem.unregister(playerRef.getUuid());
         StencilVisualManager.removePlayer(playerRef.getUuid());
+        BlueprintBookParticleLoop.remove(playerRef.getUuid());
         NewMovementSystem.disableMoonGravity(playerRef.getUuid());
     }
 

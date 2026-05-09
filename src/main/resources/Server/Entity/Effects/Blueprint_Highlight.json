@@ -1,0 +1,15 @@
+{
+  "Infinite": true,
+  "OverlapBehavior": "Ignore",
+  "RemovalBehavior": "Complete",
+  "ApplicationEffects": {
+    "Particles": [
+      {
+        "SystemId": "Drop_Uncommon",
+        "TargetEntityPart": "Self",
+        "Scale": 1.0,
+        "DetachedFromModel": true
+      }
+    ]
+  }
+}

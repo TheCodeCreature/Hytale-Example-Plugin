@@ -11,6 +11,7 @@ import com.hypixel.hytale.protocol.Packet;
 import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChain;
 import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChains;
 
+
 /**
  * POC: Detects middle-click (Pick interaction) while holding a stencil item
  * by intercepting the outbound SyncInteractionChains packet.
