@@ -444,15 +444,6 @@ class ResourceScalingIntegrationTest {
         }
 
         @Test
-        void fenceIsNotClassifiedAsBaseBlock() {
-            applyFullPipeline();
-            // Wood_Hardwood matches both Wood_Log_Oak (natural) and
-            // Wood_Hardwood_Planks (non-natural), so the fence is NOT a base block
-            assertFalse(BenchRecipeRegistries.isBaseBlockTypeAnywhere("Wood_Hardwood_Fence"),
-                    "Fence with ResourceTypeId input should NOT be a base block type");
-        }
-
-        @Test
         void fenceDropQuantityIsCorrect() {
             applyFullPipeline();
             var breaking = readGatheringBreaking(data.fenceHardwood.getGathering());

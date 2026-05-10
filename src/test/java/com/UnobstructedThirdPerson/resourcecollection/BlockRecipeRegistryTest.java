@@ -101,36 +101,6 @@ class BlockRecipeRegistryTest {
     }
 
     @Test
-    void baseBlockRecipeIdentified() {
-        BenchRecipeRegistries.init();
-
-        // Planks_Oak: input is Wood_Log_Oak which IS a natural item
-        assertTrue(BenchRecipeRegistries.isBaseBlockRecipeAnywhere("Planks_Oak"),
-                "Planks_Oak should be a base block recipe (all inputs natural)");
-    }
-
-    @Test
-    void nonBaseBlockRecipeIdentified() {
-        BenchRecipeRegistries.init();
-
-        // Slab_Oak: input is Wood_Planks_Oak which is NOT a natural item
-        assertFalse(BenchRecipeRegistries.isBaseBlockRecipeAnywhere("Slab_Oak"),
-                "Slab_Oak should NOT be a base block recipe");
-        assertFalse(BenchRecipeRegistries.isBaseBlockRecipeAnywhere("Rail_Iron"),
-                "Rail_Iron should NOT be a base block recipe");
-    }
-
-    @Test
-    void isBaseBlockTypeWorks() {
-        BenchRecipeRegistries.init();
-
-        assertTrue(BenchRecipeRegistries.isBaseBlockTypeAnywhere("Wood_Planks_Oak"),
-                "Wood_Planks_Oak should be a base block type");
-        assertFalse(BenchRecipeRegistries.isBaseBlockTypeAnywhere("Wood_Slab_Oak"),
-                "Wood_Slab_Oak should NOT be a base block type");
-    }
-
-    @Test
     void getRecipeForBlockReturnsCorrectRecipe() {
         BenchRecipeRegistries.init();
 

@@ -1,16 +1,7 @@
 package com;
 
-import com.UnobstructedThirdPerson.command.UnobstructedCamera.UnobstructedCameraCommand;
-import com.UnobstructedThirdPerson.camera.CameraTransparencyVolume;
-import com.UnobstructedThirdPerson.camera.v2.CameraTransparencyVolumeV2;
-import com.UnobstructedThirdPerson.command.debug.DebugCommand;
-import com.UnobstructedThirdPerson.command.PreviewCommand;
 import com.UnobstructedThirdPerson.command.placeblock.PlaceBlockCommand;
 import com.UnobstructedThirdPerson.command.ParticleCommand;
-import com.UnobstructedThirdPerson.movement.NewMovementSystem;
-import com.UnobstructedThirdPerson.preview.PreviewBlockManager;
-import com.UnobstructedThirdPerson.portablebench.PortableBenchConfigLoader;
-import com.UnobstructedThirdPerson.portablebench.PortableBenchInteraction;
 import com.UnobstructedThirdPerson.resourcecollection.BreakBlockDiagnostic;
 import com.UnobstructedThirdPerson.resourcecollection.DropScaler;
 import com.UnobstructedThirdPerson.resourcecollection.PlacementCostScaler;
@@ -24,8 +15,6 @@ import com.UnobstructedThirdPerson.placeblock.BlueprintBenchRecipeMutator;
 import com.UnobstructedThirdPerson.placeblock.ui.BlueprintBenchOpenUIInteraction;
 import com.UnobstructedThirdPerson.placeblock.ui.BlueprintBenchPrefsStore;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-// import com.UnobstructedThirdPerson.assignbench.AssignBenchInteraction;
-import com.UnobstructedThirdPerson.shape.v2.ShapeCompositorPresetsV2;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
@@ -53,9 +42,6 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
 
     @Override
     protected void setup(){
-        this.getCommandRegistry().registerCommand(new UnobstructedCameraCommand());
-        this.getCommandRegistry().registerCommand(new DebugCommand());
-        this.getCommandRegistry().registerCommand(new PreviewCommand());
         this.getCommandRegistry().registerCommand(new PlaceBlockCommand());
         this.getCommandRegistry().registerCommand(new ParticleCommand());
 //        this.getCommandRegistry().registerCommand(new NewMovementCommand());
@@ -80,12 +66,6 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
         // Diagnostic: log block drop config on break (toggle via /Debug BreakLog)
         this.getEntityStoreRegistry().registerSystem(new BreakBlockDiagnostic());
 
-        // Register portable bench interaction type and configs
-        this.getCodecRegistry(Interaction.CODEC)
-                .register("Portable_Bench", PortableBenchInteraction.class, PortableBenchInteraction.CODEC);
-
-        PortableBenchConfigLoader.loadAndRegister("/portable_benches.json");
-
         BlueprintBenchPrefsStore.initialize(this.getDataDirectory());
 
         // Register Blueprint Bench interaction type (opens custom UI page)
@@ -97,16 +77,6 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
                 .register("BlueprintBook_PickStencil",
                         com.UnobstructedThirdPerson.stencil.BlueprintBookPickStencilInteraction.class,
                         com.UnobstructedThirdPerson.stencil.BlueprintBookPickStencilInteraction.CODEC);
-
-        // PlaceBlockPlacementSystem — DISABLED: replaced by PlaceBlockToolInteraction (direct dispatch)
-        // this.getEntityStoreRegistry().registerSystem(new PlaceBlockPlacementSystem());
-
-        // PlaceBlockBenchInterceptor — DISABLED: replaced by custom UI + /placeblock commands
-        // this.getEntityStoreRegistry().registerSystem(new PlaceBlockBenchInterceptor());
-
-        // Register server-side collision validation system
-        // Now works because we declared dependency on EntityModule in MANIFEST
-//        this.getEntityStoreRegistry().registerSystem(new NewMovementSystem());
     }
 
     private static void onPlayerReady(PlayerReadyEvent event) {
@@ -131,22 +101,14 @@ public class UnobstructedThirdPersonPlugin extends JavaPlugin {
             StencilVisualManager.applyVisuals(playerRef, player);
         }
 
-        CameraTransparencyVolumeV2.StartTransparencyVolumeLoop(playerRef, world, new ShapeCompositorPresetsV2()
-                      .DefaultViewField()
-        );
-
         BlueprintBookParticleLoop.start(playerRef, world);
     }
 
     private static void onPlayerDisconnect(PlayerDisconnectEvent event) {
         PlayerRef playerRef = event.getPlayerRef();
-        CameraTransparencyVolume.remove(playerRef.getUuid());
-        CameraTransparencyVolumeV2.remove(playerRef.getUuid());
-        PreviewBlockManager.remove(playerRef.getUuid());
         StencilSyncSystem.unregister(playerRef.getUuid());
         StencilVisualManager.removePlayer(playerRef.getUuid());
         BlueprintBookParticleLoop.remove(playerRef.getUuid());
-        NewMovementSystem.disableMoonGravity(playerRef.getUuid());
     }
 
     private static void onAssetsLoaded(LoadAssetEvent event) {

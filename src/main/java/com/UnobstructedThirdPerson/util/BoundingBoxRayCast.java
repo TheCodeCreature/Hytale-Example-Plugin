@@ -25,11 +25,11 @@ import javax.annotation.Nullable;
  * BlockBoundingBoxes detail boxes using the interaction hitbox type (the same hitbox
  * the client uses for block outline rendering and crosshair targeting).
  */
-public final class ShapeAwareRaycast {
+public final class BoundingBoxRayCast {
 
     private static final String AIR_BLOCK_ID = "Empty";
 
-    private ShapeAwareRaycast() {}
+    private BoundingBoxRayCast() {}
 
     @Nullable
     public static Vector3i getTargetBlock(

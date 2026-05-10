@@ -30,7 +30,7 @@ import com.hypixel.hytale.server.core.asset.type.entityeffect.config.OverlapBeha
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.UnobstructedThirdPerson.util.ShapeAwareRaycast;
+import com.UnobstructedThirdPerson.util.BoundingBoxRayCast;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -112,7 +112,7 @@ public class BlueprintBookParticleLoop {
                     }
 
                     // Shape-aware raycast — checks actual interaction hitboxes, not full cubes
-                    Vector3i target = ShapeAwareRaycast.getTargetBlock(ref, 8.0, store);
+                    Vector3i target = BoundingBoxRayCast.getTargetBlock(ref, 8.0, store);
                     if (target == null) {
                         removeHighlightEntity(store);
                         return;
