@@ -1,12 +1,9 @@
 package com.CodeCreature.ui.bench;
 
 import com.CodeCreature.crafting.PlaceBlockCostUtil;
-import com.CodeCreature.crafting.RecipeAffordabilityResolver;
-import com.CodeCreature.crafting.ResolvedIngredient;
 import com.CodeCreature.ui.ingredienttree.IngredientTree;
 import com.CodeCreature.ui.ingredienttree.IngredientTreeBuilder;
 import com.CodeCreature.ui.ingredienttree.IngredientTreeGridController;
-import com.CodeCreature.scaling.BenchCategory;
 import com.CodeCreature.registry.FilteredRecipeEntry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
 import com.CodeCreature.util.StencilMetadata;
@@ -44,34 +41,10 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("BlueprintSelectionPage");
 
     private static final int MAX_GROUP_BUTTONS = 30;
-    private static final int MAX_COST_CELLS = 8;
-
     private static final Value<String> FILTER_ACTIVE =
             Value.ref("Styles/Buttons.ui", "FilterActiveStyle");
     private static final Value<String> FILTER_INACTIVE =
             Value.ref("Styles/Buttons.ui", "FilterInactiveStyle");
-
-    // Selected cell highlight
-    private static final Value<String> CELL_SELECTED_STYLE =
-            Value.ref("Styles/Buttons.ui", "SelectedCellButtonStyle");
-    private static final Value<String> CELL_UNSELECTED_STYLE =
-            Value.ref("Styles/Buttons.ui", "TransparentButtonStyle");
-
-    // Per-ingredient cost affordability
-    private static final Value<String> COST_QTY_NORMAL =
-            Value.ref("Styles/Labels.ui", "CostQuantityStyle");
-    private static final Value<String> COST_QTY_INSUFFICIENT =
-            Value.ref("Styles/Labels.ui", "CostQuantityInsufficientStyle");
-
-    // Output detail panel states
-    private static final Value<String> DETAIL_LABEL_NORMAL =
-            Value.ref("Styles/Labels.ui", "DetailLabelStyle");
-    private static final Value<String> DETAIL_LABEL_MUTED =
-            Value.ref("Styles/Labels.ui", "DetailLabelMutedStyle");
-
-    private static final String OUTPUT_BG_NORMAL = "Common/Buttons/Tertiary.png";
-    private static final String OUTPUT_BG_EMPTY = "Common/UnknownItemIcon.png";
-    private static final String OUTPUT_BG_UNAFFORDABLE = "Common/Buttons/Destructive.png";
 
     private static final String ALL_TAB = "All";
     private static final String ALL_FILTER = "All";
@@ -101,8 +74,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private int[] cellsPerSet;         // recipe count per set, indexed 0..totalSetCount-1
     private int[] groupCellOffset;     // prefix-sum: groupCellOffset[g] = sum(cellsPerSet[0..g-1])
     private int totalCellCount;        // sum of all cellsPerSet
-    private int[] cellSlotToRecipeIndex; // flat index → displayedRecipes index; length = totalCellCount
-    private Map<String, Integer> setNameToGroupIndex; // set name → max layout group index
+    private Map<String, Integer> setNameToGroupIndex; // set name â†’ max layout group index
+    private GridLayoutController gridController;
+    private DetailPanelController detailController;
     private Map<String, RecipeFilterPipeline.CategoryInfo> categoryInfoMap = Map.of();
 
     private Ref<EntityStore> playerRef_ref;
@@ -123,11 +97,11 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                     entry.benchId(), entry.set(), entry.categoryIds()));
         }
 
-        // Run pipeline with NO filtering — discover all sets and recipe counts
+        // Run pipeline with NO filtering â€” discover all sets and recipe counts
         RecipeFilterPipeline.PipelineResult maxResult = pipeline.execute(
                 inputs, ALL_TAB, Set.of(), Set.of(), "", null, false, categoryInfoMap, null);
 
-        // The result is sorted by effectiveSet — walk it to count recipes per set
+        // The result is sorted by effectiveSet â€” walk it to count recipes per set
         List<String> setNames = new ArrayList<>();
         List<Integer> counts = new ArrayList<>();
         String currentSet = null;
@@ -212,7 +186,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         var container = filterPlayer != null
                 ? filterPlayer.getInventory().getCombinedBackpackStorageHotbar() : null;
 
-        // Build affordability checker — null when disabled or no inventory
+        // Build affordability checker â€” null when disabled or no inventory
         RecipeFilterPipeline.AffordabilityChecker checker = null;
         boolean affordableOnly = false;
         RecipeFilterPipeline.ResourceTypeChecker resourceTypeChecker = null;
@@ -280,7 +254,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         loadRecipes();
 
-        // ── Compute data-driven layout ──
+        // â”€â”€ Compute data-driven layout â”€â”€
         MaxLayoutInfo maxLayout = computeMaxLayout();
         this.totalSetCount = maxLayout.setCount();
         this.maxLayoutSetNames = maxLayout.setNames().clone();
@@ -293,21 +267,25 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             groupCellOffset[i] = groupCellOffset[i - 1] + cellsPerSet[i - 1];
         }
 
-        // Build set name → group index lookup (case-insensitive)
+        // Build set name â†’ group index lookup (case-insensitive)
         this.setNameToGroupIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         for (int i = 0; i < totalSetCount; i++) {
             setNameToGroupIndex.put(maxLayoutSetNames[i], i);
         }
 
-        // Allocate indirection map
-        this.cellSlotToRecipeIndex = new int[totalCellCount];
+        // Create grid layout controller
+        this.gridController = new GridLayoutController(totalSetCount, maxLayoutSetNames,
+                cellsPerSet, groupCellOffset, totalCellCount, setNameToGroupIndex);
+
+        // Create detail panel controller
+        this.detailController = new DetailPanelController();
 
         // Load main template
         cmd.append("Pages/BlueprintBench/BlueprintBenchPage.ui");
 
-        // ── Append reusable components into empty containers (one-time init) ──
+        // â”€â”€ Append reusable components into empty containers (one-time init) â”€â”€
 
-        // Set filter buttons — one per set
+        // Set filter buttons â€” one per set
         for (int i = 0; i < totalSetCount; i++) {
             cmd.append("#SetFilters", "Pages/BlueprintBench/SetFilterButton.ui");
         }
@@ -327,11 +305,11 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         }
 
         // Cost cells (unchanged)
-        for (int i = 0; i < MAX_COST_CELLS; i++) {
+        for (int i = 0; i < DetailPanelController.MAX_COST_CELLS; i++) {
             cmd.append("#CostGrid", "Common/Components/CostCell.ui");
         }
 
-        // ── Bind ALL events (one-time) ──
+        // â”€â”€ Bind ALL events (one-time) â”€â”€
 
         // Search input
         evt.addEventBinding(
@@ -366,9 +344,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         buildBenchTabs(evt);
         buildSetFilterBindings(evt);
         buildMaterialGroupBindings(evt);
-        buildRecipeGridBindings(evt);
+        gridController.buildBindings(evt);
 
-        // Ingredient tree grid — dynamically appended
+        // Ingredient tree grid â€” dynamically appended
         if (ingredientController != null) {
             ingredientController.buildUI(cmd, evt);
             // Restore saved selections
@@ -382,14 +360,14 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         evt.addEventBinding(CustomUIEventBindingType.Activating, "#ClearIngredientsBtn",
                 EventData.of("Action", "ClearIngredients"));
 
-        // ── Set initial state ──
+        // â”€â”€ Set initial state â”€â”€
         updateAffordabilityToggle(cmd);
 
         updateBenchTabs(cmd);
         updateMaterialGroups(cmd);
         updateSetFilters(cmd);
-        updateRecipeGrid(cmd);
-        updateDetailPanel(cmd);
+        gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+        updateDetail(cmd);
     }
 
     @Override
@@ -404,9 +382,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         for (int g = 0; g < totalSetCount; g++) {
             cmd.set("#RecipeGridArea[" + g + "].Visible", false);
         }
-        for (int i = 0; i < MAX_COST_CELLS; i++) {
-            cmd.set("#CostGrid[" + i + "].Visible", false);
-        }
+        detailController.clearUI(cmd);
 
         sendUpdate(cmd, null, false);
     }
@@ -435,7 +411,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         this.playerStore = store;
 
         UICommandBuilder cmd = new UICommandBuilder();
-        // No UIEventBuilder — all events were bound in build()
+        // No UIEventBuilder â€” all events were bound in build()
 
         if (data.selectedTab != null) {
             // Tab switch
@@ -453,14 +429,14 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 updateBenchTabs(cmd);
                 updateMaterialGroups(cmd);
                 updateSetFilters(cmd);
-                updateRecipeGrid(cmd);
-                updateDetailPanel(cmd);
+                gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+                updateDetail(cmd);
                 savePrefs();
             }
             sendUpdate(cmd, null, false);
 
         } else if (data.action != null && data.action.startsWith("SetFilter:")) {
-            // Set filter toggle — index-based resolution
+            // Set filter toggle â€” index-based resolution
             String filterPayload = data.action.substring("SetFilter:".length());
             if (ALL_FILTER.equals(filterPayload)) {
                 // Clear all set filters
@@ -494,8 +470,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             pruneInvalidMaterialGroups();
             updateSetFilters(cmd);
             updateMaterialGroups(cmd);
-            updateRecipeGrid(cmd);
-            updateDetailPanel(cmd);
+            gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+            updateDetail(cmd);
             savePrefs();
             sendUpdate(cmd, null, false);
 
@@ -533,8 +509,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             applyFilter();
             updateMaterialGroups(cmd);
             updateSetFilters(cmd);
-            updateRecipeGrid(cmd);
-            updateDetailPanel(cmd);
+            gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+            updateDetail(cmd);
             savePrefs();
             sendUpdate(cmd, null, false);
 
@@ -546,8 +522,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             updateBenchTabs(cmd);
             updateMaterialGroups(cmd);
             updateSetFilters(cmd);
-            updateRecipeGrid(cmd);
-            updateDetailPanel(cmd);
+            gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+            updateDetail(cmd);
             savePrefs();
             sendUpdate(cmd, null, false);
 
@@ -562,8 +538,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             }
             updateMaterialGroups(cmd);
             updateSetFilters(cmd);
-            updateRecipeGrid(cmd);
-            updateDetailPanel(cmd);
+            gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+            updateDetail(cmd);
             savePrefs();
             sendUpdate(cmd, null, false);
 
@@ -590,8 +566,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 ingredientController.updateUI(cmd);
                 updateMaterialGroups(cmd);
                 updateSetFilters(cmd);
-                updateRecipeGrid(cmd);
-                updateDetailPanel(cmd);
+                gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+                updateDetail(cmd);
                 savePrefs();
             }
             sendUpdate(cmd, null, false);
@@ -604,8 +580,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 ingredientController.updateUI(cmd);
                 updateMaterialGroups(cmd);
                 updateSetFilters(cmd);
-                updateRecipeGrid(cmd);
-                updateDetailPanel(cmd);
+                gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+                updateDetail(cmd);
                 savePrefs();
             }
             sendUpdate(cmd, null, false);
@@ -613,13 +589,13 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         } else if (data.action != null && data.action.startsWith("RecipeSelect:idx:")) {
             int slotIdx = -1;
             try { slotIdx = Integer.parseInt(data.action.substring("RecipeSelect:idx:".length())); } catch (NumberFormatException ignored) {}
-            if (slotIdx >= 0 && slotIdx < totalCellCount) {
-                int recipeIdx = cellSlotToRecipeIndex[slotIdx];
+            if (slotIdx >= 0 && slotIdx < gridController.getTotalCellCount()) {
+                int recipeIdx = gridController.resolveRecipeIndex(slotIdx);
                 if (recipeIdx >= 0 && recipeIdx < displayedRecipes.size()) {
                     RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(recipeIdx);
                     this.selectedRecipeId = entry.recipeId();
-                    updateRecipeGrid(cmd);
-                    updateDetailPanel(cmd);
+                    gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+                    updateDetail(cmd);
                     savePrefs();
                 }
             }
@@ -689,173 +665,12 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         }
     }
 
-    private void buildRecipeGridBindings(UIEventBuilder evt) {
-        for (int g = 0; g < totalSetCount; g++) {
-            for (int c = 0; c < cellsPerSet[g]; c++) {
-                int flatIdx = groupCellOffset[g] + c;
-                evt.addEventBinding(CustomUIEventBindingType.Activating,
-                        "#RecipeGridArea[" + g + "] #GroupCells[" + c + "] #Btn",
-                        EventData.of("Action", "RecipeSelect:idx:" + flatIdx));
-            }
-        }
-    }
-
-    private void updateRecipeGrid(UICommandBuilder cmd) {
-        // Reset indirection map
-        Arrays.fill(cellSlotToRecipeIndex, -1);
-
-        // Track which groups are used this frame
-        boolean[] groupUsed = new boolean[totalSetCount];
-        // Track how many cells were filled per group (for hiding remaining)
-        int[] cellsFilled = new int[totalSetCount];
-
-        // Walk displayedRecipes (sorted by effectiveSet) and detect set boundaries
-        int currentGroupIdx = -1;
-        String currentSet = null;
-
-        for (int recipeIdx = 0; recipeIdx < displayedRecipes.size(); recipeIdx++) {
-            RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(recipeIdx);
-
-            // Set boundary → look up the fixed group slot for this set
-            if (!entry.effectiveSet().equals(currentSet)) {
-                currentSet = entry.effectiveSet();
-                Integer mappedIdx = setNameToGroupIndex.get(currentSet);
-                if (mappedIdx == null) continue; // unknown set — skip
-                currentGroupIdx = mappedIdx;
-                groupUsed[currentGroupIdx] = true;
-
-                // Show group and set its label
-                String groupSel = "#RecipeGridArea[" + currentGroupIdx + "]";
-                cmd.set(groupSel + ".Visible", true);
-                cmd.set(groupSel + " #SetGroupLabel.Text",
-                        RecipeFilterPipeline.setDisplayLabel(currentSet));
-            }
-
-            if (currentGroupIdx < 0) continue;
-
-            int cellInGroup = cellsFilled[currentGroupIdx];
-
-            // Overflow within group — skip recipe (no cell slot available)
-            if (cellInGroup >= cellsPerSet[currentGroupIdx]) continue;
-
-            // Populate cell
-            int globalIdx = groupCellOffset[currentGroupIdx] + cellInGroup;
-            String cellSel = "#RecipeGridArea[" + currentGroupIdx + "] #GroupCells[" + cellInGroup + "]";
-            cmd.set(cellSel + ".Visible", true);
-            cmd.set(cellSel + " #Icon.ItemId", entry.outputItemId());
-            cmd.set(cellSel + " #Dim.Visible", !entry.affordable());
-            boolean isSelected = entry.recipeId().equals(selectedRecipeId);
-            cmd.set(cellSel + " #Btn.Style", isSelected ? CELL_SELECTED_STYLE : CELL_UNSELECTED_STYLE);
-
-            cellSlotToRecipeIndex[globalIdx] = recipeIdx;
-            cellsFilled[currentGroupIdx]++;
-        }
-
-        // Hide remaining cells in used groups and hide all unused groups
-        for (int g = 0; g < totalSetCount; g++) {
-            if (groupUsed[g]) {
-                hideRemainingCells(cmd, g, cellsFilled[g]);
-            } else {
-                cmd.set("#RecipeGridArea[" + g + "].Visible", false);
-            }
-        }
-    }
-
-    /** Hide cells [startCell..cellsPerSet[groupIdx]) in the given group. */
-    private void hideRemainingCells(UICommandBuilder cmd, int groupIdx, int startCell) {
-        for (int c = startCell; c < cellsPerSet[groupIdx]; c++) {
-            String cellSel = "#RecipeGridArea[" + groupIdx + "] #GroupCells[" + c + "]";
-            cmd.set(cellSel + ".Visible", false);
-            cmd.set(cellSel + " #Btn.Style", CELL_UNSELECTED_STYLE);
-        }
-    }
-
-    private void updateDetailPanel(UICommandBuilder cmd) {
-        if (selectedRecipeId != null) {
-            RecipeEntry entry = findEntry(selectedRecipeId);
-            if (entry != null) {
-                cmd.set("#OutputIcon.ItemId", entry.outputItemId);
-                cmd.set("#OutputName.Text", entry.blockTypeId != null
-                        ? entry.blockTypeId.replace('_', ' ') : entry.outputItemId);
-
-                // Get inventory container for per-ingredient checks
-                boolean checkInventory = (affordabilityMode == AffordabilityMode.INVENTORY_DRIVEN);
-                Player player = playerStore != null
-                        ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
-                CombinedItemContainer container = player != null
-                        ? player.getInventory().getCombinedBackpackStorageHotbar() : null;
-
-                boolean allAffordable = true;
-                int costIdx = 0;
-                try {
-                    CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
-                    if (recipe != null) {
-                        FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(entry.recipeId);
-                        BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
-
-                        List<ResolvedIngredient> ingredients =
-                            RecipeAffordabilityResolver.resolveIngredientCosts(recipe, category, container);
-
-                        if (!ingredients.isEmpty()) {
-                            for (ResolvedIngredient ing : ingredients) {
-                                if (costIdx >= MAX_COST_CELLS) break;
-                                String sel = "#CostGrid[" + costIdx + "]";
-                                String itemId = ing.resolvedItemId();
-                                int requiredQty = ing.requiredQty();
-                                boolean sufficient = ing.sufficient();
-                                if (!sufficient) allAffordable = false;
-
-                                cmd.set(sel + ".Visible", true);
-                                cmd.set(sel + " #Icon.ItemId", itemId);
-                                cmd.set(sel + " #Qty.Text", "x" + requiredQty);
-                                if (checkInventory) {
-                                    cmd.set(sel + " #Dim.Visible", !sufficient);
-                                    cmd.set(sel + " #Qty.Style", sufficient ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
-                                } else {
-                                    cmd.set(sel + " #Dim.Visible", false);
-                                    cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
-                                }
-                                costIdx++;
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    LOGGER.warning("[BlueprintUI] Error populating cost grid: " + e.getMessage());
-                }
-
-                // Hide remaining cost cells and reset their state
-                for (int i = costIdx; i < MAX_COST_CELLS; i++) {
-                    String sel = "#CostGrid[" + i + "]";
-                    cmd.set(sel + ".Visible", false);
-                    cmd.set(sel + " #Dim.Visible", false);
-                    cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
-                }
-
-                // Output frame state — affordable vs unaffordable
-                if (checkInventory) {
-                    cmd.set("#OutputFrame.Background", allAffordable ? OUTPUT_BG_NORMAL : OUTPUT_BG_UNAFFORDABLE);
-                    cmd.set("#OutputDim.Visible", !allAffordable);
-                    cmd.set("#OutputName.Style", allAffordable ? DETAIL_LABEL_NORMAL : DETAIL_LABEL_MUTED);
-                } else {
-                    cmd.set("#OutputFrame.Background", OUTPUT_BG_NORMAL);
-                    cmd.set("#OutputDim.Visible", false);
-                    cmd.set("#OutputName.Style", DETAIL_LABEL_NORMAL);
-                }
-                return;
-            }
-        }
-        // No recipe selected — empty state
-        cmd.set("#OutputIcon.ItemId", "");
-        cmd.set("#OutputName.Text", "No recipe selected");
-        cmd.set("#OutputName.Style", DETAIL_LABEL_MUTED);
-        cmd.set("#OutputFrame.Background", OUTPUT_BG_EMPTY);
-        cmd.set("#OutputDim.Visible", false);
-        for (int i = 0; i < MAX_COST_CELLS; i++) {
-            String sel = "#CostGrid[" + i + "]";
-            cmd.set(sel + ".Visible", false);
-            cmd.set(sel + " #Dim.Visible", false);
-            cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
-        }
+    private void updateDetail(UICommandBuilder cmd) {
+        Player player = playerStore != null
+                ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
+        CombinedItemContainer container = player != null
+                ? player.getInventory().getCombinedBackpackStorageHotbar() : null;
+        detailController.updateUI(cmd, selectedRecipeId, allRecipes, affordabilityMode, container);
     }
 
     private void updateAffordabilityToggle(UICommandBuilder cmd) {
@@ -964,7 +779,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
     private static String capitalize(String id) {
         if (id == null || id.isEmpty()) return id;
-        // "TechnicalBlocks" → "Technical Blocks", "Beds" → "Beds"
+        // "TechnicalBlocks" â†’ "Technical Blocks", "Beds" â†’ "Beds"
         String spaced = id.replaceAll("([a-z])([A-Z])", "$1 $2");
         return Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1);
     }
@@ -1034,9 +849,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         return false;
     }
 
-    private record RecipeEntry(String recipeId, String outputItemId, String blockTypeId,
-                               String benchId, String set,
-                               List<String> categoryIds) {}
+    record RecipeEntry(String recipeId, String outputItemId, String blockTypeId,
+                       String benchId, String set,
+                       List<String> categoryIds) {}
 
     public static class EventPayload {
         public static final BuilderCodec<EventPayload> CODEC = BuilderCodec.builder(EventPayload.class, EventPayload::new)

@@ -1,4 +1,4 @@
-package com;
+package com.CodeCreature;
 
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.CodeCreature.command.ParticleCommand;

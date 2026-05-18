@@ -1,0 +1,157 @@
+package com.CodeCreature.ui.bench;
+
+import com.CodeCreature.crafting.RecipeAffordabilityResolver;
+import com.CodeCreature.crafting.ResolvedIngredient;
+import com.CodeCreature.scaling.BenchCategory;
+import com.CodeCreature.registry.FilteredRecipeEntry;
+import com.CodeCreature.registry.RecipeFilterRegistry;
+import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
+import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
+import com.hypixel.hytale.server.core.ui.Value;
+import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
+
+import javax.annotation.Nullable;
+import java.util.List;
+import java.util.logging.Logger;
+
+/**
+ * Owns detail panel rendering for the Blueprint Bench selection page.
+ * Renders the output icon, name, and per-ingredient cost grid with
+ * affordability coloring.
+ */
+public class DetailPanelController {
+
+    private static final Logger LOGGER = Logger.getLogger("DetailPanelController");
+
+    static final int MAX_COST_CELLS = 8;
+
+    private static final Value<String> COST_QTY_NORMAL =
+            Value.ref("Styles/Labels.ui", "CostQuantityStyle");
+    private static final Value<String> COST_QTY_INSUFFICIENT =
+            Value.ref("Styles/Labels.ui", "CostQuantityInsufficientStyle");
+
+    private static final Value<String> DETAIL_LABEL_NORMAL =
+            Value.ref("Styles/Labels.ui", "DetailLabelStyle");
+    private static final Value<String> DETAIL_LABEL_MUTED =
+            Value.ref("Styles/Labels.ui", "DetailLabelMutedStyle");
+
+    private static final String OUTPUT_BG_NORMAL = "Common/Buttons/Tertiary.png";
+    private static final String OUTPUT_BG_EMPTY = "Common/UnknownItemIcon.png";
+    private static final String OUTPUT_BG_UNAFFORDABLE = "Common/Buttons/Destructive.png";
+
+    public DetailPanelController() {
+    }
+
+    /**
+     * Updates the detail panel for the given recipe selection state.
+     *
+     * @param cmd the UI command builder to write to
+     * @param selectedRecipeId the currently selected recipe ID (null = empty state)
+     * @param allRecipes list of all recipe entries for lookup
+     * @param affordabilityMode current affordability mode
+     * @param container player's combined inventory (null if unavailable)
+     */
+    public void updateUI(UICommandBuilder cmd,
+                         @Nullable String selectedRecipeId,
+                         List<BlueprintSelectionPage.RecipeEntry> allRecipes,
+                         AffordabilityMode affordabilityMode,
+                         @Nullable CombinedItemContainer container) {
+        if (selectedRecipeId != null) {
+            BlueprintSelectionPage.RecipeEntry entry = findEntry(selectedRecipeId, allRecipes);
+            if (entry != null) {
+                cmd.set("#OutputIcon.ItemId", entry.outputItemId());
+                cmd.set("#OutputName.Text", entry.blockTypeId() != null
+                        ? entry.blockTypeId().replace('_', ' ') : entry.outputItemId());
+
+                boolean checkInventory = (affordabilityMode == AffordabilityMode.INVENTORY_DRIVEN);
+
+                boolean allAffordable = true;
+                int costIdx = 0;
+                try {
+                    CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId());
+                    if (recipe != null) {
+                        FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(entry.recipeId());
+                        BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
+
+                        List<ResolvedIngredient> ingredients =
+                            RecipeAffordabilityResolver.resolveIngredientCosts(recipe, category, container);
+
+                        if (!ingredients.isEmpty()) {
+                            for (ResolvedIngredient ing : ingredients) {
+                                if (costIdx >= MAX_COST_CELLS) break;
+                                String sel = "#CostGrid[" + costIdx + "]";
+                                String itemId = ing.resolvedItemId();
+                                int requiredQty = ing.requiredQty();
+                                boolean sufficient = ing.sufficient();
+                                if (!sufficient) allAffordable = false;
+
+                                cmd.set(sel + ".Visible", true);
+                                cmd.set(sel + " #Icon.ItemId", itemId);
+                                cmd.set(sel + " #Qty.Text", "x" + requiredQty);
+                                if (checkInventory) {
+                                    cmd.set(sel + " #Dim.Visible", !sufficient);
+                                    cmd.set(sel + " #Qty.Style", sufficient ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
+                                } else {
+                                    cmd.set(sel + " #Dim.Visible", false);
+                                    cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
+                                }
+                                costIdx++;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    LOGGER.warning("[BlueprintUI] Error populating cost grid: " + e.getMessage());
+                }
+
+                // Hide remaining cost cells and reset their state
+                for (int i = costIdx; i < MAX_COST_CELLS; i++) {
+                    String sel = "#CostGrid[" + i + "]";
+                    cmd.set(sel + ".Visible", false);
+                    cmd.set(sel + " #Dim.Visible", false);
+                    cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
+                }
+
+                // Output frame state — affordable vs unaffordable
+                if (checkInventory) {
+                    cmd.set("#OutputFrame.Background", allAffordable ? OUTPUT_BG_NORMAL : OUTPUT_BG_UNAFFORDABLE);
+                    cmd.set("#OutputDim.Visible", !allAffordable);
+                    cmd.set("#OutputName.Style", allAffordable ? DETAIL_LABEL_NORMAL : DETAIL_LABEL_MUTED);
+                } else {
+                    cmd.set("#OutputFrame.Background", OUTPUT_BG_NORMAL);
+                    cmd.set("#OutputDim.Visible", false);
+                    cmd.set("#OutputName.Style", DETAIL_LABEL_NORMAL);
+                }
+                return;
+            }
+        }
+        // No recipe selected — empty state
+        cmd.set("#OutputIcon.ItemId", "");
+        cmd.set("#OutputName.Text", "No recipe selected");
+        cmd.set("#OutputName.Style", DETAIL_LABEL_MUTED);
+        cmd.set("#OutputFrame.Background", OUTPUT_BG_EMPTY);
+        cmd.set("#OutputDim.Visible", false);
+        for (int i = 0; i < MAX_COST_CELLS; i++) {
+            String sel = "#CostGrid[" + i + "]";
+            cmd.set(sel + ".Visible", false);
+            cmd.set(sel + " #Dim.Visible", false);
+            cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
+        }
+    }
+
+    /**
+     * Clears cost grid cells (used during dismiss to remove tooltip data).
+     */
+    public void clearUI(UICommandBuilder cmd) {
+        for (int i = 0; i < MAX_COST_CELLS; i++) {
+            cmd.set("#CostGrid[" + i + "].Visible", false);
+        }
+    }
+
+    @Nullable
+    private BlueprintSelectionPage.RecipeEntry findEntry(String recipeId, List<BlueprintSelectionPage.RecipeEntry> allRecipes) {
+        for (BlueprintSelectionPage.RecipeEntry entry : allRecipes) {
+            if (entry.recipeId().equals(recipeId)) return entry;
+        }
+        return null;
+    }
+}

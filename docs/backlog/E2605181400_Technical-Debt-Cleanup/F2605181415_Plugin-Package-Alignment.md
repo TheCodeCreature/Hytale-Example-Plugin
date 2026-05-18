@@ -2,7 +2,7 @@
 id: F2605181415
 type: feature
 title: "Plugin Package Alignment"
-status: backlog
+status: done
 priority: medium
 epic: E2605181400
 created: 2026-05-18

@@ -231,8 +231,13 @@ The following findings were resolved on 2026-05-18:
 |---|---------|---------------------|--------------|
 | 1 | Pervasive reflection | Inherent constraint of the Hytale API — no setter API exists. Mitigated via centralized `AssetFieldAccessor`. | N/A (accepted risk) |
 | 2 | Static initializer crash risk | Now consolidated into `AssetFieldAccessor.INSTANCE` which fails fast with a clear `RuntimeException`. The crash risk is inherent but the error message is actionable. | N/A (mitigated) |
-| 11 | Plugin class in wrong package | Trivial fix (S complexity), zero player impact. Deferred to Sprint 2 for sequencing. | S2605181416 |
-| 17 | God class (BlueprintSelectionPage) | Medium refactor requiring full pipeline verification. 3-wave extraction (GridLayoutController + DetailPanelController + wiring). | F2605181420 |
+
+**Findings resolved in Sprint 2 (2026-05-18):**
+
+| # | Finding | Resolution |
+|---|---------|------------|
+| 11 | Plugin class in wrong package | **Resolved.** `Plugin.java` moved from `package com;` to `package com.CodeCreature;`. `gradle.properties` entrypoint updated to `com.CodeCreature.Plugin`. Sub-package imports retained (Java sub-packages are not same-package). Build passes. |
+| 17 | God class (BlueprintSelectionPage) | **Resolved.** Extracted `GridLayoutController` (131 lines: grid rendering, indirection map, cell bindings) and `DetailPanelController` (157 lines: cost grid, affordability coloring, output panel). Page reduced from 1060 → 873 lines. Both controllers follow the `IngredientTreeGridController` delegation pattern. `RecipeEntry` made package-private. Event routing delegates to `gridController.resolveRecipeIndex()`. |
 
 ---
 

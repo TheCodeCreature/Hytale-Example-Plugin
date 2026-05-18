@@ -2,7 +2,7 @@
 id: S2605181422
 type: story
 title: "Extract DetailPanelController"
-status: backlog
+status: done
 priority: medium
 feature: F2605181420
 epic: E2605181400

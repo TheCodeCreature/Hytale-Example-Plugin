@@ -2,7 +2,7 @@
 id: F2605181420
 type: feature
 title: "Blueprint Bench Page Decomposition"
-status: backlog
+status: done
 priority: medium
 epic: E2605181400
 created: 2026-05-18
