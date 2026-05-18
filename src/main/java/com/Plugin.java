@@ -3,16 +3,16 @@ package com;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.CodeCreature.command.ParticleCommand;
 import com.CodeCreature.command.placeblock.PlaceBlockCommand;
-import com.CodeCreature.placeblock.BlueprintBenchRecipeMutator;
-import com.CodeCreature.placeblock.ui.BlueprintBenchOpenUIInteraction;
-import com.CodeCreature.placeblock.ui.BlueprintBenchPrefsStore;
-import com.CodeCreature.resourcecollection.BreakBlockDiagnostic;
-import com.CodeCreature.resourcecollection.DropScaler;
-import com.CodeCreature.resourcecollection.PlacementCostScaler;
-import com.CodeCreature.stencil.BlueprintBookParticleLoop;
+import com.CodeCreature.crafting.BlueprintBenchRecipeMutator;
+import com.CodeCreature.ui.bench.BlueprintBenchOpenUIInteraction;
+import com.CodeCreature.ui.bench.BlueprintBenchPrefsStore;
+import com.CodeCreature.scaling.BreakBlockDiagnostic;
+import com.CodeCreature.scaling.DropScaler;
+import com.CodeCreature.scaling.PlacementCostScaler;
+import com.CodeCreature.ui.blueprintbook.BlueprintBookParticleLoop;
 import com.CodeCreature.stencil.StencilDropDestroySystem;
 import com.CodeCreature.stencil.StencilPlacementSystem;
-import com.CodeCreature.stencil.StencilRadialInputListener;
+import com.CodeCreature.ui.radial.StencilRadialInputListener;
 import com.CodeCreature.stencil.StencilSyncSystem;
 import com.CodeCreature.stencil.StencilVisualManager;
 import com.hypixel.hytale.component.Ref;
@@ -75,8 +75,8 @@ public class Plugin extends JavaPlugin {
         // Register Blueprint Book pick-stencil interaction type
         this.getCodecRegistry(Interaction.CODEC)
                 .register("BlueprintBook_PickStencil",
-                        com.CodeCreature.stencil.BlueprintBookPickStencilInteraction.class,
-                        com.CodeCreature.stencil.BlueprintBookPickStencilInteraction.CODEC);
+                        com.CodeCreature.ui.blueprintbook.BlueprintBookPickStencilInteraction.class,
+                        com.CodeCreature.ui.blueprintbook.BlueprintBookPickStencilInteraction.CODEC);
     }
 
     private static void onPlayerReady(PlayerReadyEvent event) {

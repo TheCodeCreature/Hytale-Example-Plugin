@@ -1,6 +1,7 @@
 package com.CodeCreature.stencil;
 
-import com.CodeCreature.placeblock.RecipeAffordabilityResolver;
+import com.CodeCreature.crafting.RecipeAffordabilityResolver;
+import com.CodeCreature.util.StencilMetadata;
 import com.hypixel.hytale.protocol.ItemBase;
 import com.hypixel.hytale.protocol.ItemTranslationProperties;
 import com.hypixel.hytale.protocol.UpdateType;

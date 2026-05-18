@@ -1,5 +1,6 @@
 package com.CodeCreature.stencil;
 
+import com.CodeCreature.util.StencilMetadata;
 import com.hypixel.hytale.component.Archetype;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;

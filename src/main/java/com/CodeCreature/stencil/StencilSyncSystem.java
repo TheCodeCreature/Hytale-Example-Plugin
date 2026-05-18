@@ -1,5 +1,6 @@
 package com.CodeCreature.stencil;
 
+import com.CodeCreature.util.StencilMetadata;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;

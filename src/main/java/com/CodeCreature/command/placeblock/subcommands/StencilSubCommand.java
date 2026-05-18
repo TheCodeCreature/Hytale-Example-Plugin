@@ -1,6 +1,6 @@
 package com.CodeCreature.command.placeblock.subcommands;
 
-import com.CodeCreature.stencil.StencilMetadata;
+import com.CodeCreature.util.StencilMetadata;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.Message;

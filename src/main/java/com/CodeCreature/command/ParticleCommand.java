@@ -1,6 +1,6 @@
 package com.CodeCreature.command;
 
-import com.CodeCreature.stencil.BlueprintBookPickStencilInteraction;
+import com.CodeCreature.ui.blueprintbook.BlueprintBookPickStencilInteraction;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.Message;
