@@ -16,6 +16,7 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  * Abstract base for bench-category processors. Provides the shared
@@ -34,6 +35,8 @@ import java.util.Set;
  * to its partitioned block set.
  */
 public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
+
+    private static final Logger LOGGER = Logger.getLogger("AbstractBenchProcessor");
 
     @Override
     @Nonnull
@@ -130,7 +133,7 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
 
                 modified++;
             } catch (Exception e) {
-                System.out.println("[" + category() + "Processor] ERROR processing " + btId + ": " + e.getMessage());
+                LOGGER.warning("[" + category() + "Processor] ERROR processing " + btId + ": " + e.getMessage());
                 skipped++;
             }
         }

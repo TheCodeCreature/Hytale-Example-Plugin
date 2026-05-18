@@ -7,7 +7,6 @@ import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
@@ -39,16 +38,6 @@ import java.util.stream.Stream;
  * Each call scans the (read-only, post-init) item asset map.
  */
 public final class ResourceTypeResolver {
-
-    private static final Field SET_FIELD;
-    static {
-        try {
-            SET_FIELD = Item.class.getDeclaredField("set");
-            SET_FIELD.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
 
     /**
      * Comparator that sorts set-root items (where {@code id == set}) before
@@ -180,7 +169,7 @@ public final class ResourceTypeResolver {
     @Nullable
     private static String getSetId(@Nonnull Item item) {
         try {
-            return (String) SET_FIELD.get(item);
+            return (String) AssetFieldAccessor.INSTANCE.itemSet.get(item);
         } catch (IllegalAccessException e) {
             return null;
         }

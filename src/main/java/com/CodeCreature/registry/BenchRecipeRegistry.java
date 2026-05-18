@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Registry of crafting recipes for a single workbench, identified by its
@@ -78,7 +79,9 @@ public final class BenchRecipeRegistry {
         return recipesByBlockType;
     }
 
+    private static final Logger LOGGER = Logger.getLogger("BenchRecipeRegistry");
+
     private static void log(String msg) {
-        System.out.println("[BenchRecipeReg] " + msg);
+        LOGGER.info("[BenchRecipeReg] " + msg);
     }
 }

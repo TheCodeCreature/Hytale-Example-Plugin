@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Logger;
 
 /**
  * Diagnostic ECS system that logs detailed drop configuration when a block
@@ -44,6 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class BreakBlockDiagnostic extends EntityEventSystem<EntityStore, BreakBlockEvent> {
 
     private static final AtomicBoolean enabled = new AtomicBoolean(false);
+    private static final Logger LOGGER = Logger.getLogger("BreakBlockDiagnostic");
 
     public BreakBlockDiagnostic() {
         super(BreakBlockEvent.class);
@@ -54,7 +56,12 @@ public class BreakBlockDiagnostic extends EntityEventSystem<EntityStore, BreakBl
     }
 
     public static boolean toggle() {
-        return enabled.getAndSet(!enabled.get()) ? false : true; // returns new state
+        boolean prev, next;
+        do {
+            prev = enabled.get();
+            next = !prev;
+        } while (!enabled.compareAndSet(prev, next));
+        return next;
     }
 
     @Nullable
@@ -81,8 +88,6 @@ public class BreakBlockDiagnostic extends EntityEventSystem<EntityStore, BreakBl
 
         // Classification
         boolean isNatural = NaturalResourceRegistry.isNaturalBlock(btId);
-        BenchBlockClassifier classifier = new BenchBlockClassifier();
-        // We can't re-classify here, but we can check the recipe registries
         CraftingRecipe recipe = BenchRecipeRegistries.getRecipeForBlock(btId);
         sb.append("  Natural: ").append(isNatural)
           .append("  |  Has recipe: ").append(recipe != null).append("\n");
@@ -187,7 +192,7 @@ public class BreakBlockDiagnostic extends EntityEventSystem<EntityStore, BreakBl
         }
 
         sb.append("══════════════════════════════════════════════");
-        System.out.println(sb);
+        LOGGER.info(sb.toString());
     }
 
     private static void logBreaking(StringBuilder sb, BlockBreakingDropType d) {

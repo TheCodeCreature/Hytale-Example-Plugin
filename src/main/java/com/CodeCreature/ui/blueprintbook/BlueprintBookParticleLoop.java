@@ -86,13 +86,17 @@ public class BlueprintBookParticleLoop {
 
     private void startUpdateLoop() {
         updateTask = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> {
-            if (!active) return;
+            if (!active) {
+                updateTask.cancel(false);
+                return;
+            }
             try {
                 world.execute(() -> {
                     Ref<EntityStore> ref = playerRef.getReference();
                     if (ref == null || !ref.isValid()) {
                         removeHighlightEntity(ref != null ? ref.getStore() : null);
                         active = false;
+                        INSTANCES.remove(playerRef.getUuid());
                         return;
                     }
 
@@ -101,6 +105,7 @@ public class BlueprintBookParticleLoop {
                     if (player == null) {
                         removeHighlightEntity(store);
                         active = false;
+                        INSTANCES.remove(playerRef.getUuid());
                         return;
                     }
 

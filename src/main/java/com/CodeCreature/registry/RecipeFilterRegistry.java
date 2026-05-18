@@ -1,5 +1,6 @@
 package com.CodeCreature.registry;
 
+import com.CodeCreature.scaling.AssetFieldAccessor;
 import com.CodeCreature.scaling.BenchCategory;
 import com.hypixel.hytale.protocol.BenchRequirement;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
@@ -8,7 +9,6 @@ import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,6 +16,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  * Shared, read-only registry of crafting recipes that produce placeable blocks
@@ -62,19 +63,6 @@ public final class RecipeFilterRegistry {
 
     /** Default skip prefixes used by both consumers. */
     public static final Set<String> DEFAULT_SKIP_PREFIXES = Set.of("Blueprint_", "Salvage");
-
-    // ─── Reflection for Item.set ────────────────────────────────
-    private static final Field ITEM_SET_FIELD;
-    static {
-        Field f = null;
-        try {
-            f = Item.class.getDeclaredField("set");
-            f.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            System.err.println("[RecipeFilterReg] Could not access Item.set field: " + e.getMessage());
-        }
-        ITEM_SET_FIELD = f;
-    }
 
     // ─── Registry state (immutable after init) ──────────────────
 
@@ -317,9 +305,8 @@ public final class RecipeFilterRegistry {
      */
     @Nullable
     static String extractItemSet(@Nonnull Item item) {
-        if (ITEM_SET_FIELD == null) return null;
         try {
-            return (String) ITEM_SET_FIELD.get(item);
+            return (String) AssetFieldAccessor.INSTANCE.itemSet.get(item);
         } catch (IllegalAccessException e) {
             return null;
         }
@@ -329,7 +316,9 @@ public final class RecipeFilterRegistry {
     //  Logging
     // ═══════════════════════════════════════════════════════════════
 
+    private static final Logger LOGGER = Logger.getLogger("RecipeFilterRegistry");
+
     private static void log(String msg) {
-        System.out.println("[RecipeFilterReg] " + msg);
+        LOGGER.info("[RecipeFilterReg] " + msg);
     }
 }

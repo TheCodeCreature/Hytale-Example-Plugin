@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  * Static coordinator that manages all {@link BenchRecipeRegistry} instances.
@@ -79,7 +80,9 @@ public final class BenchRecipeRegistries {
         return null;
     }
 
+    private static final Logger LOGGER = Logger.getLogger("BenchRecipeRegistries");
+
     private static void log(String msg) {
-        System.out.println("[BenchRecipeRegs] " + msg);
+        LOGGER.info("[BenchRecipeRegs] " + msg);
     }
 }

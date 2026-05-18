@@ -17,7 +17,9 @@ import java.lang.reflect.Field;
  * construction time; throws immediately if any field is missing so that
  * Hytale API changes are caught on startup rather than at runtime.
  */
-final class AssetFieldAccessor {
+public final class AssetFieldAccessor {
+
+    public static final AssetFieldAccessor INSTANCE = new AssetFieldAccessor();
 
     // BlockGathering / BlockType
     final Field gatheringBreaking;
@@ -42,10 +44,15 @@ final class AssetFieldAccessor {
     final Field dropQuantityMax;
 
     // CraftingRecipe
-    final Field recipeInput;
+    public final Field recipeInput;
+    public final Field recipeId;
+    public final Field recipeBenchRequirement;
+    public final Field recipeKnowledgeRequired;
+    public final Field recipeMemoriesLevel;
 
     // Item
-    final Field itemMaxStack;
+    public final Field itemMaxStack;
+    public final Field itemSet;
 
     AssetFieldAccessor() {
         try {
@@ -67,7 +74,12 @@ final class AssetFieldAccessor {
             dropQuantityMax = resolve(ItemDrop.class, "quantityMax");
 
             recipeInput = resolve(CraftingRecipe.class, "input");
+            recipeId = resolve(CraftingRecipe.class, "id");
+            recipeBenchRequirement = resolve(CraftingRecipe.class, "benchRequirement");
+            recipeKnowledgeRequired = resolve(CraftingRecipe.class, "knowledgeRequired");
+            recipeMemoriesLevel = resolve(CraftingRecipe.class, "requiredMemoriesLevel");
             itemMaxStack = resolve(Item.class, "maxStack");
+            itemSet = resolve(Item.class, "set");
         } catch (NoSuchFieldException e) {
             throw new RuntimeException(
                     "Asset field resolution failed — Hytale API may have changed: " + e.getMessage(), e);

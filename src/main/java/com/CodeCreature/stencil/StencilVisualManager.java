@@ -109,7 +109,7 @@ public final class StencilVisualManager {
         LOGGER.info("[StencilVisual] applyVisuals called for " + playerRef.getUuid());
         int affIdx = ItemQuality.getAssetMap().getIndexOrDefault(QUALITY_AFFORDABLE, -1);
         int unaffIdx = ItemQuality.getAssetMap().getIndexOrDefault(QUALITY_UNAFFORDABLE, -1);
-        LOGGER.info("[StencilVisual] Quality indices: affordable=" + affIdx + ", unaffordable=" + unaffIdx);
+        LOGGER.fine("[StencilVisual] Quality indices: affordable=" + affIdx + ", unaffordable=" + unaffIdx);
 
         // Send custom quality definitions to the client — the init packet may not include
         // plugin-loaded qualities if the packet generator cached before our asset pack loaded.
@@ -224,7 +224,7 @@ public final class StencilVisualManager {
         Set<String> currentStencils = new HashSet<>();
         Map<String, ItemVisualState> changedItems = new HashMap<>();
 
-        LOGGER.info("[StencilVisual] scanAndSend: hotbar capacity=" + hotbar.getCapacity());
+        LOGGER.fine("[StencilVisual] scanAndSend: hotbar capacity=" + hotbar.getCapacity());
         short capacity = hotbar.getCapacity();
         for (short slot = 0; slot < capacity; slot++) {
             ItemStack stack = hotbar.getItemStack(slot);
@@ -238,7 +238,7 @@ public final class StencilVisualManager {
             if (recipeId == null) continue;
 
             String itemId = stack.getItemId();
-            LOGGER.info("[StencilVisual] slot " + slot + ": stencil found — itemId=" + itemId + ", recipeId=" + recipeId);
+            LOGGER.fine("[StencilVisual] slot " + slot + ": stencil found \u2014 itemId=" + itemId + ", recipeId=" + recipeId);
             currentStencils.add(itemId);
 
             CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(recipeId);
@@ -253,7 +253,7 @@ public final class StencilVisualManager {
 
         state.getTrackedItems().keySet().removeIf(key -> !currentStencils.contains(key));
 
-        LOGGER.info("[StencilVisual] scanAndSend: found " + currentStencils.size() + " stencils, " + changedItems.size() + " changed");
+        LOGGER.fine("[StencilVisual] scanAndSend: found " + currentStencils.size() + " stencils, " + changedItems.size() + " changed");
         if (!changedItems.isEmpty()) {
             UpdateItems packet = buildUpdatePacket(changedItems);
             if (packet != null) {

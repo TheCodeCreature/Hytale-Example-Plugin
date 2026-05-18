@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.logging.Logger;
 
 /**
  * Single-pass asset modifier for the 12x resource economy.
@@ -48,8 +49,10 @@ public final class DropScaler {
 
     private DropScaler() {}
 
+    private static final Logger LOGGER = Logger.getLogger("DropScaler");
+
     private static void log(String msg) {
-        System.out.println("[DropScaler] " + msg);
+        LOGGER.info("[DropScaler] " + msg);
     }
 
     /**
@@ -69,7 +72,7 @@ public final class DropScaler {
      */
     static void applyModifications() {
         int multiplier = ResourceConstants.RESOURCE_MULTIPLIER;
-        AssetFieldAccessor f = new AssetFieldAccessor();
+        AssetFieldAccessor f = AssetFieldAccessor.INSTANCE;
 
         // ── Phase 1: Scale all crafting costs ────────────────────────
         int recipesScaled = scaleCraftingCosts(f, multiplier);

@@ -6,11 +6,12 @@ import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
-import java.lang.reflect.Field;
+import com.CodeCreature.scaling.AssetFieldAccessor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Creates shadow recipes with {@code PlaceBlock} ResourceTypeId input and
@@ -30,27 +31,14 @@ public final class BlueprintBenchRecipeMutator {
         return SHADOW_TO_ORIGINAL.get(shadowRecipeId);
     }
 
+    private static final Logger LOGGER = Logger.getLogger("BlueprintBenchRecipeMutator");
+
     private static void log(String msg) {
-        System.out.println("[BlueprintBenchMutator] " + msg);
+        LOGGER.info("[BlueprintBenchMutator] " + msg);
     }
 
     public static void mutate() {
-        Field idField, inputField, benchReqField, knowledgeField, memoriesField;
-        try {
-            idField = CraftingRecipe.class.getDeclaredField("id");
-            idField.setAccessible(true);
-            inputField = CraftingRecipe.class.getDeclaredField("input");
-            inputField.setAccessible(true);
-            benchReqField = CraftingRecipe.class.getDeclaredField("benchRequirement");
-            benchReqField.setAccessible(true);
-            knowledgeField = CraftingRecipe.class.getDeclaredField("knowledgeRequired");
-            knowledgeField.setAccessible(true);
-            memoriesField = CraftingRecipe.class.getDeclaredField("requiredMemoriesLevel");
-            memoriesField.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            log("ERROR: Could not find required fields on CraftingRecipe: " + e.getMessage());
-            return;
-        }
+        AssetFieldAccessor f = AssetFieldAccessor.INSTANCE;
 
         List<CraftingRecipe> shadowRecipes = new ArrayList<>();
 
@@ -80,22 +68,22 @@ public final class BlueprintBenchRecipeMutator {
                 String shadowId = "Blueprint_" + originalId;
 
                 // Override id
-                idField.set(shadow, shadowId);
+                f.recipeId.set(shadow, shadowId);
 
                 // Override input to use PlaceBlock ResourceType (matches all 3 placeholder colors)
-                inputField.set(shadow, new MaterialQuantity[]{
+                f.recipeInput.set(shadow, new MaterialQuantity[]{
                         new MaterialQuantity(null, "PlaceBlock", null, 1, null)
                 });
 
                 // Override benchRequirement to Blueprint only
-                benchReqField.set(shadow, new BenchRequirement[]{
+                f.recipeBenchRequirement.set(shadow, new BenchRequirement[]{
                         new BenchRequirement(BenchType.StructuralCrafting, BLUEPRINT_ID, sourceReq.categories, 0)
                 });
 
                 // Clear knowledge requirements — StructuralCrafting doesn't support them,
                 // and inherited values from the original recipe would keep recipes locked
-                knowledgeField.set(shadow, false);
-                memoriesField.set(shadow, 1);
+                f.recipeKnowledgeRequired.set(shadow, false);
+                f.recipeMemoriesLevel.set(shadow, 1);
 
                 shadowRecipes.add(shadow);
                 SHADOW_TO_ORIGINAL.put(shadowId, originalId);
