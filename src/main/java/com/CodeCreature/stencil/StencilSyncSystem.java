@@ -6,6 +6,7 @@ import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.event.EventRegistration;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class StencilSyncSystem {
 
-    private static final ConcurrentHashMap<UUID, Boolean> registeredPlayers = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<UUID, EventRegistration<?, ?>[]> registeredPlayers = new ConcurrentHashMap<>();
 
     private StencilSyncSystem() {}
 
@@ -36,30 +37,42 @@ public final class StencilSyncSystem {
      */
     public static void register(PlayerRef playerRef, Player player) {
         UUID uuid = playerRef.getUuid();
-        if (registeredPlayers.putIfAbsent(uuid, Boolean.TRUE) != null) {
+        if (registeredPlayers.containsKey(uuid)) {
             return; // Already registered
         }
 
         Inventory inventory = player.getInventory();
         ItemContainer hotbar = inventory.getHotbar();
 
-        hotbar.registerChangeEvent(event -> {
+        @SuppressWarnings("unchecked")
+        EventRegistration<?, ?>[] handles = new EventRegistration[3];
+
+        handles[0] = hotbar.registerChangeEvent(event -> {
             restoreStencils(hotbar);
             StencilVisualManager.refreshAffordability(playerRef, player);
         });
 
         // Also refresh affordability when backpack/storage change (e.g., picking up or dropping items)
-        inventory.getBackpack().registerChangeEvent(event ->
+        handles[1] = inventory.getBackpack().registerChangeEvent(event ->
                 StencilVisualManager.refreshAffordability(playerRef, player));
-        inventory.getStorage().registerChangeEvent(event ->
+        handles[2] = inventory.getStorage().registerChangeEvent(event ->
                 StencilVisualManager.refreshAffordability(playerRef, player));
+
+        registeredPlayers.put(uuid, handles);
     }
 
     /**
      * Unregisters a player (cleanup on disconnect).
      */
     public static void unregister(UUID uuid) {
-        registeredPlayers.remove(uuid);
+        EventRegistration<?, ?>[] handles = registeredPlayers.remove(uuid);
+        if (handles != null) {
+            for (EventRegistration<?, ?> handle : handles) {
+                if (handle != null) {
+                    handle.unregister();
+                }
+            }
+        }
     }
 
     /**

@@ -43,7 +43,7 @@ import java.util.logging.Logger;
 public class BlueprintBookParticleLoop {
 
     private static final Logger LOGGER = Logger.getLogger("BlueprintBookParticleLoop");
-    private static final long UPDATE_INTERVAL_MILLIS = 100;
+    private static final long UPDATE_INTERVAL_MILLIS = 500;
     private static final String BLUEPRINT_BOOK_ITEM_ID = "BlueprintBook";
     private static final String EFFECT_ID_GREEN = "Drop_Uncommon";
     private static final String EFFECT_ID_RED = "BlockPlaceFail";
@@ -55,6 +55,7 @@ public class BlueprintBookParticleLoop {
     private ScheduledFuture<?> updateTask;
     private Vector3i lastTargetBlock;
     private Ref<EntityStore> activeEntity;
+    private boolean lastAffordable;
     private volatile boolean active = true;
 
     public BlueprintBookParticleLoop(@Nonnull PlayerRef playerRef, @Nonnull World world) {
@@ -137,19 +138,23 @@ public class BlueprintBookParticleLoop {
                     }
 
                     // Target has a recipe — manage the highlight entity
+                    CombinedItemContainer container = player.getInventory().getCombinedBackpackStorageHotbar();
+                    boolean affordable = RecipeAffordabilityResolver.isAffordable(recipe, container);
+
                     if (target.equals(lastTargetBlock) && activeEntity != null && activeEntity.isValid()) {
-                        // Entity already exists at this target — effect is infinite, nothing to do
-                        return;
+                        // Entity already exists at this target — only respawn if affordability changed
+                        if (affordable == lastAffordable) {
+                            return;
+                        }
                     }
 
-                    // Target changed or entity missing — replace
+                    // Target changed, affordability changed, or entity missing — replace
                     if (activeEntity != null && activeEntity.isValid()) {
                         store.removeEntity(activeEntity, RemoveReason.REMOVE);
                     }
-                    CombinedItemContainer container = player.getInventory().getCombinedBackpackStorageHotbar();
-                    boolean affordable = RecipeAffordabilityResolver.isAffordable(recipe, container);
                     activeEntity = spawnHighlightEntity(store, target, blockTypeId, affordable);
                     lastTargetBlock = target;
+                    lastAffordable = affordable;
                 });
             } catch (Exception e) {
                 LOGGER.warning("[BlueprintBookParticle] Error in update loop: " + e.getMessage());
@@ -200,7 +205,7 @@ public class BlueprintBookParticleLoop {
         String effectId = affordable ? EFFECT_ID_GREEN : EFFECT_ID_RED;
         EntityEffect effect = EntityEffect.getAssetMap().getAsset(effectId);
         EffectControllerComponent effectCtrl = store.getComponent(entityRef, EffectControllerComponent.getComponentType());
-        effectCtrl.addEffect(entityRef, effect, UPDATE_INTERVAL_MILLIS, OverlapBehavior.OVERWRITE, store);
+        effectCtrl.addEffect(entityRef, effect, 10000, OverlapBehavior.OVERWRITE, store);
 
         return entityRef;
     }
@@ -211,6 +216,7 @@ public class BlueprintBookParticleLoop {
         }
         activeEntity = null;
         lastTargetBlock = null;
+        lastAffordable = false;
     }
 
     private void shutdown() {

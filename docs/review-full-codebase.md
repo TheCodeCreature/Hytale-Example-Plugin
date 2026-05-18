@@ -217,22 +217,22 @@ The following findings were resolved on 2026-05-18:
 | 16 | Excessive INFO-level logging | **Resolved.** Downgraded 4 per-mutation `LOGGER.info()` calls to `LOGGER.fine()` in `StencilVisualManager.scanAndSend()` and `applyVisuals()`. Meaningful state-change events (packet sends, player connect) remain at INFO. |
 | 18 | Dead BenchBlockClassifier per event | **Resolved.** Removed `new BenchBlockClassifier()` instantiation and associated comment from `BreakBlockDiagnostic.handle()`. The classifier was never populated or used — `BenchRecipeRegistries.getRecipeForBlock()` provides the needed lookup. |
 | 20 | System.out.println used for logging | **Resolved.** All 8 occurrences across 7 files replaced with `java.util.logging.Logger`. Each file now has a `private static final Logger LOGGER` field. The `log()` helper methods retained for tag consistency, bodies changed to `LOGGER.info(msg)`. The `AbstractBenchProcessor` error path uses `LOGGER.warning()`. |
+| 5 | 100ms entity spawn/despawn loop | **Resolved.** Loop interval increased from 100ms to 500ms. Added `lastAffordable` diff check — entity only respawns when target block OR affordability state changes. Effect duration set to 10000ms (pseudo-infinite) eliminating per-tick flicker. Entity still reuses across loop ticks when target is stable. |
+| 9 | Inventory change listeners never unregister | **Resolved.** `registeredPlayers` map now stores `EventRegistration[]` handles (3 per player: hotbar, backpack, storage). `unregister()` calls `.unregister()` on each handle, properly deregistering the lambdas from containers on player disconnect. Follows the engine's own `Inventory.unregister()` pattern. |
 
 **Additional structural change (supports #3 and #4):**
 - `AssetFieldAccessor` made `public` with `public static final INSTANCE` singleton pattern
 - 5 new fields added (`recipeId`, `recipeBenchRequirement`, `recipeKnowledgeRequired`, `recipeMemoriesLevel`, `itemSet`)
 - `DropScaler` updated to use `INSTANCE` instead of `new AssetFieldAccessor()`
 
-**Findings NOT yet resolved (deferred):**
+**Findings NOT yet resolved (deferred — planned for Sprint 2):**
 
-| # | Finding | Reason for deferral |
-|---|---------|---------------------|
-| 1 | Pervasive reflection | Inherent constraint of the Hytale API — no setter API exists. Mitigated via centralized `AssetFieldAccessor`. |
-| 2 | Static initializer crash risk | Now consolidated into `AssetFieldAccessor.INSTANCE` which fails fast with a clear `RuntimeException`. The crash risk is inherent but the error message is actionable. |
-| 5 | 100ms entity spawn loop | Requires research into particle-only alternatives in the Hytale API. Major performance redesign. |
-| 9 | Listener leak (StencilSyncSystem) | Requires investigation of Hytale container lifecycle to determine safe deregistration point. |
-| 11 | Plugin class in wrong package | Requires manifest descriptor change; risk of breaking plugin loading. |
-| 17 | God class (BlueprintSelectionPage) | Major refactor — separate epic needed to decompose without regressions. |
+| # | Finding | Reason for deferral | Backlog Item |
+|---|---------|---------------------|--------------|
+| 1 | Pervasive reflection | Inherent constraint of the Hytale API — no setter API exists. Mitigated via centralized `AssetFieldAccessor`. | N/A (accepted risk) |
+| 2 | Static initializer crash risk | Now consolidated into `AssetFieldAccessor.INSTANCE` which fails fast with a clear `RuntimeException`. The crash risk is inherent but the error message is actionable. | N/A (mitigated) |
+| 11 | Plugin class in wrong package | Trivial fix (S complexity), zero player impact. Deferred to Sprint 2 for sequencing. | S2605181416 |
+| 17 | God class (BlueprintSelectionPage) | Medium refactor requiring full pipeline verification. 3-wave extraction (GridLayoutController + DetailPanelController + wiring). | F2605181420 |
 
 ---
 
