@@ -1,12 +1,12 @@
 # Product Board
 
-> Last updated: 2026-05-07 15:00
+> Last updated: 2026-05-18 14:30
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 44
+    "Backlog" : 54
     "In Progress" : 2
     "Done" : 33
     "Cancelled" : 8
@@ -23,6 +23,17 @@ pie title Backlog Distribution
 ### Backlog
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
+| E2605181400 | Epic | Technical Debt Cleanup | — | high |
+| F2605181405 | Feature | Blueprint Book Highlight Performance | E2605181400 | high |
+| S2605181406 | Story | Infinite-Duration Effect + 500ms Loop | E2605181400 | high |
+| F2605181410 | Feature | Inventory Listener Lifecycle Fix | E2605181400 | high |
+| S2605181411 | Story | Store EventRegistration Handles | E2605181400 | high |
+| F2605181415 | Feature | Plugin Package Alignment | E2605181400 | medium |
+| S2605181416 | Story | Move Plugin.java to CodeCreature Package | E2605181400 | medium |
+| F2605181420 | Feature | Blueprint Bench Page Decomposition | E2605181400 | medium |
+| S2605181421 | Story | Extract GridLayoutController | E2605181400 | medium |
+| S2605181422 | Story | Extract DetailPanelController | E2605181400 | medium |
+| S2605181423 | Story | Wire Controllers into BlueprintSelectionPage | E2605181400 | medium |
 | S2605051200 | Story | Dynamic Cells Per Set Group | E2604221030 | high |
 | S2605051205 | Story | Fix Uncategorized Recipe Visibility | E2604221030 | high |
 
