@@ -2,10 +2,12 @@
 id: F2604272100
 type: feature
 title: "Simplified Economy Pipeline"
-status: backlog
+status: cancelled
 priority: critical
 epic: E2604201200
 created: 2026-04-27
+cancelled: 2026-05-19
+cancellation-reason: "Superseded by F2605191000 (Leaf-Only Recipe Scaling). Uniform ×12 scaling causes exponential cost explosion on multi-tier recipes. Leaf-only scaling fixes the root cause."
 ---
 
 # Simplified Economy Pipeline

@@ -1,6 +1,6 @@
 ---
 area: "Resource Economy"
-updated: 2026-04-26
+updated: 2026-05-19
 ---
 
 # Resource Economy — Product Vision
@@ -15,11 +15,11 @@ The system should be **invisible to the player** once configured. No lag at star
 
 1. **Natural blocks drop 12× their vanilla quantity.** A rock that drops 1 cobblestone now drops 12.
 2. **Natural resource stack sizes scale to 12×** their vanilla maximum to accommodate the increased yield.
-3. **Bench recipes cost 12× their vanilla input quantities.** If a fence costs 2 planks, it now costs 24. This applies to ALL recipes at registered benches — block outputs AND non-block outputs (Rope, Fibre, tools, ingredients).
+3. **Bench recipe inputs are scaled per-input based on classification.** Each input is independently classified: raw material inputs are scaled ×12; crafted intermediate inputs retain their vanilla quantities. If a fence costs 2 planks (raw), it costs 24. If a recipe costs 1 Ingredient_Fibre (crafted), it stays 1. This applies to ALL recipes at registered benches — block outputs AND non-block outputs.
 4. **Breaking a crafted block drops its recipe ingredients**, not the block itself. The quantities match the scaled recipe cost divided by output quantity.
 5. **Placing a natural block consumes 12× of the item** (enforced at runtime by PlacementCostScaler), so the place-break loop is symmetric.
 6. **Base block recipes are excluded from cost scaling** — these are block recipes where every input is a raw natural resource (e.g., 1× Rock_Stone → Rock_Stone_Cobble). Their costs are implicitly scaled by Contract #1 (the natural drops are already 12×).
-7. **Processed ingredients are NOT natural items.** Items like `Ingredient_Fibre` (crafted from `Plant_Fiber` at another bench) are processed materials. A recipe using `Ingredient_Fibre` is NOT a base recipe and MUST have its costs scaled.
+7. **Processed ingredients are NOT natural items and are NOT scaled.** Items like `Ingredient_Fibre` (crafted from `Plant_Fiber` at another bench) are crafted intermediates. Because their own recipe already consumed scaled raw inputs, scaling them again would double-count. Crafted intermediate inputs retain their vanilla quantity.
 8. **The economy configuration persists to disk.** Once calculated, modifications are saved so they do not need to be recomputed on every server boot.
 9. **Admins can inspect, recalculate, and reset** the economy via in-game commands at any time.
 
@@ -38,10 +38,10 @@ flowchart LR
 ```mermaid
 flowchart LR
     G["Player gathers bush\n(receives 12 Plant_Fiber)"] --> H["Crafts Ingredient_Fibre\nat Workbench\n(costs 12 Plant_Fiber)"]
-    H --> I["Crafts Deco_Rope\nat Builders bench\n(costs 12 Ingredient_Fibre)"]
+    H --> I["Crafts Deco_Rope\nat Builders bench\n(costs 1 Ingredient_Fibre — crafted, not scaled)"]
     I --> J["Places Deco_Rope"]
     J --> K["Breaks Deco_Rope"]
-    K --> L["Receives 12 Ingredient_Fibre"]
+    K --> L["Receives 1 Ingredient_Fibre"]
     L --> I
 ```
 
@@ -49,8 +49,8 @@ flowchart LR
 
 | Scenario | Decision | Rationale |
 |----------|----------|-----------|
-| Recipe uses `Ingredient_Fibre` (a processed item, not a raw natural drop) | Scale the recipe cost ×12 | `Ingredient_Fibre` is NOT a natural item — it's crafted from `Plant_Fiber`. The recipe is not a "base" recipe. |
-| Recipe output is a non-block item (e.g., Rope, Thread, Bolt_Wool) | Still scale its recipe cost ×12 | All bench recipes must participate in the economy, regardless of whether the output is placeable. |
+| Recipe input is `Ingredient_Fibre` (a crafted intermediate) | Do NOT scale this input — retain vanilla quantity | `Ingredient_Fibre` is crafted from `Plant_Fiber`. Its cost was already absorbed when Plant_Fiber was scaled at the Workbench recipe. Scaling again would double-count. |
+| Recipe has mixed inputs (e.g., 1 raw + 1 crafted intermediate) | Scale each input independently: raw inputs ×12, crafted inputs ×1 | Per-input classification ensures each resource is scaled exactly once across the full crafting chain. |
 | Recipe output is a block item classified as "base" (all inputs are raw natural resources) | Do NOT scale its recipe cost | The inputs already drop at 12× from natural blocks (Contract #1). Scaling would make them cost 144×. |
 | Recipe at a bench not registered (e.g., Farmingbench, Stonecutter) | Do NOT scale | Only registered bench recipes participate. Expansion can add benches later. |
 | Block destroyed by physics cascade | Same drops as manual breaking | Player expectation: blocks don't vanish into nothing. |
@@ -72,7 +72,7 @@ When a player breaks blocks, they receive scaled yields. Natural blocks give 12�
 
 **Systems:** DropScaler (recipe cost scaling), BenchRecipeRegistries, BenchCategoryProcessors
 
-When a player crafts at a bench, recipe costs are scaled to match the generous gathering yields. A wall that costs 4 stone in vanilla costs 48 in the scaled economy — exactly what 4 natural blocks yielded. This is the **transformation** side of the economy — how raw resources become useful items.
+When a player crafts at a bench, recipe costs are scaled per-input to match the generous gathering yields. Raw material inputs are scaled ×12 (a wall costing 4 stone in vanilla costs 48 in the scaled economy — exactly what 4 natural blocks yielded). Crafted intermediate inputs retain their vanilla quantities because their own recipe already consumed scaled raw inputs. This is the **transformation** side of the economy — how raw resources become useful items.
 
 ### Phase 3: Build (Placement & Construction)
 
@@ -140,10 +140,10 @@ flowchart LR
 
 ## Anti-Patterns to Reject
 
-- **Classifying processed ingredients as "natural items"** because they appear in a natural drop chain somewhere upstream. `Ingredient_Fibre` is not `Plant_Fiber`. The classification must look at the direct recipe inputs, not the transitive ingredient tree.
+- **Scaling crafted intermediate inputs ×12** as if they were raw materials. `Ingredient_Fibre` already cost 12× Plant_Fiber to craft — scaling it again at the Deco_Rope recipe would double-count. Each input must be classified independently: raw → scale ×12, crafted → retain vanilla.
 - **Recomputing asset modifications on every server boot.** This is slow, fragile, and prevents admins from verifying what was changed. Modifications must be persistable and inspectable.
 - **Skipping non-block recipes** because they "don't have a block to modify." The recipe cost still needs scaling. Only the *drop modification* (Phase 4a) is block-specific.
-- **Using the `NaturalResourceRegistry.isNaturalItem()` check to determine if a recipe input is a "base" input.** This check returns true for any item that ANY natural block can drop — but `Ingredient_Fibre` is not in that set. The correct check is whether the input resolves to an item that is exclusively a raw, unprocessed natural drop. Processed intermediaries must not be conflated with raw drops.
+- **Applying a blanket ×12 multiplier to all inputs in a recipe.** The leaf-only model requires per-input classification. Each input is independently checked: if it is a raw natural drop, scale ×12; if it is a crafted intermediate, retain vanilla quantity. Treating all inputs uniformly violates the leaf-only principle.
 - **Consuming resources at recipe selection time in the PlaceBlock flow.** This would eliminate the core value of the building tool — the ability to freely browse recipes and change your mind. The deferred-consumption model is intentional.
 - **Allowing both PlacementCostScaler and PlaceBlock tool to fire on the same PlaceBlockEvent.** This would double-charge the player. The systems must be mutually exclusive based on whether the placed item is a natural block or an armed placeholder.
 - **Storing "placed-via-PlaceBlock" metadata on blocks.** Once placed, a block is just a block. Adding placement-source metadata would create a hidden distinction that violates Contract #14 and complicates the break-return logic.

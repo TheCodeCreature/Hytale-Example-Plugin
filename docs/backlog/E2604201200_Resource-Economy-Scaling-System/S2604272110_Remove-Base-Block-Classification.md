@@ -2,10 +2,12 @@
 id: S2604272110
 type: story
 title: "Remove Base-Block Classification"
-status: backlog
+status: cancelled
 priority: critical
 feature: F2604272100
 epic: E2604201200
+cancelled: 2026-05-19
+cancellation-reason: "Parent feature F2604272100 cancelled. Leaf-only scaling (F2605191000) introduces per-input classification instead of removing base-block classification."
 created: 2026-04-27
 ---
 

@@ -1,15 +1,15 @@
 # Product Board
 
-> Last updated: 2026-05-18 16:00
+> Last updated: 2026-05-19 10:00
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 46
-    "In Progress" : 2
+    "Backlog" : 42
+    "In Progress" : 5
     "Done" : 41
-    "Cancelled" : 8
+    "Cancelled" : 12
 ```
 
 ## Board
@@ -19,20 +19,18 @@ pie title Backlog Distribution
 |----|------|-------|------|----------|
 | F2604262300 | Feature | Custom Interaction Placement | E2604221030 | critical |
 | E2605061200 | Epic | Ingredient Filter Grid Refactor | — | high |
+| F2605191000 | Feature | Leaf-Only Recipe Scaling | E2604201200 | critical |
+| S2605191005 | Story | Build RecipeTierClassifier | E2604201200 | critical |
 
 ### Backlog
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
+| S2605191010 | Story | Modify DropScaler Phase 1 for Leaf-Only Scaling | E2604201200 | critical |
+| S2605191015 | Story | Update Vision Contracts for Leaf-Only Scaling | E2604201200 | critical |
 | E2605181400 | Epic | Technical Debt Cleanup | — | high |
 | F2605181420 | Feature | Blueprint Bench Page Decomposition | E2605181400 | medium |
 | S2605051200 | Story | Dynamic Cells Per Set Group | E2604221030 | high |
 | S2605051205 | Story | Fix Uncategorized Recipe Visibility | E2604221030 | high |
-
-| F2604272100 | Feature | Simplified Economy Pipeline | E2604201200 | critical |
-| S2604272105 | Story | Fix NaturalResourceRegistry Init and Simplify | E2604201200 | critical |
-| S2604272110 | Story | Remove Base-Block Classification | E2604201200 | critical |
-| S2604272115 | Story | Simplify DropScaler Pipeline Phases | E2604201200 | critical |
-| S2604272120 | Story | Update Tests for Uniform Scaling | E2604201200 | high |
 | E2604221030 | Epic | PlaceBlock Building Tool | — | high |
 | S2604262305 | Story | Register Custom PlaceBlock Interaction Type | E2604221030 | critical |
 | S2604262310 | Story | Implement Placement Logic in Custom Interaction | E2604221030 | critical |

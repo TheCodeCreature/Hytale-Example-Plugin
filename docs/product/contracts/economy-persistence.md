@@ -1,6 +1,6 @@
 ---
 area: "Economy Persistence"
-updated: 2026-04-18
+updated: 2026-05-19
 ---
 
 # Economy Persistence — Manifest Contract
@@ -32,7 +32,7 @@ Once an admin calculates the economy, it should survive server restarts without 
     {
       "recipeId": "Deco_Rope_Recipe_Generated_0",
       "inputs": [
-        { "index": 0, "itemId": "Ingredient_Fibre", "originalQty": 1, "scaledQty": 12 }
+        { "index": 0, "itemId": "Ingredient_Fibre", "classification": "crafted", "originalQty": 1, "scaledQty": 1 }
       ]
     }
   ],
@@ -43,7 +43,7 @@ Once an admin calculates the economy, it should survive server restarts without 
       "breaking": {
         "gatherType": "Plants",
         "quality": 0,
-        "quantity": 12,
+        "quantity": 1,
         "itemId": "Ingredient_Fibre",
         "dropListId": null
       }

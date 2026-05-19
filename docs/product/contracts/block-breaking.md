@@ -1,6 +1,6 @@
 ---
 area: "Block Breaking & Crafting Loop"
-updated: 2026-04-18
+updated: 2026-05-19
 ---
 
 # Block Breaking — Behavioral Contract
@@ -12,7 +12,7 @@ When a player breaks any block, the result should feel **predictable and fair**.
 ## Behavioral Contracts
 
 1. **When a player breaks a natural block**, they receive the block's configured drop quantity (scaled to 12×). This is the block's gathering `Breaking.Quantity` after modification.
-2. **When a player breaks a crafted block** (one with a bench recipe), they receive the recipe's input materials at the scaled quantity, divided by the recipe's output quantity. If a recipe produces 2 walls from 24 stone, each wall drops 12 stone.
+2. **When a player breaks a crafted block** (one with a bench recipe), they receive the recipe's input materials at their per-input scaled quantities, divided by the recipe's output quantity. Raw inputs return at ×12; crafted intermediate inputs return at their vanilla quantity. If a recipe produces 2 walls from 24 stone (raw, scaled), each wall drops 12 stone. If a recipe takes 1 Ingredient_Fibre (crafted, unscaled), the block drops 1 Ingredient_Fibre.
 3. **When a player breaks a "base" crafted block** (recipe inputs are all raw natural resources), the block drops its own item at 1× quantity. The cost to place was already implicit in the natural gather scaling.
 4. **Drop behavior is identical regardless of who placed the block.** There is no "player-placed vs. world-generated" distinction for crafted blocks in terms of what drops.
 5. **Physics-cascade destruction produces the same drops as manual breaking.** Blocks don't vanish.
@@ -40,8 +40,8 @@ A recipe is "base" only if ALL of its inputs resolve to items that are **exclusi
 
 | Scenario | Decision | Rationale |
 |----------|----------|-----------|
-| `Deco_Rope` recipe uses `Ingredient_Fibre` (a processed item) | Recipe cost scaled ×12, break drops 12× Ingredient_Fibre | Ingredient_Fibre is NOT a natural item — it's crafted from Plant_Fiber |
-| `Deco_Rope_Diagonal` has same recipe pattern | Same treatment as `Deco_Rope` | Consistency across rope variants |
+| `Deco_Rope` recipe uses `Ingredient_Fibre` (a crafted intermediate) | Ingredient_Fibre input retains vanilla quantity (1×), break drops 1× Ingredient_Fibre | Ingredient_Fibre is a crafted intermediate — its cost was already scaled at the Workbench recipe level |
+| `Deco_Rope_Diagonal` has same recipe pattern | Same treatment as `Deco_Rope` — 1× Ingredient_Fibre cost and drop | Consistency across rope variants |
 | `Thatch_Block` recipe uses `4x Plant_Fiber` (a raw natural drop) | Base recipe — cost NOT scaled, block drops itself at 1× | Plant_Fiber IS a natural item; all inputs are exclusively natural |
 | Recipe at `Farmingbench` (e.g., Ingredient_Hay) | NOT scaled — Farmingbench is not a registered bench | Only registered benches participate |
 | Block with recipe using `ResourceTypeId` (e.g., "Wood_Hardwood") | Resolved to a concrete item, then classified | ResourceTypeId resolution is independent of base classification |

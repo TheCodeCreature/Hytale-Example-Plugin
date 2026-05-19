@@ -2,10 +2,12 @@
 id: S2604272105
 type: story
 title: "Fix NaturalResourceRegistry Init and Simplify"
-status: backlog
+status: cancelled
 priority: critical
 feature: F2604272100
 epic: E2604201200
+cancelled: 2026-05-19
+cancellation-reason: "Parent feature F2604272100 cancelled. NaturalResourceRegistry init issues addressed separately if still present."
 created: 2026-04-27
 ---
 

@@ -61,6 +61,7 @@ public final class DropScaler {
      */
     public static void apply() {
         NaturalResourceRegistry.init();
+        RecipeTierClassifier.init();
         RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
         BenchRecipeRegistries.init();
         applyModifications();
@@ -172,6 +173,7 @@ public final class DropScaler {
 
     private static int scaleCraftingCosts(AssetFieldAccessor f, int multiplier) {
         int modified = 0;
+        int totalSkipped = 0;
         for (BenchRecipeRegistry reg : BenchRecipeRegistries.getAllRegistries()) {
         for (var entry : reg.getAllRecipesById().entrySet()) {
             String recipeId = entry.getKey();
@@ -181,10 +183,21 @@ public final class DropScaler {
             if (inputs == null || inputs.length == 0) continue;
 
             MaterialQuantity[] scaled = new MaterialQuantity[inputs.length];
+            int skipped = 0;
             for (int i = 0; i < inputs.length; i++) {
                 MaterialQuantity mq = inputs[i];
-                scaled[i] = mq == null ? null : mq.clone(mq.getQuantity() * multiplier);
+                if (mq == null) {
+                    scaled[i] = null;
+                    continue;
+                }
+                if (!RecipeTierClassifier.isRawInput(mq)) {
+                    scaled[i] = mq; // keep vanilla quantity
+                    skipped++;
+                    continue;
+                }
+                scaled[i] = mq.clone(mq.getQuantity() * multiplier);
             }
+            totalSkipped += skipped;
 
             try {
                 f.recipeInput.set(recipe, scaled);
@@ -194,6 +207,8 @@ public final class DropScaler {
             }
         }
         }
+        log("Crafting costs: " + modified + " recipes scaled, "
+                + totalSkipped + " inputs skipped (crafted intermediates)");
         return modified;
     }
 

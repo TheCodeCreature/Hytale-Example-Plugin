@@ -23,7 +23,8 @@ Provide a unified system for scaling crafting recipes, filtering recipe data, an
 | ID | Title | Status |
 |----|-------|--------|
 | F2604271700 | Unified Recipe Filter Registry | done |
-| F2604272100 | Simplified Economy Pipeline | backlog |
+| F2604272100 | Simplified Economy Pipeline | cancelled |
+| F2605191000 | Leaf-Only Recipe Scaling | in-progress |
 
 ## Context
 Currently, `BlueprintSelectionPage.loadRecipes()` and `BenchRecipeRegistry.init()` independently scan all CraftingRecipe assets with overlapping but divergent filter predicates. Bench IDs are defined in 3 places. ResourceType→ItemId resolution exists as two separate implementations (one naive, one bench-aware). BenchRequirement extraction differs (first-only vs all-entries). This creates maintenance burden and allows behavioral drift.

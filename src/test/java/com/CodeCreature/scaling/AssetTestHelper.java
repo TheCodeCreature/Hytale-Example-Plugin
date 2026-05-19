@@ -253,6 +253,11 @@ public final class AssetTestHelper {
     //  Registry pre-population (bypasses init() for isolated tests)
     // ──────────────────────────────────────────────────────────────
 
+    public static void setCraftedItemIds(Set<String> craftedItemIds) {
+        setStaticField(RecipeTierClassifier.class, "craftedItemIds",
+                Collections.unmodifiableSet(craftedItemIds));
+    }
+
     public static void setNaturalRegistry(Set<String> naturalBlockTypes, Set<String> naturalItemIds) {
         setStaticField(NaturalResourceRegistry.class, "naturalBlockTypes",
                 Collections.unmodifiableSet(naturalBlockTypes));
@@ -371,6 +376,7 @@ public final class AssetTestHelper {
         setStaticField(ItemDropList.class, "ASSET_STORE", null);
 
         setNaturalRegistry(Collections.emptySet(), Collections.emptySet());
+        setStaticField(RecipeTierClassifier.class, "craftedItemIds", Collections.emptySet());
         setStaticField(BenchRecipeRegistries.class, "registries", Collections.emptyMap());
     }
 

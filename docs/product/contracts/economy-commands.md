@@ -1,6 +1,6 @@
 ---
 area: "Economy Admin Commands"
-updated: 2026-04-18
+updated: 2026-05-19
 ---
 
 # Economy Admin Commands
@@ -63,8 +63,8 @@ Shows the economy status of a specific item or block type. Uses Hytale's `ArgTyp
 §f  Type: Block (Builders bench)
 §f  Recipe: Deco_Rope_Recipe_Generated_0
 §f  Original inputs: 1× Ingredient_Fibre
-§f  Scaled inputs:   12× Ingredient_Fibre
-§f  Break drops:     12× Ingredient_Fibre
+§f  Scaled inputs:   1× Ingredient_Fibre (crafted — not scaled)
+§f  Break drops:     1× Ingredient_Fibre
 §f  Base recipe: No
 §f  Status: §aModified
 ```
