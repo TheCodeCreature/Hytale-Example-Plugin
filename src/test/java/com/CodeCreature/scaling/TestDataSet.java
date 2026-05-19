@@ -129,7 +129,6 @@ public final class TestDataSet {
     public final Map<String, CraftingRecipe> buildersRecipesById = new HashMap<>();
     public final Map<String, CraftingRecipe> furnitureBenchRecipesByBlockType = new HashMap<>();
     public final Map<String, CraftingRecipe> furnitureBenchRecipesById = new HashMap<>();
-    public final Set<String> baseBlockRecipeIds = new HashSet<>();
 
     public TestDataSet() {
         // ────────────────────────────────────────────────
@@ -417,8 +416,6 @@ public final class TestDataSet {
         buildersRecipesById.put("Wood_Hardwood_Fence", recipeFenceHardwood);
         furnitureBenchRecipesById.put("Furniture_Kweebec_Bed", recipeKweebecBed);
 
-        // Base block: Planks_Oak (all inputs natural: Wood_Log_Oak ∈ naturalItemIds)
-        baseBlockRecipeIds.add("Planks_Oak");
     }
 
     /** Installs all asset stores and pre-populates registries. */
@@ -428,12 +425,11 @@ public final class TestDataSet {
         installRecipes(recipes);
         installDropLists(dropLists);
         setNaturalRegistry(naturalBlockIds, naturalItemIds);
+        RecipeTierClassifier.init();
         setBenchRecipeRegistries(
                 Map.of("Builders", buildersRecipesByBlockType,
                        "Furniture_Bench", furnitureBenchRecipesByBlockType),
                 Map.of("Builders", buildersRecipesById,
-                       "Furniture_Bench", furnitureBenchRecipesById),
-                Map.of("Builders", baseBlockRecipeIds,
-                       "Furniture_Bench", Set.of()));
+                       "Furniture_Bench", furnitureBenchRecipesById));
     }
 }

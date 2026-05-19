@@ -174,9 +174,12 @@ public final class DropScaler {
     private static int scaleCraftingCosts(AssetFieldAccessor f, int multiplier) {
         int modified = 0;
         int totalSkipped = 0;
+        int duplicates = 0;
+        Set<String> processedRecipeIds = new HashSet<>();
         for (BenchRecipeRegistry reg : BenchRecipeRegistries.getAllRegistries()) {
         for (var entry : reg.getAllRecipesById().entrySet()) {
             String recipeId = entry.getKey();
+            if (!processedRecipeIds.add(recipeId)) { duplicates++; continue; }
             CraftingRecipe recipe = entry.getValue();
 
             MaterialQuantity[] inputs = recipe.getInput();
@@ -208,7 +211,8 @@ public final class DropScaler {
         }
         }
         log("Crafting costs: " + modified + " recipes scaled, "
-                + totalSkipped + " inputs skipped (crafted intermediates)");
+                + totalSkipped + " inputs skipped (crafted intermediates), "
+                + duplicates + " duplicates skipped");
         return modified;
     }
 

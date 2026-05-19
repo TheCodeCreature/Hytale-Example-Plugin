@@ -1,14 +1,14 @@
 # Product Board
 
-> Last updated: 2026-05-19 10:00
+> Last updated: 2026-05-19 11:00
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 42
-    "In Progress" : 5
-    "Done" : 41
+    "Backlog" : 40
+    "In Progress" : 3
+    "Done" : 48
     "Cancelled" : 12
 ```
 
@@ -20,13 +20,10 @@ pie title Backlog Distribution
 | F2604262300 | Feature | Custom Interaction Placement | E2604221030 | critical |
 | E2605061200 | Epic | Ingredient Filter Grid Refactor | — | high |
 | F2605191000 | Feature | Leaf-Only Recipe Scaling | E2604201200 | critical |
-| S2605191005 | Story | Build RecipeTierClassifier | E2604201200 | critical |
 
 ### Backlog
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
-| S2605191010 | Story | Modify DropScaler Phase 1 for Leaf-Only Scaling | E2604201200 | critical |
-| S2605191015 | Story | Update Vision Contracts for Leaf-Only Scaling | E2604201200 | critical |
 | E2605181400 | Epic | Technical Debt Cleanup | — | high |
 | F2605181420 | Feature | Blueprint Bench Page Decomposition | E2605181400 | medium |
 | S2605051200 | Story | Dynamic Cells Per Set Group | E2604221030 | high |
@@ -70,6 +67,11 @@ pie title Backlog Distribution
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
 | F2605181405 | Feature | Blueprint Book Highlight Performance | E2605181400 | high |
+| S2605191005 | Story | Build RecipeTierClassifier | E2604201200 | critical |
+| S2605191010 | Story | Modify DropScaler Phase 1 for Leaf-Only Scaling | E2604201200 | critical |
+| S2605191015 | Story | Update Vision Contracts for Leaf-Only Scaling | E2604201200 | critical |
+| S2605191020 | Story | Add Duplicate Recipe Guard | E2604201200 | critical |
+| S2605191025 | Story | Remove Dead baseBlockRecipeIds Tests | E2604201200 | critical |
 | S2605181406 | Story | Infinite-Duration Effect + 500ms Loop | E2605181400 | high |
 | F2605181410 | Feature | Inventory Listener Lifecycle Fix | E2605181400 | high |
 | S2605181411 | Story | Store EventRegistration Handles | E2605181400 | high |

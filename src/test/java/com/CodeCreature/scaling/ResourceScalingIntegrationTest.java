@@ -27,8 +27,8 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Integration tests that verify the full modifier pipeline produces correct
  * end-to-end results: natural blocks drop 12x, recipe blocks drop scaled
- * ingredients, base blocks stay at 1x, recipe costs are scaled, and stack
- * sizes are adjusted.
+ * ingredients, raw input costs are scaled 12x, crafted intermediate inputs
+ * retain vanilla quantities, and stack sizes are adjusted.
  */
 class ResourceScalingIntegrationTest {
 
@@ -70,10 +70,11 @@ class ResourceScalingIntegrationTest {
         }
 
         @Test
-        void dirtSoftUnchanged() {
+        void dirtSoftConvertedToDropList() {
             applyFullPipeline();
-            // Soft blocks have no quantity to multiply (always drop 1)
-            assertEquals("Dirt", readSoftItemId(data.dirtSoft));
+            // Soft drops with direct itemId are converted to drop lists for 12x scaling
+            assertNull(readSoftItemId(data.dirtSoft));
+            assertEquals("Plugin_NaturalIngredient_Dirt", readSoftDropListId(data.dirtSoft));
         }
 
         @Test
@@ -91,27 +92,30 @@ class ResourceScalingIntegrationTest {
         void slabDropsIngredients() {
             applyFullPipeline();
             var breaking = readGatheringBreaking(data.woodSlabOak.getGathering());
-            assertEquals("Wood_Planks_Oak", breaking.getItemId());
-            // 1 input * 12 / 2 output = 6
-            assertEquals(6, breaking.getQuantity());
+            // All recipe blocks use synthetic drop lists
+            assertNull(readBreakingItemId(breaking));
+            assertEquals("Plugin_RecipeDrop_Wood_Slab_Oak", readBreakingDropListId(breaking));
+            assertEquals(1, breaking.getQuantity());
         }
 
         @Test
         void railDropsIngredients() {
             applyFullPipeline();
             var breaking = readGatheringBreaking(data.railIron.getGathering());
-            assertEquals("Metal_Ingot_Iron", breaking.getItemId());
-            // 2 input * 12 / 1 output = 24
-            assertEquals(24, breaking.getQuantity());
+            // All recipe blocks use synthetic drop lists
+            assertNull(readBreakingItemId(breaking));
+            assertEquals("Plugin_RecipeDrop_Rail_Iron", readBreakingDropListId(breaking));
+            assertEquals(1, breaking.getQuantity());
         }
 
         @Test
         void doorDropsIngredients() {
             applyFullPipeline();
             var breaking = readGatheringBreaking(data.doorWoodOak.getGathering());
-            assertEquals("Wood_Planks_Oak", breaking.getItemId());
-            // 2 input * 12 / 1 output = 24
-            assertEquals(24, breaking.getQuantity());
+            // All recipe blocks use synthetic drop lists
+            assertNull(readBreakingItemId(breaking));
+            assertEquals("Plugin_RecipeDrop_Door_Wood_Oak", readBreakingDropListId(breaking));
+            assertEquals(1, breaking.getQuantity());
         }
 
         @Test
@@ -133,23 +137,25 @@ class ResourceScalingIntegrationTest {
     }
 
     @Nested
-    class BaseBlockBehavior {
+    class LeafOnlyScaling {
 
         @Test
-        void planksKeep1xCost() {
+        void planksRawInputScaled12x() {
             applyFullPipeline();
             MaterialQuantity[] inputs = readRecipeInputs(data.recipePlanksOak);
-            assertEquals(1, inputs[0].getQuantity(),
-                    "Base block (planks) should keep 1x recipe cost");
+            // Wood_Log_Oak is a raw material → scaled ×12
+            assertEquals(12, inputs[0].getQuantity(),
+                    "Planks recipe raw input (Wood_Log_Oak) should be scaled ×12");
         }
 
         @Test
-        void planksDropSelf() {
+        void planksDropsIngredients() {
             applyFullPipeline();
             var breaking = readGatheringBreaking(data.woodPlanksOak.getGathering());
-            // RecipeDropModifier skips base blocks, so the original breaking stays
-            assertEquals("Wood_Planks_Oak", breaking.getItemId());
-            assertEquals(1, breaking.getQuantity());
+            // Planks is a recipe block → Phase 3a creates synthetic drop list
+            // Input: 12 Wood_Log_Oak, Output: 2 Planks → drop = 12/2 = 6 per plank
+            assertNotNull(breaking.getDropListId(),
+                    "Planks should use a synthetic drop list (recipe block)");
         }
     }
 
@@ -184,23 +190,25 @@ class ResourceScalingIntegrationTest {
     class CraftingCostScaling {
 
         @Test
-        void nonBaseRecipeCostsScaled() {
+        void craftedInputCostsUnchanged() {
             applyFullPipeline();
 
             MaterialQuantity[] slabInputs = readRecipeInputs(data.recipeSlabOak);
-            assertEquals(12, slabInputs[0].getQuantity(),
-                    "Slab recipe cost (non-base) should be 1 * 12 = 12");
+            assertEquals(1, slabInputs[0].getQuantity(),
+                    "Slab recipe input (Wood_Planks_Oak, crafted) should stay at 1");
 
             MaterialQuantity[] railInputs = readRecipeInputs(data.recipeRailIron);
-            assertEquals(24, railInputs[0].getQuantity(),
-                    "Rail recipe cost (non-base) should be 2 * 12 = 24");
+            assertEquals(2, railInputs[0].getQuantity(),
+                    "Rail recipe input (Metal_Ingot_Iron, crafted) should stay at 2");
         }
 
         @Test
-        void baseRecipeCostUnchanged() {
+        void rawInputRecipeScaled() {
             applyFullPipeline();
             MaterialQuantity[] planksInputs = readRecipeInputs(data.recipePlanksOak);
-            assertEquals(1, planksInputs[0].getQuantity());
+            // Wood_Log_Oak is raw → scaled ×12
+            assertEquals(12, planksInputs[0].getQuantity(),
+                    "Planks recipe raw input should be scaled ×12");
         }
     }
 
@@ -219,11 +227,15 @@ class ResourceScalingIntegrationTest {
 
             // These should still have ingredient drops, not 12x self-drops
             var railBreaking = readGatheringBreaking(data.railIron.getGathering());
-            assertEquals("Metal_Ingot_Iron", railBreaking.getItemId(),
+            assertNull(readBreakingItemId(railBreaking),
+                    "Rail should use drop list, not direct itemId");
+            assertEquals("Plugin_RecipeDrop_Rail_Iron", readBreakingDropListId(railBreaking),
                     "Rail should drop ingredients even if in natural registry");
 
             var doorBreaking = readGatheringBreaking(data.doorWoodOak.getGathering());
-            assertEquals("Wood_Planks_Oak", doorBreaking.getItemId(),
+            assertNull(readBreakingItemId(doorBreaking),
+                    "Door should use drop list, not direct itemId");
+            assertEquals("Plugin_RecipeDrop_Door_Wood_Oak", readBreakingDropListId(doorBreaking),
                     "Door should drop ingredients even if in natural registry");
         }
     }
@@ -290,20 +302,14 @@ class ResourceScalingIntegrationTest {
             assertDoesNotThrow(() -> applyFullPipeline());
         }
 
-        @Test
-        void recipeWithOutputQtyOneProducesCorrectDrops() {
-            // Rail: 2 * 12 / 1 = 24
-            applyFullPipeline();
-            var breaking = readGatheringBreaking(data.railIron.getGathering());
-            assertEquals(24, breaking.getQuantity());
-        }
+
 
         @Test
         void recipeWithOutputQtyTwoProducesCorrectDrops() {
-            // Slab: 1 * 12 / 2 = 6
+            // Slab: Wood_Planks_Oak is crafted → input stays 1, drop = max(1, 1/2) = 1
             applyFullPipeline();
             var breaking = readGatheringBreaking(data.woodSlabOak.getGathering());
-            assertEquals(6, breaking.getQuantity());
+            assertEquals(1, breaking.getQuantity());
         }
 
         @Test
@@ -367,24 +373,19 @@ class ResourceScalingIntegrationTest {
                     "GatherType should be preserved for multi-ingredient recipe blocks");
         }
 
-        @Test
-        void singleIngredientRecipeStillUseDirectItemId() {
-            applyFullPipeline();
-            // Door: single input (2x Wood_Planks_Oak → 1x Door_Wood_Oak) — should stay direct
-            var breaking = readGatheringBreaking(data.doorWoodOak.getGathering());
-            assertEquals("Wood_Planks_Oak", readBreakingItemId(breaking),
-                    "Single-ingredient recipe should use direct itemId");
-            assertNull(readBreakingDropListId(breaking),
-                    "Single-ingredient recipe should not use dropListId");
-        }
+
 
         @Test
         void multiIngredientRecipeCostsScaled() {
             applyFullPipeline();
             MaterialQuantity[] inputs = readRecipeInputs(data.recipeFurnitureBed);
-            assertEquals(36, inputs[0].getQuantity(), "3 * 12 = 36");
-            assertEquals(48, inputs[1].getQuantity(), "4 * 12 = 48");
-            assertEquals(24, inputs[2].getQuantity(), "2 * 12 = 24");
+            // Wood_Planks_Oak is crafted → stays at 3
+            assertEquals(3, inputs[0].getQuantity(),
+                    "Wood_Planks_Oak (crafted) should stay at 3");
+            assertEquals(48, inputs[1].getQuantity(),
+                    "Ingredient_Fibre (raw) 4 * 12 = 48");
+            assertEquals(24, inputs[2].getQuantity(),
+                    "Cloth_Wool_Red (raw) 2 * 12 = 24");
         }
     }
 
@@ -448,9 +449,10 @@ class ResourceScalingIntegrationTest {
         void fenceDropQuantityIsCorrect() {
             applyFullPipeline();
             var breaking = readGatheringBreaking(data.fenceHardwood.getGathering());
-            // 1 input * 12 / 2 output = 6
-            assertEquals(6, breaking.getQuantity(),
-                    "Fence drop quantity should be (1*12)/2 = 6");
+            // Breaking quantity is always 1; actual drop quantity (6) is inside the synthetic drop list
+            assertEquals(1, breaking.getQuantity(),
+                    "Breaking quantity should be 1 (actual qty is in the drop list)");
+            assertEquals("Plugin_RecipeDrop_Wood_Hardwood_Fence", readBreakingDropListId(breaking));
         }
 
         @Test

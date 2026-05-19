@@ -59,9 +59,11 @@ Fix the exponential cost explosion in the 12× scaling system. Currently, Phase 
 ## Stories
 | ID | Title | Status |
 |----|-------|--------|
-| S2605191005 | Build RecipeTierClassifier | in-progress |
-| S2605191010 | Modify DropScaler Phase 1 for Leaf-Only Scaling | not started |
-| S2605191015 | Update Vision Contracts for Leaf-Only Scaling | not started |
+| S2605191005 | Build RecipeTierClassifier | done |
+| S2605191010 | Modify DropScaler Phase 1 for Leaf-Only Scaling | done |
+| S2605191015 | Update Vision Contracts for Leaf-Only Scaling | done |
+| S2605191020 | Add Duplicate Recipe Guard to scaleCraftingCosts | done |
+| S2605191025 | Remove Dead baseBlockRecipeIds from Test Infrastructure | done |
 
 ## Notes
 - Design doc: `docs/design-linear-scaling-fix.md`

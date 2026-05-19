@@ -272,12 +272,10 @@ public final class AssetTestHelper {
      */
     public static void setBenchRecipeRegistries(String benchId,
                                                 Map<String, CraftingRecipe> byBlock,
-                                                Map<String, CraftingRecipe> byId,
-                                                Set<String> baseBlockRecipeIds) {
+                                                Map<String, CraftingRecipe> byId) {
         setBenchRecipeRegistries(
                 Map.of(benchId, byBlock),
-                Map.of(benchId, byId),
-                Map.of(benchId, baseBlockRecipeIds));
+                Map.of(benchId, byId));
     }
 
     /**
@@ -285,8 +283,7 @@ public final class AssetTestHelper {
      */
     public static void setBenchRecipeRegistries(
             Map<String, Map<String, CraftingRecipe>> byBlockPerBench,
-            Map<String, Map<String, CraftingRecipe>> byIdPerBench,
-            Map<String, Set<String>> baseIdsPerBench) {
+            Map<String, Map<String, CraftingRecipe>> byIdPerBench) {
         java.util.LinkedHashMap<String, BenchRecipeRegistry> regs = new java.util.LinkedHashMap<>();
         for (String benchId : byBlockPerBench.keySet()) {
             BenchRecipeRegistry reg = new BenchRecipeRegistry(benchId);
@@ -294,8 +291,6 @@ public final class AssetTestHelper {
                     Collections.unmodifiableMap(byBlockPerBench.getOrDefault(benchId, Collections.emptyMap())));
             setField(BenchRecipeRegistry.class, reg, "recipesById",
                     Collections.unmodifiableMap(byIdPerBench.getOrDefault(benchId, Collections.emptyMap())));
-            setField(BenchRecipeRegistry.class, reg, "baseBlockRecipeIds",
-                    Collections.unmodifiableSet(baseIdsPerBench.getOrDefault(benchId, Collections.emptySet())));
             regs.put(benchId, reg);
         }
         setStaticField(BenchRecipeRegistries.class, "registries",
