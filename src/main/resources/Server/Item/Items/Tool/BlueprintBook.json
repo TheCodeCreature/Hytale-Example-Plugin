@@ -15,6 +15,9 @@
 	"Model": "Items/Weapons/Spellbook/Grimoire.blockymodel",
 	"Texture": "Items/Weapons/Spellbook/Grimoire_Brown_Texture.png",
 	"PlayerAnimationsId": "Spellbook",
+	"Utility": {
+		"Usable": true
+	},
 	"Recipe": {
 		"Input": [
 			{
@@ -48,10 +51,18 @@
 		"TimeSeconds": 4
 	},
 	"Interactions": {
-		"Secondary": "BlueprintBench_OpenUI",
-		"Pick": "BlueprintBook_PickStencil"
+		"Pick": "BlueprintBook_PickStencil",
+		"Secondary": "BlueprintBench_OpenUI"
 	},
 	"InteractionConfig": {
-		"DisplayOutlines": true
+		"DisplayOutlines": true,
+		"Priorities": {
+			"Secondary": {
+				"OffHand": 1
+			},
+			"Pick": {
+				"OffHand": 1
+			}
+		}
 	}
 }
