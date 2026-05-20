@@ -1,5 +1,6 @@
 package com.CodeCreature.scaling;
 
+import com.CodeCreature.crafting.RecipeTreeResolver;
 import com.CodeCreature.registry.BenchRecipeRegistries;
 import com.CodeCreature.registry.BenchRecipeRegistry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
@@ -65,6 +66,7 @@ public final class DropScaler {
         RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
         BenchRecipeRegistries.init();
         applyModifications();
+        RecipeTreeResolver.init();
     }
 
     /**

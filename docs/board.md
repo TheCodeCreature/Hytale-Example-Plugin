@@ -1,14 +1,14 @@
 # Product Board
 
-> Last updated: 2026-05-19 11:00
+> Last updated: 2026-05-20 10:30
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 40
-    "In Progress" : 3
-    "Done" : 48
+    "Backlog" : 48
+    "In Progress" : 4
+    "Done" : 55
     "Cancelled" : 12
 ```
 
@@ -20,6 +20,7 @@ pie title Backlog Distribution
 | F2604262300 | Feature | Custom Interaction Placement | E2604221030 | critical |
 | E2605061200 | Epic | Ingredient Filter Grid Refactor | — | high |
 | F2605191000 | Feature | Leaf-Only Recipe Scaling | E2604201200 | critical |
+| E2605191100 | Epic | Auto-Craft Stencil System | — | high |
 
 ### Backlog
 | ID | Type | Title | Epic | Priority |
@@ -62,6 +63,9 @@ pie title Backlog Distribution
 | F2605071540 | Feature | Radial Cost Arc Affordability Feedback | E2605071500 | high |
 | S2605071541 | Story | Add CostDim Overlay to StencilRadialCostSlot.ui | E2605071500 | high |
 | S2605071542 | Story | Wire Affordability Check into showCostArc | E2605071500 | high |
+| F2605191120 | Feature | UI Raw Cost Display | E2605191100 | medium |
+| S2605191121 | Story | Add Raw Cost to StencilRadialMenuPage | E2605191100 | medium |
+| S2605191122 | Story | Add Raw Cost to BlueprintSelectionPage | E2605191100 | medium |
 
 ### Done
 | ID | Type | Title | Epic | Priority |
@@ -80,6 +84,16 @@ pie title Backlog Distribution
 | S2605181421 | Story | Extract GridLayoutController | E2605181400 | medium |
 | S2605181422 | Story | Extract DetailPanelController | E2605181400 | medium |
 | S2605181423 | Story | Wire Controllers into BlueprintSelectionPage | E2605181400 | medium |
+| F2605191105 | Feature | Recipe Tree Resolution | E2605191100 | high |
+| S2605191106 | Story | Implement RecipeTreeResolver with Cache | E2605191100 | high |
+| S2605191107 | Story | Implement Supporting Records | E2605191100 | high |
+| F2605191110 | Feature | Auto-Craft Consumption Planning | E2605191100 | high |
+| S2605191111 | Story | Implement AutoCraftPlanner | E2605191100 | high |
+| S2605191112 | Story | Add isAffordableWithAutoCraft to RecipeAffordabilityResolver | E2605191100 | high |
+| F2605191115 | Feature | Stencil Integration | E2605191100 | high |
+| S2605191116 | Story | Wire AutoCraftPlanner into StencilPlacementSystem | E2605191100 | high |
+| S2605191117 | Story | Update StencilVisualManager for Auto-Craft Affordability | E2605191100 | high |
+| S2605191118 | Story | Add RecipeTreeResolver.init() to DropScaler | E2605191100 | medium |
 | E2604301400 | Epic | Blueprint Stencil POC | — | high |
 | F2604301410 | Feature | Blueprint Stencil Placement Interception | E2604301400 | high |
 | S2604301411 | Story | Blueprint Stencil Metadata Utility | E2604301400 | high |

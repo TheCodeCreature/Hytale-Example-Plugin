@@ -142,4 +142,26 @@ public final class RecipeAffordabilityResolver {
         List<ResolvedIngredient> ingredients = resolveIngredientCosts(recipe, BenchCategory.BUILDERS_ONLY, container);
         return ingredients.isEmpty() || ingredients.stream().allMatch(ResolvedIngredient::sufficient);
     }
+
+    /**
+     * Returns whether the player can afford the recipe, including auto-craft
+     * resolution of missing intermediates to raw materials.
+     *
+     * <p>Delegates to {@link AutoCraftPlanner#plan} and returns
+     * {@code plan.affordable()}. This method checks both the direct
+     * ingredient path (fast) and the auto-craft path (slow).
+     *
+     * <p>This is the preferred affordability check for stencil-related
+     * contexts where auto-craft should be considered.
+     *
+     * @param recipe    the crafting recipe to check
+     * @param category  the bench category for ResourceTypeId resolution
+     * @param container the player's combined inventory container
+     * @return {@code true} if the player can afford directly or via auto-craft
+     */
+    public static boolean isAffordableWithAutoCraft(@Nonnull CraftingRecipe recipe,
+                                                     @Nonnull BenchCategory category,
+                                                     @Nonnull CombinedItemContainer container) {
+        return AutoCraftPlanner.plan(recipe, category, container).affordable();
+    }
 }

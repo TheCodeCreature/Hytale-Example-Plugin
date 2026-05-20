@@ -1,7 +1,5 @@
 {
 	"SubCategory": "CraftingTools",
-    "Model": "Items/Weapons/Spellbook/Grimoire.blockymodel",
-    "Texture": "Items/Weapons/Spellbook/Grimoire_Brown_Texture.png",
 	"Icon": "Icons/ItemsGenerated/Weapon_Spellbook_Grimoire_Brown.png",
 	"Categories": [
 		"Tool.BlueprintBook"
@@ -14,8 +12,9 @@
 	"MaxStack": 1,
 	"Quality": "Tool",
 	"Set": "BlueprintBook",
+	"Model": "Items/Weapons/Spellbook/Grimoire.blockymodel",
+	"Texture": "Items/Weapons/Spellbook/Grimoire_Brown_Texture.png",
 	"PlayerAnimationsId": "Spellbook",
-	"Weapon": {},
 	"Recipe": {
 		"Input": [
 			{
@@ -49,8 +48,8 @@
 		"TimeSeconds": 4
 	},
 	"Interactions": {
-		"Use": "BlueprintBench_OpenUI",
-		"Secondary": "BlueprintBook_PickStencil"
+		"Secondary": "BlueprintBench_OpenUI",
+		"Pick": "BlueprintBook_PickStencil"
 	},
 	"InteractionConfig": {
 		"DisplayOutlines": true

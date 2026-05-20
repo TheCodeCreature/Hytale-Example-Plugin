@@ -45,6 +45,30 @@ flowchart LR
     L --> I
 ```
 
+### Auto-Craft UX Flow (Stencil Placement)
+
+```mermaid
+flowchart TD
+    A["Player arms stencil\nwith 'Brick Stairs' recipe"] --> B{"Has 3 bricks?"}
+    B -- Yes --> C["Fast path:\nconsume 3 bricks\nplace brick stairs"]
+    B -- No --> D{"Has some bricks?"}
+    D -- "Yes (e.g., 1 brick)" --> E["Use 1 existing brick\nResolve deficit: 2 bricks"]
+    D -- "No (0 bricks)" --> F["Resolve deficit: 3 bricks"]
+    E --> G["Resolve 2 bricks → 24 cobblestone"]
+    F --> H["Resolve 3 bricks → 36 cobblestone"]
+    G --> I{"Has 24 cobblestone?"}
+    H --> J{"Has 36 cobblestone?"}
+    I -- Yes --> K["Consume 1 brick + 24 cobblestone\nplace brick stairs"]
+    I -- No --> L["Placement denied\nnothing consumed"]
+    J -- Yes --> M["Consume 36 cobblestone\nplace brick stairs"]
+    J -- No --> L
+    C --> N["Player breaks brick stairs"]
+    K --> N
+    M --> N
+    N --> O["Receives 3 bricks back\n(Contract #4 — always intermediates)"]
+    O --> P["Player now has 3 bricks\nfor next placement (fast path)"]
+```
+
 ## Edge Cases & Decisions
 
 | Scenario | Decision | Rationale |
@@ -57,6 +81,13 @@ flowchart LR
 | Block placed by another player is broken | Same behavior — drops recipe ingredients | Consistency: all instances of a block type behave identically. |
 | Server restarts after economy is configured | Economy persists — no recomputation | Startup speed and determinism. Recomputation only via explicit command. |
 | Economy manifest is stale (game update changed recipes) | Admin runs recalculate command | The manifest includes a version/hash so staleness can be detected. |
+| Player auto-crafts brick stairs using cobblestone, then breaks the stairs | Returns 3 bricks (direct intermediates), NOT cobblestone | Contract #4 is inviolable. Auto-craft is a consumption convenience, not a transmutation bypass. The player gains intermediates they didn't have before — this is the intended value. |
+| Player has 1 brick and 24 cobblestone, needs 3 bricks for brick stairs | Consume 1 brick + 24 cobblestone (deficit of 2 bricks resolved to raw) | Contract #16 — prefer existing intermediates. Only the deficit is resolved downward. |
+| Player has sufficient intermediates for the full recipe | Fast path — consume intermediates directly, no auto-craft invoked | Auto-craft is a fallback, not the default path. Existing behavior is unchanged. |
+| Auto-craft encounters a multi-level recipe chain (e.g., item requires intermediate that itself requires another intermediate) | Resolve recursively to raw materials | The system follows the full recipe tree. Each crafted intermediate is resolved to its own raw inputs until only raw materials remain. |
+| Player lacks sufficient raw materials for auto-craft deficit | Placement denied — nothing consumed (Contract #11 — atomicity) | No partial consumption. The player is never charged for a placement that doesn't happen. |
+| Auto-craft is used at a standard crafting bench (not stencil) | NOT supported — auto-craft is stencil-only | Contract #15 explicitly limits auto-craft to stencil (PlaceBlock tool) placements. Bench crafting requires exact ingredients as before. |
+| Radial menu displays cost for a recipe with crafted inputs | Shows both direct cost ("3 bricks") and raw cost ("36 cobblestone") | Contract #18 — dual cost display ensures player transparency. |
 
 ## The Three Phases of the Economy
 
@@ -82,6 +113,7 @@ When a player places blocks into the world, the economy enforces costs:
 
 - **Natural blocks** (stone, wood, dirt): PlacementCostScaler consumes 11 extra items at placement time, making each placement cost 12× total. This ensures the gather→place loop is symmetric.
 - **Crafted blocks** (walls, fences, decorations): The **PlaceBlock Building Tool** enables a deferred-consumption workflow. Instead of crafting a block into inventory and then placing it, the player selects a recipe at the **Blueprint Bench** — a dedicated workbench block placed in the world — arms a placeholder tool with that recipe, and places the block directly into the world. Resources are consumed from the player's inventory **at placement time**, not at recipe selection time.
+- **Auto-craft for stencils** (Contracts #15–#18): When placing crafted blocks via the stencil tool, if the player is missing some or all recipe intermediates, the system automatically resolves the deficit to raw materials. The intermediates are never physically created — raw materials are consumed directly. This eliminates the need to interrupt a build workflow to visit a crafting bench. Auto-craft prefers existing intermediates first (Contract #16), preserves break-return behavior unchanged (Contract #17), and displays both direct and raw costs in the UI (Contract #18).
 
 The Build phase is the **output** side of the economy — how resources leave the player's inventory and enter the world. Both placement systems ensure that `gather → build → break` is a closed loop: whatever was consumed to place a block is returned when it's broken.
 
@@ -138,6 +170,16 @@ flowchart LR
 
 14. **Placed blocks are indistinguishable from normally-crafted blocks.** Once a block is placed via the PlaceBlock tool, it IS the crafted block — it has the same block type, the same breaking behavior (Contract #4), and the same drops. There is no "placed-via-tool" metadata. A player breaking a block cannot and should not know how it was placed.
 
+### Auto-Craft Contracts (Stencil Placement Only)
+
+15. **Auto-craft resolves intermediate deficits to raw materials at stencil placement time.** If the player doesn't have enough of a recipe's direct ingredients (e.g., only 1 of 3 required bricks), the system recursively resolves the deficit to raw materials. The intermediate items are never created in inventory — the economy behaves as if they were crafted and consumed atomically. This applies exclusively to stencil (PlaceBlock tool) placements; bench crafting is unchanged.
+
+16. **Auto-craft prefers existing intermediates over raw material resolution.** Before resolving any deficit to raw materials, the system uses whatever matching intermediates the player already has in inventory. Only the remaining deficit is resolved downward to raw materials. A player with 2 of 3 required bricks and sufficient cobblestone will consume 2 bricks + the cobblestone equivalent of 1 brick — not cobblestone for all 3.
+
+17. **Auto-craft does NOT change break behavior.** Breaking a block placed via auto-craft returns the recipe's direct intermediates (per Contract #4), not the raw materials that were consumed. If a player auto-crafted brick stairs using cobblestone, breaking returns bricks. The player gains intermediates they can reuse for future placements — either directly (fast path) or via auto-craft again. This is the designed value proposition: the player trades raw materials and gets intermediates back, a net convenience gain with no material transmutation.
+
+18. **The radial menu and blueprint bench replace unaffordable intermediates with raw materials.** When auto-craft is needed, the UI replaces intermediate ingredient slots with the raw materials that will actually be consumed. The display reflects the real consumption plan, not the nominal recipe. If the player has some intermediates (partial fast-path), those intermediates remain visible and only the deficit is shown as raw materials. When the player has all intermediates (full fast-path), the UI shows the original recipe unchanged.
+
 ## Anti-Patterns to Reject
 
 - **Scaling crafted intermediate inputs ×12** as if they were raw materials. `Ingredient_Fibre` already cost 12× Plant_Fiber to craft — scaling it again at the Deco_Rope recipe would double-count. Each input must be classified independently: raw → scale ×12, crafted → retain vanilla.
@@ -149,3 +191,7 @@ flowchart LR
 - **Storing "placed-via-PlaceBlock" metadata on blocks.** Once placed, a block is just a block. Adding placement-source metadata would create a hidden distinction that violates Contract #14 and complicates the break-return logic.
 - **Using the Portable Bench (F-press handheld) for the PlaceBlock arming flow.** The Portable Bench is a craft-anywhere convenience tool that produces inventory items. The Blueprint Bench is a physically-placed workbench block that arms placeholder tools for deferred placement. These are fundamentally different workflows and must not be conflated.
 - **Modifying the existing Builders Bench to support PlaceBlock arming.** The Builders Bench is a standard crafting station. The Blueprint Bench is a new, separate block that coexists alongside it. Merging them would confuse two distinct player workflows (craft-to-inventory vs. arm-and-place).
+- **Returning raw materials when breaking a block placed via auto-craft.** Contract #4 is absolute: breaking returns recipe intermediates. Auto-craft is a consumption convenience that affects what leaves the player's inventory, NOT what comes back. A block placed via auto-craft (cobblestone consumed) must return bricks on break — same as a block placed via direct intermediates. This is the designed value exchange, not a bug.
+- **Enabling auto-craft at standard crafting benches.** Auto-craft is exclusively a stencil (PlaceBlock tool) feature. Bench crafting requires exact ingredients. Allowing auto-craft at benches would blur the distinction between the two workflows and remove the incentive for players to pre-craft intermediates.
+- **Silently auto-crafting without showing the player what will be consumed.** The UI must display both direct recipe costs and raw material costs (Contract #18). A player should never be surprised by what was deducted from their inventory after a stencil placement.
+- **Creating intermediate items in inventory during auto-craft.** The intermediates must never physically exist — even transiently. The economy behaves as if they were crafted and immediately consumed in a single atomic operation. Materializing intermediates (even temporarily) risks duplication exploits and violates the atomicity guarantee.
