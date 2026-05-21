@@ -43,10 +43,14 @@ import java.util.logging.Logger;
 public class BlueprintBookParticleLoop {
 
     private static final Logger LOGGER = Logger.getLogger("BlueprintBookParticleLoop");
-    private static final long UPDATE_INTERVAL_MILLIS = 500;
+    private static final long UPDATE_INTERVAL_MILLIS = 100;
     private static final String BLUEPRINT_BOOK_ITEM_ID = "BlueprintBook";
     private static final String EFFECT_ID_GREEN = "Drop_Uncommon";
     private static final String EFFECT_ID_RED = "BlockPlaceFail";
+
+    // Feature flag: when false, skips affordability check and always shows green.
+    // Set to true once auto-craft affordability performance is optimized.
+    private static final boolean ENABLE_AFFORDABILITY_CHECK = true;
 
     private static final Map<UUID, BlueprintBookParticleLoop> INSTANCES = new ConcurrentHashMap<>();
 
@@ -112,7 +116,13 @@ public class BlueprintBookParticleLoop {
 
                     byte activeSlot = player.getInventory().getActiveHotbarSlot();
                     ItemStack held = player.getInventory().getHotbar().getItemStack(activeSlot);
-                    if (held == null || !held.getItemId().equals(BLUEPRINT_BOOK_ITEM_ID)) {
+                    boolean holdingBook = held != null && held.getItemId().equals(BLUEPRINT_BOOK_ITEM_ID);
+                    if (!holdingBook) {
+                        // Check utility (offhand) slot
+                        ItemStack utilityItem = player.getInventory().getUtilityItem();
+                        holdingBook = utilityItem != null && utilityItem.getItemId().equals(BLUEPRINT_BOOK_ITEM_ID);
+                    }
+                    if (!holdingBook) {
                         removeHighlightEntity(store);
                         return;
                     }
@@ -138,8 +148,9 @@ public class BlueprintBookParticleLoop {
                     }
 
                     // Target has a recipe — manage the highlight entity
+                    boolean affordable;
                     CombinedItemContainer container = player.getInventory().getCombinedBackpackStorageHotbar();
-                    boolean affordable = RecipeAffordabilityResolver.isAffordable(recipe, container);
+                    affordable = RecipeAffordabilityResolver.isAffordable(recipe, container);
 
                     if (target.equals(lastTargetBlock) && activeEntity != null && activeEntity.isValid()) {
                         // Entity already exists at this target — only respawn if affordability changed
@@ -162,8 +173,10 @@ public class BlueprintBookParticleLoop {
         }, UPDATE_INTERVAL_MILLIS, UPDATE_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
     }
 
-    private Ref<EntityStore> spawnHighlightEntity(Store<EntityStore> store, Vector3i target, String blockTypeKey, boolean affordable) {
-        LOGGER.fine(() -> "[BlueprintBookParticle] Spawning highlight entity at " + target + " for block " + blockTypeKey + " affordable=" + affordable);
+    private Ref<EntityStore> spawnHighlightEntity(Store<EntityStore> store, Vector3i target, String blockTypeKey,
+            boolean affordable) {
+        LOGGER.fine(() -> "[BlueprintBookParticle] Spawning highlight entity at " + target + " for block "
+                + blockTypeKey + " affordable=" + affordable);
         Holder<EntityStore> holder = EntityStore.REGISTRY.newHolder();
 
         // Position and rotation — match the placed block's orientation
@@ -172,9 +185,8 @@ public class BlueprintBookParticleLoop {
         RotationTuple rotationTuple = RotationTuple.get(rotationIndex);
         Vector3f rotation = new Vector3f(
                 (float) rotationTuple.pitch().getRadians(),
-                (float) rotationTuple.yaw().getRadians()-3.14f, // Rotate 180 degrees to align with player's view
-                (float) rotationTuple.roll().getRadians()
-        );
+                (float) rotationTuple.yaw().getRadians() - 3.14f, // Rotate 180 degrees to align with player's view
+                (float) rotationTuple.roll().getRadians());
         holder.addComponent(TransformComponent.getComponentType(), new TransformComponent(pos, rotation));
         holder.addComponent(HeadRotation.getComponentType(), new HeadRotation(rotation));
 
@@ -204,8 +216,9 @@ public class BlueprintBookParticleLoop {
         // Apply the highlight effect — green if affordable, red if not
         String effectId = affordable ? EFFECT_ID_GREEN : EFFECT_ID_RED;
         EntityEffect effect = EntityEffect.getAssetMap().getAsset(effectId);
-        EffectControllerComponent effectCtrl = store.getComponent(entityRef, EffectControllerComponent.getComponentType());
-        effectCtrl.addEffect(entityRef, effect, 10000, OverlapBehavior.OVERWRITE, store);
+        EffectControllerComponent effectCtrl = store.getComponent(entityRef,
+                EffectControllerComponent.getComponentType());
+        effectCtrl.addEffect(entityRef, effect, UPDATE_INTERVAL_MILLIS, OverlapBehavior.OVERWRITE, store);
 
         return entityRef;
     }
