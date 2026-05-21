@@ -66,7 +66,6 @@ public final class DropScaler {
         RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
         BenchRecipeRegistries.init();
         applyModifications();
-        RecipeTreeResolver.init();
     }
 
     /**
@@ -83,6 +82,11 @@ public final class DropScaler {
         // ── Phase 2: Classify blocks by bench category ───────────────
         BenchBlockClassifier classifier = new BenchBlockClassifier();
         classifier.classify();
+
+        // ── Phase 2b: Build raw-cost cache ─────────────────────────
+        // Must run after Phase 1 (scaled costs) and before Phase 3
+        // (processors use resolveRecipeToRaw for raw-material drops).
+        RecipeTreeResolver.init();
 
         // ── Phase 3: Process blocks ──────────────────────────────────
 

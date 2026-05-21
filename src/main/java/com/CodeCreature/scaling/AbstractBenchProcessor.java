@@ -1,5 +1,7 @@
 package com.CodeCreature.scaling;
 
+import com.CodeCreature.crafting.RawMaterialRequirement;
+import com.CodeCreature.crafting.RecipeTreeResolver;
 import com.CodeCreature.registry.BenchRecipeRegistries;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockBreakingDropType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockGathering;
@@ -55,23 +57,13 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
 
             BlockGathering originalGathering = bt.getGathering();
 
-            MaterialQuantity[] inputs = recipe.getInput();
-            if (inputs == null || inputs.length ==  0) { skipped++; continue; }
-
-            MaterialQuantity primaryOut = recipe.getPrimaryOutput();
-            int outputQty = (primaryOut != null && primaryOut.getQuantity() > 0)
-                    ? primaryOut.getQuantity() : 1;
-
             record ResolvedIngredient(String itemId, int dropQty) {}
+            List<RawMaterialRequirement> rawCost = RecipeTreeResolver.resolveRecipeToRaw(recipe);
+            if (rawCost.isEmpty()) { skipped++; continue; }
+
             List<ResolvedIngredient> resolved = new ArrayList<>();
-            for (MaterialQuantity mq : inputs) {
-                if (mq == null) continue;
-                String itemId = ResourceTypeResolver.resolveInputItemId(mq, category());
-                if (itemId == null) continue;
-                itemId = NaturalResourceRegistry.resolveToGatherableForm(itemId);
-                int inputQty = mq.getQuantity(); // already 12x scaled from Phase 1
-                int dropQty = Math.max(1, inputQty / outputQty);
-                resolved.add(new ResolvedIngredient(itemId, dropQty));
+            for (RawMaterialRequirement raw : rawCost) {
+                resolved.add(new ResolvedIngredient(raw.itemId(), raw.quantity()));
             }
             if (resolved.isEmpty()) { skipped++; continue; }
 
