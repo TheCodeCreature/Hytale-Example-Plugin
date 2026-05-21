@@ -12,7 +12,7 @@ import com.CodeCreature.scaling.PlacementCostScaler;
 import com.CodeCreature.ui.blueprintbook.BlueprintBookParticleLoop;
 import com.CodeCreature.stencil.StencilDropDestroySystem;
 import com.CodeCreature.stencil.StencilPlacementSystem;
-import com.CodeCreature.ui.radial.StencilRadialInputListener;
+import com.CodeCreature.ui.radial.StencilInputListener;
 import com.CodeCreature.stencil.StencilSyncSystem;
 import com.CodeCreature.stencil.StencilVisualManager;
 import com.hypixel.hytale.component.Ref;
@@ -49,7 +49,7 @@ public class Plugin extends JavaPlugin {
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, Plugin::onPlayerDisconnect);
 
         // Stencil radial input — detect Pick interaction while holding a stencil (POC)
-        PacketAdapters.registerOutbound((PlayerPacketWatcher) StencilRadialInputListener::onOutboundPacket);
+        PacketAdapters.registerOutbound((PlayerPacketWatcher) StencilInputListener::onOutboundPacket);
 
         // Boost stack sizes after assets are loaded
         this.getEventRegistry().register(LoadAssetEvent.class, Plugin::onAssetsLoaded);

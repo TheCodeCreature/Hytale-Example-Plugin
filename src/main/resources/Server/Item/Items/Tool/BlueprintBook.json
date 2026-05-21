@@ -52,12 +52,12 @@
 	},
 	"Interactions": {
 		"Pick": "BlueprintBook_PickStencil",
-		"Secondary": "BlueprintBench_OpenUI"
+		"Use": "BlueprintBench_OpenUI"
 	},
 	"InteractionConfig": {
 		"DisplayOutlines": true,
 		"Priorities": {
-			"Secondary": {
+			"Use": {
 				"OffHand": 1
 			},
 			"Pick": {

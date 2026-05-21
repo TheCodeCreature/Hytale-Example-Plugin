@@ -55,6 +55,10 @@ public class BlueprintBookPickStencilInteraction extends SimpleInstantInteractio
         PlayerRef playerRef = commandBuffer.getComponent(ref, PlayerRef.getComponentType());
         if (playerRef == null) return;
 
+        // Main hand wins — if the player is holding a stencil, let StencilInputListener handle Pick
+        var activeItem = player.getInventory().getActiveHotbarItem();
+        if (StencilMetadata.isStencil(activeItem)) return;
+
         Store<EntityStore> store = commandBuffer.getStore();
 
         Vector3i target = TargetUtil.getTargetBlock(ref, 8.0, store);

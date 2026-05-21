@@ -45,12 +45,13 @@ public class BlueprintBookParticleLoop {
     private static final Logger LOGGER = Logger.getLogger("BlueprintBookParticleLoop");
     private static final long UPDATE_INTERVAL_MILLIS = 100;
     private static final String BLUEPRINT_BOOK_ITEM_ID = "BlueprintBook";
+    private static final String EFFECT_ID_DEFAULT = "Drop_Epic";
     private static final String EFFECT_ID_GREEN = "Drop_Uncommon";
     private static final String EFFECT_ID_RED = "BlockPlaceFail";
 
     // Feature flag: when false, skips affordability check and always shows green.
     // Set to true once auto-craft affordability performance is optimized.
-    private static final boolean ENABLE_AFFORDABILITY_CHECK = true;
+    private static final boolean ENABLE_AFFORDABILITY_CHECK = false;
 
     private static final Map<UUID, BlueprintBookParticleLoop> INSTANCES = new ConcurrentHashMap<>();
 
@@ -147,16 +148,19 @@ public class BlueprintBookParticleLoop {
                         return;
                     }
 
-                    // Target has a recipe — manage the highlight entity
+                    // Target has a recipe — resolve affordability
                     boolean affordable;
-                    CombinedItemContainer container = player.getInventory().getCombinedBackpackStorageHotbar();
-                    affordable = RecipeAffordabilityResolver.isAffordable(recipe, container);
+                    if (ENABLE_AFFORDABILITY_CHECK) {
+                        CombinedItemContainer container = player.getInventory().getCombinedBackpackStorageHotbar();
+                        affordable = RecipeAffordabilityResolver.isAffordable(recipe, container);
+                    } else {
+                        affordable = true;
+                    }
 
-                    if (target.equals(lastTargetBlock) && activeEntity != null && activeEntity.isValid()) {
-                        // Entity already exists at this target — only respawn if affordability changed
-                        if (affordable == lastAffordable) {
-                            return;
-                        }
+                    // Same target, entity still alive, affordability unchanged — nothing to do
+                    if (target.equals(lastTargetBlock) && activeEntity != null && activeEntity.isValid()
+                            && affordable == lastAffordable) {
+                        return;
                     }
 
                     // Target changed, affordability changed, or entity missing — replace
@@ -214,11 +218,15 @@ public class BlueprintBookParticleLoop {
         LOGGER.fine(() -> "[BlueprintBookParticle] Entity spawned with networkId=" + networkId);
 
         // Apply the highlight effect — green if affordable, red if not
-        String effectId = affordable ? EFFECT_ID_GREEN : EFFECT_ID_RED;
+        String effectId = EFFECT_ID_DEFAULT;
+        if (ENABLE_AFFORDABILITY_CHECK) {
+            effectId = affordable ? EFFECT_ID_GREEN : EFFECT_ID_RED;
+        }
+
         EntityEffect effect = EntityEffect.getAssetMap().getAsset(effectId);
         EffectControllerComponent effectCtrl = store.getComponent(entityRef,
                 EffectControllerComponent.getComponentType());
-        effectCtrl.addEffect(entityRef, effect, UPDATE_INTERVAL_MILLIS, OverlapBehavior.OVERWRITE, store);
+        effectCtrl.addEffect(entityRef, effect, UPDATE_INTERVAL_MILLIS+1, OverlapBehavior.EXTEND, store);
 
         return entityRef;
     }
