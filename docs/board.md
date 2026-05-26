@@ -1,12 +1,12 @@
 # Product Board
 
-> Last updated: 2026-05-20 10:30
+> Last updated: 2026-05-26 12:05
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 48
+    "Backlog" : 50
     "In Progress" : 4
     "Done" : 55
     "Cancelled" : 12
@@ -26,6 +26,8 @@ pie title Backlog Distribution
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
 | E2605181400 | Epic | Technical Debt Cleanup | — | high |
+| F2605261200 | Feature | Decompile Update API Compatibility | E2605181400 | critical |
+| S2605261205 | Story | Fix Missing Vector Types After Decompile Update | E2605181400 | critical |
 | F2605181420 | Feature | Blueprint Bench Page Decomposition | E2605181400 | medium |
 | S2605051200 | Story | Dynamic Cells Per Set Group | E2604221030 | high |
 | S2605051205 | Story | Fix Uncategorized Recipe Visibility | E2604221030 | high |

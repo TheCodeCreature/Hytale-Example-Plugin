@@ -25,6 +25,7 @@ Address remaining code quality findings from the comprehensive code review — i
 | F2605181410 | Inventory Listener Lifecycle Fix | backlog |
 | F2605181415 | Plugin Package Alignment | backlog |
 | F2605181420 | Blueprint Bench Page Decomposition | backlog |
+| F2605261200 | Decompile Update API Compatibility | backlog |
 
 ## Context
 These items were identified in the full codebase review (docs/review-full-codebase.md, findings #5, #9, #11, #17) and initially deferred due to risk or scope. Feasibility research (docs/hytale/research-particle-highlight-and-container-events.md) and architecture assessment (docs/review-refactor-blast-radius.md) have confirmed all 4 are viable. Design doc at docs/design-deferred-fixes.md.

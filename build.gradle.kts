@@ -42,6 +42,11 @@ dependencies {
     compileOnly(files("$hytaleInstall/Assets.zip"))
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testImplementation("org.mockito:mockito-core:5.12.0")
+    testImplementation("org.mockito:mockito-inline:5.2.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.12.0")
+    testImplementation("net.bytebuddy:byte-buddy:1.17.6")
+    testImplementation("net.bytebuddy:byte-buddy-agent:1.17.6")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
 }
 
@@ -110,6 +115,7 @@ tasks.test {
     useJUnitPlatform()
 
     systemProperty("java.util.logging.manager", "com.hypixel.hytale.logger.backend.HytaleLogManager")
+    systemProperty("net.bytebuddy.experimental", "true")
 
     // Allow reflective access for resource collection unit tests
     jvmArgs(
@@ -373,6 +379,15 @@ afterEvaluate {
     if (targetTask != null) {
         targetTask.dependsOn(checkNoExistingServers)
         targetTask.dependsOn(deployCommonAssets)
+
+        (targetTask as? JavaExec)?.let { runTask ->
+            runTask.doFirst {
+                // Defensive cleanup: some plugin/toolchain combinations can inject
+                // empty JVM/program args, which Java interprets as an empty main class.
+                runTask.setJvmArgs(runTask.jvmArgs.filter { it.isNotBlank() })
+                runTask.setArgs(runTask.args.filter { it.isNotBlank() })
+            }
+        }
 
         // Only sync assets back on successful server shutdown, NOT on kill/failure.
         // Using finalizedBy would run syncAssets even when the task is cancelled or
