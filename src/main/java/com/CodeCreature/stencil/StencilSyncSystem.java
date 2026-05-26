@@ -6,6 +6,7 @@ import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.event.EventRegistration;
 
 import java.util.UUID;
@@ -29,17 +30,21 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class StencilSyncSystem {
 
     private static final ConcurrentHashMap<UUID, EventRegistration<?, ?>[]> registeredPlayers = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<UUID, AffordabilityCoalescer> coalescers = new ConcurrentHashMap<>();
 
     private StencilSyncSystem() {}
 
     /**
      * Registers inventory change listeners for a player to auto-restore stencil quantities.
      */
-    public static void register(PlayerRef playerRef, Player player) {
+    public static void register(PlayerRef playerRef, Player player, World world) {
         UUID uuid = playerRef.getUuid();
         if (registeredPlayers.containsKey(uuid)) {
             return; // Already registered
         }
+
+        AffordabilityCoalescer coalescer = new AffordabilityCoalescer(playerRef, player);
+        coalescers.put(uuid, coalescer);
 
         Inventory inventory = player.getInventory();
         ItemContainer hotbar = inventory.getHotbar();
@@ -48,15 +53,22 @@ public final class StencilSyncSystem {
         EventRegistration<?, ?>[] handles = new EventRegistration[3];
 
         handles[0] = hotbar.registerChangeEvent(event -> {
-            restoreStencils(hotbar);
-            StencilVisualManager.refreshAffordability(playerRef, player);
+            if (!coalescer.isRestoring()) {
+                coalescer.setRestoring(true);
+                try {
+                    restoreStencils(hotbar);
+                } finally {
+                    coalescer.setRestoring(false);
+                }
+            }
+            coalescer.markDirty(world);
         });
 
         // Also refresh affordability when backpack/storage change (e.g., picking up or dropping items)
         handles[1] = inventory.getBackpack().registerChangeEvent(event ->
-                StencilVisualManager.refreshAffordability(playerRef, player));
+                coalescer.markDirty(world));
         handles[2] = inventory.getStorage().registerChangeEvent(event ->
-                StencilVisualManager.refreshAffordability(playerRef, player));
+                coalescer.markDirty(world));
 
         registeredPlayers.put(uuid, handles);
     }
@@ -65,6 +77,7 @@ public final class StencilSyncSystem {
      * Unregisters a player (cleanup on disconnect).
      */
     public static void unregister(UUID uuid) {
+        coalescers.remove(uuid);
         EventRegistration<?, ?>[] handles = registeredPlayers.remove(uuid);
         if (handles != null) {
             for (EventRegistration<?, ?> handle : handles) {

@@ -97,7 +97,7 @@ public class Plugin extends JavaPlugin {
         // Register per-player stencil sync listeners
         Player player = store.getComponent(ref, Player.getComponentType());
         if (player != null) {
-            StencilSyncSystem.register(playerRef, player);
+            StencilSyncSystem.register(playerRef, player, world);
             StencilVisualManager.applyVisuals(playerRef, player);
         }
 

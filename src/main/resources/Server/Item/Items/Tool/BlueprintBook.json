@@ -15,9 +15,6 @@
 	"Model": "Items/Weapons/Spellbook/Grimoire.blockymodel",
 	"Texture": "Items/Weapons/Spellbook/Grimoire_Brown_Texture.png",
 	"PlayerAnimationsId": "Spellbook",
-	"Utility": {
-		"Usable": true
-	},
 	"Recipe": {
 		"Input": [
 			{
@@ -55,14 +52,6 @@
 		"Use": "BlueprintBench_OpenUI"
 	},
 	"InteractionConfig": {
-		"DisplayOutlines": true,
-		"Priorities": {
-			"Use": {
-				"OffHand": 1
-			},
-			"Pick": {
-				"OffHand": 1
-			}
-		}
+		"DisplayOutlines": true
 	}
 }

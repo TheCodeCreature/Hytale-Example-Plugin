@@ -4,6 +4,7 @@ import com.CodeCreature.scaling.BenchCategory;
 import com.CodeCreature.scaling.NaturalResourceRegistry;
 import com.CodeCreature.scaling.RecipeTierClassifier;
 import com.CodeCreature.scaling.ResourceTypeResolver;
+import com.CodeCreature.util.StencilMetadata;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
@@ -13,7 +14,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * Computes an {@link AutoCraftPlan} for a stencil placement, determining
@@ -56,8 +56,6 @@ import java.util.logging.Logger;
  * @see com.CodeCreature.stencil.StencilPlacementSystem
  */
 public final class AutoCraftPlanner {
-
-    private static final Logger LOGGER = Logger.getLogger("AutoCraftPlanner");
 
     private AutoCraftPlanner() {}
 
@@ -120,17 +118,26 @@ public final class AutoCraftPlanner {
             return AutoCraftPlan.direct(List.of(), directView, rawView);
         }
 
-        // Step 2: Fast path — player has all direct ingredients
-        if (container.canRemoveMaterials(directMaterials)) {
-            List<ConsumptionEntry> consumptions = new ArrayList<>();
-            for (MaterialQuantity mq : directMaterials) {
-                if (mq == null) continue;
-                String itemId = ResourceTypeResolver.resolveInputItemId(mq, category);
-                if (itemId == null || itemId.isEmpty()) continue;
-                itemId = NaturalResourceRegistry.resolveToGatherableForm(itemId);
-                consumptions.add(new ConsumptionEntry(itemId, mq.getQuantity()));
-            }
-            return AutoCraftPlan.direct(consumptions, directView, rawView);
+        // Step 2: Fast path — player has all direct ingredients (excluding stencils)
+        // NOTE: We cannot use container.canRemoveMaterials(directMaterials) here because
+        // ResourceTypeId-based matching incorrectly matches stencil items (which share
+        // the same ResourceTypes as regular items but have stencil BSON metadata).
+        // Instead, resolve each ingredient to a concrete ItemId and count non-stencil items.
+        boolean directlyAvailable = true;
+        List<ConsumptionEntry> fastPathConsumptions = new ArrayList<>();
+        for (MaterialQuantity mq : directMaterials) {
+            if (mq == null) continue;
+            String itemId = ResourceTypeResolver.resolveInputItemId(mq, category);
+            if (itemId == null || itemId.isEmpty()) { directlyAvailable = false; break; }
+            itemId = NaturalResourceRegistry.resolveToGatherableForm(itemId);
+            final String lookupId = itemId;
+            int available = container.countItemStacks(stack ->
+                    lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
+            if (available < mq.getQuantity()) { directlyAvailable = false; break; }
+            fastPathConsumptions.add(new ConsumptionEntry(itemId, mq.getQuantity()));
+        }
+        if (directlyAvailable) {
+            return AutoCraftPlan.direct(fastPathConsumptions, directView, rawView);
         }
 
         // Step 3: Slow path — per-ingredient deficit computation
@@ -147,7 +154,8 @@ public final class AutoCraftPlanner {
             int needed = mq.getQuantity();
 
             final String lookupId = resolvedId;
-            int playerHas = container.countItemStacks(stack -> lookupId.equals(stack.getItemId()));
+            int playerHas = container.countItemStacks(stack ->
+                    lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
             int useExisting = Math.min(playerHas, needed);
             int deficit = needed - useExisting;
 
@@ -175,7 +183,8 @@ public final class AutoCraftPlanner {
         for (var entry : totalConsumption.entrySet()) {
             final String itemId = entry.getKey();
             int qtyNeeded = entry.getValue();
-            int available = container.countItemStacks(stack -> itemId.equals(stack.getItemId()));
+            int available = container.countItemStacks(stack ->
+                    itemId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
             if (available < qtyNeeded) {
                 return AutoCraftPlan.unaffordable(directView, rawView);
             }

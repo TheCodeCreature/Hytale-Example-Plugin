@@ -21,6 +21,7 @@ import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.EntityScaleComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.HeadRotation;
+import com.hypixel.hytale.server.core.modules.entity.component.Intangible;
 import com.hypixel.hytale.server.core.entity.entities.BlockEntity;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.modules.entity.EntityModule;
@@ -45,7 +46,7 @@ public class BlueprintBookParticleLoop {
     private static final Logger LOGGER = Logger.getLogger("BlueprintBookParticleLoop");
     private static final long UPDATE_INTERVAL_MILLIS = 100;
     private static final String BLUEPRINT_BOOK_ITEM_ID = "BlueprintBook";
-    private static final String EFFECT_ID_DEFAULT = "Drop_Epic";
+    private static final String EFFECT_ID_DEFAULT = "Drop_Rare";
     private static final String EFFECT_ID_GREEN = "Drop_Uncommon";
     private static final String EFFECT_ID_RED = "BlockPlaceFail";
 
@@ -118,11 +119,6 @@ public class BlueprintBookParticleLoop {
                     byte activeSlot = player.getInventory().getActiveHotbarSlot();
                     ItemStack held = player.getInventory().getHotbar().getItemStack(activeSlot);
                     boolean holdingBook = held != null && held.getItemId().equals(BLUEPRINT_BOOK_ITEM_ID);
-                    if (!holdingBook) {
-                        // Check utility (offhand) slot
-                        ItemStack utilityItem = player.getInventory().getUtilityItem();
-                        holdingBook = utilityItem != null && utilityItem.getItemId().equals(BLUEPRINT_BOOK_ITEM_ID);
-                    }
                     if (!holdingBook) {
                         removeHighlightEntity(store);
                         return;
@@ -210,6 +206,11 @@ public class BlueprintBookParticleLoop {
         // Block entity — renders as the targeted block's cube model with its textures
         holder.addComponent(BlockEntity.getComponentType(), new BlockEntity(blockTypeKey));
         holder.addComponent(EntityScaleComponent.getComponentType(), new EntityScaleComponent(2.1f));
+
+        // Intangible — exclude from spatial indices so client raycasts pass through
+        // to the underlying block. Without this, the entity's auto-injected BoundingBox
+        // intercepts all interactions (break, use, place).
+        holder.ensureComponent(Intangible.getComponentType());
 
         // Non-serialized — don't persist this entity to disk
         holder.ensureComponent(EntityStore.REGISTRY.getNonSerializedComponentType());

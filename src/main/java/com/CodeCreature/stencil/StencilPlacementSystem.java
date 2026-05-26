@@ -4,10 +4,7 @@ import com.CodeCreature.crafting.AutoCraftPlan;
 import com.CodeCreature.crafting.AutoCraftPlanner;
 import com.CodeCreature.crafting.ConsumptionEntry;
 import com.CodeCreature.crafting.PlaceBlockCostUtil;
-import com.CodeCreature.crafting.RecipeTreeResolver;
 import com.CodeCreature.scaling.BenchCategory;
-import com.CodeCreature.scaling.NaturalResourceRegistry;
-import com.CodeCreature.scaling.ResourceTypeResolver;
 import com.CodeCreature.util.StencilMetadata;
 import com.hypixel.hytale.component.Archetype;
 import com.hypixel.hytale.component.ArchetypeChunk;
@@ -15,10 +12,7 @@ import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
-import com.hypixel.hytale.math.util.ChunkUtil;
-import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.server.core.Message;
-import com.hypixel.hytale.server.core.asset.type.blocktype.config.RotationTuple;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -30,14 +24,11 @@ import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import com.hypixel.hytale.server.core.inventory.transaction.ListTransaction;
 import com.hypixel.hytale.server.core.inventory.transaction.MaterialTransaction;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
-import com.hypixel.hytale.server.core.universe.world.World;
-import com.hypixel.hytale.server.core.universe.world.chunk.WorldChunk;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Intercepts {@link PlaceBlockEvent} for blueprint stencil items and redirects
@@ -69,8 +60,6 @@ import java.util.logging.Logger;
  * {@code getEntityStoreRegistry().registerSystem(new StencilPlacementSystem())}</p>
  */
 public class StencilPlacementSystem extends EntityEventSystem<EntityStore, PlaceBlockEvent> {
-
-    private static final Logger LOGGER = Logger.getLogger("StencilPlacementSystem");
 
     public StencilPlacementSystem() {
         super(PlaceBlockEvent.class);
@@ -134,20 +123,23 @@ public class StencilPlacementSystem extends EntityEventSystem<EntityStore, Place
         }
 
         // 7. Consume recipe resources atomically
-        List<MaterialQuantity> consumptionMaterials;
-        if (!plan.requiresAutoCraft()) {
-            // Fast path: use original recipe materials directly —
-            // engine handles ResourceTypeId matching natively
-            consumptionMaterials = materials;
-        } else {
-            // Slow path: build from auto-craft plan consumption entries
-            consumptionMaterials = buildConsumptionMaterials(plan, recipe);
-            if (consumptionMaterials == null) {
-                event.setCancelled(true);
-                sendError(playerRef, "Resource consumption failed — cannot resolve materials");
-                return;
-            }
+        //    Always use ItemId-based MaterialQuantities built from the plan's
+        //    resolved consumption entries. This ensures the engine uses
+        //    isStackableWith/isEquivalentType for matching (which checks metadata),
+        //    preventing stencil items from being consumed as raw materials.
+        //    ResourceTypeId-based MQs match stencils because stencils share
+        //    ResourceTypes with regular items — ItemId-based MQs do not.
+        List<MaterialQuantity> consumptionMaterials = new java.util.ArrayList<>();
+        for (ConsumptionEntry entry : plan.consumptions()) {
+            consumptionMaterials.add(new MaterialQuantity(
+                    entry.itemId(), null, null, entry.quantity(), null));
         }
+        if (consumptionMaterials.isEmpty()) {
+            event.setCancelled(true);
+            sendError(playerRef, "Resource consumption failed — empty consumption list");
+            return;
+        }
+
         ListTransaction<MaterialTransaction> txn = container.removeMaterials(consumptionMaterials, true, true, true);
         if (!txn.succeeded()) {
             event.setCancelled(true);
@@ -190,75 +182,4 @@ public class StencilPlacementSystem extends EntityEventSystem<EntityStore, Place
         }
     }
 
-    /**
-     * Converts an {@link AutoCraftPlan}'s consumption entries to
-     * {@link MaterialQuantity} instances for {@code removeMaterials()}.
-     *
-     * <p>For each consumption entry, finds a matching {@link MaterialQuantity}
-     * in the recipe's inputs (or sub-recipe inputs) to clone with the
-     * required quantity.
-     *
-     * @param plan   the auto-craft plan with consumption entries
-     * @param recipe the original recipe (for finding cloneable MaterialQuantity instances)
-     * @return list of MaterialQuantity for removeMaterials, or null if any entry can't be resolved
-     */
-    @Nullable
-    private static List<MaterialQuantity> buildConsumptionMaterials(
-            @Nonnull AutoCraftPlan plan, @Nonnull CraftingRecipe recipe) {
-        List<MaterialQuantity> result = new java.util.ArrayList<>();
-        MaterialQuantity[] inputs = recipe.getInput();
-
-        for (ConsumptionEntry entry : plan.consumptions()) {
-            MaterialQuantity template = findTemplate(entry.itemId(), inputs);
-            if (template == null) {
-                // Try finding from sub-recipes (auto-crafted raw materials)
-                template = findTemplateFromSubRecipes(entry.itemId());
-            }
-            if (template == null) {
-                LOGGER.warning("[StencilPlacement] Cannot find MaterialQuantity template for: " + entry.itemId());
-                return null;
-            }
-            result.add(template.clone(entry.quantity()));
-        }
-        return result;
-    }
-
-    @Nullable
-    private static MaterialQuantity findTemplate(@Nonnull String itemId, @Nullable MaterialQuantity[] inputs) {
-        if (inputs == null) return null;
-        for (MaterialQuantity mq : inputs) {
-            if (mq == null) continue;
-            // Direct itemId match
-            if (itemId.equals(mq.getItemId())) return mq;
-            // ResourceTypeId resolution match — raw materials in recipes
-            // are often specified via ResourceTypeId (e.g., "Rock_Stone")
-            // rather than direct itemId
-            if (mq.getResourceTypeId() != null) {
-                String resolved = ResourceTypeResolver.resolveInputItemId(mq, BenchCategory.BUILDERS_ONLY);
-                if (resolved != null) {
-                    resolved = NaturalResourceRegistry.resolveToGatherableForm(resolved);
-                    if (itemId.equals(resolved)) return mq;
-                }
-            }
-        }
-        return null;
-    }
-
-    @Nullable
-    private static MaterialQuantity findTemplateFromSubRecipes(@Nonnull String itemId) {
-        // Search through all recipes for a MaterialQuantity that references this item
-        CraftingRecipe subRecipe = RecipeTreeResolver.findRecipeFor(itemId);
-        if (subRecipe != null) {
-            MaterialQuantity[] subInputs = subRecipe.getInput();
-            MaterialQuantity template = findTemplate(itemId, subInputs);
-            if (template != null) return template;
-        }
-        // Try finding any recipe that uses this item as input
-        for (CraftingRecipe r : CraftingRecipe.getAssetMap().getAssetMap().values()) {
-            if (r == null) continue;
-            MaterialQuantity template = findTemplate(itemId, r.getInput());
-            if (template != null) return template;
-        }
-        return null;
-    }
 }
