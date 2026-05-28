@@ -89,7 +89,7 @@ public final class StencilSyncSystem {
     }
 
     /**
-     * Scans the hotbar for stencil items with qty 1 and restores them to qty 2.
+     * Scans the hotbar for stencil items and restores them to the configured stack size.
      */
     private static void restoreStencils(ItemContainer hotbar) {
         short capacity = hotbar.getCapacity();
@@ -97,8 +97,8 @@ public final class StencilSyncSystem {
             ItemStack stack = hotbar.getItemStack(slot);
             if (stack == null) continue;
             if (!StencilMetadata.isStencil(stack)) continue;
-            if (stack.getQuantity() == 1) {
-                ItemStack restored = new ItemStack(stack.getItemId(), 2, stack.getMetadata());
+            if (stack.getQuantity() != StencilMetadata.STENCIL_STACK_SIZE) {
+                ItemStack restored = new ItemStack(stack.getItemId(), StencilMetadata.STENCIL_STACK_SIZE, stack.getMetadata());
                 hotbar.setItemStackForSlot(slot, restored);
             }
         }

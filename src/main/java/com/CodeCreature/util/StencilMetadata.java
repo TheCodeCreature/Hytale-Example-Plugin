@@ -30,6 +30,8 @@ public final class StencilMetadata {
     /** BSON key storing the recipe ID to consume resources from. */
     private static final String RECIPE_ID_KEY = "RecipeId";
 
+    public static final int STENCIL_STACK_SIZE = 99;
+
     private StencilMetadata() {}
 
     /**
@@ -98,6 +100,6 @@ public final class StencilMetadata {
         BsonDocument metadata = new BsonDocument();
         metadata.put(STENCIL_TAG_KEY, new BsonString("true"));
         metadata.put(RECIPE_ID_KEY, new BsonString(recipeId));
-        return new ItemStack(itemTypeKey, 1, metadata);
+        return new ItemStack(itemTypeKey, STENCIL_STACK_SIZE, metadata);
     }
 }
