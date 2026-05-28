@@ -8,9 +8,7 @@ import com.hypixel.hytale.component.Holder;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.RemoveReason;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
-import com.hypixel.hytale.math.vector.Vector3i;
+import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.RotationTuple;
@@ -34,6 +32,9 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import javax.annotation.Nonnull;
+import org.joml.Vector3d;
+import org.joml.Vector3i;
+
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -117,7 +118,12 @@ public class BlueprintBookParticleLoop {
                     }
 
                     byte activeSlot = player.getInventory().getActiveHotbarSlot();
-                    ItemStack held = player.getInventory().getHotbar().getItemStack(activeSlot);
+                    var hotbar = player.getInventory().getHotbar();
+                    if (hotbar == null) {
+                        removeHighlightEntity(store);
+                        return;
+                    }
+                    ItemStack held = hotbar.getItemStack(activeSlot);
                     boolean holdingBook = held != null && held.getItemId().equals(BLUEPRINT_BOOK_ITEM_ID);
                     if (!holdingBook) {
                         removeHighlightEntity(store);
@@ -183,10 +189,10 @@ public class BlueprintBookParticleLoop {
         Vector3d pos = new Vector3d(target.x + 0.5, target.y, target.z + 0.5);
         int rotationIndex = world.getBlockRotationIndex(target.x, target.y, target.z);
         RotationTuple rotationTuple = RotationTuple.get(rotationIndex);
-        Vector3f rotation = new Vector3f(
-                (float) rotationTuple.pitch().getRadians(),
-                (float) rotationTuple.yaw().getRadians() - 3.14f, // Rotate 180 degrees to align with player's view
-                (float) rotationTuple.roll().getRadians());
+        Rotation3f rotation = new Rotation3f(
+            (float) rotationTuple.pitch().getRadians(),
+            (float) rotationTuple.yaw().getRadians() - 3.14f, // Rotate 180 degrees to align with player's view
+            (float) rotationTuple.roll().getRadians());
         holder.addComponent(TransformComponent.getComponentType(), new TransformComponent(pos, rotation));
         holder.addComponent(HeadRotation.getComponentType(), new HeadRotation(rotation));
 
@@ -216,6 +222,10 @@ public class BlueprintBookParticleLoop {
         holder.ensureComponent(EntityStore.REGISTRY.getNonSerializedComponentType());
 
         Ref<EntityStore> entityRef = store.addEntity(holder, AddReason.SPAWN);
+        if (entityRef == null) {
+            LOGGER.warning("[BlueprintBookParticle] Failed to spawn highlight entity");
+            return null;
+        }
         LOGGER.fine(() -> "[BlueprintBookParticle] Entity spawned with networkId=" + networkId);
 
         // Apply the highlight effect — green if affordable, red if not
@@ -227,6 +237,10 @@ public class BlueprintBookParticleLoop {
         EntityEffect effect = EntityEffect.getAssetMap().getAsset(effectId);
         EffectControllerComponent effectCtrl = store.getComponent(entityRef,
                 EffectControllerComponent.getComponentType());
+        if (effect == null || effectCtrl == null) {
+            LOGGER.warning("[BlueprintBookParticle] Missing effect or controller for highlight entity");
+            return entityRef;
+        }
         effectCtrl.addEffect(entityRef, effect, UPDATE_INTERVAL_MILLIS+1, OverlapBehavior.EXTEND, store);
 
         return entityRef;

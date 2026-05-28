@@ -5,7 +5,6 @@ import com.CodeCreature.registry.FilteredRecipeEntry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
 import com.CodeCreature.util.StencilMetadata;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.math.vector.Vector3i;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -19,6 +18,9 @@ import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.protocol.Packet;
 import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChain;
 import com.hypixel.hytale.protocol.packets.interaction.SyncInteractionChains;
+import org.joml.Vector3i;
+
+import java.util.Objects;
 
 
 /**
@@ -80,8 +82,15 @@ public final class StencilInputListener {
      */
     private static void openRadialMenu(PlayerRef playerRef, Ref<EntityStore> ref,
                                        Store<EntityStore> store, Player player) {
+        if (playerRef == null || ref == null || store == null || player == null) {
+            return;
+        }
+
         var pageManager = player.getPageManager();
-        pageManager.openCustomPage(ref, store, new StencilRadialMenuPage(playerRef, player));
+        pageManager.openCustomPage(
+                Objects.requireNonNull(ref, "ref"),
+                Objects.requireNonNull(store, "store"),
+                new StencilRadialMenuPage(playerRef, player));
     }
 
     /**
@@ -90,17 +99,30 @@ public final class StencilInputListener {
      */
     private static void pickToSwitch(PlayerRef playerRef, Ref<EntityStore> ref,
                                      Store<EntityStore> store, Player player) {
-        Vector3i target = TargetUtil.getTargetBlock(ref, 8.0, store);
+        if (playerRef == null || ref == null || store == null || player == null) {
+            return;
+        }
+
+        Vector3i target = TargetUtil.getTargetBlock(
+                Objects.requireNonNull(ref, "ref"),
+                8.0,
+                Objects.requireNonNull(store, "store"));
         if (target == null) return;
 
         var world = store.getExternalData().getWorld();
         BlockType blockType = world.getBlockType(target.x, target.y, target.z);
         if (blockType == null) return;
 
-        CraftingRecipe recipe = BenchRecipeRegistries.getRecipeForBlock(blockType.getId());
+        String blockTypeId = blockType.getId();
+        if (blockTypeId == null) return;
+
+        CraftingRecipe recipe = BenchRecipeRegistries.getRecipeForBlock(blockTypeId);
         if (recipe == null) return;
 
-        FilteredRecipeEntry entry = RecipeFilterRegistry.getEntry(recipe.getId());
+        String recipeId = recipe.getId();
+        if (recipeId == null) return;
+
+        FilteredRecipeEntry entry = RecipeFilterRegistry.getEntry(recipeId);
         if (entry == null) return;
 
         var itemInHand = player.getInventory().getActiveHotbarItem();
@@ -108,8 +130,11 @@ public final class StencilInputListener {
 
         ItemStack newStencil = StencilMetadata.createStencil(entry.outputItemId(), entry.recipeId());
         short activeSlot = (short) player.getInventory().getActiveHotbarSlot();
-        player.getInventory().getHotbar().setItemStackForSlot(activeSlot, newStencil);
+        var hotbar = player.getInventory().getHotbar();
+        if (hotbar == null) return;
 
-        LOGGER.atInfo().log("[Stencil] Pick-to-switch for player %s — swapped to recipe %d", playerRef.getUuid(), entry.recipeId());
+        hotbar.setItemStackForSlot(activeSlot, newStencil);
+
+        LOGGER.atInfo().log("[Stencil] Pick-to-switch for player %s - swapped to recipe %s", playerRef.getUuid(), entry.recipeId());
     }
 }

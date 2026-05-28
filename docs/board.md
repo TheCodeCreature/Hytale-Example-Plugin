@@ -1,14 +1,14 @@
 # Product Board
 
-> Last updated: 2026-05-26 12:05
+> Last updated: 2026-05-27 17:45
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 50
+    "Backlog" : 49
     "In Progress" : 4
-    "Done" : 55
+    "Done" : 59
     "Cancelled" : 12
 ```
 
@@ -72,6 +72,10 @@ pie title Backlog Distribution
 ### Done
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
+| S2605271730 | Story | Fix Manifest ServerVersion Semver Range | E2605181400 | critical |
+| S2605271735 | Story | Fix Permission Node Invalid Characters | E2605181400 | high |
+| S2605271740 | Story | Remove Compile Restoration Skeleton Code | E2605181400 | medium |
+| S2605271745 | Story | Fix Null Safety in BlueprintBookParticleLoop | E2605181400 | high |
 | F2605181405 | Feature | Blueprint Book Highlight Performance | E2605181400 | high |
 | S2605191005 | Story | Build RecipeTierClassifier | E2604201200 | critical |
 | S2605191010 | Story | Modify DropScaler Phase 1 for Leaf-Only Scaling | E2604201200 | critical |

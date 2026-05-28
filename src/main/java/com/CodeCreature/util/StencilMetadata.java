@@ -98,6 +98,6 @@ public final class StencilMetadata {
         BsonDocument metadata = new BsonDocument();
         metadata.put(STENCIL_TAG_KEY, new BsonString("true"));
         metadata.put(RECIPE_ID_KEY, new BsonString(recipeId));
-        return new ItemStack(itemTypeKey, 2, metadata);
+        return new ItemStack(itemTypeKey, 1, metadata);
     }
 }

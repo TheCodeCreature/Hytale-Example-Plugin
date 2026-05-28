@@ -81,9 +81,9 @@ tasks.named<ProcessResources>("processResources") {
     var replaceProperties = mapOf(
         "plugin_group" to findProperty("plugin_group"),
         "plugin_maven_group" to project.group,
-        "plugin_name" to project.name,
+        "plugin_name" to (findProperty("plugin_name")?.toString() ?: project.name),
         "plugin_version" to project.version,
-        "server_version" to detectedServerVersion,
+        "server_version" to if (detectedServerVersion.matches(Regex("""\d+\.\d+\.\d+"""))) "^$detectedServerVersion" else detectedServerVersion,
 
         "plugin_description" to findProperty("plugin_description"),
         "plugin_website" to findProperty("plugin_website"),
