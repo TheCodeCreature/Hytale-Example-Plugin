@@ -40,6 +40,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 import com.CodeCreature.util.DebugLogger;
@@ -48,6 +49,7 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 public class BlueprintBookParticleLoop {
 
     private static final long UPDATE_INTERVAL_MILLIS = 100;
+    private static final long EFFECT_DURATION_MILLIS = 500;
     private static final String BLUEPRINT_BOOK_ITEM_ID = "BlueprintBook";
     private static final String EFFECT_ID_DEFAULT = "Drop_Rare";
     private static final String EFFECT_ID_GREEN = "Drop_Uncommon";
@@ -66,6 +68,7 @@ public class BlueprintBookParticleLoop {
     private Ref<EntityStore> activeEntity;
     private boolean lastAffordable;
     private volatile boolean active = true;
+    private final AtomicBoolean pending = new AtomicBoolean(false);
 
     public BlueprintBookParticleLoop(@Nonnull PlayerRef playerRef, @Nonnull World world) {
         this.playerRef = playerRef;
@@ -96,89 +99,91 @@ public class BlueprintBookParticleLoop {
 
     private void startUpdateLoop() {
         updateTask = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> {
-            if (!active) {
-                updateTask.cancel(false);
-                return;
-            }
+            if (!active) { return; }
+            if (!pending.compareAndSet(false, true)) { return; }
             try {
-                world.execute(() -> {
-                    Ref<EntityStore> ref = playerRef.getReference();
-                    if (ref == null || !ref.isValid()) {
-                        removeHighlightEntity(ref != null ? ref.getStore() : null);
-                        active = false;
-                        INSTANCES.remove(playerRef.getUuid());
-                        return;
-                    }
-
-                    Store<EntityStore> store = ref.getStore();
-                    Player player = store.getComponent(ref, Player.getComponentType());
-                    if (player == null) {
-                        removeHighlightEntity(store);
-                        active = false;
-                        INSTANCES.remove(playerRef.getUuid());
-                        return;
-                    }
-
-                    byte activeSlot = player.getInventory().getActiveHotbarSlot();
-                    var hotbar = player.getInventory().getHotbar();
-                    if (hotbar == null) {
-                        removeHighlightEntity(store);
-                        return;
-                    }
-                    ItemStack held = hotbar.getItemStack(activeSlot);
-                    boolean holdingBook = held != null && held.getItemId().equals(BLUEPRINT_BOOK_ITEM_ID);
-                    if (!holdingBook) {
-                        removeHighlightEntity(store);
-                        return;
-                    }
-
-                    // Shape-aware raycast — checks actual interaction hitboxes, not full cubes
-                    Vector3i target = BoundingBoxRayCast.getTargetBlock(ref, 8.0, store);
-                    if (target == null) {
-                        removeHighlightEntity(store);
-                        return;
-                    }
-
-                    BlockType blockType = world.getBlockType(target.x, target.y, target.z);
-                    if (blockType == null) {
-                        removeHighlightEntity(store);
-                        return;
-                    }
-
-                    String blockTypeId = blockType.getId();
-                    CraftingRecipe recipe = BenchRecipeRegistries.getRecipeForBlock(blockTypeId);
-                    if (recipe == null) {
-                        removeHighlightEntity(store);
-                        return;
-                    }
-
-                    // Target has a recipe — resolve affordability
-                    boolean affordable;
-                    if (ENABLE_AFFORDABILITY_CHECK) {
-                        CombinedItemContainer container = player.getInventory().getCombinedBackpackStorageHotbar();
-                        affordable = RecipeAffordabilityResolver.isAffordable(recipe, container);
-                    } else {
-                        affordable = true;
-                    }
-
-                    // Same target, entity still alive, affordability unchanged — nothing to do
-                    if (target.equals(lastTargetBlock) && activeEntity != null && activeEntity.isValid()
-                            && affordable == lastAffordable) {
-                        return;
-                    }
-
-                    // Target changed, affordability changed, or entity missing — replace
-                    if (activeEntity != null && activeEntity.isValid()) {
-                        store.removeEntity(activeEntity, RemoveReason.REMOVE);
-                    }
-                    activeEntity = spawnHighlightEntity(store, target, blockTypeId, affordable);
-                    lastTargetBlock = target;
-                    lastAffordable = affordable;
-                });
+                world.execute(this::executeTick);
             } catch (Exception e) {
+                pending.set(false);
                 DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING, "[BlueprintBookParticle] Error in update loop: " + e.getMessage());
             }
         }, UPDATE_INTERVAL_MILLIS, UPDATE_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+    }
+
+    private void executeTick() {
+        pending.set(false);
+        if (!active) { return; }
+
+        Ref<EntityStore> ref = playerRef.getReference();
+        if (ref == null || !ref.isValid()) {
+            removeHighlightEntity(ref != null ? ref.getStore() : (activeEntity != null ? activeEntity.getStore() : null));
+            active = false;
+            return;
+        }
+
+        Store<EntityStore> store = ref.getStore();
+        Player player = store.getComponent(ref, Player.getComponentType());
+        if (player == null) {
+            removeHighlightEntity(store);
+            active = false;
+            return;
+        }
+
+        byte activeSlot = player.getInventory().getActiveHotbarSlot();
+        var hotbar = player.getInventory().getHotbar();
+        if (hotbar == null) {
+            removeHighlightEntity(store);
+            return;
+        }
+        ItemStack held = hotbar.getItemStack(activeSlot);
+        boolean holdingBook = held != null && held.getItemId().equals(BLUEPRINT_BOOK_ITEM_ID);
+        if (!holdingBook) {
+            removeHighlightEntity(store);
+            return;
+        }
+
+        // Shape-aware raycast — checks actual interaction hitboxes, not full cubes
+        Vector3i target = BoundingBoxRayCast.getTargetBlock(ref, 8.0, store);
+        if (target == null) {
+            removeHighlightEntity(store);
+            return;
+        }
+
+        BlockType blockType = world.getBlockType(target.x, target.y, target.z);
+        if (blockType == null) {
+            removeHighlightEntity(store);
+            return;
+        }
+
+        String blockTypeId = blockType.getId();
+        CraftingRecipe recipe = BenchRecipeRegistries.getRecipeForBlock(blockTypeId);
+        if (recipe == null) {
+            removeHighlightEntity(store);
+            return;
+        }
+
+        // Target has a recipe — resolve affordability
+        boolean affordable;
+        if (ENABLE_AFFORDABILITY_CHECK) {
+            CombinedItemContainer container = player.getInventory().getCombinedBackpackStorageHotbar();
+            affordable = RecipeAffordabilityResolver.isAffordable(recipe, container);
+        } else {
+            affordable = true;
+        }
+
+        // Same target, entity still alive, affordability unchanged — nothing to do
+        if (target.equals(lastTargetBlock) && activeEntity != null && activeEntity.isValid()
+                && affordable == lastAffordable) {
+            return;
+        }
+
+        // Target changed, affordability changed, or entity missing — replace
+        if (activeEntity != null && activeEntity.isValid()) {
+            store.removeEntity(activeEntity, RemoveReason.REMOVE);
+        }
+        activeEntity = spawnHighlightEntity(store, target, blockTypeId, affordable);
+        lastTargetBlock = target;
+        lastAffordable = affordable;
     }
 
     private Ref<EntityStore> spawnHighlightEntity(Store<EntityStore> store, Vector3i target, String blockTypeKey,
@@ -243,7 +248,7 @@ public class BlueprintBookParticleLoop {
             DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING, "[BlueprintBookParticle] Missing effect or controller for highlight entity");
             return entityRef;
         }
-        effectCtrl.addEffect(entityRef, effect, UPDATE_INTERVAL_MILLIS+1, OverlapBehavior.EXTEND, store);
+        effectCtrl.addEffect(entityRef, effect, EFFECT_DURATION_MILLIS, OverlapBehavior.EXTEND, store);
 
         return entityRef;
     }
@@ -258,22 +263,22 @@ public class BlueprintBookParticleLoop {
     }
 
     private void shutdown() {
+        active = false;
         if (updateTask != null) {
             updateTask.cancel(false);
             updateTask = null;
         }
-        if (activeEntity != null) {
-            try {
-                world.execute(() -> {
-                    if (activeEntity != null && activeEntity.isValid()) {
-                        Store<EntityStore> store = activeEntity.getStore();
-                        store.removeEntity(activeEntity, RemoveReason.REMOVE);
-                    }
-                    activeEntity = null;
-                });
-            } catch (Exception e) {
-                DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING, "[BlueprintBookParticle] Error removing entity on shutdown: " + e.getMessage());
-            }
+        try {
+            world.execute(() -> {
+                if (activeEntity != null && activeEntity.isValid()) {
+                    Store<EntityStore> store = activeEntity.getStore();
+                    store.removeEntity(activeEntity, RemoveReason.REMOVE);
+                }
+                activeEntity = null;
+            });
+        } catch (Exception e) {
+            DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING,
+                    "[BlueprintBookParticle] Error queueing entity cleanup: " + e.getMessage());
         }
     }
 }

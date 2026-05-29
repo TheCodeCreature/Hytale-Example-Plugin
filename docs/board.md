@@ -1,14 +1,14 @@
 # Product Board
 
-> Last updated: 2026-05-28 12:00
+> Last updated: 2026-05-29 16:00
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 43
-    "In Progress" : 4
-    "Done" : 65
+    "Backlog" : 54
+    "In Progress" : 5
+    "Done" : 66
     "Cancelled" : 12
 ```
 
@@ -21,10 +21,27 @@ pie title Backlog Distribution
 | E2605061200 | Epic | Ingredient Filter Grid Refactor | — | high |
 | F2605191000 | Feature | Leaf-Only Recipe Scaling | E2604201200 | critical |
 | E2605191100 | Epic | Auto-Craft Stencil System | — | high |
+| E2605291500 | Epic | World Thread Queue Saturation Fix | — | critical |
 
 ### Backlog
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
+| E2605291000 | Epic | Dynamic Bench Discovery System | — | high |
+| F2605291005 | Feature | Auto-Discovery Bench Registry | E2605291000 | high |
+| S2605291030 | Story | Create BenchRegistry with Runtime Discovery | E2605291000 | high |
+| S2605291035 | Story | Update RecipeFilterRegistry for Open Discovery | E2605291000 | high |
+| S2605291040 | Story | Update BenchBlockClassifier for Dynamic Categories | E2605291000 | high |
+| S2605291080 | Story | Unify NaturalResourceRegistry with BenchRegistry | E2605291000 | high |
+| F2605291010 | Feature | Generic Bench Processor | E2605291000 | high |
+| S2605291045 | Story | Create GenericBenchProcessor | E2605291000 | high |
+| S2605291050 | Story | Refactor DropScaler for Dynamic Processor Dispatch | E2605291000 | high |
+| S2605291055 | Story | Remove Hardcoded Processor Classes | E2605291000 | medium |
+| F2605291015 | Feature | Config-Based Bench Deny List | E2605291000 | medium |
+| S2605291060 | Story | Add Bench Deny List to Plugin Config | E2605291000 | medium |
+| S2605291065 | Story | Wire Deny List into Discovery Pipeline | E2605291000 | medium |
+| F2605291020 | Feature | Dynamic UI Tab Verification | E2605291000 | medium |
+| S2605291070 | Story | Verify UI Tab Rendering with N Benches | E2605291000 | medium |
+| S2605291075 | Story | Validate BlueprintBenchPrefs for Dynamic Tabs | E2605291000 | medium |
 | E2605181400 | Epic | Technical Debt Cleanup | — | high |
 | F2605281000 | Feature | Centralized Debug Logging Utility | E2605181400 | high |
 | F2605261200 | Feature | Decompile Update API Compatibility | E2605181400 | critical |
@@ -82,6 +99,7 @@ pie title Backlog Distribution
 | S2605271735 | Story | Fix Permission Node Invalid Characters | E2605181400 | high |
 | S2605271740 | Story | Remove Compile Restoration Skeleton Code | E2605181400 | medium |
 | S2605271745 | Story | Fix Null Safety in BlueprintBookParticleLoop | E2605181400 | high |
+| F2605291505 | Feature | Particle Loop Task Queue Guard | E2605291500 | critical |
 | F2605181405 | Feature | Blueprint Book Highlight Performance | E2605181400 | high |
 | S2605191005 | Story | Build RecipeTierClassifier | E2604201200 | critical |
 | S2605191010 | Story | Modify DropScaler Phase 1 for Leaf-Only Scaling | E2604201200 | critical |
