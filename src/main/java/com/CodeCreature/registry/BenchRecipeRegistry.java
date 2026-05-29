@@ -7,7 +7,10 @@ import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Registry of crafting recipes for a single workbench, identified by its
@@ -58,7 +61,7 @@ public final class BenchRecipeRegistry {
         recipesByBlockType = Collections.unmodifiableMap(byBlock);
         recipesById = Collections.unmodifiableMap(byId);
 
-        log("[" + benchId + "] Initialized: " + byBlock.size() + " block recipes, "
+        DebugLogger.log(REGISTRY, Level.INFO, "[BenchRecipeReg] [" + benchId + "] Initialized: " + byBlock.size() + " block recipes, "
                 + byId.size() + " total");
     }
 
@@ -77,11 +80,5 @@ public final class BenchRecipeRegistry {
 
     public Map<String, CraftingRecipe> getAllRecipesByBlockType() {
         return recipesByBlockType;
-    }
-
-    private static final Logger LOGGER = Logger.getLogger("BenchRecipeRegistry");
-
-    private static void log(String msg) {
-        LOGGER.info("[BenchRecipeReg] " + msg);
     }
 }

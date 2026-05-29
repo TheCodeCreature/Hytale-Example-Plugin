@@ -18,7 +18,10 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Abstract base for bench-category processors. Provides the shared
@@ -37,8 +40,6 @@ import java.util.logging.Logger;
  * to its partitioned block set.
  */
 public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
-
-    private static final Logger LOGGER = Logger.getLogger("AbstractBenchProcessor");
 
     @Override
     @Nonnull
@@ -125,7 +126,7 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
 
                 modified++;
             } catch (Exception e) {
-                LOGGER.warning("[" + category() + "Processor] ERROR processing " + btId + ": " + e.getMessage());
+                DebugLogger.log(SCALING, Level.WARNING, "[" + category() + "Processor] ERROR processing " + btId + ": " + e.getMessage());
                 skipped++;
             }
         }

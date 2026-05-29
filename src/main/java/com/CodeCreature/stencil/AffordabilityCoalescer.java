@@ -7,7 +7,6 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Logger;
 
 /**
  * Coalesces multiple synchronous inventory change events into a single deferred
@@ -56,8 +55,6 @@ import java.util.logging.Logger;
  * @see StencilVisualManager#refreshAffordability
  */
 public final class AffordabilityCoalescer {
-
-    private static final Logger LOGGER = Logger.getLogger("AffordabilityCoalescer");
 
     /** Player network reference for sending packets. */
     private final PlayerRef playerRef;

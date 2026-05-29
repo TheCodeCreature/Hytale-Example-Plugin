@@ -70,7 +70,6 @@ public final class DebugLogger {
          *         (e.g. {@code "logging.blueprint_bench"})
          */
         public String flagKey() {
-            // TODO: Return "logging." + this.name().toLowerCase()
             return "logging." + this.name().toLowerCase();
         }
     }
@@ -84,8 +83,8 @@ public final class DebugLogger {
      * @param message the message to log
      */
     public static void log(Subsystem sub, Level level, String message) {
-        // TODO: if (!isEnabled(sub)) return;
-        // TODO: LOGGER.log(level, "[" + sub.name() + "] " + message);
+        if (!isEnabled(sub)) return;
+        LOGGER.log(level, message);
     }
 
     /**
@@ -98,8 +97,8 @@ public final class DebugLogger {
      * @param supplier deferred message supplier
      */
     public static void log(Subsystem sub, Level level, Supplier<String> supplier) {
-        // TODO: if (!isEnabled(sub)) return;
-        // TODO: LOGGER.log(level, "[" + sub.name() + "] " + supplier.get());
+        if (!isEnabled(sub)) return;
+        LOGGER.log(level, supplier);
     }
 
     /**
@@ -114,8 +113,8 @@ public final class DebugLogger {
      * @param args   format arguments
      */
     public static void logHytale(Subsystem sub, String format, Object... args) {
-        // TODO: if (!isEnabled(sub)) return;
-        // TODO: HYTALE_LOGGER.atInfo().log("[" + sub.name() + "] " + format, args);
+        if (!isEnabled(sub)) return;
+        HYTALE_LOGGER.atInfo().log(format, args);
     }
 
     /**
@@ -130,8 +129,8 @@ public final class DebugLogger {
      * @param message   the raw message string (may include {@code §} color codes)
      */
     public static void chat(PlayerRef playerRef, Subsystem sub, String message) {
-        // TODO: if (!isEnabled(sub)) return;
-        // TODO: playerRef.sendMessage(Message.raw(message));
+        if (!isEnabled(sub)) return;
+        playerRef.sendMessage(Message.raw(message));
     }
 
     /**
@@ -147,7 +146,6 @@ public final class DebugLogger {
      * @return {@code true} if logging is active for this subsystem
      */
     public static boolean isEnabled(Subsystem sub) {
-        // TODO: return FeatureFlags.get("logging.global") && FeatureFlags.get(sub.flagKey());
-        return false;
+        return FeatureFlags.get("logging.global") && FeatureFlags.get(sub.flagKey());
     }
 }

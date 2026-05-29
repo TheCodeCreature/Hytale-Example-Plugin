@@ -7,11 +7,12 @@ import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.protocol.ItemResourceType;
 
 import java.util.*;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 public final class IngredientTreeBuilder {
-
-    private static final Logger LOG = Logger.getLogger(IngredientTreeBuilder.class.getName());
 
     private IngredientTreeBuilder() {}
 
@@ -45,7 +46,7 @@ public final class IngredientTreeBuilder {
             }
         }
 
-        LOG.fine(() -> "Collected " + resourceTypeIds.size() + " resource type IDs");
+        DebugLogger.log(INGREDIENT_TREE, Level.FINE, () -> "Collected " + resourceTypeIds.size() + " resource type IDs");
 
         // ── Step 1b: Collect direct item IDs (items not covered by any collected resource type) ──
         Set<String> directItemIds = new LinkedHashSet<>();
@@ -77,7 +78,7 @@ public final class IngredientTreeBuilder {
             }
         }
 
-        LOG.fine(() -> "Collected " + directItemIds.size() + " direct item IDs");
+        DebugLogger.log(INGREDIENT_TREE, Level.FINE, () -> "Collected " + directItemIds.size() + " direct item IDs");
 
         // ── Step 2: Resolve icons for each resource type ID ──
         Map<String, String> iconMap = new HashMap<>();
@@ -169,7 +170,7 @@ public final class IngredientTreeBuilder {
 
         groups.sort(Comparator.comparing(IngredientGroup::getDisplayName));
 
-        LOG.info("Built ingredient tree: " + groups.size() + " groups, "
+        DebugLogger.log(INGREDIENT_TREE, Level.INFO, "Built ingredient tree: " + groups.size() + " groups, "
                 + nodeIndex.size() + " total nodes");
 
         return new IngredientTree(groups, nodeIndex);

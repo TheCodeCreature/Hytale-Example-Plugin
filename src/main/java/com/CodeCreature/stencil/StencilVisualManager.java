@@ -25,7 +25,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Manages per-player visual overrides for blueprint stencil items in the hotbar.
@@ -73,8 +76,6 @@ import java.util.logging.Logger;
  */
 public final class StencilVisualManager {
 
-    private static final Logger LOGGER = Logger.getLogger("StencilVisualManager");
-
     /** Quality asset ID for affordable stencils (green slot glow). */
     private static final String QUALITY_AFFORDABLE = "Stencil_Affordable";
 
@@ -107,10 +108,10 @@ public final class StencilVisualManager {
      * @param player    the player entity, used to access inventory
      */
     public static void applyVisuals(@Nonnull PlayerRef playerRef, @Nonnull Player player) {
-        LOGGER.info("[StencilVisual] applyVisuals called for " + playerRef.getUuid());
+        DebugLogger.log(STENCIL, Level.INFO, "[StencilVisual] applyVisuals called for " + playerRef.getUuid());
         int affIdx = ItemQuality.getAssetMap().getIndexOrDefault(QUALITY_AFFORDABLE, -1);
         int unaffIdx = ItemQuality.getAssetMap().getIndexOrDefault(QUALITY_UNAFFORDABLE, -1);
-        LOGGER.fine("[StencilVisual] Quality indices: affordable=" + affIdx + ", unaffordable=" + unaffIdx);
+        DebugLogger.log(STENCIL, Level.FINE, "[StencilVisual] Quality indices: affordable=" + affIdx + ", unaffordable=" + unaffIdx);
 
         // Send custom quality definitions to the client — the init packet may not include
         // plugin-loaded qualities if the packet generator cached before our asset pack loaded.
@@ -150,7 +151,7 @@ public final class StencilVisualManager {
         for (String qualityId : customIds) {
             ItemQuality quality = assetMap.getAsset(qualityId);
             if (quality == null) {
-                LOGGER.warning("[StencilVisual] Custom quality not found: " + qualityId);
+                DebugLogger.log(STENCIL, Level.WARNING, "[StencilVisual] Custom quality not found: " + qualityId);
                 continue;
             }
             int index = assetMap.getIndexOrDefault(qualityId, -1);
@@ -161,7 +162,7 @@ public final class StencilVisualManager {
         packet.maxId = assetMap.getNextIndex();
 
         if (!packet.itemQualities.isEmpty()) {
-            LOGGER.info("[StencilVisual] Sending UpdateItemQualities with " + packet.itemQualities.size()
+            DebugLogger.log(STENCIL, Level.INFO, "[StencilVisual] Sending UpdateItemQualities with " + packet.itemQualities.size()
                     + " custom qualities (maxId=" + packet.maxId + ")");
             playerRef.getPacketHandler().writeNoCache(packet);
         }
@@ -225,13 +226,13 @@ public final class StencilVisualManager {
         Set<String> currentStencils = new HashSet<>();
         Map<String, ItemVisualState> changedItems = new HashMap<>();
 
-        LOGGER.fine("[StencilVisual] scanAndSend: hotbar capacity=" + hotbar.getCapacity());
+        DebugLogger.log(STENCIL, Level.FINE, "[StencilVisual] scanAndSend: hotbar capacity=" + hotbar.getCapacity());
         short capacity = hotbar.getCapacity();
         for (short slot = 0; slot < capacity; slot++) {
             ItemStack stack = hotbar.getItemStack(slot);
             if (stack == null) continue;
             if (!StencilMetadata.isStencil(stack)) {
-                LOGGER.fine("[StencilVisual] slot " + slot + ": not a stencil (" + stack.getItemId() + ")");
+                DebugLogger.log(STENCIL, Level.FINE, "[StencilVisual] slot " + slot + ": not a stencil (" + stack.getItemId() + ")");
                 continue;
             }
 
@@ -239,7 +240,7 @@ public final class StencilVisualManager {
             if (recipeId == null) continue;
 
             String itemId = stack.getItemId();
-            LOGGER.fine("[StencilVisual] slot " + slot + ": stencil found \u2014 itemId=" + itemId + ", recipeId=" + recipeId);
+            DebugLogger.log(STENCIL, Level.FINE, "[StencilVisual] slot " + slot + ": stencil found \u2014 itemId=" + itemId + ", recipeId=" + recipeId);
             currentStencils.add(itemId);
 
             CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(recipeId);
@@ -254,14 +255,14 @@ public final class StencilVisualManager {
 
         state.getTrackedItems().keySet().removeIf(key -> !currentStencils.contains(key));
 
-        LOGGER.fine("[StencilVisual] scanAndSend: found " + currentStencils.size() + " stencils, " + changedItems.size() + " changed");
+        DebugLogger.log(STENCIL, Level.FINE, "[StencilVisual] scanAndSend: found " + currentStencils.size() + " stencils, " + changedItems.size() + " changed");
         if (!changedItems.isEmpty()) {
             UpdateItems packet = buildUpdatePacket(changedItems);
             if (packet != null) {
-                LOGGER.info("[StencilVisual] Sending UpdateItems with " + packet.items.size() + " item overrides");
+                DebugLogger.log(STENCIL, Level.INFO, "[StencilVisual] Sending UpdateItems with " + packet.items.size() + " item overrides");
                 playerRef.getPacketHandler().writeNoCache(packet);
             } else {
-                LOGGER.warning("[StencilVisual] buildUpdatePacket returned null despite " + changedItems.size() + " changed items");
+                DebugLogger.log(STENCIL, Level.WARNING, "[StencilVisual] buildUpdatePacket returned null despite " + changedItems.size() + " changed items");
             }
         }
     }
@@ -303,12 +304,12 @@ public final class StencilVisualManager {
 
             Item item = Item.getAssetMap().getAsset(itemId);
             if (item == null) {
-                LOGGER.warning("[StencilVisual] Item asset not found for: " + itemId);
+                DebugLogger.log(STENCIL, Level.WARNING, "[StencilVisual] Item asset not found for: " + itemId);
                 continue;
             }
 
             ItemBase packet = item.toPacket();
-            LOGGER.info("[StencilVisual] Override: " + itemId + " qualityIndex=" + vis.getQualityIndex() + " name=" + resolveDisplayName(itemId));
+            DebugLogger.log(STENCIL, Level.INFO, "[StencilVisual] Override: " + itemId + " qualityIndex=" + vis.getQualityIndex() + " name=" + resolveDisplayName(itemId));
             packet.qualityIndex = vis.getQualityIndex();
             packet.translationProperties = new ItemTranslationProperties();
             packet.translationProperties.name = resolveDisplayName(itemId);

@@ -12,7 +12,10 @@ import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Owns detail panel rendering for the Blueprint Bench selection page.
@@ -20,8 +23,6 @@ import java.util.logging.Logger;
  * affordability coloring.
  */
 public class DetailPanelController {
-
-    private static final Logger LOGGER = Logger.getLogger("DetailPanelController");
 
     static final int MAX_COST_CELLS = 8;
 
@@ -100,7 +101,7 @@ public class DetailPanelController {
                         }
                     }
                 } catch (Exception e) {
-                    LOGGER.warning("[BlueprintUI] Error populating cost grid: " + e.getMessage());
+                    DebugLogger.log(BLUEPRINT_BENCH, Level.WARNING, "[BlueprintUI] Error populating cost grid: " + e.getMessage());
                 }
 
                 // Hide remaining cost cells and reset their state

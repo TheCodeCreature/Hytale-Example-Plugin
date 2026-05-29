@@ -4,11 +4,12 @@ import com.CodeCreature.registry.BenchRecipeRegistries;
 import com.CodeCreature.registry.FilteredRecipeEntry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
 import com.CodeCreature.util.StencilMetadata;
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
@@ -30,8 +31,6 @@ import javax.annotation.Nonnull;
  * and adds the corresponding stencil to the player's inventory (hotbar first).
  */
 public class BlueprintBookPickStencilInteraction extends SimpleInstantInteraction {
-
-    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
     private static volatile String particleEffect = "GreenOrbImpact";
 
@@ -83,7 +82,7 @@ public class BlueprintBookPickStencilInteraction extends SimpleInstantInteractio
         ItemStack stencil = StencilMetadata.createStencil(entry.outputItemId(), entry.recipeId());
         player.getInventory().getCombinedHotbarFirst().addItemStack(stencil);
 
-        LOGGER.atInfo().log("[BlueprintBook] Gave stencil for %s to player %s", entry.recipeId(), playerRef.getUuid());
+        DebugLogger.logHytale(BLUEPRINT_BOOK, "[BlueprintBook] Gave stencil for %s to player %s", entry.recipeId(), playerRef.getUuid());
     }
 
     private boolean hasStencilForRecipe(ItemContainer container, String recipeId) {

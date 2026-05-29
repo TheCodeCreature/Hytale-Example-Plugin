@@ -14,7 +14,6 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
-import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.item.config.BlockGroup;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -33,12 +32,14 @@ import org.jspecify.annotations.NonNull;
 import javax.annotation.Nullable;
 import java.util.*;
 
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
+import java.util.logging.Level;
+
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemCategory;
 
 public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSelectionPage.EventPayload> {
-
-    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("BlueprintSelectionPage");
 
     private static final int MAX_GROUP_BUTTONS = 30;
     private static final Value<String> FILTER_ACTIVE =
@@ -149,17 +150,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         benchIds.clear();
         benchIds.addAll(benchSet);
-        LOGGER.info("[BlueprintBench] Loaded bench IDs: " + benchIds);
+        DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintBench] Loaded bench IDs: " + benchIds);
 
         // Debug: log category coverage
         long withCats = allRecipes.stream().filter(r -> r.categoryIds() != null && !r.categoryIds().isEmpty()).count();
-        LOGGER.info("[BlueprintBench] Recipes with categories: " + withCats + "/" + allRecipes.size());
+        DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintBench] Recipes with categories: " + withCats + "/" + allRecipes.size());
         // Debug: log distinct category IDs from recipes
         Set<String> recipeCatIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (RecipeEntry r : allRecipes) {
             if (r.categoryIds() != null) recipeCatIds.addAll(r.categoryIds());
         }
-        LOGGER.info("[BlueprintBench] Distinct recipe category IDs: " + recipeCatIds);
+        DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintBench] Distinct recipe category IDs: " + recipeCatIds);
 
         this.categoryInfoMap = buildCategoryInfoMap();
 
@@ -753,7 +754,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         // Build the map with dot-notation keys to match recipe category IDs.
         Map<String, RecipeFilterPipeline.CategoryInfo> map = new LinkedHashMap<>();
         for (ItemCategory topLevel : allCats.values()) {
-            LOGGER.info("[BlueprintBench] Top-level category: id=" + topLevel.getId()
+            DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintBench] Top-level category: id=" + topLevel.getId()
                     + " name=" + topLevel.getName() + " icon=" + topLevel.getIcon()
                     + " order=" + topLevel.getOrder());
             // Top-level entries (e.g. "Blocks", "Items", "Furniture")
@@ -765,7 +766,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             if (children != null) {
                 for (ItemCategory child : children) {
                     String dotKey = topLevel.getId() + "." + child.getId();
-                    LOGGER.info("[BlueprintBench]   Child category: dotKey=" + dotKey
+                    DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintBench]   Child category: dotKey=" + dotKey
                             + " name=" + child.getName() + " icon=" + child.getIcon()
                             + " order=" + child.getOrder());
                     map.put(dotKey, new RecipeFilterPipeline.CategoryInfo(
@@ -773,7 +774,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 }
             }
         }
-        LOGGER.info("[BlueprintBench] Built categoryInfoMap with " + map.size() + " categories: " + map.keySet());
+        DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintBench] Built categoryInfoMap with " + map.size() + " categories: " + map.keySet());
         return map;
     }
 
@@ -787,8 +788,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private void giveSelectedBlueprint(Store<EntityStore> store, Ref<EntityStore> ref,
                                   UICommandBuilder cmd) {
         if (selectedRecipeId == null) {
-            this.playerRef.sendMessage(
-                    Message.raw("\u00a7c[BlueprintBench] No recipe selected."));
+            DebugLogger.chat(this.playerRef, BLUEPRINT_BENCH,
+                    "\u00a7c[BlueprintBench] No recipe selected.");
             return;
         }
 
@@ -801,9 +802,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         ItemStack item = StencilMetadata.createStencil(entry.outputItemId(), entry.recipeId());
         player.getInventory().getCombinedHotbarFirst().addItemStack(item);
 
-        this.playerRef.sendMessage(
-                Message.raw("\u00a7a[BlueprintBench] Given stencil: " + entry.outputItemId().replace('_', ' ')));
-        LOGGER.info("[BlueprintUI] Gave player stencil for " + entry.outputItemId() + " (recipe: " + entry.recipeId() + ")");
+        DebugLogger.chat(this.playerRef, BLUEPRINT_BENCH,
+                "\u00a7a[BlueprintBench] Given stencil: " + entry.outputItemId().replace('_', ' '));
+        DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintUI] Gave player stencil for " + entry.outputItemId() + " (recipe: " + entry.recipeId() + ")");
     }
 
     @Nullable

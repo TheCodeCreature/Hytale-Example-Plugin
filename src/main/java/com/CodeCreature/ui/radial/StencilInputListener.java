@@ -4,7 +4,8 @@ import com.CodeCreature.registry.BenchRecipeRegistries;
 import com.CodeCreature.registry.FilteredRecipeEntry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
 import com.CodeCreature.util.StencilMetadata;
-import com.hypixel.hytale.logger.HytaleLogger;
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -33,8 +34,6 @@ import java.util.Objects;
  * Registration: PacketAdapters.registerOutbound(StencilRadialInputListener::onOutboundPacket)
  */
 public final class StencilInputListener {
-
-    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
     private StencilInputListener() {}
 
@@ -65,7 +64,7 @@ public final class StencilInputListener {
 
             if (chain.interactionType == InteractionType.Use) {
                 // Stencil + Use — open radial menu on world thread
-                LOGGER.atInfo().log("[Stencil] Use interaction for player %s — opening radial menu", playerRef.getUuid());
+                DebugLogger.logHytale(STENCIL, "[Stencil] Use interaction for player %s — opening radial menu", playerRef.getUuid());
                 world.execute(() -> openRadialMenu(playerRef, ref, store, player));
                 break;
             }
@@ -135,6 +134,6 @@ public final class StencilInputListener {
 
         hotbar.setItemStackForSlot(activeSlot, newStencil);
 
-        LOGGER.atInfo().log("[Stencil] Pick-to-switch for player %s - swapped to recipe %s", playerRef.getUuid(), entry.recipeId());
+        DebugLogger.logHytale(STENCIL, "[Stencil] Pick-to-switch for player %s - swapped to recipe %s", playerRef.getUuid(), entry.recipeId());
     }
 }

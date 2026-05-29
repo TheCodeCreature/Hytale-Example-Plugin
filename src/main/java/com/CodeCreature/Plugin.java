@@ -2,10 +2,13 @@ package com.CodeCreature;
 
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.CodeCreature.command.ParticleCommand;
+import com.CodeCreature.command.debug.DebugCommand;
 import com.CodeCreature.command.placeblock.PlaceBlockCommand;
 import com.CodeCreature.crafting.BlueprintBenchRecipeMutator;
 import com.CodeCreature.ui.bench.BlueprintBenchOpenUIInteraction;
 import com.CodeCreature.ui.bench.BlueprintBenchPrefsStore;
+import com.CodeCreature.util.DebugLogger;
+import com.CodeCreature.util.FeatureFlags;
 import com.CodeCreature.scaling.BreakBlockDiagnostic;
 import com.CodeCreature.scaling.DropScaler;
 import com.CodeCreature.scaling.PlacementCostScaler;
@@ -17,8 +20,6 @@ import com.CodeCreature.stencil.StencilSyncSystem;
 import com.CodeCreature.stencil.StencilVisualManager;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.Interaction;
 import com.hypixel.hytale.server.core.asset.LoadAssetEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
@@ -33,8 +34,6 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
 public class Plugin extends JavaPlugin {
-    
-    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
     public Plugin(@NonNull JavaPluginInit init) {
         super(init);
@@ -44,6 +43,7 @@ public class Plugin extends JavaPlugin {
     protected void setup(){
         this.getCommandRegistry().registerCommand(new PlaceBlockCommand());
         this.getCommandRegistry().registerCommand(new ParticleCommand());
+        this.getCommandRegistry().registerCommand(new DebugCommand());
 //        this.getCommandRegistry().registerCommand(new NewMovementCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, Plugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, Plugin::onPlayerDisconnect);
@@ -67,6 +67,7 @@ public class Plugin extends JavaPlugin {
         this.getEntityStoreRegistry().registerSystem(new BreakBlockDiagnostic());
 
         BlueprintBenchPrefsStore.initialize(this.getDataDirectory());
+        FeatureFlags.initialize(this.getDataDirectory());
 
         // Register Blueprint Bench interaction type (opens custom UI page)
         this.getCodecRegistry(Interaction.CODEC)
@@ -92,7 +93,7 @@ public class Plugin extends JavaPlugin {
         EntityStore entityStore = store.getExternalData();
         World world = entityStore.getWorld();
 
-        playerRef.sendMessage(Message.raw("§a[Plugin] Resource scaling active."));
+        DebugLogger.chat(playerRef, DebugLogger.Subsystem.PLUGIN, "§a[Plugin] Resource scaling active.");
 
         // Register per-player stencil sync listeners
         Player player = store.getComponent(ref, Player.getComponentType());

@@ -8,11 +8,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 public class BlueprintBenchPrefsStore {
 
-    private static final Logger LOGGER = Logger.getLogger("BlueprintBenchPrefsStore");
     private static Path prefsDir;
 
     public static void initialize(Path dataDirectory) {
@@ -20,7 +22,7 @@ public class BlueprintBenchPrefsStore {
         try {
             Files.createDirectories(prefsDir);
         } catch (IOException e) {
-            LOGGER.warning("[BlueprintPrefs] Failed to create prefs directory: " + e.getMessage());
+            DebugLogger.log(BLUEPRINT_BENCH, Level.WARNING, "[BlueprintPrefs] Failed to create prefs directory: " + e.getMessage());
         }
     }
 
@@ -34,7 +36,7 @@ public class BlueprintBenchPrefsStore {
         try {
             return BlueprintBenchPrefs.CODEC.decode(doc, new ExtraInfo());
         } catch (Exception e) {
-            LOGGER.warning("[BlueprintPrefs] Failed to decode prefs for " + playerUuid + ": " + e.getMessage());
+            DebugLogger.log(BLUEPRINT_BENCH, Level.WARNING, "[BlueprintPrefs] Failed to decode prefs for " + playerUuid + ": " + e.getMessage());
             return new BlueprintBenchPrefs();
         }
     }
@@ -47,7 +49,7 @@ public class BlueprintBenchPrefsStore {
             BsonDocument doc = BlueprintBenchPrefs.CODEC.encode(prefs, new ExtraInfo());
             BsonUtil.writeDocument(file, doc);
         } catch (Exception e) {
-            LOGGER.warning("[BlueprintPrefs] Failed to save prefs for " + playerUuid + ": " + e.getMessage());
+            DebugLogger.log(BLUEPRINT_BENCH, Level.WARNING, "[BlueprintPrefs] Failed to save prefs for " + playerUuid + ": " + e.getMessage());
         }
     }
 }

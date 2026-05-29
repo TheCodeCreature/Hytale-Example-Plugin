@@ -10,7 +10,10 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Static coordinator that manages all {@link BenchRecipeRegistry} instances.
@@ -43,7 +46,7 @@ public final class BenchRecipeRegistries {
             totalRecipes += registry.getAllRecipesById().size();
         }
         registries = Collections.unmodifiableMap(map);
-        log("Initialized " + map.size() + " bench registries with "
+        DebugLogger.log(REGISTRY, Level.INFO, "[BenchRecipeRegs] Initialized " + map.size() + " bench registries with "
                 + totalRecipes + " total recipes");
     }
 
@@ -78,11 +81,5 @@ public final class BenchRecipeRegistries {
             if (recipe != null) return recipe;
         }
         return null;
-    }
-
-    private static final Logger LOGGER = Logger.getLogger("BenchRecipeRegistries");
-
-    private static void log(String msg) {
-        LOGGER.info("[BenchRecipeRegs] " + msg);
     }
 }

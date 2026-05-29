@@ -47,23 +47,37 @@ public class LoggingSubCommand extends AbstractPlayerCommand {
                            @NonNull Ref<EntityStore> ref,
                            @NonNull PlayerRef playerRef,
                            @NonNull World world) {
-        // TODO: Check if subsystemArg.provided(context)
-        //
-        // If NOT provided:
-        //   boolean newVal = FeatureFlags.toggle("logging.global");
-        //   String status = newVal ? "§a[Debug] Global logging ENABLED" : "§c[Debug] Global logging DISABLED";
-        //   playerRef.sendMessage(Message.raw(status));
-        //
-        // If provided:
-        //   String input = subsystemArg.get(context);
-        //   Validate input against DebugLogger.Subsystem.values() (case-insensitive)
-        //   If invalid: playerRef.sendMessage(Message.raw("§c[Debug] Unknown subsystem: " + input))
-        //     and list valid names
-        //   If valid:
-        //     DebugLogger.Subsystem sub = matched subsystem
-        //     boolean newVal = FeatureFlags.toggle(sub.flagKey());
-        //     String status = newVal ? "§a[Debug] " + sub.name() + " logging ENABLED"
-        //                            : "§c[Debug] " + sub.name() + " logging DISABLED";
-        //     playerRef.sendMessage(Message.raw(status));
+        if (!subsystemArg.provided(context)) {
+            boolean newVal = FeatureFlags.toggle("logging.global");
+            String status = newVal ? "§a[Debug] Global logging ENABLED" : "§c[Debug] Global logging DISABLED";
+            playerRef.sendMessage(Message.raw(status));
+            return;
+        }
+
+        String input = subsystemArg.get(context);
+
+        DebugLogger.Subsystem matched = null;
+        for (DebugLogger.Subsystem sub : DebugLogger.Subsystem.values()) {
+            if (sub.name().equalsIgnoreCase(input)) {
+                matched = sub;
+                break;
+            }
+        }
+
+        if (matched == null) {
+            StringBuilder validNames = new StringBuilder();
+            for (DebugLogger.Subsystem sub : DebugLogger.Subsystem.values()) {
+                if (validNames.length() > 0) validNames.append(", ");
+                validNames.append(sub.name().toLowerCase());
+            }
+            playerRef.sendMessage(Message.raw("§c[Debug] Unknown subsystem: " + input + ". Valid: " + validNames));
+            return;
+        }
+
+        boolean newVal = FeatureFlags.toggle(matched.flagKey());
+        String status = newVal
+            ? "§a[Debug] " + matched.name() + " logging ENABLED"
+            : "§c[Debug] " + matched.name() + " logging DISABLED";
+        playerRef.sendMessage(Message.raw(status));
     }
 }

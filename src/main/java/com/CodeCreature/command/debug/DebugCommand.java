@@ -17,7 +17,7 @@ public class DebugCommand extends AbstractCommandCollection {
 
     public DebugCommand() {
         super("debug", "Debug and diagnostic commands");
-        // TODO: this.addSubCommand(new LoggingSubCommand());
-        // TODO: this.addSubCommand(new BreakLogSubCommand());
+        this.addSubCommand(new LoggingSubCommand());
+        this.addSubCommand(new BreakLogSubCommand());
     }
 }

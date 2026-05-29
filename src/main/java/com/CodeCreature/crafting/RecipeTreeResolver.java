@@ -17,7 +17,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Recursively resolves crafted items to their raw material equivalents,
@@ -59,8 +62,6 @@ import java.util.logging.Logger;
  */
 public final class RecipeTreeResolver {
 
-    private static final Logger LOGGER = Logger.getLogger("RecipeTreeResolver");
-
     /**
      * Maps a crafted item's ID to the crafting recipe that produces it.
      * Only includes non-Salvage recipes from registered crafting benches.
@@ -86,10 +87,6 @@ public final class RecipeTreeResolver {
             "Stonecutter", "Refinery", "Furnace", "Kiln");
 
     private RecipeTreeResolver() {}
-
-    private static void log(String msg) {
-        LOGGER.info("[RecipeTreeResolver] " + msg);
-    }
 
     /**
      * Initializes the recipe-by-output index and pre-computes the raw
@@ -140,7 +137,7 @@ public final class RecipeTreeResolver {
             }
         }
         rawCostCache = Collections.unmodifiableMap(cache);
-        log("Initialized: " + resolved + " items resolved, " + unresolvable + " unresolvable");
+        DebugLogger.log(CRAFTING, Level.INFO, "[RecipeTreeResolver] Initialized: " + resolved + " items resolved, " + unresolvable + " unresolvable");
     }
 
     /**
@@ -275,7 +272,7 @@ public final class RecipeTreeResolver {
     private static Map<String, Integer> computeRawCost(@Nonnull String itemId,
                                                         @Nonnull Set<String> visited) {
         if (visited.contains(itemId)) {
-            log("Cycle detected at " + itemId);
+            DebugLogger.log(CRAFTING, Level.INFO, "[RecipeTreeResolver] Cycle detected at " + itemId);
             return null;
         }
 

@@ -5,6 +5,8 @@ import com.CodeCreature.crafting.AutoCraftPlanner;
 import com.CodeCreature.crafting.ConsumptionEntry;
 import com.CodeCreature.crafting.PlaceBlockCostUtil;
 import com.CodeCreature.scaling.BenchCategory;
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 import com.CodeCreature.util.StencilMetadata;
 import com.hypixel.hytale.component.Archetype;
 import com.hypixel.hytale.component.ArchetypeChunk;
@@ -12,7 +14,6 @@ import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
-import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -154,9 +155,9 @@ public class StencilPlacementSystem extends EntityEventSystem<EntityStore, Place
         //    c) StencilSyncSystem restores stencil back to qty 2 on inventory change
         if (playerRef != null) {
             if (plan.requiresAutoCraft()) {
-                playerRef.sendMessage(Message.raw("§a[Stencil] Placed " + outputBlockTypeId + " (auto-crafted from raw materials)"));
+                DebugLogger.chat(playerRef, STENCIL, "§a[Stencil] Placed " + outputBlockTypeId + " (auto-crafted from raw materials)");
             } else {
-                playerRef.sendMessage(Message.raw("§a[Stencil] Placed " + outputBlockTypeId));
+                DebugLogger.chat(playerRef, STENCIL, "§a[Stencil] Placed " + outputBlockTypeId);
             }
         }
     }
@@ -178,7 +179,7 @@ public class StencilPlacementSystem extends EntityEventSystem<EntityStore, Place
 
     private static void sendError(@Nullable PlayerRef playerRef, String detail) {
         if (playerRef != null) {
-            playerRef.sendMessage(Message.raw("§c[Stencil] " + detail));
+            DebugLogger.chat(playerRef, STENCIL, "§c[Stencil] " + detail);
         }
     }
 

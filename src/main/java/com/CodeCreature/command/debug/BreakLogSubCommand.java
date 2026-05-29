@@ -37,10 +37,10 @@ public class BreakLogSubCommand extends AbstractPlayerCommand {
                            @NonNull Ref<EntityStore> ref,
                            @NonNull PlayerRef playerRef,
                            @NonNull World world) {
-        // TODO: boolean newVal = FeatureFlags.toggle("diagnostics.breakLog");
-        // TODO: String status = newVal
-        //           ? "§a[Debug] Break-block diagnostic logging ENABLED"
-        //           : "§c[Debug] Break-block diagnostic logging DISABLED";
-        // TODO: playerRef.sendMessage(Message.raw(status));
+        boolean newVal = FeatureFlags.toggle("diagnostics.breakLog");
+        String status = newVal
+            ? "§a[Debug] Break-block diagnostic logging ENABLED"
+            : "§c[Debug] Break-block diagnostic logging DISABLED";
+        playerRef.sendMessage(Message.raw(status));
     }
 }

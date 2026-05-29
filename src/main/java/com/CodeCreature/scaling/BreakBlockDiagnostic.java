@@ -1,6 +1,7 @@
 package com.CodeCreature.scaling;
 
 import com.CodeCreature.registry.BenchRecipeRegistries;
+import com.CodeCreature.util.FeatureFlags;
 import com.hypixel.hytale.component.Archetype;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
@@ -26,7 +27,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 /**
@@ -44,24 +44,10 @@ import java.util.logging.Logger;
  */
 public class BreakBlockDiagnostic extends EntityEventSystem<EntityStore, BreakBlockEvent> {
 
-    private static final AtomicBoolean enabled = new AtomicBoolean(false);
     private static final Logger LOGGER = Logger.getLogger("BreakBlockDiagnostic");
 
     public BreakBlockDiagnostic() {
         super(BreakBlockEvent.class);
-    }
-
-    public static boolean isEnabled() {
-        return enabled.get();
-    }
-
-    public static boolean toggle() {
-        boolean prev, next;
-        do {
-            prev = enabled.get();
-            next = !prev;
-        } while (!enabled.compareAndSet(prev, next));
-        return next;
     }
 
     @Nullable
@@ -76,7 +62,7 @@ public class BreakBlockDiagnostic extends EntityEventSystem<EntityStore, BreakBl
                        @Nonnull Store<EntityStore> store,
                        @Nonnull CommandBuffer<EntityStore> commandBuffer,
                        @Nonnull BreakBlockEvent event) {
-        if (!enabled.get()) return;
+        if (!FeatureFlags.get("diagnostics.breakLog")) return;
 
         BlockType bt = event.getBlockType();
         if (bt == null) return;

@@ -16,7 +16,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Shared, read-only registry of crafting recipes that produce placeable blocks
@@ -176,7 +179,7 @@ public final class RecipeFilterRegistry {
         }
         bySet = Collections.unmodifiableMap(immutableSetMap);
 
-        log("Initialized: " + result.size() + " entries, "
+        DebugLogger.log(REGISTRY, Level.INFO, "[RecipeFilterReg] Initialized: " + result.size() + " entries, "
                 + benchMap.size() + " bench IDs");
     }
 
@@ -316,9 +319,4 @@ public final class RecipeFilterRegistry {
     //  Logging
     // ═══════════════════════════════════════════════════════════════
 
-    private static final Logger LOGGER = Logger.getLogger("RecipeFilterRegistry");
-
-    private static void log(String msg) {
-        LOGGER.info("[RecipeFilterReg] " + msg);
-    }
 }

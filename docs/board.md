@@ -1,14 +1,14 @@
 # Product Board
 
-> Last updated: 2026-05-27 17:45
+> Last updated: 2026-05-28 12:00
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 49
+    "Backlog" : 43
     "In Progress" : 4
-    "Done" : 59
+    "Done" : 65
     "Cancelled" : 12
 ```
 
@@ -27,11 +27,6 @@ pie title Backlog Distribution
 |----|------|-------|------|----------|
 | E2605181400 | Epic | Technical Debt Cleanup | — | high |
 | F2605281000 | Feature | Centralized Debug Logging Utility | E2605181400 | high |
-| S2605281025 | Story | Create Standalone FeatureFlags System | E2605181400 | high |
-| S2605281005 | Story | Create DebugLogger Utility Class | E2605181400 | high |
-| S2605281010 | Story | Migrate All Log Call Sites to DebugLogger | E2605181400 | high |
-| S2605281015 | Story | Migrate Debug Chat Messages to DebugLogger | E2605181400 | high |
-| S2605281020 | Story | Register /Debug Logging Command | E2605181400 | high |
 | F2605261200 | Feature | Decompile Update API Compatibility | E2605181400 | critical |
 | S2605261205 | Story | Fix Missing Vector Types After Decompile Update | E2605181400 | critical |
 | F2605181420 | Feature | Blueprint Bench Page Decomposition | E2605181400 | medium |
@@ -78,6 +73,11 @@ pie title Backlog Distribution
 ### Done
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
+| S2605281025 | Story | Create Standalone FeatureFlags System | E2605181400 | high |
+| S2605281005 | Story | Create DebugLogger Utility Class | E2605181400 | high |
+| S2605281010 | Story | Migrate All Log Call Sites to DebugLogger | E2605181400 | high |
+| S2605281015 | Story | Migrate Debug Chat Messages to DebugLogger | E2605181400 | high |
+| S2605281020 | Story | Register /Debug Logging Command | E2605181400 | high |
 | S2605271730 | Story | Fix Manifest ServerVersion Semver Range | E2605181400 | critical |
 | S2605271735 | Story | Fix Permission Node Invalid Characters | E2605181400 | high |
 | S2605271740 | Story | Remove Compile Restoration Skeleton Code | E2605181400 | medium |

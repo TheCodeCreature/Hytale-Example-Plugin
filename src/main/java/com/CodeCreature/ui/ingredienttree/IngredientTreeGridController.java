@@ -11,11 +11,12 @@ import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 public class IngredientTreeGridController {
-
-    private static final Logger LOG = Logger.getLogger(IngredientTreeGridController.class.getName());
 
     private enum ElementKind { HEADER, GRID_CONTAINER, LEAF_BUTTON, ITEM_BUTTON }
 
@@ -82,7 +83,7 @@ public class IngredientTreeGridController {
         }
         this.totalContainerElements = containerIdx;
 
-        LOG.info("Ingredient tree UI built: " + totalContainerElements + " container elements, "
+        DebugLogger.log(INGREDIENT_TREE, Level.INFO, "Ingredient tree UI built: " + totalContainerElements + " container elements, "
                 + elements.size() + " total tracked elements (" + tree.getGroups().size() + " groups)");
 
         updateUI(cmd);

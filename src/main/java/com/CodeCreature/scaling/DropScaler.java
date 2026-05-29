@@ -29,7 +29,10 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Single-pass asset modifier for the 12x resource economy.
@@ -49,12 +52,6 @@ public final class DropScaler {
     private static final String DROPLIST_PREFIX = "Plugin_NaturalIngredient_";
 
     private DropScaler() {}
-
-    private static final Logger LOGGER = Logger.getLogger("DropScaler");
-
-    private static void log(String msg) {
-        LOGGER.info("[DropScaler] " + msg);
-    }
 
     /**
      * Full pipeline: initialize registries from loaded assets, then apply
@@ -110,7 +107,7 @@ public final class DropScaler {
                 categoryResults.add(future.get());
             }
         } catch (Exception e) {
-            log("ERROR in parallel category processing: " + e.getMessage());
+            DebugLogger.log(SCALING, Level.INFO, "[DropScaler] ERROR in parallel category processing: " + e.getMessage());
         }
 
         // Merge results from category processors
@@ -158,7 +155,7 @@ public final class DropScaler {
                 ItemDropList.getAssetStore().loadAssets(
                         "Plugin:NaturalIngredients", syntheticDropLists);
             } catch (Exception e) {
-                log("ERROR registering synthetic drop lists: "
+                DebugLogger.log(SCALING, Level.INFO, "[DropScaler] ERROR registering synthetic drop lists: "
                         + e.getClass().getSimpleName() + ": " + e.getMessage());
             }
         }
@@ -166,7 +163,7 @@ public final class DropScaler {
         // ── Phase 5: Scale natural item stack sizes ──────────────────
         int stacksBoosted = scaleStackSizes(f, multiplier);
 
-        log("Pipeline complete: " + recipesScaled + " recipes scaled, "
+        DebugLogger.log(SCALING, Level.INFO, "[DropScaler] Pipeline complete: " + recipesScaled + " recipes scaled, "
                 + naturalModified + " natural blocks (" + naturalSkipped + " skipped), "
                 + recipeModified + " recipe blocks (" + recipeSkipped + " skipped), "
                 + syntheticDropLists.size() + " synthetic drop lists, "
@@ -212,11 +209,11 @@ public final class DropScaler {
                 f.recipeInput.set(recipe, scaled);
                 modified++;
             } catch (IllegalAccessException e) {
-                log("ERROR scaling recipe " + recipeId + ": " + e.getMessage());
+                DebugLogger.log(SCALING, Level.INFO, "[DropScaler] ERROR scaling recipe " + recipeId + ": " + e.getMessage());
             }
         }
         }
-        log("Crafting costs: " + modified + " recipes scaled, "
+        DebugLogger.log(SCALING, Level.INFO, "[DropScaler] Crafting costs: " + modified + " recipes scaled, "
                 + totalSkipped + " inputs skipped (crafted intermediates), "
                 + duplicates + " duplicates skipped");
         return modified;
@@ -284,7 +281,7 @@ public final class DropScaler {
 
             return true;
         } catch (Exception e) {
-            log("ERROR processing natural block " + bt.getId() + ": " + e.getMessage());
+            DebugLogger.log(SCALING, Level.INFO, "[DropScaler] ERROR processing natural block " + bt.getId() + ": " + e.getMessage());
             return false;
         }
     }
@@ -313,7 +310,7 @@ public final class DropScaler {
                 itemIdField.set(config, null);
                 dropListIdField.set(config, newDlId);
             } catch (IllegalAccessException e) {
-                log("ERROR swapping item " + itemId + ": " + e.getMessage());
+                DebugLogger.log(SCALING, Level.INFO, "[DropScaler] ERROR swapping item " + itemId + ": " + e.getMessage());
             }
             return;
         }
@@ -346,7 +343,7 @@ public final class DropScaler {
                 processedDrops.add(drop);
             } catch (IllegalAccessException e) {
                 String dItemId = drop.getItemId();
-                log("ERROR scaling drop " + dItemId
+                DebugLogger.log(SCALING, Level.INFO, "[DropScaler] ERROR scaling drop " + dItemId
                         + " in " + dropListId + ": " + e.getMessage());
             }
         }
@@ -369,7 +366,7 @@ public final class DropScaler {
                     boosted++;
                 }
             } catch (IllegalAccessException e) {
-                log("ERROR scaling stack size for " + entry.getKey() + ": " + e.getMessage());
+                DebugLogger.log(SCALING, Level.INFO, "[DropScaler] ERROR scaling stack size for " + entry.getKey() + ": " + e.getMessage());
             }
         }
         return boosted;

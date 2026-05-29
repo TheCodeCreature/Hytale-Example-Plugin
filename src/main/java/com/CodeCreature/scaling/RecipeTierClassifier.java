@@ -8,7 +8,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Classifies items as "crafted intermediates" vs "raw materials" for
@@ -28,12 +31,6 @@ public final class RecipeTierClassifier {
     private static Set<String> craftedItemIds = Collections.emptySet();
 
     private RecipeTierClassifier() {}
-
-    private static final Logger LOGGER = Logger.getLogger("RecipeTierClassifier");
-
-    private static void log(String msg) {
-        LOGGER.info("[RecipeTierClassifier] " + msg);
-    }
 
     /**
      * Scans all crafting recipes and builds the set of crafted item IDs.
@@ -62,7 +59,7 @@ public final class RecipeTierClassifier {
         crafted.removeIf(NaturalResourceRegistry::isNaturalItem);
 
         craftedItemIds = Collections.unmodifiableSet(crafted);
-        log("Initialized: " + craftedItemIds.size() + " crafted item IDs classified");
+        DebugLogger.log(SCALING, Level.INFO, "[RecipeTierClassifier] Initialized: " + craftedItemIds.size() + " crafted item IDs classified");
     }
 
     /**

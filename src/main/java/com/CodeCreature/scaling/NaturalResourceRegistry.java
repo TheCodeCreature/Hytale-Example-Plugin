@@ -19,7 +19,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Central registry of natural resource block types and item IDs.
@@ -39,12 +42,6 @@ public final class NaturalResourceRegistry {
     private static Map<String, String> gatherableFormMap = Collections.emptyMap();
 
     private NaturalResourceRegistry() {}
-
-    private static final Logger LOGGER = Logger.getLogger("NaturalResourceRegistry");
-
-    private static void log(String msg) {
-        LOGGER.info("[NaturalRegistry] " + msg);
-    }
 
     /**
      * Builds the registry. Must be called after assets are loaded
@@ -109,7 +106,7 @@ public final class NaturalResourceRegistry {
         naturalBlockTypes = Collections.unmodifiableSet(blockTypes);
         naturalItemIds = Collections.unmodifiableSet(itemIds);
         gatherableFormMap = Collections.unmodifiableMap(gfMap);
-        log("Initialized: " + blockTypes.size() + " natural block types, "
+        DebugLogger.log(SCALING, Level.INFO, "[NaturalRegistry] Initialized: " + blockTypes.size() + " natural block types, "
                 + itemIds.size() + " natural items, "
                 + gfMap.size() + " gatherable-form mappings");
     }

@@ -40,11 +40,13 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 public class BlueprintBookParticleLoop {
 
-    private static final Logger LOGGER = Logger.getLogger("BlueprintBookParticleLoop");
     private static final long UPDATE_INTERVAL_MILLIS = 100;
     private static final String BLUEPRINT_BOOK_ITEM_ID = "BlueprintBook";
     private static final String EFFECT_ID_DEFAULT = "Drop_Rare";
@@ -76,19 +78,19 @@ public class BlueprintBookParticleLoop {
         if (existing != null) {
             existing.shutdown();
             INSTANCES.remove(playerId);
-            LOGGER.info("[BlueprintBookParticle] Replaced stale loop for player: " + playerRef.getUsername());
+            DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[BlueprintBookParticle] Replaced stale loop for player: " + playerRef.getUsername());
         }
         BlueprintBookParticleLoop instance = new BlueprintBookParticleLoop(playerRef, world);
         instance.startUpdateLoop();
         INSTANCES.put(playerId, instance);
-        LOGGER.info("[BlueprintBookParticle] Created loop for player: " + playerRef.getUsername());
+        DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[BlueprintBookParticle] Created loop for player: " + playerRef.getUsername());
     }
 
     public static void remove(@Nonnull UUID playerId) {
         BlueprintBookParticleLoop instance = INSTANCES.remove(playerId);
         if (instance != null) {
             instance.shutdown();
-            LOGGER.info("[BlueprintBookParticle] Removed loop for player: " + playerId);
+            DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[BlueprintBookParticle] Removed loop for player: " + playerId);
         }
     }
 
@@ -174,14 +176,14 @@ public class BlueprintBookParticleLoop {
                     lastAffordable = affordable;
                 });
             } catch (Exception e) {
-                LOGGER.warning("[BlueprintBookParticle] Error in update loop: " + e.getMessage());
+                DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING, "[BlueprintBookParticle] Error in update loop: " + e.getMessage());
             }
         }, UPDATE_INTERVAL_MILLIS, UPDATE_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
     }
 
     private Ref<EntityStore> spawnHighlightEntity(Store<EntityStore> store, Vector3i target, String blockTypeKey,
             boolean affordable) {
-        LOGGER.fine(() -> "[BlueprintBookParticle] Spawning highlight entity at " + target + " for block "
+        DebugLogger.log(BLUEPRINT_BOOK, Level.FINE, () -> "[BlueprintBookParticle] Spawning highlight entity at " + target + " for block "
                 + blockTypeKey + " affordable=" + affordable);
         Holder<EntityStore> holder = EntityStore.REGISTRY.newHolder();
 
@@ -223,10 +225,10 @@ public class BlueprintBookParticleLoop {
 
         Ref<EntityStore> entityRef = store.addEntity(holder, AddReason.SPAWN);
         if (entityRef == null) {
-            LOGGER.warning("[BlueprintBookParticle] Failed to spawn highlight entity");
+            DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING, "[BlueprintBookParticle] Failed to spawn highlight entity");
             return null;
         }
-        LOGGER.fine(() -> "[BlueprintBookParticle] Entity spawned with networkId=" + networkId);
+        DebugLogger.log(BLUEPRINT_BOOK, Level.FINE, () -> "[BlueprintBookParticle] Entity spawned with networkId=" + networkId);
 
         // Apply the highlight effect — green if affordable, red if not
         String effectId = EFFECT_ID_DEFAULT;
@@ -238,7 +240,7 @@ public class BlueprintBookParticleLoop {
         EffectControllerComponent effectCtrl = store.getComponent(entityRef,
                 EffectControllerComponent.getComponentType());
         if (effect == null || effectCtrl == null) {
-            LOGGER.warning("[BlueprintBookParticle] Missing effect or controller for highlight entity");
+            DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING, "[BlueprintBookParticle] Missing effect or controller for highlight entity");
             return entityRef;
         }
         effectCtrl.addEffect(entityRef, effect, UPDATE_INTERVAL_MILLIS+1, OverlapBehavior.EXTEND, store);
@@ -270,7 +272,7 @@ public class BlueprintBookParticleLoop {
                     activeEntity = null;
                 });
             } catch (Exception e) {
-                LOGGER.warning("[BlueprintBookParticle] Error removing entity on shutdown: " + e.getMessage());
+                DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING, "[BlueprintBookParticle] Error removing entity on shutdown: " + e.getMessage());
             }
         }
     }

@@ -1,9 +1,9 @@
 package com.CodeCreature.command;
 
 import com.CodeCreature.ui.blueprintbook.BlueprintBookPickStencilInteraction;
+import com.CodeCreature.util.DebugLogger;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
@@ -28,7 +28,7 @@ public class ParticleCommand extends AbstractPlayerCommand {
                            @NonNull PlayerRef playerRef,
                            @NonNull World world) {
         String current = BlueprintBookPickStencilInteraction.getParticleEffect();
-        playerRef.sendMessage(Message.raw("Current particle effect: " + current));
+        DebugLogger.chat(playerRef, DebugLogger.Subsystem.PLUGIN, "Current particle effect: " + current);
     }
 
     // /bookParticle set Dust_Sparkles_Fine → set
@@ -48,7 +48,7 @@ public class ParticleCommand extends AbstractPlayerCommand {
                                @NonNull World world) {
             String name = nameArg.get(context);
             BlueprintBookPickStencilInteraction.setParticleEffect(name);
-            playerRef.sendMessage(Message.raw("Particle effect set to: " + name));
+            DebugLogger.chat(playerRef, DebugLogger.Subsystem.PLUGIN, "Particle effect set to: " + name);
         }
     }
 }

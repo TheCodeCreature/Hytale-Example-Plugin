@@ -1,0 +1,12 @@
+{
+  "logging.global" : false,
+  "logging.plugin" : true,
+  "logging.stencil" : true,
+  "logging.blueprint_bench" : true,
+  "logging.blueprint_book" : true,
+  "logging.scaling" : true,
+  "logging.registry" : true,
+  "logging.crafting" : true,
+  "logging.ingredient_tree" : true,
+  "diagnostics.breakLog" : false
+}

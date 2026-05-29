@@ -1,9 +1,9 @@
 package com.CodeCreature.command.placeblock.subcommands;
 
+import com.CodeCreature.util.DebugLogger;
 import com.CodeCreature.util.StencilMetadata;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
@@ -48,7 +48,7 @@ public class StencilSubCommand extends AbstractPlayerCommand {
 
         Player player = store.getComponent(ref, Player.getComponentType());
         if (player == null) {
-            playerRef.sendMessage(Message.raw("§c[Stencil] Could not resolve player."));
+            DebugLogger.chat(playerRef, DebugLogger.Subsystem.STENCIL, "§c[Stencil] Could not resolve player.");
             return;
         }
 
@@ -60,14 +60,14 @@ public class StencilSubCommand extends AbstractPlayerCommand {
             recipe = findRecipeByOutput(itemId);
         }
         if (recipe == null) {
-            playerRef.sendMessage(Message.raw("§c[Stencil] No recipe found for: " + itemId));
+            DebugLogger.chat(playerRef, DebugLogger.Subsystem.STENCIL, "§c[Stencil] No recipe found for: " + itemId);
             return;
         }
 
         // Derive the output item ID from the recipe (the item we'll create the stencil from)
         MaterialQuantity primaryOutput = recipe.getPrimaryOutput();
         if (primaryOutput == null || primaryOutput.getItemId() == null) {
-            playerRef.sendMessage(Message.raw("§c[Stencil] Recipe has no output item."));
+            DebugLogger.chat(playerRef, DebugLogger.Subsystem.STENCIL, "§c[Stencil] Recipe has no output item.");
             return;
         }
         String outputItemId = primaryOutput.getItemId();
@@ -75,7 +75,7 @@ public class StencilSubCommand extends AbstractPlayerCommand {
         // Verify the output item has a block type (is placeable)
         Item outputItem = Item.getAssetMap().getAsset(outputItemId);
         if (outputItem == null || outputItem.getBlockId() == null) {
-            playerRef.sendMessage(Message.raw("§c[Stencil] '" + outputItemId + "' is not a placeable block."));
+            DebugLogger.chat(playerRef, DebugLogger.Subsystem.STENCIL, "§c[Stencil] '" + outputItemId + "' is not a placeable block.");
             return;
         }
 
@@ -84,7 +84,7 @@ public class StencilSubCommand extends AbstractPlayerCommand {
         ItemStack stencil = StencilMetadata.createStencil(outputItemId, recipeId);
         player.getInventory().getCombinedHotbarFirst().addItemStack(stencil);
 
-        playerRef.sendMessage(Message.raw("§a[Stencil] Created: " + outputItemId + " (recipe: " + recipeId + ")"));
+        DebugLogger.chat(playerRef, DebugLogger.Subsystem.STENCIL, "§a[Stencil] Created: " + outputItemId + " (recipe: " + recipeId + ")");
     }
 
     /**

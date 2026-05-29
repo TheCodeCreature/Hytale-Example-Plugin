@@ -21,8 +21,8 @@ import java.util.logging.Logger;
  * {@link ConcurrentHashMap}. This allows safe reads from any thread (server,
  * world, ECS) without synchronization.</p>
  *
- * <p>Persistence uses {@link BsonUtil} for consistency with the codebase's
- * existing JSON I/O pattern (see {@code BlueprintBenchPrefsStore}).</p>
+ * <p>Persistence uses {@link BsonUtil} for JSON I/O with {@code .join()} to
+ * ensure synchronous writes (matching Hytale's own TeleportPlugin pattern).</p>
  *
  * <h3>Usage:</h3>
  * <pre>
@@ -64,27 +64,38 @@ public final class FeatureFlags {
      * @param dataDirectory the plugin's data directory (from {@code getDataDirectory()})
      */
     public static void initialize(Path dataDirectory) {
-        // TODO: Set filePath to dataDirectory.resolve("feature_flags.json")
-        // TODO: Read existing file via BsonUtil.readDocumentNow(filePath)
-        // TODO: If document is non-null, iterate entries and populate flags map
-        //       (each entry is a BsonBoolean keyed by dot-notation string)
-        // TODO: Call registerDefaults() to ensure all known keys exist
-        // TODO: Call save() to persist any newly-registered defaults
+        filePath = dataDirectory.resolve("feature_flags.json");
+        BsonDocument doc = BsonUtil.readDocumentNow(filePath);
+        if (doc != null) {
+            for (Map.Entry<String, BsonValue> entry : doc.entrySet()) {
+                if (entry.getValue().isBoolean()) {
+                    flags.put(entry.getKey(), new AtomicBoolean(entry.getValue().asBoolean().getValue()));
+                }
+            }
+        }
+        registerDefaults();
+        save();
     }
 
     /**
      * Persists the current flag state to {@code feature_flags.json}.
      *
      * <p>Builds a {@link BsonDocument} with one {@link BsonBoolean} entry per
-     * flag, then writes via {@link BsonUtil#writeDocument}. Logs a warning on
-     * I/O failure — never throws.</p>
+     * flag, then writes synchronously via {@link BsonUtil#writeDocument} with
+     * {@code .join()} to block until the async I/O completes. Logs a warning
+     * on I/O failure — never throws.</p>
      */
     public static void save() {
-        // TODO: Guard against filePath being null (not initialized)
-        // TODO: Build a BsonDocument from the flags map
-        //       for each entry: doc.put(key, new BsonBoolean(atomicBool.get()))
-        // TODO: Write via BsonUtil.writeDocument(filePath, doc)
-        // TODO: Catch exceptions and log warning
+        if (filePath == null) return;
+        BsonDocument doc = new BsonDocument();
+        for (Map.Entry<String, AtomicBoolean> entry : flags.entrySet()) {
+            doc.put(entry.getKey(), new BsonBoolean(entry.getValue().get()));
+        }
+        try {
+            BsonUtil.writeDocument(filePath, doc).join();
+        } catch (Exception e) {
+            LOGGER.warning("[FeatureFlags] Failed to save: " + e.getMessage());
+        }
     }
 
     /**
@@ -97,10 +108,8 @@ public final class FeatureFlags {
      * @return current flag value, or {@code true} if unregistered
      */
     public static boolean get(String key) {
-        // TODO: Look up key in flags map
-        // TODO: If absent, return true (fail-open default)
-        // TODO: Otherwise return atomicBoolean.get()
-        return true;
+        AtomicBoolean flag = flags.get(key);
+        return flag == null ? true : flag.get();
     }
 
     /**
@@ -113,26 +122,28 @@ public final class FeatureFlags {
      * @param value new value
      */
     public static void set(String key, boolean value) {
-        // TODO: computeIfAbsent to ensure AtomicBoolean exists for the key
-        // TODO: Set the AtomicBoolean value
-        // TODO: Call save()
+        flags.computeIfAbsent(key, k -> new AtomicBoolean(value)).set(value);
+        save();
     }
 
     /**
      * Flips a flag using a CAS loop and auto-saves.
      *
-     * <p>Follows the same compare-and-set pattern used by
-     * {@code BreakBlockDiagnostic.toggle()}.</p>
+     * <p>Uses a compare-and-set loop on the underlying {@link AtomicBoolean}
+     * to ensure thread-safe flipping.</p>
      *
      * @param key dot-notation flag key
      * @return the new value after toggling
      */
     public static boolean toggle(String key) {
-        // TODO: computeIfAbsent to ensure AtomicBoolean exists (default true)
-        // TODO: CAS loop: prev = get(), next = !prev, compareAndSet(prev, next)
-        // TODO: Call save()
-        // TODO: Return the new value
-        return false;
+        AtomicBoolean flag = flags.computeIfAbsent(key, k -> new AtomicBoolean(true));
+        boolean prev, next;
+        do {
+            prev = flag.get();
+            next = !prev;
+        } while (!flag.compareAndSet(prev, next));
+        save();
+        return next;
     }
 
     /**
@@ -145,7 +156,7 @@ public final class FeatureFlags {
      * @param defaultValue value to use if the key is new
      */
     public static void register(String key, boolean defaultValue) {
-        // TODO: Use putIfAbsent so existing (file-loaded) values are preserved
+        flags.putIfAbsent(key, new AtomicBoolean(defaultValue));
     }
 
     /**
@@ -157,10 +168,11 @@ public final class FeatureFlags {
      * @return unmodifiable {@code Map<String, Boolean>} of all flags
      */
     public static Map<String, Boolean> getAll() {
-        // TODO: Build a LinkedHashMap<String, Boolean> from the flags map
-        //       (iterate entries, call atomicBoolean.get() for each value)
-        // TODO: Return Collections.unmodifiableMap(snapshot)
-        return Collections.emptyMap();
+        LinkedHashMap<String, Boolean> snapshot = new LinkedHashMap<>();
+        for (Map.Entry<String, AtomicBoolean> entry : flags.entrySet()) {
+            snapshot.put(entry.getKey(), entry.getValue().get());
+        }
+        return Collections.unmodifiableMap(snapshot);
     }
 
     /**
@@ -170,16 +182,15 @@ public final class FeatureFlags {
      * present in the map (from the file) are not overwritten.</p>
      */
     private static void registerDefaults() {
-        // TODO: Register each known flag with its default value:
-        //   register("logging.global", true)
-        //   register("logging.plugin", true)
-        //   register("logging.stencil", true)
-        //   register("logging.blueprint_bench", true)
-        //   register("logging.blueprint_book", true)
-        //   register("logging.scaling", true)
-        //   register("logging.registry", true)
-        //   register("logging.crafting", true)
-        //   register("logging.ingredient_tree", true)
-        //   register("diagnostics.breakLog", false)
+        register("logging.global", true);
+        register("logging.plugin", true);
+        register("logging.stencil", true);
+        register("logging.blueprint_bench", true);
+        register("logging.blueprint_book", true);
+        register("logging.scaling", true);
+        register("logging.registry", true);
+        register("logging.crafting", true);
+        register("logging.ingredient_tree", true);
+        register("diagnostics.breakLog", false);
     }
 }
