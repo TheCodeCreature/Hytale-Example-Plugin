@@ -26,6 +26,12 @@ pie title Backlog Distribution
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
 | E2605181400 | Epic | Technical Debt Cleanup | — | high |
+| F2605281000 | Feature | Centralized Debug Logging Utility | E2605181400 | high |
+| S2605281025 | Story | Create Standalone FeatureFlags System | E2605181400 | high |
+| S2605281005 | Story | Create DebugLogger Utility Class | E2605181400 | high |
+| S2605281010 | Story | Migrate All Log Call Sites to DebugLogger | E2605181400 | high |
+| S2605281015 | Story | Migrate Debug Chat Messages to DebugLogger | E2605181400 | high |
+| S2605281020 | Story | Register /Debug Logging Command | E2605181400 | high |
 | F2605261200 | Feature | Decompile Update API Compatibility | E2605181400 | critical |
 | S2605261205 | Story | Fix Missing Vector Types After Decompile Update | E2605181400 | critical |
 | F2605181420 | Feature | Blueprint Bench Page Decomposition | E2605181400 | medium |
