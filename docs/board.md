@@ -1,6 +1,6 @@
 # Product Board
 
-> Last updated: 2026-05-29 16:00
+> Last updated: 2026-05-29 17:00
 
 ## Status Overview
 
@@ -100,6 +100,7 @@ pie title Backlog Distribution
 | S2605271740 | Story | Remove Compile Restoration Skeleton Code | E2605181400 | medium |
 | S2605271745 | Story | Fix Null Safety in BlueprintBookParticleLoop | E2605181400 | high |
 | F2605291505 | Feature | Particle Loop Task Queue Guard | E2605291500 | critical |
+| F2605291600 | Feature | Disconnect Race Condition Fix | E2605291500 | critical |
 | F2605181405 | Feature | Blueprint Book Highlight Performance | E2605181400 | high |
 | S2605191005 | Story | Build RecipeTierClassifier | E2604201200 | critical |
 | S2605191010 | Story | Modify DropScaler Phase 1 for Leaf-Only Scaling | E2604201200 | critical |

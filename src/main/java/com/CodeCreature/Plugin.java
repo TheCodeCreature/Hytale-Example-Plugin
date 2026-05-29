@@ -31,6 +31,8 @@ import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import java.util.UUID;
+import java.util.logging.Level;
 import org.jspecify.annotations.NonNull;
 
 public class Plugin extends JavaPlugin {
@@ -107,9 +109,26 @@ public class Plugin extends JavaPlugin {
 
     private static void onPlayerDisconnect(PlayerDisconnectEvent event) {
         PlayerRef playerRef = event.getPlayerRef();
-        StencilSyncSystem.unregister(playerRef.getUuid());
-        StencilVisualManager.removePlayer(playerRef.getUuid());
-        BlueprintBookParticleLoop.remove(playerRef.getUuid());
+        UUID playerId = playerRef.getUuid();
+
+        try {
+            StencilSyncSystem.unregister(playerId);
+        } catch (Exception e) {
+            DebugLogger.log(DebugLogger.Subsystem.PLUGIN, Level.WARNING,
+                    "[Plugin] Error in StencilSyncSystem.unregister for " + playerId + ": " + e.getMessage());
+        }
+        try {
+            StencilVisualManager.removePlayer(playerId);
+        } catch (Exception e) {
+            DebugLogger.log(DebugLogger.Subsystem.PLUGIN, Level.WARNING,
+                    "[Plugin] Error in StencilVisualManager.removePlayer for " + playerId + ": " + e.getMessage());
+        }
+        try {
+            BlueprintBookParticleLoop.remove(playerId);
+        } catch (Exception e) {
+            DebugLogger.log(DebugLogger.Subsystem.PLUGIN, Level.WARNING,
+                    "[Plugin] Error in BlueprintBookParticleLoop.remove for " + playerId + ": " + e.getMessage());
+        }
     }
 
     private static void onAssetsLoaded(LoadAssetEvent event) {

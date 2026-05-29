@@ -11,6 +11,10 @@ import com.hypixel.hytale.event.EventRegistration;
 
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Monitors hotbar inventory changes and restores stencil items that were
@@ -40,7 +44,9 @@ public final class StencilSyncSystem {
     public static void register(PlayerRef playerRef, Player player, World world) {
         UUID uuid = playerRef.getUuid();
         if (registeredPlayers.containsKey(uuid)) {
-            return; // Already registered
+            DebugLogger.log(STENCIL, Level.WARNING,
+                    "[StencilSync] Replacing stale registration for player: " + uuid);
+            unregister(uuid);
         }
 
         AffordabilityCoalescer coalescer = new AffordabilityCoalescer(playerRef, player);

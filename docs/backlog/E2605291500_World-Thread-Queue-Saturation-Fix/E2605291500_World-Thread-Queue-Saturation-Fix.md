@@ -22,6 +22,7 @@ Eliminate progressive server slowdown caused by unbounded world thread task queu
 | ID | Title | Status |
 |----|-------|--------|
 | F2605291505 | Particle Loop Task Queue Guard | done |
+| F2605291600 | Disconnect Race Condition Fix | done |
 | F2605291510 | Entity Churn Reduction | backlog |
 | F2605291515 | Disconnect Entity Leak Fix | backlog |
 

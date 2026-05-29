@@ -171,15 +171,18 @@ public class BlueprintBookParticleLoop {
             affordable = true;
         }
 
+        // Local capture — activeEntity can be nulled from Netty thread via shutdown()
+        Ref<EntityStore> currentEntity = activeEntity;
+
         // Same target, entity still alive, affordability unchanged — nothing to do
-        if (target.equals(lastTargetBlock) && activeEntity != null && activeEntity.isValid()
+        if (target.equals(lastTargetBlock) && currentEntity != null && currentEntity.isValid()
                 && affordable == lastAffordable) {
             return;
         }
 
         // Target changed, affordability changed, or entity missing — replace
-        if (activeEntity != null && activeEntity.isValid()) {
-            store.removeEntity(activeEntity, RemoveReason.REMOVE);
+        if (currentEntity != null && currentEntity.isValid()) {
+            store.removeEntity(currentEntity, RemoveReason.REMOVE);
         }
         activeEntity = spawnHighlightEntity(store, target, blockTypeId, affordable);
         lastTargetBlock = target;
@@ -254,8 +257,9 @@ public class BlueprintBookParticleLoop {
     }
 
     private void removeHighlightEntity(Store<EntityStore> store) {
-        if (activeEntity != null && activeEntity.isValid() && store != null) {
-            store.removeEntity(activeEntity, RemoveReason.REMOVE);
+        Ref<EntityStore> entity = activeEntity;
+        if (entity != null && entity.isValid() && store != null) {
+            store.removeEntity(entity, RemoveReason.REMOVE);
         }
         activeEntity = null;
         lastTargetBlock = null;
@@ -263,22 +267,19 @@ public class BlueprintBookParticleLoop {
     }
 
     private void shutdown() {
-        active = false;
         if (updateTask != null) {
             updateTask.cancel(false);
             updateTask = null;
         }
-        try {
-            world.execute(() -> {
-                if (activeEntity != null && activeEntity.isValid()) {
-                    Store<EntityStore> store = activeEntity.getStore();
-                    store.removeEntity(activeEntity, RemoveReason.REMOVE);
-                }
-                activeEntity = null;
-            });
-        } catch (Exception e) {
-            DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING,
-                    "[BlueprintBookParticle] Error queueing entity cleanup: " + e.getMessage());
-        }
+        // Null fields before the volatile write to `active` — the volatile store
+        // acts as a memory fence, publishing these writes to the world thread.
+        // Entity cleanup is NOT queued via world.execute() — adding work to the
+        // world thread during disconnect delays the engine's entity removal, which
+        // blocks rejoin (SetupPacketHandler.removalFuture.join() hangs).
+        // The highlight entity is non-serialized and the 500ms effect self-expires.
+        activeEntity = null;
+        lastTargetBlock = null;
+        lastAffordable = false;
+        active = false;
     }
 }
