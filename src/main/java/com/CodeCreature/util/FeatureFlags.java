@@ -101,15 +101,15 @@ public final class FeatureFlags {
     /**
      * Returns the current value of a flag.
      *
-     * <p>If the key is not registered, returns {@code true} (fail-open).
+     * <p>If the key is not registered, returns {@code false} (fail-closed).
      * Thread-safe: reads from {@link AtomicBoolean#get()}.</p>
      *
      * @param key dot-notation flag key (e.g. {@code "logging.stencil"})
-     * @return current flag value, or {@code true} if unregistered
+     * @return current flag value, or {@code false} if unregistered
      */
     public static boolean get(String key) {
         AtomicBoolean flag = flags.get(key);
-        return flag == null ? true : flag.get();
+        return flag == null ? false : flag.get();
     }
 
     /**
@@ -136,7 +136,7 @@ public final class FeatureFlags {
      * @return the new value after toggling
      */
     public static boolean toggle(String key) {
-        AtomicBoolean flag = flags.computeIfAbsent(key, k -> new AtomicBoolean(true));
+        AtomicBoolean flag = flags.computeIfAbsent(key, k -> new AtomicBoolean(false));
         boolean prev, next;
         do {
             prev = flag.get();
@@ -182,15 +182,15 @@ public final class FeatureFlags {
      * present in the map (from the file) are not overwritten.</p>
      */
     private static void registerDefaults() {
-        register("logging.global", true);
-        register("logging.plugin", true);
-        register("logging.stencil", true);
-        register("logging.blueprint_bench", true);
-        register("logging.blueprint_book", true);
-        register("logging.scaling", true);
-        register("logging.registry", true);
-        register("logging.crafting", true);
-        register("logging.ingredient_tree", true);
+        register("logging.global", false);
+        register("logging.plugin", false);
+        register("logging.stencil", false);
+        register("logging.blueprint_bench", false);
+        register("logging.blueprint_book", false);
+        register("logging.scaling", false);
+        register("logging.registry", false);
+        register("logging.crafting", false);
+        register("logging.ingredient_tree", false);
         register("diagnostics.breakLog", false);
     }
 }

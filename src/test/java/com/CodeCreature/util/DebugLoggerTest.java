@@ -117,9 +117,16 @@ class DebugLoggerTest {
     @Nested
     class WhenBothGlobalAndSubsystemAreOn {
 
+        @BeforeEach
+        void enableAll() {
+            FeatureFlags.set("logging.global", true);
+            for (Subsystem sub : Subsystem.values()) {
+                FeatureFlags.set(sub.flagKey(), true);
+            }
+        }
+
         @Test
         void isEnabledReturnsTrue() {
-            // After initialize(), logging.global and all subsystems default to true
             assertTrue(DebugLogger.isEnabled(Subsystem.STENCIL),
                     "isEnabled() should be true when both global and subsystem flags are on");
         }
@@ -128,7 +135,7 @@ class DebugLoggerTest {
         void isEnabledReturnsTrueForAllSubsystems() {
             for (Subsystem sub : Subsystem.values()) {
                 assertTrue(DebugLogger.isEnabled(sub),
-                        "isEnabled(" + sub.name() + ") should be true with defaults");
+                        "isEnabled(" + sub.name() + ") should be true when explicitly enabled");
             }
         }
     }
@@ -160,7 +167,11 @@ class DebugLoggerTest {
     class WhenSubsystemFlagIsOff {
 
         @BeforeEach
-        void disableStencil() {
+        void enableAllThenDisableStencil() {
+            FeatureFlags.set("logging.global", true);
+            for (Subsystem sub : Subsystem.values()) {
+                FeatureFlags.set(sub.flagKey(), true);
+            }
             FeatureFlags.set("logging.stencil", false);
         }
 

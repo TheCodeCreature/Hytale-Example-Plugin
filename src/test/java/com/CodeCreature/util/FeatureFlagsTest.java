@@ -65,10 +65,10 @@ class FeatureFlagsTest {
     class WhenKeyIsUnregistered {
 
         @Test
-        void getReturnsTrue_failOpen() {
-            // Unregistered keys default to true so features are not silently disabled
-            assertTrue(FeatureFlags.get("nonexistent.key"),
-                    "Unregistered flag must return true (fail-open policy)");
+        void getReturnsFalse_failClosed() {
+            // Unregistered keys default to false — logging is off unless explicitly enabled
+            assertFalse(FeatureFlags.get("nonexistent.key"),
+                    "Unregistered flag must return false (fail-closed policy)");
         }
     }
 
@@ -164,14 +164,14 @@ class FeatureFlagsTest {
         }
 
         @Test
-        void toggleOnUnregisteredKeyCreatesWithDefaultTrueThenFlips() {
-            // Unregistered keys get computeIfAbsent(k, k -> new AtomicBoolean(true))
-            // then immediately toggled → result should be false
+        void toggleOnUnregisteredKeyCreatesWithDefaultFalseThenFlips() {
+            // Unregistered keys get computeIfAbsent(k, k -> new AtomicBoolean(false))
+            // then immediately toggled → result should be true
             boolean result = FeatureFlags.toggle("unknown.flag");
 
-            assertFalse(result,
-                    "toggle() on unregistered key: default=true → flipped to false");
-            assertFalse(FeatureFlags.get("unknown.flag"));
+            assertTrue(result,
+                    "toggle() on unregistered key: default=false → flipped to true");
+            assertTrue(FeatureFlags.get("unknown.flag"));
         }
     }
 
@@ -240,11 +240,11 @@ class FeatureFlagsTest {
         }
 
         @Test
-        void initializeSetsLoggingDefaultsToTrue() {
+        void initializeSetsLoggingDefaultsToFalse() {
             FeatureFlags.initialize(Path.of("test-data"));
 
-            assertTrue(FeatureFlags.get("logging.global"), "logging.global default should be true");
-            assertTrue(FeatureFlags.get("logging.plugin"), "logging.plugin default should be true");
+            assertFalse(FeatureFlags.get("logging.global"), "logging.global default should be false");
+            assertFalse(FeatureFlags.get("logging.plugin"), "logging.plugin default should be false");
         }
 
         @Test
