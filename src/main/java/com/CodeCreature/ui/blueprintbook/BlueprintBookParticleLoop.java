@@ -54,6 +54,7 @@ public class BlueprintBookParticleLoop {
     private static final String EFFECT_ID_DEFAULT = "Drop_Rare";
     private static final String EFFECT_ID_GREEN = "Drop_Uncommon";
     private static final String EFFECT_ID_RED = "BlockPlaceFail";
+    private static final long MIN_INTERVAL_NANOS = 50_000_000L; // 50ms rate limit
 
     // Feature flag: when false, skips affordability check and always shows green.
     // Set to true once auto-craft affordability performance is optimized.
@@ -69,6 +70,7 @@ public class BlueprintBookParticleLoop {
     private boolean lastAffordable;
     private volatile boolean active = true;
     private final AtomicBoolean pending = new AtomicBoolean(false);
+    private long lastExecuteNanos;
 
     public BlueprintBookParticleLoop(@Nonnull PlayerRef playerRef, @Nonnull World world) {
         this.playerRef = playerRef;
@@ -84,9 +86,9 @@ public class BlueprintBookParticleLoop {
             DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[BlueprintBookParticle] Replaced stale loop for player: " + playerRef.getUsername());
         }
         BlueprintBookParticleLoop instance = new BlueprintBookParticleLoop(playerRef, world);
-        instance.startUpdateLoop();
         INSTANCES.put(playerId, instance);
         DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[BlueprintBookParticle] Created loop for player: " + playerRef.getUsername());
+        instance.startUpdateLoop();
     }
 
     public static void remove(@Nonnull UUID playerId) {
@@ -98,6 +100,7 @@ public class BlueprintBookParticleLoop {
     }
 
     private void startUpdateLoop() {
+        if (updateTask != null) return; // Already running
         updateTask = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> {
             if (!active) { return; }
             if (!pending.compareAndSet(false, true)) { return; }
@@ -110,9 +113,24 @@ public class BlueprintBookParticleLoop {
         }, UPDATE_INTERVAL_MILLIS, UPDATE_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
     }
 
+    private void stopUpdateLoop() {
+        if (updateTask != null) {
+            updateTask.cancel(false);
+            updateTask = null;
+        }
+        lastTargetBlock = null;
+        lastAffordable = false;
+    }
+
     private void executeTick() {
-        pending.set(false);
+      try {
         if (!active) { return; }
+
+        long now = System.nanoTime();
+        if (now - lastExecuteNanos < MIN_INTERVAL_NANOS) {
+            return; // Rate-limited — pending.set(false) in finally handles re-arm
+        }
+        lastExecuteNanos = now;
 
         Ref<EntityStore> ref = playerRef.getReference();
         if (ref == null || !ref.isValid()) {
@@ -187,6 +205,9 @@ public class BlueprintBookParticleLoop {
         activeEntity = spawnHighlightEntity(store, target, blockTypeId, affordable);
         lastTargetBlock = target;
         lastAffordable = affordable;
+      } finally {
+          pending.set(false);
+      }
     }
 
     private Ref<EntityStore> spawnHighlightEntity(Store<EntityStore> store, Vector3i target, String blockTypeKey,
@@ -267,16 +288,21 @@ public class BlueprintBookParticleLoop {
     }
 
     private void shutdown() {
-        if (updateTask != null) {
-            updateTask.cancel(false);
-            updateTask = null;
+        stopUpdateLoop();
+
+        // Entity cleanup — must be inline since we can't world.execute during disconnect
+        Ref<EntityStore> entity = activeEntity;
+        if (entity != null && entity.isValid()) {
+            // Best-effort cleanup — if store is unavailable, entity is non-serialized and will be GC'd
+            try {
+                Store<EntityStore> store = entity.getStore();
+                if (store != null) {
+                    store.removeEntity(entity, RemoveReason.REMOVE);
+                }
+            } catch (Exception e) {
+                // Swallow — shutdown cleanup, entity is non-serialized
+            }
         }
-        // Null fields before the volatile write to `active` — the volatile store
-        // acts as a memory fence, publishing these writes to the world thread.
-        // Entity cleanup is NOT queued via world.execute() — adding work to the
-        // world thread during disconnect delays the engine's entity removal, which
-        // blocks rejoin (SetupPacketHandler.removalFuture.join() hangs).
-        // The highlight entity is non-serialized and the 500ms effect self-expires.
         activeEntity = null;
         lastTargetBlock = null;
         lastAffordable = false;

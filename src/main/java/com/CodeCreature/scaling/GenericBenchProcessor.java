@@ -52,8 +52,18 @@ public final class GenericBenchProcessor extends AbstractBenchProcessor {
      * @return {@code true} for natural preference, {@code false} for
      *         non-natural preference
      */
-    @Override
     public boolean preferNatural() {
         return preferNatural;
+    }
+
+    /**
+     * Returns {@code null} — this processor is not tied to a specific
+     * {@link BenchCategory}.  The only call-site in
+     * {@link AbstractBenchProcessor} uses this in a catch-block log message,
+     * where {@code null} is safely concatenated as the string "null".
+     */
+    @Override
+    public BenchCategory category() {
+        return null;
     }
 }

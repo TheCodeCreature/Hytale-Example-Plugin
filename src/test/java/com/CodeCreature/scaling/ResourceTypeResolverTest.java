@@ -71,6 +71,7 @@ class ResourceTypeResolverTest {
         setNaturalRegistry(
                 Set.of("Rock_Stone", "Wood_Log_Oak", "Wood_Log_Birch"),
                 Set.of("Rock_Stone", "Wood_Log_Oak", "Wood_Log_Birch"));
+        ResourceTypeResolver.initialize();
     }
 
     // ────────────────────────────────────────────────────────────

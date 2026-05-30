@@ -371,6 +371,7 @@ public final class AssetTestHelper {
         setStaticField(ItemDropList.class, "ASSET_STORE", null);
 
         setNaturalRegistry(Collections.emptySet(), Collections.emptySet());
+        setStaticField(ResourceTypeResolver.class, "resourceTypeIndex", Map.of());
         setStaticField(RecipeTierClassifier.class, "craftedItemIds", Collections.emptySet());
         setStaticField(BenchRecipeRegistries.class, "registries", Collections.emptyMap());
     }

@@ -111,8 +111,11 @@ public final class AutoCraftPlanner {
                                      @Nonnull CombinedItemContainer container) {
         // Step 1: Compute direct materials and display data
         List<MaterialQuantity> directMaterials = PlaceBlockCostUtil.getPerUnitCost(recipe);
-        List<ResolvedIngredient> directView = RecipeAffordabilityResolver.resolveIngredientCosts(recipe, category, container);
-        List<RawMaterialRequirement> rawView = RecipeTreeResolver.resolveRecipeToRaw(recipe);
+        // Display data (directView, rawView) is not computed here — no caller reads
+        // directCostView() or rawCostView() from the plan. Computing them doubled the
+        // ResourceType resolution cost on every affordability check.
+        List<ResolvedIngredient> directView = List.of();
+        List<RawMaterialRequirement> rawView = List.of();
 
         if (directMaterials.isEmpty()) {
             return AutoCraftPlan.direct(List.of(), directView, rawView);

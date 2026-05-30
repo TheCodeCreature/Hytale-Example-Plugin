@@ -157,16 +157,19 @@ public final class AffordabilityCoalescer {
      * It runs on the world thread on the next tick after all synchronous change
      * events from the current mutation have completed.
      *
-     * <p>Clears {@link #pending} BEFORE calling {@code refreshAffordability()},
-     * so that if the refresh itself triggers inventory changes (it shouldn't,
-     * but defensively), those changes can schedule a new refresh.
+     * <p>Clears {@link #pending} AFTER calling {@code refreshAffordability()},
+     * so that no new refresh can be scheduled while the current one is running.
+     * Uses try-finally to ensure the flag is always cleared even if the refresh throws.
      *
      * <p>If the player disconnected between scheduling and execution,
      * {@link StencilVisualManager#refreshAffordability} will find no tracked
      * state and no-op safely.
      */
     private void executeRefresh() {
-        pending.set(false);
-        StencilVisualManager.refreshAffordability(playerRef, player);
+        try {
+            StencilVisualManager.refreshAffordability(playerRef, player);
+        } finally {
+            pending.set(false);
+        }
     }
 }

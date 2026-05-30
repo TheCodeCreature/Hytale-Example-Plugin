@@ -7,8 +7,12 @@ import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -47,7 +51,39 @@ public final class ResourceTypeResolver {
     private static final Comparator<Map.Entry<String, Item>> SET_ROOT_FIRST =
             Comparator.comparing(e -> !isSetRoot(e.getKey(), e.getValue()));
 
+    /** Pre-indexed item entry for O(1) resource type lookup. */
+    private record IndexedItem(String itemId, boolean isNatural, boolean isSetRoot) {}
+
+    /** Index: resourceTypeId → sorted list of matching items (set-roots first). */
+    private static Map<String, List<IndexedItem>> resourceTypeIndex = Map.of();
+
     private ResourceTypeResolver() {}
+
+    /**
+     * Builds the resource type index from the item asset map.
+     * Must be called after assets are loaded (after NaturalResourceRegistry.init()).
+     */
+    public static void initialize() {
+        Map<String, List<IndexedItem>> index = new HashMap<>();
+        for (var entry : Item.getAssetMap().getAssetMap().entrySet()) {
+            Item item = entry.getValue();
+            if (item == null || item.getResourceTypes() == null || isDeco(item)) continue;
+            String itemId = entry.getKey();
+            boolean isNatural = NaturalResourceRegistry.isNaturalItem(itemId);
+            boolean setRoot = isSetRoot(itemId, item);
+            IndexedItem indexed = new IndexedItem(itemId, isNatural, setRoot);
+            for (ItemResourceType rt : item.getResourceTypes()) {
+                if (rt.id != null) {
+                    index.computeIfAbsent(rt.id, k -> new ArrayList<>()).add(indexed);
+                }
+            }
+        }
+        // Sort each list: set roots first (false < true → roots before derivatives)
+        for (List<IndexedItem> list : index.values()) {
+            list.sort(Comparator.comparing(i -> !i.isSetRoot));
+        }
+        resourceTypeIndex = Collections.unmodifiableMap(index);
+    }
 
     /**
      * Resolves a {@link MaterialQuantity} to a concrete item ID using the
@@ -98,26 +134,16 @@ public final class ResourceTypeResolver {
     @Nullable
     static String resolveByResourceType(@Nonnull String resId,
                                          @Nonnull BenchCategory category) {
+        List<IndexedItem> items = resourceTypeIndex.getOrDefault(resId, List.of());
+        if (items.isEmpty()) return null;
         boolean preferNatural = category.preferNatural();
 
-        // Pass 1: preferred items (natural for Furniture, non-natural for Builders),
-        // sorted so set-root items (e.g. Planks) come before derivatives (Decorative/Ornate)
-        var preferred = itemsWithResourceType(resId)
-                .filter(e -> NaturalResourceRegistry.isNaturalItem(e.getKey()) == preferNatural)
-                .sorted(SET_ROOT_FIRST)
-                .map(Map.Entry::getKey)
-                .findFirst();
-        if (preferred.isPresent()) {
-            return preferred.get();
+        // Pass 1: preferred items (already sorted set-roots first)
+        for (IndexedItem item : items) {
+            if (item.isNatural == preferNatural) return item.itemId;
         }
-
-        // Pass 2: fallback to any item with a matching ResourceType, set-roots first
-        var fallback = itemsWithResourceType(resId)
-                .sorted(SET_ROOT_FIRST)
-                .map(Map.Entry::getKey)
-                .findFirst()
-                .orElse(null);
-        return fallback;
+        // Pass 2: any item (first in list is a set-root due to sorting)
+        return items.get(0).itemId;
     }
 
     /**

@@ -59,6 +59,7 @@ public final class DropScaler {
      */
     public static void apply() {
         NaturalResourceRegistry.init();
+        ResourceTypeResolver.initialize();
         RecipeTierClassifier.init();
         RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
         BenchRecipeRegistries.init();
