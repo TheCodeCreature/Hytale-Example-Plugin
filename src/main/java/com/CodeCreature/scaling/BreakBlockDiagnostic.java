@@ -85,7 +85,7 @@ public class BreakBlockDiagnostic extends EntityEventSystem<EntityStore, BreakBl
             if (inputs != null) {
                 for (MaterialQuantity mq : inputs) {
                     if (mq == null) continue;
-                    String resolved = ResourceTypeResolver.resolveInputItemId(mq, null);
+                    String resolved = ResourceTypeResolver.resolveInputItemId(mq, false);
                     String itemId = mq.getItemId();
                     String resId = mq.getResourceTypeId();
                     sb.append("    - itemId=").append(itemId)

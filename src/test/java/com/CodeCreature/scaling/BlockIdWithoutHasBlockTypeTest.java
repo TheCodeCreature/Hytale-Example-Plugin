@@ -1,6 +1,7 @@
 package com.CodeCreature.scaling;
 
 import com.CodeCreature.registry.BenchRecipeRegistries;
+import com.CodeCreature.registry.BenchRegistry;
 import com.CodeCreature.scaling.DropScaler;
 import com.CodeCreature.scaling.NaturalResourceRegistry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
@@ -112,6 +113,7 @@ class BlockIdWithoutHasBlockTypeTest {
         installItems(items);
         installRecipes(recipes);
         installDropLists(new HashMap<>());
+        BenchRegistry.init();
     }
 
     @AfterEach

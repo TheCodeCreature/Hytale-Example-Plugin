@@ -4,12 +4,9 @@ import javax.annotation.Nonnull;
 
 /**
  * Generic bench processor that handles blocks belonging to any bench-set.
- * Parameterized by a {@code preferNatural} flag instead of a hardcoded
- * {@link BenchCategory} enum constant.
- *
- * <p>Replaces the former {@code BuildersProcessor}, {@code FurnitureProcessor},
- * and {@code OverlapProcessor} — all three were identical except for which
- * {@code BenchCategory} they returned. This class makes the preference
+ * Parameterized by a {@code preferNatural} flag that controls how
+ * {@link ResourceTypeResolver} picks a concrete item for a
+ * {@code ResourceTypeId} input. This class makes the preference
  * configurable at construction time.
  *
  * <p>All processing logic lives in {@link AbstractBenchProcessor} — this
@@ -56,14 +53,4 @@ public final class GenericBenchProcessor extends AbstractBenchProcessor {
         return preferNatural;
     }
 
-    /**
-     * Returns {@code null} — this processor is not tied to a specific
-     * {@link BenchCategory}.  The only call-site in
-     * {@link AbstractBenchProcessor} uses this in a catch-block log message,
-     * where {@code null} is safely concatenated as the string "null".
-     */
-    @Override
-    public BenchCategory category() {
-        return null;
-    }
 }

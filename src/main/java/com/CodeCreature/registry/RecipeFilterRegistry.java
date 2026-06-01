@@ -1,7 +1,6 @@
 package com.CodeCreature.registry;
 
 import com.CodeCreature.scaling.AssetFieldAccessor;
-import com.CodeCreature.scaling.BenchCategory;
 import com.hypixel.hytale.protocol.BenchRequirement;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
@@ -34,7 +33,7 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
  *   <li>Output item exists in the asset map and has a non-null block ID</li>
  *   <li>At least one input has an {@code itemId} or {@code resourceTypeId}</li>
  *   <li>At least one {@link BenchRequirement} ID matches the allowed set
- *       (derived from {@link BenchCategory#allBenchIds()})</li>
+ *       (derived from {@link BenchRegistry#allBenchIds()})</li>
  * </ol>
  *
  * <p>Each passing recipe produces a {@link FilteredRecipeEntry} that is
@@ -42,7 +41,7 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
  *
  * <p>This class is the <strong>single source of truth</strong> for:
  * <ul>
- *   <li>Which bench IDs are "allowed" (via {@link BenchCategory})</li>
+ *   <li>Which bench IDs are "allowed" (via {@link BenchRegistry})</li>
  *   <li>The complete, correctly-scanned set of BenchRequirement IDs per recipe</li>
  *   <li>The {@code Item.set} value (extracted via reflection once, shared)</li>
  * </ul>
@@ -60,7 +59,7 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
  * are effectively immutable).
  *
  * @see FilteredRecipeEntry
- * @see BenchCategory#allBenchIds()
+ * @see BenchRegistry#allBenchIds()
  */
 public final class RecipeFilterRegistry {
 
@@ -94,7 +93,7 @@ public final class RecipeFilterRegistry {
      * <p>Must be called exactly once, after assets are loaded and after
      * {@link NaturalResourceRegistry#init()} (if ResourceType resolution
      * is needed downstream). Allowed bench IDs are derived from
-     * {@link BenchCategory#allBenchIds()}.
+     * {@link BenchRegistry#allBenchIds()}.
      *
      * <p>Skip prefixes control which recipe ID prefixes are excluded.
      * Use {@link #DEFAULT_SKIP_PREFIXES} for the standard set
@@ -105,7 +104,7 @@ public final class RecipeFilterRegistry {
      * @throws IllegalStateException if called more than once
      */
     public static void init(@Nonnull Set<String> skipPrefixes) {
-        Set<String> allowedBenchIds = BenchCategory.allBenchIds();
+        Set<String> allowedBenchIds = BenchRegistry.allBenchIds();
 
         List<FilteredRecipeEntry> result = new ArrayList<>();
         Map<String, FilteredRecipeEntry> idMap = new HashMap<>();
@@ -139,8 +138,8 @@ public final class RecipeFilterRegistry {
             Set<String> matchedBenchIds = extractMatchingBenchIds(recipe, allowedBenchIds);
             if (matchedBenchIds.isEmpty()) continue;
 
-            // Classify bench category
-            BenchCategory category = BenchCategory.fromRecipe(recipe);
+            // Resolve preferNatural from matched bench IDs
+            boolean preferNatural = BenchRegistry.isPreferNatural(matchedBenchIds);
 
             // Extract Item.set via reflection
             String itemSet = extractItemSet(outputItem);
@@ -151,7 +150,7 @@ public final class RecipeFilterRegistry {
 
             FilteredRecipeEntry entry = new FilteredRecipeEntry(
                     recipe, recipeId, outputItemId, blockTypeId,
-                    Collections.unmodifiableSet(matchedBenchIds), category, itemSet, categoryIds);
+                    Collections.unmodifiableSet(matchedBenchIds), preferNatural, itemSet, categoryIds);
 
             result.add(entry);
             idMap.put(recipeId, entry);

@@ -1,18 +1,21 @@
 package com.CodeCreature.crafting;
 
-import com.CodeCreature.scaling.BenchCategory;
 import com.CodeCreature.scaling.NaturalResourceRegistry;
 import com.CodeCreature.scaling.ResourceTypeResolver;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 
+import com.CodeCreature.util.StencilMetadata;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Stateless utility that encapsulates the full ingredient resolution chain
@@ -63,7 +66,7 @@ public final class RecipeAffordabilityResolver {
      *   <li>Compute per-unit costs via {@link PlaceBlockCostUtil#getPerUnitCost}</li>
      *   <li>For each {@link MaterialQuantity}, resolve to a concrete item ID
      *       via {@link ResourceTypeResolver#resolveInputItemId} using the
-     *       given {@link BenchCategory}</li>
+     *       given {@code preferNatural} preference</li>
      *   <li>Map through {@link NaturalResourceRegistry#resolveToGatherableForm}</li>
      *   <li>Merge duplicates: if two inputs resolve to the same item ID,
      *       sum their quantities into a single entry</li>
@@ -75,12 +78,11 @@ public final class RecipeAffordabilityResolver {
      * <p>If {@code container} is {@code null}, all ingredients will have
      * {@code playerHas=0} and {@code sufficient=false}.
      *
-     * @param recipe    the crafting recipe to resolve ingredients for
-     * @param category  the bench category controlling natural/non-natural
-     *                  preference during ResourceTypeId resolution
-     * @param container the player's combined inventory container
-     *                  (backpack + storage + hotbar), or {@code null} if
-     *                  inventory checking is not available
+     * @param recipe         the crafting recipe to resolve ingredients for
+     * @param preferNatural  {@code true} to prefer natural items, {@code false} for non-natural
+     * @param container      the player's combined inventory container
+     *                       (backpack + storage + hotbar), or {@code null} if
+     *                       inventory checking is not available
      * @return list of resolved ingredients with affordability data,
      *         in resolution order (first occurrence determines position);
      *         empty list if the recipe has no inputs
@@ -88,7 +90,7 @@ public final class RecipeAffordabilityResolver {
     @Nonnull
     public static List<ResolvedIngredient> resolveIngredientCosts(
             @Nonnull CraftingRecipe recipe,
-            @Nonnull BenchCategory category,
+            boolean preferNatural,
             @Nullable CombinedItemContainer container) {
         List<MaterialQuantity> perUnitInputs = PlaceBlockCostUtil.getPerUnitCost(recipe);
         if (perUnitInputs.isEmpty()) {
@@ -96,21 +98,42 @@ public final class RecipeAffordabilityResolver {
         }
 
         Map<String, Integer> ingredientMap = new LinkedHashMap<>();
+        Map<String, String> resolvedToResourceType = new LinkedHashMap<>();
         for (MaterialQuantity mq : perUnitInputs) {
             if (mq == null) continue;
-            String itemId = ResourceTypeResolver.resolveInputItemId(mq, category);
+            String itemId = ResourceTypeResolver.resolveInputItemId(mq, preferNatural);
             if (itemId == null || itemId.isEmpty()) continue;
             itemId = NaturalResourceRegistry.resolveToGatherableForm(itemId);
             ingredientMap.merge(itemId, mq.getQuantity(), Integer::sum);
+            if (mq.getResourceTypeId() != null) {
+                resolvedToResourceType.putIfAbsent(itemId, mq.getResourceTypeId());
+            }
         }
 
         List<ResolvedIngredient> result = new ArrayList<>(ingredientMap.size());
         for (var e : ingredientMap.entrySet()) {
             String itemId = e.getKey();
             int requiredQty = e.getValue();
-            int playerHas = container != null
-                    ? container.countItemStacks(stack -> itemId.equals(stack.getItemId()))
-                    : 0;
+            int playerHas;
+            String resourceTypeId = resolvedToResourceType.get(itemId);
+            if (container != null && resourceTypeId != null) {
+                // Multi-variant: sum across all matching variants, excluding stencils
+                List<String> allVariants = ResourceTypeResolver.getAllMatchingItemIds(resourceTypeId);
+                int total = 0;
+                Set<String> seen = new HashSet<>();
+                for (String variantId : allVariants) {
+                    String resolved = NaturalResourceRegistry.resolveToGatherableForm(variantId);
+                    if (!seen.add(resolved)) continue;
+                    final String lookupId = resolved;
+                    total += container.countItemStacks(stack ->
+                            lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
+                }
+                playerHas = total;
+            } else if (container != null) {
+                playerHas = container.countItemStacks(stack -> itemId.equals(stack.getItemId()));
+            } else {
+                playerHas = 0;
+            }
             result.add(new ResolvedIngredient(itemId, requiredQty, playerHas, playerHas >= requiredQty));
         }
         return List.copyOf(result);
@@ -125,10 +148,10 @@ public final class RecipeAffordabilityResolver {
      *       .stream().allMatch(ResolvedIngredient::sufficient)
      * </pre>
      *
-     * <p>Uses {@link BenchCategory#BUILDERS_ONLY} as the default category,
-     * which matches the behavior of {@code StencilVisualManager}'s previous
-     * direct {@code canRemoveMaterials()} check (stencils are currently
-     * only for builder-bench recipes).
+     * <p>Uses {@code preferNatural=false} as the default, which matches
+     * the behavior of {@code StencilVisualManager}'s previous direct
+     * {@code canRemoveMaterials()} check (stencils are currently only
+     * for builder-bench recipes, which prefer non-natural items).
      *
      * <p>Returns {@code true} if the recipe has no inputs (zero-cost recipe).
      *
@@ -139,7 +162,7 @@ public final class RecipeAffordabilityResolver {
      */
     public static boolean isAffordable(@Nonnull CraftingRecipe recipe,
                                        @Nonnull CombinedItemContainer container) {
-        List<ResolvedIngredient> ingredients = resolveIngredientCosts(recipe, BenchCategory.BUILDERS_ONLY, container);
+        List<ResolvedIngredient> ingredients = resolveIngredientCosts(recipe, false, container);
         return ingredients.isEmpty() || ingredients.stream().allMatch(ResolvedIngredient::sufficient);
     }
 
@@ -154,14 +177,14 @@ public final class RecipeAffordabilityResolver {
      * <p>This is the preferred affordability check for stencil-related
      * contexts where auto-craft should be considered.
      *
-     * @param recipe    the crafting recipe to check
-     * @param category  the bench category for ResourceTypeId resolution
-     * @param container the player's combined inventory container
+     * @param recipe         the crafting recipe to check
+     * @param preferNatural  {@code true} to prefer natural items during resolution
+     * @param container      the player's combined inventory container
      * @return {@code true} if the player can afford directly or via auto-craft
      */
     public static boolean isAffordableWithAutoCraft(@Nonnull CraftingRecipe recipe,
-                                                     @Nonnull BenchCategory category,
+                                                     boolean preferNatural,
                                                      @Nonnull CombinedItemContainer container) {
-        return AutoCraftPlanner.plan(recipe, category, container).affordable();
+        return AutoCraftPlanner.plan(recipe, preferNatural, container).affordable();
     }
 }

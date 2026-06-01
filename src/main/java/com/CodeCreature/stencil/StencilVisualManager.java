@@ -1,7 +1,6 @@
 package com.CodeCreature.stencil;
 
 import com.CodeCreature.crafting.RecipeAffordabilityResolver;
-import com.CodeCreature.scaling.BenchCategory;
 import com.CodeCreature.util.StencilMetadata;
 import com.hypixel.hytale.protocol.ItemBase;
 import com.hypixel.hytale.protocol.ItemTranslationProperties;
@@ -246,7 +245,7 @@ public final class StencilVisualManager {
             CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(recipeId);
             if (recipe == null) continue;
 
-            boolean affordable = RecipeAffordabilityResolver.isAffordableWithAutoCraft(recipe, BenchCategory.BUILDERS_ONLY, container);
+            boolean affordable = RecipeAffordabilityResolver.isAffordableWithAutoCraft(recipe, false, container);
 
             if (state.updateItem(itemId, affordable)) {
                 changedItems.put(itemId, state.getTrackedItems().get(itemId));

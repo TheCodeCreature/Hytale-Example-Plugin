@@ -1,8 +1,10 @@
 package com.CodeCreature.scaling;
 
+import com.CodeCreature.crafting.RawMaterialRequirement;
 import com.CodeCreature.crafting.RecipeTreeResolver;
 import com.CodeCreature.registry.BenchRecipeRegistries;
 import com.CodeCreature.registry.BenchRecipeRegistry;
+import com.CodeCreature.registry.BenchRegistry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockBreakingDropType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockGathering;
@@ -14,6 +16,7 @@ import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemDrop;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemDropList;
+import com.hypixel.hytale.server.core.asset.type.item.config.container.MultipleItemDropContainer;
 import com.hypixel.hytale.server.core.asset.type.item.config.container.SingleItemDropContainer;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
@@ -25,11 +28,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
+
+import javax.annotation.Nonnull;
 
 import com.CodeCreature.util.DebugLogger;
 import static com.CodeCreature.util.DebugLogger.Subsystem.*;
@@ -58,6 +64,7 @@ public final class DropScaler {
      * all asset modifications in a single pass.
      */
     public static void apply() {
+        BenchRegistry.init();
         NaturalResourceRegistry.init();
         ResourceTypeResolver.initialize();
         RecipeTierClassifier.init();
@@ -88,18 +95,20 @@ public final class DropScaler {
 
         // ── Phase 3: Process blocks ──────────────────────────────────
 
-        // Phase 3a: Recipe blocks — parallel per category
-        List<BenchCategoryProcessor> processors = List.of(
-                new BuildersProcessor(),
-                new FurnitureProcessor(),
-                new OverlapProcessor()
-        );
+        // Phase 3a: Recipe blocks — parallel per distinct bench-set
+        Map<Set<String>, Set<String>> benchSetToBlocks = classifier.getDistinctBenchSets();
+        List<Map.Entry<BenchCategoryProcessor, Set<String>>> processorEntries = new ArrayList<>();
+        for (var entry : benchSetToBlocks.entrySet()) {
+            boolean preferNatural = BenchRegistry.isPreferNatural(entry.getKey());
+            processorEntries.add(Map.entry(new GenericBenchProcessor(preferNatural), entry.getValue()));
+        }
 
         List<BenchCategoryProcessor.ProcessResult> categoryResults = new ArrayList<>();
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             List<Future<BenchCategoryProcessor.ProcessResult>> futures = new ArrayList<>();
-            for (BenchCategoryProcessor proc : processors) {
-                Set<String> blocks = classifier.getBlocksByCategory(proc.category());
+            for (var pe : processorEntries) {
+                Set<String> blocks = pe.getValue();
+                BenchCategoryProcessor proc = pe.getKey();
                 if (!blocks.isEmpty()) {
                     futures.add(executor.submit(() -> proc.process(blocks, f)));
                 }
@@ -128,6 +137,7 @@ public final class DropScaler {
 
         int naturalModified = 0;
         int naturalSkipped = 0;
+        int recipeFallbackModified = 0;
 
         for (var entry : BlockType.getAssetMap().getAssetMap().entrySet()) {
             BlockType bt = entry.getValue();
@@ -136,17 +146,30 @@ public final class DropScaler {
             if ("Empty".equals(btId) || "Unknown".equals(btId)) continue;
             if (btId.startsWith("*") || btId.startsWith("Block_Placeholder")) continue;
 
-            boolean isNatural = NaturalResourceRegistry.isNaturalBlock(btId);
-            boolean hasRecipe = classifier.getCategory(btId) != null;
+            // Skip blocks already processed by Phase 3a
+            if (classifier.hasRecipe(btId)) continue;
 
-            if (isNatural && !hasRecipe) {
-                if (processNaturalBlock(bt, f, multiplier,
-                        processedConfigs, processedDrops, processedDropListIds,
-                        syntheticDropLists)) {
-                    naturalModified++;
-                } else {
-                    naturalSkipped++;
+            // Fallback: try recipe-resolution via item-level lookup
+            Item blockItem = bt.getItem();
+            if (blockItem != null) {
+                List<RawMaterialRequirement> rawCost = RecipeTreeResolver.resolveItemToRaw(blockItem.getId());
+                if (rawCost != null && !rawCost.isEmpty()) {
+                    if (processRecipeBlockFromRaw(bt, btId, rawCost, f, syntheticDropLists)) {
+                        recipeFallbackModified++;
+                    } else {
+                        naturalSkipped++;
+                    }
+                    continue;
                 }
+            }
+
+            // No recipe found — multiply existing drops × 12
+            if (processNaturalBlock(bt, f, multiplier,
+                    processedConfigs, processedDrops, processedDropListIds,
+                    syntheticDropLists)) {
+                naturalModified++;
+            } else {
+                naturalSkipped++;
             }
         }
 
@@ -166,7 +189,7 @@ public final class DropScaler {
 
         DebugLogger.log(SCALING, Level.INFO, "[DropScaler] Pipeline complete: " + recipesScaled + " recipes scaled, "
                 + naturalModified + " natural blocks (" + naturalSkipped + " skipped), "
-                + recipeModified + " recipe blocks (" + recipeSkipped + " skipped), "
+                + recipeModified + " recipe blocks + " + recipeFallbackModified + " fallback (" + recipeSkipped + " skipped), "
                 + syntheticDropLists.size() + " synthetic drop lists, "
                 + stacksBoosted + " stack sizes boosted");
     }
@@ -283,6 +306,75 @@ public final class DropScaler {
             return true;
         } catch (Exception e) {
             DebugLogger.log(SCALING, Level.INFO, "[DropScaler] ERROR processing natural block " + bt.getId() + ": " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Processes a block that has a known raw material cost (from
+     * {@link RecipeTreeResolver#resolveItemToRaw}) but was not handled by
+     * Phase 3a's bench-category processors. Creates a synthetic drop list
+     * containing the raw materials and replaces the block's gathering config
+     * to reference it.
+     *
+     * <p>This is the fallback path for blocks whose recipe output→block-type
+     * mapping is not captured by {@link BenchRecipeRegistries}, but whose
+     * block item IS in the recipe tree cache.
+     */
+    private static boolean processRecipeBlockFromRaw(
+            @Nonnull BlockType bt,
+            @Nonnull String btId,
+            @Nonnull List<RawMaterialRequirement> rawCost,
+            @Nonnull AssetFieldAccessor f,
+            @Nonnull List<ItemDropList> syntheticDropLists) {
+
+        BlockGathering originalGathering = bt.getGathering();
+
+        boolean isSoftBlock = originalGathering == null
+                || originalGathering.isSoft();
+
+        BlockBreakingDropType existing = originalGathering != null
+                ? originalGathering.getBreaking() : null;
+        String gatherType = existing != null ? existing.getGatherType() : null;
+        int quality = existing != null ? existing.getQuality() : 0;
+
+        try {
+            BlockGathering gathering;
+            if (originalGathering != null) {
+                gathering = cloneGathering(originalGathering);
+            } else {
+                gathering = createEmptyGathering();
+            }
+            f.blockTypeGathering.set(bt, gathering);
+
+            String dlId = "Plugin_RecipeDrop_" + btId;
+            SingleItemDropContainer[] containers = new SingleItemDropContainer[rawCost.size()];
+            for (int i = 0; i < rawCost.size(); i++) {
+                RawMaterialRequirement raw = rawCost.get(i);
+                ItemDrop drop = new ItemDrop(raw.itemId(), null, raw.quantity(), raw.quantity());
+                containers[i] = new SingleItemDropContainer(drop, 100.0);
+            }
+            if (rawCost.size() == 1) {
+                syntheticDropLists.add(new ItemDropList(dlId, containers[0]));
+            } else {
+                MultipleItemDropContainer multi = new MultipleItemDropContainer(
+                        containers, 100.0, 1, 1);
+                syntheticDropLists.add(new ItemDropList(dlId, multi));
+            }
+
+            BlockBreakingDropType newBreaking = new BlockBreakingDropType(
+                    gatherType, quality, 1, null, dlId);
+            f.gatheringBreaking.set(gathering, newBreaking);
+
+            if (isSoftBlock) {
+                SoftBlockDropType softDrop = createEmptySoftDrop();
+                f.softDropListId.set(softDrop, dlId);
+                f.gatheringSoft.set(gathering, softDrop);
+            }
+
+            return true;
+        } catch (Exception e) {
+            DebugLogger.log(SCALING, Level.WARNING, "[DropScaler] ERROR processing recipe fallback for " + btId + ": " + e.getMessage());
             return false;
         }
     }

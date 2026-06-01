@@ -12,7 +12,6 @@ import com.hypixel.hytale.server.core.asset.type.item.config.ItemDrop;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemDropList;
 import com.hypixel.hytale.server.core.asset.type.item.config.container.MultipleItemDropContainer;
 import com.hypixel.hytale.server.core.asset.type.item.config.container.SingleItemDropContainer;
-import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -27,10 +26,10 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
  * Abstract base for bench-category processors. Provides the shared
  * recipe-block processing logic (resolve inputs → build drops → set
  * breaking config). Subclasses only need to declare their
- * {@link BenchCategory}.
+ * {@link #preferNatural()} preference.
  *
- * <p>The processing logic is identical across all bench categories —
- * the difference is entirely in the {@link BenchCategory} passed to
+ * <p>The processing logic is identical across all bench types —
+ * the difference is entirely in the {@code boolean preferNatural} passed to
  * {@link ResourceTypeResolver#resolveInputItemId}, which controls
  * the natural/non-natural preference. If a future bench type needs
  * completely different drop logic, it can override {@link #process}.
@@ -59,7 +58,7 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
             BlockGathering originalGathering = bt.getGathering();
 
             record ResolvedIngredient(String itemId, int dropQty) {}
-            List<RawMaterialRequirement> rawCost = RecipeTreeResolver.resolveRecipeToRaw(recipe);
+            List<RawMaterialRequirement> rawCost = RecipeTreeResolver.resolveRecipeToRaw(recipe, preferNatural());
             if (rawCost.isEmpty()) { skipped++; continue; }
 
             List<ResolvedIngredient> resolved = new ArrayList<>();
@@ -126,7 +125,7 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
 
                 modified++;
             } catch (Exception e) {
-                DebugLogger.log(SCALING, Level.WARNING, "[" + category() + "Processor] ERROR processing " + btId + ": " + e.getMessage());
+                DebugLogger.log(SCALING, Level.WARNING, "[" + (preferNatural() ? "Natural" : "Synthetic") + "Processor] ERROR processing " + btId + ": " + e.getMessage());
                 skipped++;
             }
         }

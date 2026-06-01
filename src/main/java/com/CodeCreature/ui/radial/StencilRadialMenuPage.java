@@ -2,7 +2,6 @@ package com.CodeCreature.ui.radial;
 
 import com.CodeCreature.crafting.RecipeAffordabilityResolver;
 import com.CodeCreature.crafting.ResolvedIngredient;
-import com.CodeCreature.scaling.BenchCategory;
 import com.CodeCreature.registry.FilteredRecipeEntry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
 import com.CodeCreature.util.StencilMetadata;
@@ -377,7 +376,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
         if (recipe == null) return;
 
         FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(item.recipeId());
-        BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
+        boolean preferNatural = fe != null && fe.preferNatural();
 
         Player player = playerStore != null ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
         CombinedItemContainer container = null;
@@ -386,7 +385,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
         }
 
         boolean affordable = container != null
-                && RecipeAffordabilityResolver.resolveIngredientCosts(recipe, category, container)
+                && RecipeAffordabilityResolver.resolveIngredientCosts(recipe, preferNatural, container)
                         .stream().allMatch(ResolvedIngredient::sufficient);
         cmd.set("#Segments[" + slotIndex + "] #SegFrame.Background", affordable ? SEG_FRAME_NORMAL : SEG_FRAME_UNAFFORDABLE);
         cmd.set("#Segments[" + slotIndex + "] #Dim.Visible", !affordable);
@@ -402,7 +401,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
         if (recipe == null) { hideCostArc(cmd); return; }
 
         FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(item.recipeId());
-        BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
+        boolean preferNatural = fe != null && fe.preferNatural();
 
         // Get player inventory for affordability checking
         Player player = playerStore != null ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
@@ -411,7 +410,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
             container = player.getInventory().getCombinedBackpackStorageHotbar();
         }
 
-        List<ResolvedIngredient> ingredients = RecipeAffordabilityResolver.resolveIngredientCosts(recipe, category, container);
+        List<ResolvedIngredient> ingredients = RecipeAffordabilityResolver.resolveIngredientCosts(recipe, preferNatural, container);
         int count = Math.min(ingredients.size(), MAX_COST_SLOTS);
         if (ingredients.isEmpty()) { hideCostArc(cmd); return; }
 

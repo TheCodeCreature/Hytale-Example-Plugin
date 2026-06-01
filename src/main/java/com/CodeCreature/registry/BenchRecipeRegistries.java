@@ -1,6 +1,5 @@
 package com.CodeCreature.registry;
 
-import com.CodeCreature.scaling.BenchCategory;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 
 import javax.annotation.Nonnull;
@@ -36,7 +35,7 @@ public final class BenchRecipeRegistries {
     private BenchRecipeRegistries() {}
 
     public static void init() {
-        Set<String> benchIds = BenchCategory.allBenchIds();
+        Set<String> benchIds = BenchRegistry.allBenchIds();
         Map<String, BenchRecipeRegistry> map = new LinkedHashMap<>();
         int totalRecipes = 0;
         for (String benchId : benchIds) {
@@ -76,10 +75,16 @@ public final class BenchRecipeRegistries {
 
     @Nullable
     public static CraftingRecipe getRecipeForBlock(@Nonnull String blockTypeId) {
+        CraftingRecipe fallback = null;
         for (BenchRecipeRegistry reg : registries.values()) {
             CraftingRecipe recipe = reg.getRecipeForBlock(blockTypeId);
-            if (recipe != null) return recipe;
+            if (recipe != null) {
+                if (BenchRegistry.isCraftingBenchId(reg.getBenchId())) {
+                    return recipe; // crafting bench recipe takes priority
+                }
+                if (fallback == null) fallback = recipe;
+            }
         }
-        return null;
+        return fallback;
     }
 }

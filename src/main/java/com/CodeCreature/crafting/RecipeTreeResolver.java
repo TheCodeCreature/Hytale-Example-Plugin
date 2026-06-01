@@ -1,6 +1,6 @@
 package com.CodeCreature.crafting;
 
-import com.CodeCreature.scaling.BenchCategory;
+import com.CodeCreature.registry.BenchRegistry;
 import com.CodeCreature.scaling.NaturalResourceRegistry;
 import com.CodeCreature.scaling.RecipeTierClassifier;
 import com.CodeCreature.scaling.ResourceTypeResolver;
@@ -77,14 +77,6 @@ public final class RecipeTreeResolver {
      * during resolution but could not be resolved (cycle or missing recipe).
      */
     private static Map<String, List<RawMaterialRequirement>> rawCostCache = Collections.emptyMap();
-
-    /**
-     * Bench IDs whose recipes are eligible for auto-craft resolution.
-     * Includes both crafting benches and processing benches.
-     */
-    private static final Set<String> ELIGIBLE_BENCH_IDS = Set.of(
-            "Builders", "Furniture_Bench", "Workbench", "Fieldcraft",
-            "Stonecutter", "Refinery", "Furnace", "Kiln");
 
     private RecipeTreeResolver() {}
 
@@ -186,14 +178,15 @@ public final class RecipeTreeResolver {
      *         the recipe has no inputs
      */
     @Nonnull
-    public static List<RawMaterialRequirement> resolveRecipeToRaw(@Nonnull CraftingRecipe recipe) {
+    public static List<RawMaterialRequirement> resolveRecipeToRaw(@Nonnull CraftingRecipe recipe,
+                                                                   boolean preferNatural) {
         List<MaterialQuantity> perUnit = PlaceBlockCostUtil.getPerUnitCost(recipe);
         if (perUnit.isEmpty()) return List.of();
 
         Map<String, Integer> merged = new LinkedHashMap<>();
         for (MaterialQuantity mq : perUnit) {
             if (mq == null) continue;
-            String resolvedId = ResourceTypeResolver.resolveInputItemId(mq, BenchCategory.BUILDERS_ONLY);
+            String resolvedId = ResourceTypeResolver.resolveInputItemId(mq, preferNatural);
             if (resolvedId == null || resolvedId.isEmpty()) continue;
             resolvedId = NaturalResourceRegistry.resolveToGatherableForm(resolvedId);
             int qty = mq.getQuantity();
@@ -285,7 +278,7 @@ public final class RecipeTreeResolver {
 
         for (MaterialQuantity mq : perUnitCosts) {
             if (mq == null) continue;
-            String resolvedId = ResourceTypeResolver.resolveInputItemId(mq, BenchCategory.BUILDERS_ONLY);
+            String resolvedId = ResourceTypeResolver.resolveInputItemId(mq, false);
             if (resolvedId == null || resolvedId.isEmpty()) continue;
             resolvedId = NaturalResourceRegistry.resolveToGatherableForm(resolvedId);
             int qty = mq.getQuantity();
@@ -320,10 +313,11 @@ public final class RecipeTreeResolver {
      *         {@link #ELIGIBLE_BENCH_IDS}
      */
     private static boolean isEligibleBenchRecipe(@Nonnull CraftingRecipe recipe) {
+        Set<String> allBenchIds = BenchRegistry.allBenchIds();
         BenchRequirement[] reqs = recipe.getBenchRequirement();
         if (reqs == null) return false;
         for (BenchRequirement req : reqs) {
-            if (req != null && req.id != null && ELIGIBLE_BENCH_IDS.contains(req.id)) {
+            if (req != null && req.id != null && allBenchIds.contains(req.id)) {
                 return true;
             }
         }

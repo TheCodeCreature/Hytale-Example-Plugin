@@ -87,19 +87,19 @@ public final class ResourceTypeResolver {
 
     /**
      * Resolves a {@link MaterialQuantity} to a concrete item ID using the
-     * given {@link BenchCategory} to determine natural/non-natural preference.
+     * given preference to determine natural/non-natural item selection.
      *
      * <p>If the input has a direct {@code ItemId}, validates it exists in
      * the asset map and returns it. If the input uses a {@code ResourceTypeId},
-     * delegates to {@link #resolveByResourceType(String, BenchCategory)}.
+     * delegates to {@link #resolveByResourceType(String, boolean)}.
      *
-     * @param input    the recipe input to resolve
-     * @param category the bench category controlling resolution preference
+     * @param input          the recipe input to resolve
+     * @param preferNatural  {@code true} to prefer natural items, {@code false} for non-natural
      * @return the concrete item ID, or null if unresolvable
      */
     @Nullable
     public static String resolveInputItemId(@Nonnull MaterialQuantity input,
-                                             @Nonnull BenchCategory category) {
+                                             boolean preferNatural) {
         String itemId = input.getItemId();
         if (itemId != null && !"Empty".equals(itemId)) {
             Item item = Item.getAssetMap().getAsset(itemId);
@@ -107,7 +107,7 @@ public final class ResourceTypeResolver {
         }
         String resId = input.getResourceTypeId();
         if (resId != null) {
-            return resolveByResourceType(resId, category);
+            return resolveByResourceType(resId, preferNatural);
         }
         return null;
     }
@@ -118,25 +118,24 @@ public final class ResourceTypeResolver {
      *
      * <p>Two-pass resolution with set-root tie-breaking:
      * <ul>
-     *   <li>Pass 1: items matching the category's preference
-     *       ({@link BenchCategory#preferNatural()} controls whether
-     *       natural or non-natural items are checked first),
-     *       sorted so set-root items come before derivatives</li>
+     *   <li>Pass 1: items matching the preference
+     *       ({@code preferNatural} controls whether natural or non-natural
+     *       items are checked first), sorted so set-root items come before
+     *       derivatives</li>
      *   <li>Pass 2: all items (fallback), also sorted set-roots first</li>
      * </ul>
      *
-     * @param resId    the resource type ID (e.g. {@code "Wood_All"},
-     *                 {@code "Wood_Hardwood"})
-     * @param category the bench category controlling preference
+     * @param resId         the resource type ID (e.g. {@code "Wood_All"},
+     *                      {@code "Wood_Hardwood"})
+     * @param preferNatural {@code true} to prefer natural items, {@code false} for non-natural
      * @return the first matching item ID, or null if no item declares
      *         this resource type
      */
     @Nullable
     static String resolveByResourceType(@Nonnull String resId,
-                                         @Nonnull BenchCategory category) {
+                                         boolean preferNatural) {
         List<IndexedItem> items = resourceTypeIndex.getOrDefault(resId, List.of());
         if (items.isEmpty()) return null;
-        boolean preferNatural = category.preferNatural();
 
         // Pass 1: preferred items (already sorted set-roots first)
         for (IndexedItem item : items) {
@@ -144,6 +143,27 @@ public final class ResourceTypeResolver {
         }
         // Pass 2: any item (first in list is a set-root due to sorting)
         return items.get(0).itemId;
+    }
+
+    /**
+     * Returns all concrete item IDs that match the given {@code ResourceTypeId},
+     * in the same order as the pre-built index (set-roots first, then derivatives).
+     *
+     * <p>This method is the multi-variant counterpart to
+     * {@link #resolveByResourceType(String, boolean)}, which returns only the
+     * first (preferred) match. Use this method when all matching variants
+     * should be considered (e.g., for inventory counting across all variants).
+     *
+     * <p>Each returned item ID appears exactly once. The list is unmodifiable.
+     *
+     * @param resourceTypeId the resource type ID to look up (e.g. {@code "Rock_Shale_Brick"})
+     * @return unmodifiable list of concrete item IDs; empty if no items match
+     */
+    @Nonnull
+    public static List<String> getAllMatchingItemIds(@Nonnull String resourceTypeId) {
+        List<IndexedItem> items = resourceTypeIndex.getOrDefault(resourceTypeId, List.of());
+        if (items.isEmpty()) return List.of();
+        return items.stream().map(IndexedItem::itemId).toList();
     }
 
     /**
@@ -219,7 +239,7 @@ public final class ResourceTypeResolver {
      * </ul>
      *
      * <p>Short-circuits on first match. Does NOT apply
-     * {@link BenchCategory} preference — this is a filter predicate,
+     * {@code preferNatural} preference — this is a filter predicate,
      * not a resolution operation.
      *
      * <p>This method is <strong>thread-safe</strong> — it reads only

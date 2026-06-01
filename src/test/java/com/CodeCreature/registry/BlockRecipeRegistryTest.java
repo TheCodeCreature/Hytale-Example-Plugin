@@ -2,6 +2,7 @@ package com.CodeCreature.registry;
 
 import com.CodeCreature.registry.BenchRecipeRegistries;
 import com.CodeCreature.registry.BenchRecipeRegistry;
+import com.CodeCreature.registry.BenchRegistry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
 import com.CodeCreature.scaling.TestDataSet;
 import com.hypixel.hytale.protocol.BenchType;
@@ -37,6 +38,7 @@ class BlockRecipeRegistryTest {
         // Pre-populate NaturalResourceRegistry (BenchRecipeRegistry.init needs it
         // for base block classification)
         setNaturalRegistry(data.naturalBlockIds, data.naturalItemIds);
+        BenchRegistry.init();
         RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
     }
 

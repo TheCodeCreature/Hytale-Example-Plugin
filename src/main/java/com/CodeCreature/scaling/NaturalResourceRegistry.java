@@ -228,18 +228,13 @@ public final class NaturalResourceRegistry {
     }
 
     /**
-     * Bench IDs whose recipes disqualify a block from being natural.
-     * Must match the bench IDs passed to {@link BenchRecipeRegistries#init}.
+     * Bench IDs that classify a block as "crafted" (non-natural) when it has
+     * a recipe requiring one of these benches. Processing benches (Stonecutter,
+     * Refinery, Furnace, Kiln) are excluded — their recipes are refinement
+     * recipes that should NOT disqualify a block from being natural.
      */
-    private static final Set<String> CRAFTING_BENCH_IDS = Set.of(
-            "Builders", "Furniture_Bench", "Workbench", "Fieldcraft");
+    private static final Set<String> CRAFTING_BENCH_IDS = Set.of("Builders", "Furniture_Bench");
 
-    /**
-     * Returns true if the recipe requires one of the known crafting benches.
-     * Processing recipes (stonecutter/refinery) are excluded because
-     * they are resource-refinement recipes that don't make the output block
-     * a "crafted" block.
-     */
     private static boolean isCraftingBench(@Nonnull CraftingRecipe recipe) {
         BenchRequirement[] reqs = recipe.getBenchRequirement();
         if (reqs == null) return false;

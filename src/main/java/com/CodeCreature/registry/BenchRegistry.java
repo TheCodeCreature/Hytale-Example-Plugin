@@ -6,12 +6,18 @@ import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonValue;
 
 import com.CodeCreature.util.DebugLogger;
 import static com.CodeCreature.util.DebugLogger.Subsystem.*;
@@ -61,13 +67,37 @@ public final class BenchRegistry {
      */
     private static final String FURNITURE_BENCH_ID = "Furniture_Bench";
 
+    /**
+     * Bench IDs for true crafting benches (not processing/refinement).
+     * Used to prioritize crafting recipes over processing recipes when
+     * a block has recipes at both types of bench.
+     */
+    private static final Set<String> CRAFTING_BENCH_IDS = Set.of(
+            "Builders", "Furniture_Bench", "Workbench", "Fieldcraft");
+
     /** benchId → BenchConfig. Populated at init, immutable afterward. */
     private static Map<String, BenchConfig> configs = Collections.emptyMap();
 
     /** Bench IDs excluded from processing. Loaded from deny-list.json. */
     private static Set<String> denyList = Collections.emptySet();
 
+    /** Plugin data directory for loading config files. Null until {@link #initialize} is called. */
+    private static Path dataDirectory;
+
+    /** Guard against double-init. */
+    private static boolean initialized = false;
+
     private BenchRegistry() {}
+
+    /**
+     * Stores the plugin data directory for later use by {@link #init()}.
+     * Must be called from {@code Plugin.setup()} before {@link #init()}.
+     *
+     * @param dataDir the plugin's data directory
+     */
+    public static void initialize(@Nonnull Path dataDir) {
+        BenchRegistry.dataDirectory = dataDir;
+    }
 
     /**
      * Scans all {@link CraftingRecipe} assets, extracts unique
@@ -96,13 +126,43 @@ public final class BenchRegistry {
      * final registered benches at INFO level.
      */
     public static void init() {
-        // TODO: Load deny list from plugin data directory (deny-list.json)
-        // TODO: Scan all CraftingRecipe assets for unique BenchRequirement.id values
-        // TODO: Filter out denied bench IDs
-        // TODO: Create BenchConfig per bench (Furniture_Bench → preferNatural=true, others → false)
-        // TODO: Store in configs map (LinkedHashMap for deterministic order)
-        // TODO: Log discovery results
-        throw new UnsupportedOperationException("TODO");
+        if (initialized) {
+            DebugLogger.log(REGISTRY, Level.WARNING, "[BenchRegistry] init() called more than once — skipping");
+            return;
+        }
+        initialized = true;
+
+        if (dataDirectory != null) {
+            denyList = loadDenyList(dataDirectory.resolve("deny-list.json"));
+        } else {
+            denyList = Collections.emptySet();
+        }
+
+        Map<String, BenchConfig> discovered = new LinkedHashMap<>();
+        int totalFound = 0;
+        int denied = 0;
+
+        for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()) {
+            BenchRequirement[] requirements = recipe.getBenchRequirement();
+            if (requirements == null) continue;
+            for (BenchRequirement req : requirements) {
+                if (req == null || req.id == null) continue;
+                totalFound++;
+                if (denyList.contains(req.id)) {
+                    denied++;
+                    continue;
+                }
+                if (!discovered.containsKey(req.id)) {
+                    boolean preferNatural = FURNITURE_BENCH_ID.equals(req.id);
+                    discovered.put(req.id, new BenchConfig(req.id, preferNatural));
+                }
+            }
+        }
+
+        configs = Collections.unmodifiableMap(discovered);
+        DebugLogger.log(REGISTRY, Level.INFO,
+            "[BenchRegistry] Discovered " + totalFound + " bench references, "
+                + denied + " denied, " + configs.size() + " registered");
     }
 
     /**
@@ -118,8 +178,7 @@ public final class BenchRegistry {
      */
     @Nonnull
     public static Set<String> allBenchIds() {
-        // TODO: Return unmodifiable key set of configs map
-        throw new UnsupportedOperationException("TODO");
+        return Collections.unmodifiableSet(configs.keySet());
     }
 
     /**
@@ -131,8 +190,7 @@ public final class BenchRegistry {
      */
     @Nullable
     public static BenchConfig getConfig(@Nonnull String benchId) {
-        // TODO: Look up in configs map
-        throw new UnsupportedOperationException("TODO");
+        return configs.get(benchId);
     }
 
     /**
@@ -152,8 +210,28 @@ public final class BenchRegistry {
      * @return {@code true} if natural items should be preferred
      */
     public static boolean isPreferNatural(@Nonnull Set<String> benchIds) {
-        // TODO: Iterate benchIds, look up each config, return true if any has preferNatural=true
-        throw new UnsupportedOperationException("TODO");
+        for (String benchId : benchIds) {
+            BenchConfig config = configs.get(benchId);
+            if (config != null && config.preferNatural()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if the given bench ID is a crafting bench
+     * (as opposed to a processing/refinement bench like Stonecutter).
+     *
+     * <p>Used by {@link BenchRecipeRegistries#getRecipeForBlock} to
+     * prioritize crafting recipes over processing recipes when a block
+     * has recipes at both types.
+     *
+     * @param benchId the bench requirement ID
+     * @return true if this is a crafting bench
+     */
+    public static boolean isCraftingBenchId(@Nonnull String benchId) {
+        return CRAFTING_BENCH_IDS.contains(benchId);
     }
 
     /**
@@ -167,8 +245,7 @@ public final class BenchRegistry {
      * @return {@code true} if not denied
      */
     public static boolean isBenchAllowed(@Nonnull String benchId) {
-        // TODO: Return !denyList.contains(benchId)
-        throw new UnsupportedOperationException("TODO");
+        return !denyList.contains(benchId);
     }
 
     /**
@@ -189,17 +266,40 @@ public final class BenchRegistry {
      */
     @Nonnull
     static Set<String> loadDenyList(@Nonnull Path configPath) {
-        // TODO: Read JSON file, parse "deniedBenchIds" array
-        // TODO: Return empty set on missing file or parse error (with warning log)
-        throw new UnsupportedOperationException("TODO");
+        if (!Files.exists(configPath)) {
+            DebugLogger.log(REGISTRY, Level.INFO,
+                "[BenchRegistry] No deny-list.json found at " + configPath + " — using empty deny list");
+            return Collections.emptySet();
+        }
+        try {
+            String json = Files.readString(configPath);
+            BsonDocument doc = BsonDocument.parse(json);
+            BsonArray array = doc.getArray("deniedBenchIds", new BsonArray());
+            Set<String> denied = new HashSet<>();
+            for (BsonValue value : array) {
+                if (value.isString()) {
+                    denied.add(value.asString().getValue());
+                }
+            }
+            return Collections.unmodifiableSet(denied);
+        } catch (IOException e) {
+            DebugLogger.log(REGISTRY, Level.WARNING,
+                "[BenchRegistry] Failed to read deny-list.json: " + e.getMessage());
+            return Collections.emptySet();
+        } catch (Exception e) {
+            DebugLogger.log(REGISTRY, Level.WARNING,
+                "[BenchRegistry] Malformed deny-list.json: " + e.getMessage());
+            return Collections.emptySet();
+        }
     }
 
     /**
      * Resets the registry to its uninitialized state.
      * <strong>Test-only</strong> — allows re-initialization in unit tests.
      */
-    static void reset() {
+    public static void reset() {
         configs = Collections.emptyMap();
         denyList = Collections.emptySet();
+        initialized = false;
     }
 }

@@ -1,6 +1,5 @@
 package com.CodeCreature.crafting;
 
-import com.CodeCreature.scaling.BenchCategory;
 import com.CodeCreature.scaling.NaturalResourceRegistry;
 import com.CodeCreature.scaling.RecipeTierClassifier;
 import com.CodeCreature.scaling.ResourceTypeResolver;
@@ -97,17 +96,17 @@ public final class AutoCraftPlanner {
      * map uses {@code merge(itemId, qty, Integer::sum)} to aggregate
      * all needs, and the final inventory check validates the total.
      *
-     * @param recipe    the crafting recipe for the block being placed
-     * @param category  the bench category controlling
-     *                  {@code ResourceTypeId} resolution preference
-     * @param container the player's combined inventory container
-     *                  (backpack + storage + hotbar)
+     * @param recipe         the crafting recipe for the block being placed
+     * @param preferNatural  {@code true} to prefer natural items during
+     *                       {@code ResourceTypeId} resolution
+     * @param container      the player's combined inventory container
+     *                       (backpack + storage + hotbar)
      * @return an {@link AutoCraftPlan} with the consumption list and
      *         affordability result
      */
     @Nonnull
     public static AutoCraftPlan plan(@Nonnull CraftingRecipe recipe,
-                                     @Nonnull BenchCategory category,
+                                     boolean preferNatural,
                                      @Nonnull CombinedItemContainer container) {
         // Step 1: Compute direct materials and display data
         List<MaterialQuantity> directMaterials = PlaceBlockCostUtil.getPerUnitCost(recipe);
@@ -130,14 +129,49 @@ public final class AutoCraftPlanner {
         List<ConsumptionEntry> fastPathConsumptions = new ArrayList<>();
         for (MaterialQuantity mq : directMaterials) {
             if (mq == null) continue;
-            String itemId = ResourceTypeResolver.resolveInputItemId(mq, category);
-            if (itemId == null || itemId.isEmpty()) { directlyAvailable = false; break; }
-            itemId = NaturalResourceRegistry.resolveToGatherableForm(itemId);
-            final String lookupId = itemId;
-            int available = container.countItemStacks(stack ->
-                    lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
-            if (available < mq.getQuantity()) { directlyAvailable = false; break; }
-            fastPathConsumptions.add(new ConsumptionEntry(itemId, mq.getQuantity()));
+            int needed = mq.getQuantity();
+            String resourceTypeId = mq.getResourceTypeId();
+
+            if (resourceTypeId != null) {
+                // Multi-variant path: check all matching items for this ResourceTypeId
+                List<String> allVariants = ResourceTypeResolver.getAllMatchingItemIds(resourceTypeId);
+                if (allVariants.isEmpty()) { directlyAvailable = false; break; }
+
+                // Collect per-variant availability, deduplicating by resolved gatherable form
+                Map<String, Integer> variantAvailability = new LinkedHashMap<>();
+                for (String variantId : allVariants) {
+                    String resolved = NaturalResourceRegistry.resolveToGatherableForm(variantId);
+                    if (variantAvailability.containsKey(resolved)) continue;
+                    final String lookupId = resolved;
+                    int available = container.countItemStacks(stack ->
+                            lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
+                    variantAvailability.put(resolved, available);
+                }
+
+                int totalAvailable = variantAvailability.values().stream().mapToInt(Integer::intValue).sum();
+                if (totalAvailable < needed) { directlyAvailable = false; break; }
+
+                // Greedy fill across variants
+                int remaining = needed;
+                for (var entry : variantAvailability.entrySet()) {
+                    if (remaining <= 0) break;
+                    int use = Math.min(entry.getValue(), remaining);
+                    if (use > 0) {
+                        fastPathConsumptions.add(new ConsumptionEntry(entry.getKey(), use));
+                        remaining -= use;
+                    }
+                }
+            } else {
+                // Single-item path (ItemId): existing logic unchanged
+                String itemId = ResourceTypeResolver.resolveInputItemId(mq, preferNatural);
+                if (itemId == null || itemId.isEmpty()) { directlyAvailable = false; break; }
+                itemId = NaturalResourceRegistry.resolveToGatherableForm(itemId);
+                final String lookupId = itemId;
+                int available = container.countItemStacks(stack ->
+                        lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
+                if (available < needed) { directlyAvailable = false; break; }
+                fastPathConsumptions.add(new ConsumptionEntry(itemId, needed));
+            }
         }
         if (directlyAvailable) {
             return AutoCraftPlan.direct(fastPathConsumptions, directView, rawView);
@@ -149,35 +183,88 @@ public final class AutoCraftPlanner {
 
         for (MaterialQuantity mq : directMaterials) {
             if (mq == null) continue;
-            String resolvedId = ResourceTypeResolver.resolveInputItemId(mq, category);
-            if (resolvedId == null || resolvedId.isEmpty()) {
-                return AutoCraftPlan.unaffordable(directView, rawView);
-            }
-            resolvedId = NaturalResourceRegistry.resolveToGatherableForm(resolvedId);
             int needed = mq.getQuantity();
+            String resourceTypeId = mq.getResourceTypeId();
 
-            final String lookupId = resolvedId;
-            int playerHas = container.countItemStacks(stack ->
-                    lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
-            int useExisting = Math.min(playerHas, needed);
-            int deficit = needed - useExisting;
+            if (resourceTypeId != null) {
+                // Multi-variant path
+                List<String> allVariants = ResourceTypeResolver.getAllMatchingItemIds(resourceTypeId);
 
-            if (useExisting > 0) {
-                totalConsumption.merge(resolvedId, useExisting, Integer::sum);
-            }
+                // Primary resolved item for auto-craft raw cost lookup
+                String primaryResolvedId = ResourceTypeResolver.resolveInputItemId(mq, preferNatural);
+                if (primaryResolvedId == null || primaryResolvedId.isEmpty()) {
+                    return AutoCraftPlan.unaffordable(directView, rawView);
+                }
+                primaryResolvedId = NaturalResourceRegistry.resolveToGatherableForm(primaryResolvedId);
 
-            if (deficit > 0) {
-                if (RecipeTierClassifier.isCraftedItem(resolvedId)) {
-                    requiresAutoCraft = true;
-                    List<RawMaterialRequirement> rawPerUnit = RecipeTreeResolver.resolveItemToRaw(resolvedId);
-                    if (rawPerUnit == null) {
-                        return AutoCraftPlan.unaffordable(directView, rawView);
+                // Collect per-variant availability, deduplicating by resolved gatherable form
+                Map<String, Integer> variantAvailability = new LinkedHashMap<>();
+                for (String variantId : allVariants) {
+                    String resolved = NaturalResourceRegistry.resolveToGatherableForm(variantId);
+                    if (variantAvailability.containsKey(resolved)) continue;
+                    final String lookupId = resolved;
+                    int available = container.countItemStacks(stack ->
+                            lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
+                    variantAvailability.put(resolved, available);
+                }
+
+                // Greedy consume across variants
+                int remaining = needed;
+                for (var entry : variantAvailability.entrySet()) {
+                    if (remaining <= 0) break;
+                    int use = Math.min(entry.getValue(), remaining);
+                    if (use > 0) {
+                        totalConsumption.merge(entry.getKey(), use, Integer::sum);
+                        remaining -= use;
                     }
-                    for (RawMaterialRequirement rawReq : rawPerUnit) {
-                        totalConsumption.merge(rawReq.itemId(), rawReq.quantity() * deficit, Integer::sum);
+                }
+
+                // Deficit: auto-craft using primary resolved item's raw cost
+                if (remaining > 0) {
+                    if (RecipeTierClassifier.isCraftedItem(primaryResolvedId)) {
+                        requiresAutoCraft = true;
+                        List<RawMaterialRequirement> rawPerUnit = RecipeTreeResolver.resolveItemToRaw(primaryResolvedId);
+                        if (rawPerUnit == null) {
+                            return AutoCraftPlan.unaffordable(directView, rawView);
+                        }
+                        for (RawMaterialRequirement rawReq : rawPerUnit) {
+                            totalConsumption.merge(rawReq.itemId(), rawReq.quantity() * remaining, Integer::sum);
+                        }
+                    } else {
+                        totalConsumption.merge(primaryResolvedId, remaining, Integer::sum);
                     }
-                } else {
-                    totalConsumption.merge(resolvedId, deficit, Integer::sum);
+                }
+            } else {
+                // Single-item path (ItemId): existing logic unchanged
+                String resolvedId = ResourceTypeResolver.resolveInputItemId(mq, preferNatural);
+                if (resolvedId == null || resolvedId.isEmpty()) {
+                    return AutoCraftPlan.unaffordable(directView, rawView);
+                }
+                resolvedId = NaturalResourceRegistry.resolveToGatherableForm(resolvedId);
+
+                final String lookupId = resolvedId;
+                int playerHas = container.countItemStacks(stack ->
+                        lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
+                int useExisting = Math.min(playerHas, needed);
+                int deficit = needed - useExisting;
+
+                if (useExisting > 0) {
+                    totalConsumption.merge(resolvedId, useExisting, Integer::sum);
+                }
+
+                if (deficit > 0) {
+                    if (RecipeTierClassifier.isCraftedItem(resolvedId)) {
+                        requiresAutoCraft = true;
+                        List<RawMaterialRequirement> rawPerUnit = RecipeTreeResolver.resolveItemToRaw(resolvedId);
+                        if (rawPerUnit == null) {
+                            return AutoCraftPlan.unaffordable(directView, rawView);
+                        }
+                        for (RawMaterialRequirement rawReq : rawPerUnit) {
+                            totalConsumption.merge(rawReq.itemId(), rawReq.quantity() * deficit, Integer::sum);
+                        }
+                    } else {
+                        totalConsumption.merge(resolvedId, deficit, Integer::sum);
+                    }
                 }
             }
         }

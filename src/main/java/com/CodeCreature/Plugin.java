@@ -70,6 +70,7 @@ public class Plugin extends JavaPlugin {
 
         BlueprintBenchPrefsStore.initialize(this.getDataDirectory());
         FeatureFlags.initialize(this.getDataDirectory());
+        com.CodeCreature.registry.BenchRegistry.initialize(this.getDataDirectory());
 
         // Register Blueprint Bench interaction type (opens custom UI page)
         this.getCodecRegistry(Interaction.CODEC)

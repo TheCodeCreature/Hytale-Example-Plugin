@@ -1,6 +1,5 @@
 package com.CodeCreature.registry;
 
-import com.CodeCreature.scaling.BenchCategory;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 
 import javax.annotation.Nonnull;
@@ -25,8 +24,8 @@ import java.util.Set;
  *   <li>{@code benchIds} — the set of ALL bench requirement IDs that this
  *       recipe declares (scanning every {@code BenchRequirement} entry,
  *       not just the first)</li>
- *   <li>{@code benchCategory} — the {@link BenchCategory} derived from
- *       {@code benchIds}, or {@code null} if no known category matches</li>
+ *   <li>{@code preferNatural} — whether this recipe's bench prefers
+ *       natural resource items during {@code ResourceTypeId} resolution</li>
  *   <li>{@code set} — the {@code Item.set} value extracted via reflection,
  *       used for UI grouping; may be {@code null} if the item has no set</li>
  * </ul>
@@ -36,7 +35,7 @@ import java.util.Set;
  * @param outputItemId  output item asset ID
  * @param blockTypeId   output item's block type ID (never null)
  * @param benchIds      all matching bench requirement IDs (immutable, never empty)
- * @param benchCategory the classified bench category, or null
+ * @param preferNatural whether this recipe's bench prefers natural items
  * @param set           the Item.set value, or null
  */
 public record FilteredRecipeEntry(
@@ -45,7 +44,7 @@ public record FilteredRecipeEntry(
         @Nonnull String outputItemId,
         @Nonnull String blockTypeId,
         @Nonnull Set<String> benchIds,
-        @Nullable BenchCategory benchCategory,
+        boolean preferNatural,
         @Nullable String set,
         @Nonnull List<String> categoryIds
 ) {}

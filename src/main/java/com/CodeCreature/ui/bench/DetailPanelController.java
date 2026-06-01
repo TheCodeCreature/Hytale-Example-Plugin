@@ -2,7 +2,6 @@ package com.CodeCreature.ui.bench;
 
 import com.CodeCreature.crafting.RecipeAffordabilityResolver;
 import com.CodeCreature.crafting.ResolvedIngredient;
-import com.CodeCreature.scaling.BenchCategory;
 import com.CodeCreature.registry.FilteredRecipeEntry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
@@ -72,10 +71,10 @@ public class DetailPanelController {
                     CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId());
                     if (recipe != null) {
                         FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(entry.recipeId());
-                        BenchCategory category = fe != null ? fe.benchCategory() : BenchCategory.BUILDERS_ONLY;
+                        boolean preferNatural = fe != null && fe.preferNatural();
 
                         List<ResolvedIngredient> ingredients =
-                            RecipeAffordabilityResolver.resolveIngredientCosts(recipe, category, container);
+                            RecipeAffordabilityResolver.resolveIngredientCosts(recipe, preferNatural, container);
 
                         if (!ingredients.isEmpty()) {
                             for (ResolvedIngredient ing : ingredients) {

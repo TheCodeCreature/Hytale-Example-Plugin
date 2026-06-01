@@ -4,7 +4,6 @@ import com.CodeCreature.crafting.AutoCraftPlan;
 import com.CodeCreature.crafting.AutoCraftPlanner;
 import com.CodeCreature.crafting.ConsumptionEntry;
 import com.CodeCreature.crafting.PlaceBlockCostUtil;
-import com.CodeCreature.scaling.BenchCategory;
 import com.CodeCreature.util.DebugLogger;
 import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 import com.CodeCreature.util.StencilMetadata;
@@ -116,7 +115,7 @@ public class StencilPlacementSystem extends EntityEventSystem<EntityStore, Place
         // 6. Auto-craft planning — computes what to consume (direct intermediates + raw materials for deficit)
         Inventory inventory = player.getInventory();
         CombinedItemContainer container = inventory.getCombinedBackpackStorageHotbar();
-        AutoCraftPlan plan = AutoCraftPlanner.plan(recipe, BenchCategory.BUILDERS_ONLY, container);
+        AutoCraftPlan plan = AutoCraftPlanner.plan(recipe, false, container);
         if (!plan.affordable()) {
             event.setCancelled(true);
             sendError(playerRef, "Not enough resources!");

@@ -8,28 +8,28 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Processes a set of recipe blocks belonging to a single {@link BenchCategory}.
+ * Processes a set of recipe blocks belonging to a single bench configuration.
  *
  * <p>Each implementation handles the specific drop-resolution logic for its
  * bench type. Implementations are stateless and thread-safe — all mutable
  * results are returned in a {@link ProcessResult}.
  *
- * <p>Designed for parallel execution: each category's blocks are an
+ * <p>Designed for parallel execution: each bench-set's blocks are an
  * independent partition, so multiple processors can run concurrently on
  * virtual threads without overlapping on the same block types.
  *
- * <p>New bench categories can be supported by adding new implementations
+ * <p>New bench types are supported automatically via {@code BenchRegistry}
  * without modifying existing code.
  */
 public interface BenchCategoryProcessor {
 
     /**
-     * The bench category this processor handles.
+     * Whether this processor prefers natural resource items when resolving
+     * {@code ResourceTypeId}-based recipe inputs.
      *
-     * @return the category this processor is responsible for
+     * @return {@code true} to prefer natural items, {@code false} for non-natural
      */
-    @Nonnull
-    BenchCategory category();
+    boolean preferNatural();
 
     /**
      * Processes all non-base recipe blocks in the given set, resolving
@@ -39,7 +39,7 @@ public interface BenchCategoryProcessor {
      * <ol>
      *   <li>Look up the recipe from the appropriate {@link BenchRecipeRegistry}</li>
      *   <li>Resolve each input using {@link ResourceTypeResolver#resolveInputItemId}
-     *       with this processor's {@link #category()}</li>
+     *       with this processor's {@link #preferNatural()}</li>
      *   <li>Calculate proportional drop quantities (inputQty / outputQty)</li>
      *   <li>Set the block's breaking config to drop the resolved items</li>
      * </ol>

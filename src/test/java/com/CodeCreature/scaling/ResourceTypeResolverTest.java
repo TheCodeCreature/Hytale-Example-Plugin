@@ -1,6 +1,5 @@
 package com.CodeCreature.scaling;
 
-import com.CodeCreature.scaling.BenchCategory;
 import com.CodeCreature.scaling.ResourceTypeResolver;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
@@ -90,7 +89,7 @@ class ResourceTypeResolverTest {
                 installMinimal(items);
 
                 assertEquals("Wood_Hardwood_Planks",
-                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", BenchCategory.BUILDERS_ONLY));
+                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", false));
             }
 
             @Test
@@ -102,7 +101,7 @@ class ResourceTypeResolverTest {
                 installMinimal(items);
 
                 assertEquals("Wood_Hardwood_Planks",
-                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", BenchCategory.BUILDERS_ONLY));
+                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", false));
             }
 
             @Test
@@ -114,7 +113,7 @@ class ResourceTypeResolverTest {
                 installMinimal(items);
 
                 assertEquals("Wood_Hardwood_Planks",
-                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", BenchCategory.BUILDERS_ONLY));
+                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", false));
             }
 
             @Test
@@ -126,7 +125,7 @@ class ResourceTypeResolverTest {
                 installMinimal(items);
 
                 assertEquals("Wood_Hardwood_Planks",
-                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", BenchCategory.BUILDERS_ONLY),
+                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", false),
                         "Builders should not pick natural Wood_Log_Oak");
             }
 
@@ -137,7 +136,7 @@ class ResourceTypeResolverTest {
                 items.put("Wood_Hardwood_Ornate", ornate());
                 installMinimal(items);
 
-                String result = ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", BenchCategory.BUILDERS_ONLY);
+                String result = ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", false);
                 assertNotNull(result, "Should find a non-natural derivative as fallback");
                 assertTrue(result.equals("Wood_Hardwood_Decorative") || result.equals("Wood_Hardwood_Ornate"),
                         "Should pick one of the available derivatives");
@@ -150,7 +149,7 @@ class ResourceTypeResolverTest {
                 installMinimal(items);
 
                 assertEquals("Wood_Log_Oak",
-                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", BenchCategory.BUILDERS_ONLY),
+                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", false),
                         "Pass 2 should fall back to natural item when no non-natural exists");
             }
         }
@@ -167,7 +166,7 @@ class ResourceTypeResolverTest {
                 installMinimal(items);
 
                 assertEquals("Wood_Log_Oak",
-                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", BenchCategory.FURNITURE_ONLY),
+                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", true),
                         "Furniture should prefer natural Wood_Log_Oak");
             }
 
@@ -180,7 +179,7 @@ class ResourceTypeResolverTest {
                 installMinimal(items);
 
                 assertEquals("Wood_Hardwood_Planks",
-                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", BenchCategory.FURNITURE_ONLY),
+                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", true),
                         "Pass 2 should pick set-root Planks even for Furniture when no natural exists");
             }
         }
@@ -197,7 +196,7 @@ class ResourceTypeResolverTest {
                 installMinimal(items);
 
                 assertEquals("Wood_Log_Oak",
-                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", BenchCategory.BUILDERS_AND_FURNITURE),
+                        ResourceTypeResolver.resolveByResourceType("Wood_Hardwood", true),
                         "Dual-bench category should resolve to natural (furniture preference wins)");
             }
         }
@@ -212,7 +211,7 @@ class ResourceTypeResolverTest {
                 installMinimal(items);
 
                 assertNull(
-                        ResourceTypeResolver.resolveByResourceType("Stone_Granite", BenchCategory.BUILDERS_ONLY),
+                        ResourceTypeResolver.resolveByResourceType("Stone_Granite", false),
                         "Unknown ResourceTypeId should return null");
             }
         }
@@ -230,7 +229,7 @@ class ResourceTypeResolverTest {
 
             assertEquals("Wood_Hardwood_Planks",
                     ResourceTypeResolver.resolveInputItemId(
-                            materialQty("Wood_Hardwood_Planks", 1), BenchCategory.BUILDERS_ONLY));
+                            materialQty("Wood_Hardwood_Planks", 1), false));
         }
 
         @Test
@@ -240,7 +239,7 @@ class ResourceTypeResolverTest {
             installMinimal(items);
 
             assertNull(ResourceTypeResolver.resolveInputItemId(
-                    materialQty("Nonexistent_Item", 1), BenchCategory.BUILDERS_ONLY));
+                    materialQty("Nonexistent_Item", 1), false));
         }
 
         @Test
@@ -254,7 +253,7 @@ class ResourceTypeResolverTest {
 
             assertEquals("Wood_Hardwood_Planks",
                     ResourceTypeResolver.resolveInputItemId(
-                            materialQtyResource("Wood_Hardwood", 1), BenchCategory.BUILDERS_ONLY),
+                            materialQtyResource("Wood_Hardwood", 1), false),
                     "ResourceTypeId input should delegate and pick set-root Planks");
         }
 
@@ -267,7 +266,7 @@ class ResourceTypeResolverTest {
 
             MaterialQuantity input = new MaterialQuantity("Empty", "Wood_Hardwood", null, 1, null);
             assertEquals("Wood_Hardwood_Planks",
-                    ResourceTypeResolver.resolveInputItemId(input, BenchCategory.BUILDERS_ONLY),
+                    ResourceTypeResolver.resolveInputItemId(input, false),
                     "\"Empty\" ItemId should be ignored, falling through to ResourceTypeId");
         }
 
@@ -280,7 +279,7 @@ class ResourceTypeResolverTest {
             // MaterialQuantity requires at least one non-null identifier;
             // use tag-only input which has no ItemId and no ResourceTypeId
             MaterialQuantity input = new MaterialQuantity(null, null, "SomeTag", 1, null);
-            assertNull(ResourceTypeResolver.resolveInputItemId(input, BenchCategory.BUILDERS_ONLY),
+            assertNull(ResourceTypeResolver.resolveInputItemId(input, false),
                     "Input with no ItemId and no ResourceTypeId should return null");
         }
     }

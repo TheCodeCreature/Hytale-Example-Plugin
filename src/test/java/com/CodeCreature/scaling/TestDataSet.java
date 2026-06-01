@@ -1,5 +1,6 @@
 package com.CodeCreature.scaling;
 
+import com.CodeCreature.registry.BenchRegistry;
 import com.hypixel.hytale.protocol.BenchType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockBreakingDropType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockGathering;
@@ -424,6 +425,7 @@ public final class TestDataSet {
         installItems(items);
         installRecipes(recipes);
         installDropLists(dropLists);
+        BenchRegistry.init();
         setNaturalRegistry(naturalBlockIds, naturalItemIds);
         RecipeTierClassifier.init();
         setBenchRecipeRegistries(

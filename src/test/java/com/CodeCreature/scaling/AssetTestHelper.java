@@ -2,6 +2,7 @@ package com.CodeCreature.scaling;
 
 import com.CodeCreature.registry.BenchRecipeRegistries;
 import com.CodeCreature.registry.BenchRecipeRegistry;
+import com.CodeCreature.registry.BenchRegistry;
 import com.CodeCreature.scaling.NaturalResourceRegistry;
 import com.hypixel.hytale.assetstore.AssetMap;
 import com.hypixel.hytale.assetstore.AssetStore;
@@ -374,6 +375,7 @@ public final class AssetTestHelper {
         setStaticField(ResourceTypeResolver.class, "resourceTypeIndex", Map.of());
         setStaticField(RecipeTierClassifier.class, "craftedItemIds", Collections.emptySet());
         setStaticField(BenchRecipeRegistries.class, "registries", Collections.emptyMap());
+        BenchRegistry.reset();
     }
 
     // ──────────────────────────────────────────────────────────────

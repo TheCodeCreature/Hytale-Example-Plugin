@@ -1,6 +1,7 @@
 package com.CodeCreature.scaling;
 
 import com.CodeCreature.registry.BenchRecipeRegistries;
+import com.CodeCreature.registry.BenchRegistry;
 import com.CodeCreature.scaling.DropScaler;
 import com.CodeCreature.scaling.NaturalResourceRegistry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
@@ -133,6 +134,7 @@ class DropBehaviorScenarioTest {
         installRecipes(recipes);
         installDropLists(Map.of());
 
+        BenchRegistry.init();
         NaturalResourceRegistry.init();
         RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
         BenchRecipeRegistries.init();
