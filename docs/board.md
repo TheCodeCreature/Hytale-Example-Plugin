@@ -1,14 +1,14 @@
 # Product Board
 
-> Last updated: 2026-05-29 18:00
+> Last updated: 2026-06-01 10:00
 
 ## Status Overview
 
 ```mermaid
 pie title Backlog Distribution
-    "Backlog" : 54
-    "In Progress" : 5
-    "Done" : 68
+    "Backlog" : 48
+    "In Progress" : 4
+    "Done" : 75
     "Cancelled" : 12
 ```
 
@@ -27,21 +27,13 @@ pie title Backlog Distribution
 | ID | Type | Title | Epic | Priority |
 |----|------|-------|------|----------|
 | E2605291000 | Epic | Dynamic Bench Discovery System | — | high |
-| F2605291005 | Feature | Auto-Discovery Bench Registry | E2605291000 | high |
-| S2605291030 | Story | Create BenchRegistry with Runtime Discovery | E2605291000 | high |
-| S2605291035 | Story | Update RecipeFilterRegistry for Open Discovery | E2605291000 | high |
-| S2605291040 | Story | Update BenchBlockClassifier for Dynamic Categories | E2605291000 | high |
-| S2605291080 | Story | Unify NaturalResourceRegistry with BenchRegistry | E2605291000 | high |
-| F2605291010 | Feature | Generic Bench Processor | E2605291000 | high |
-| S2605291045 | Story | Create GenericBenchProcessor | E2605291000 | high |
-| S2605291050 | Story | Refactor DropScaler for Dynamic Processor Dispatch | E2605291000 | high |
-| S2605291055 | Story | Remove Hardcoded Processor Classes | E2605291000 | medium |
+| F2605291020 | Feature | Dynamic UI Tab Rendering | E2605291000 | high |
+| S2605291070 | Story | Dynamic Tab Creation from BenchIds | E2605291000 | high |
+| S2605291075 | Story | Validate BlueprintBookPrefs for Dynamic Tabs | E2605291000 | medium |
+| S2605291080 | Story | Unify NaturalResourceRegistry with BenchRegistry | E2605291000 | medium |
 | F2605291015 | Feature | Config-Based Bench Deny List | E2605291000 | medium |
 | S2605291060 | Story | Add Bench Deny List to Plugin Config | E2605291000 | medium |
 | S2605291065 | Story | Wire Deny List into Discovery Pipeline | E2605291000 | medium |
-| F2605291020 | Feature | Dynamic UI Tab Verification | E2605291000 | medium |
-| S2605291070 | Story | Verify UI Tab Rendering with N Benches | E2605291000 | medium |
-| S2605291075 | Story | Validate BlueprintBenchPrefs for Dynamic Tabs | E2605291000 | medium |
 | E2605181400 | Epic | Technical Debt Cleanup | — | high |
 | F2605281000 | Feature | Centralized Debug Logging Utility | E2605181400 | high |
 | F2605261200 | Feature | Decompile Update API Compatibility | E2605181400 | critical |
@@ -73,7 +65,7 @@ pie title Backlog Distribution
 | E2605071500 | Epic | Unified Style & Affordability System | — | high |
 | F2605071510 | Feature | Plugin-Wide Shared Style Tokens | E2605071500 | high |
 | S2605071511 | Story | Create SharedStyles.ui with Universal Tokens | E2605071500 | high |
-| S2605071512 | Story | Migrate BlueprintBenchStyles.ui to Import Shared | E2605071500 | high |
+| S2605071512 | Story | Migrate BlueprintBookStyles.ui to Import Shared | E2605071500 | high |
 | F2605071520 | Feature | StencilRadial Style Extraction | E2605071500 | high |
 | S2605071521 | Story | Create StencilRadialStyles.ui | E2605071500 | high |
 | S2605071522 | Story | Replace Inline Styles in Radial UI Files | E2605071500 | high |
@@ -98,6 +90,14 @@ pie title Backlog Distribution
 | S2605271730 | Story | Fix Manifest ServerVersion Semver Range | E2605181400 | critical |
 | S2605271735 | Story | Fix Permission Node Invalid Characters | E2605181400 | high |
 | S2605271740 | Story | Remove Compile Restoration Skeleton Code | E2605181400 | medium |
+| F2605291005 | Feature | Auto-Discovery Bench Registry | E2605291000 | high |
+| S2605291030 | Story | Create BenchRegistry with Runtime Discovery | E2605291000 | high |
+| S2605291035 | Story | Update RecipeFilterRegistry for Open Discovery | E2605291000 | high |
+| S2605291040 | Story | Update BenchBlockClassifier for Dynamic Categories | E2605291000 | high |
+| F2605291010 | Feature | Generic Bench Processor | E2605291000 | high |
+| S2605291045 | Story | Create GenericBenchProcessor | E2605291000 | high |
+| S2605291050 | Story | Refactor DropScaler for Dynamic Dispatch | E2605291000 | high |
+| S2605291055 | Story | Remove Hardcoded Processor Classes | E2605291000 | medium |
 | S2605271745 | Story | Fix Null Safety in BlueprintBookParticleLoop | E2605181400 | high |
 | F2605291505 | Feature | Particle Loop Task Queue Guard | E2605291500 | critical |
 | F2605291600 | Feature | Disconnect Race Condition Fix | E2605291500 | critical |
@@ -198,7 +198,7 @@ Select-then-build workflow at the **Blueprint Bench**. Player arms a placeholder
 **Contracts:** #10–#16 (unchanged by pivot)
 
 **Key Docs:**
-- [design-blueprint-bench-custom-ui.md](docs/Plans/design-blueprint-bench-custom-ui.md) — Custom UI architecture
+- [design-Blueprint-Book-custom-ui.md](docs/Plans/design-Blueprint-Book-custom-ui.md) — Custom UI architecture
 - [custom-ui-options.md](docs/hytale/plugins/custom-ui-options.md) — Hytale Expert UI research
 - [structural-crafting-dimming.md](docs/hytale/crafting/structural-crafting-dimming.md) — Dimming root cause analysis
 

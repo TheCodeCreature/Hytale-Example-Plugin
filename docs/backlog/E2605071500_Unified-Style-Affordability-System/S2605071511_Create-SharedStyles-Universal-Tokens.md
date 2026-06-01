@@ -32,6 +32,6 @@ As a **plugin developer**, I want **a single shared style file** so that **all U
 - **Then** no "Failed to load custom UI documents" error appears in logs
 
 ## Notes
-- Reference BlueprintBenchStyles.ui for existing token definitions
+- Reference BlueprintBookStyles.ui for existing token definitions
 - New overlay tokens need OutlineColor: #000000 and RenderBold: true
 - @CostQuantityOverlayStyle is gold (#ffcc00) variant of @CostQuantityStyle for floating overlay context

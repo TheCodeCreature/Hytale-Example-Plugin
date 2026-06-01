@@ -22,7 +22,7 @@ As a **developer**, I want **all existing log calls to route through DebugLogger
 - [ ] Per-class `private static final Logger LOGGER` declarations removed from migrated files
 - [ ] Per-class `private static final HytaleLogger LOGGER` declarations removed from migrated files
 - [ ] Two unused logger declarations removed (`StencilRadialMenuPage`, `AffordabilityCoalescer`)
-- [ ] Private `log()` helper methods in 7 classes removed (RecipeTierClassifier, NaturalResourceRegistry, DropScaler, RecipeFilterRegistry, BenchRecipeRegistry, BenchRecipeRegistries, RecipeTreeResolver, BlueprintBenchRecipeMutator)
+- [ ] Private `log()` helper methods in 7 classes removed (RecipeTierClassifier, NaturalResourceRegistry, DropScaler, RecipeFilterRegistry, BenchRecipeRegistry, BenchRecipeRegistries, RecipeTreeResolver, BlueprintBookRecipeMutator)
 - [ ] Log message content (tags, format strings) preserved exactly
 - [ ] Build compiles with zero errors after migration
 
@@ -40,4 +40,4 @@ As a **developer**, I want **all existing log calls to route through DebugLogger
 
 ## Notes
 - 18 files to touch — see audit report for complete inventory
-- Subsystem mapping: Plugin→PLUGIN, StencilInputListener/StencilVisualManager/StencilPlacementSystem→STENCIL, BlueprintBookParticleLoop/BlueprintBookPickStencilInteraction→BLUEPRINT_BOOK, BlueprintSelectionPage/DetailPanelController/BlueprintBenchPrefsStore→BLUEPRINT_BENCH, RecipeTierClassifier/NaturalResourceRegistry/DropScaler/AbstractBenchProcessor/BreakBlockDiagnostic→SCALING, RecipeFilterRegistry/BenchRecipeRegistry/BenchRecipeRegistries→REGISTRY, RecipeTreeResolver/BlueprintBenchRecipeMutator→CRAFTING, IngredientTreeGridController/IngredientTreeBuilder→INGREDIENT_TREE
+- Subsystem mapping: Plugin→PLUGIN, StencilInputListener/StencilVisualManager/StencilPlacementSystem→STENCIL, BlueprintBookParticleLoop/BlueprintBookPickStencilInteraction→BLUEPRINT_BOOK, BlueprintSelectionPage/DetailPanelController/BlueprintBookPrefsStore→BLUEPRINT_BOOK, RecipeTierClassifier/NaturalResourceRegistry/DropScaler/AbstractBenchProcessor/BreakBlockDiagnostic→SCALING, RecipeFilterRegistry/BenchRecipeRegistry/BenchRecipeRegistries→REGISTRY, RecipeTreeResolver/BlueprintBookRecipeMutator→CRAFTING, IngredientTreeGridController/IngredientTreeBuilder→INGREDIENT_TREE

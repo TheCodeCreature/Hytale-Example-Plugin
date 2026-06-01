@@ -22,12 +22,12 @@ As a **plugin developer**, I want **all three affordability consumers to use Rec
 - [ ] StencilRadialMenuPage.showCostArc() calls resolveIngredientCosts() instead of inline 3-step chain
 - [ ] Duplicated imports of ResourceTypeResolver and NaturalResourceRegistry removed from migrated callers
 - [ ] Existing tests pass without modification
-- [ ] No visual regression in BlueprintBench, stencil hotbar glow, or radial menu
+- [ ] No visual regression in BlueprintBook, stencil hotbar glow, or radial menu
 
 ### Scenarios
-**BlueprintBench detail panel unchanged**
+**BlueprintBook detail panel unchanged**
 - **Given** updateDetailPanel() now uses resolveIngredientCosts()
-- **When** a player selects a recipe in the BlueprintBench
+- **When** a player selects a recipe in the BlueprintBook
 - **Then** cost cells show the same item icons, quantities, and red/white coloring as before
 
 **Stencil hotbar glow unchanged**

@@ -17,7 +17,7 @@ As a **player**, I want my material group selections to be remembered between be
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] `BlueprintBenchPrefs` includes `activeMaterialGroups` field (List<String>)
+- [ ] `BlueprintBookPrefs` includes `activeMaterialGroups` field (List<String>)
 - [ ] Groups are saved when the bench is dismissed
 - [ ] Groups are restored when the bench is opened
 - [ ] Invalid/stale group names are silently ignored on load
@@ -29,4 +29,4 @@ As a **player**, I want my material group selections to be remembered between be
 - **Then** "Wood" and "Rock" are still active
 
 ## Notes
-- Same persistence mechanism as existing set filters (BlueprintBenchPrefsStore)
+- Same persistence mechanism as existing set filters (BlueprintBookPrefsStore)

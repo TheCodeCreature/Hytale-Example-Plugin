@@ -141,7 +141,7 @@ Key locations:
 - `SimpleInstantInteraction` structure unchanged (same `CODEC`, same `firstRun()` abstract method)
 - `BuilderCodec` API pattern unchanged
 - `Interaction.CODEC` registry pattern unchanged
-- The plugin's `BlueprintBenchOpenUIInteraction` and `BlueprintBookPickStencilInteraction` codecs should work as-is
+- The plugin's `BlueprintBookOpenUIInteraction` and `BlueprintBookPickStencilInteraction` codecs should work as-is
 
 ### 3.2 Core Plugin Module List — STABLE
 - Both 0.5.0 and 0.5.1 load the same 37 core plugins in the same order

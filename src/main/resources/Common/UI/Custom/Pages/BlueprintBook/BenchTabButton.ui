@@ -1,0 +1,9 @@
+// BenchTabButton — single bench tab button
+// Reusable component: server appends N instances into #BenchTabs during build()
+// Server updates via cmd.set() on indexed selectors: #BenchTabs[N].Id, #BenchTabs[N].TooltipText
+
+TabButton {
+    Icon: "../../Common/RecipesIcon.png";
+    TooltipText: "";
+    Id: "";
+}

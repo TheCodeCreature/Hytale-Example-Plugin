@@ -1,12 +1,12 @@
-﻿=== FILE: src\main\java\com\Plugin.java ===
+=== FILE: src\main\java\com\Plugin.java ===
 package com;
 
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.CodeCreature.command.ParticleCommand;
 import com.CodeCreature.command.placeblock.PlaceBlockCommand;
-import com.CodeCreature.placeblock.BlueprintBenchRecipeMutator;
-import com.CodeCreature.placeblock.ui.BlueprintBenchOpenUIInteraction;
-import com.CodeCreature.placeblock.ui.BlueprintBenchPrefsStore;
+import com.CodeCreature.placeblock.BlueprintBookRecipeMutator;
+import com.CodeCreature.placeblock.ui.BlueprintBookOpenUIInteraction;
+import com.CodeCreature.placeblock.ui.BlueprintBookPrefsStore;
 import com.CodeCreature.resourcecollection.BreakBlockDiagnostic;
 import com.CodeCreature.resourcecollection.DropScaler;
 import com.CodeCreature.resourcecollection.PlacementCostScaler;
@@ -67,11 +67,11 @@ public class Plugin extends JavaPlugin {
         // Diagnostic: log block drop config on break (toggle via /Debug BreakLog)
         this.getEntityStoreRegistry().registerSystem(new BreakBlockDiagnostic());
 
-        BlueprintBenchPrefsStore.initialize(this.getDataDirectory());
+        BlueprintBookPrefsStore.initialize(this.getDataDirectory());
 
         // Register Blueprint Bench interaction type (opens custom UI page)
         this.getCodecRegistry(Interaction.CODEC)
-                .register("BlueprintBench_OpenUI", BlueprintBenchOpenUIInteraction.class, BlueprintBenchOpenUIInteraction.CODEC);
+                .register("BlueprintBook_OpenUI", BlueprintBookOpenUIInteraction.class, BlueprintBookOpenUIInteraction.CODEC);
 
         // Register Blueprint Book pick-stencil interaction type
         this.getCodecRegistry(Interaction.CODEC)
@@ -114,7 +114,7 @@ public class Plugin extends JavaPlugin {
 
     private static void onAssetsLoaded(LoadAssetEvent event) {
         DropScaler.apply();
-        BlueprintBenchRecipeMutator.mutate();
+        BlueprintBookRecipeMutator.mutate();
     }
 }
 
@@ -306,7 +306,7 @@ public class StencilSubCommand extends AbstractPlayerCommand {
     }
 }
 
-=== FILE: src\main\java\com\CodeCreature\placeblock\BlueprintBenchRecipeMutator.java ===
+=== FILE: src\main\java\com\CodeCreature\placeblock\BlueprintBookRecipeMutator.java ===
 package com.CodeCreature.placeblock;
 
 import com.hypixel.hytale.protocol.BenchRequirement;
@@ -328,19 +328,19 @@ import java.util.Map;
  *
  * <p>Must run during {@code LoadAssetEvent}, after {@code DropScaler.apply()}.
  */
-public final class BlueprintBenchRecipeMutator {
+public final class BlueprintBookRecipeMutator {
 
     private static final String BLUEPRINT_ID = "Blueprint";
     private static final Map<String, String> SHADOW_TO_ORIGINAL = new HashMap<>();
 
-    private BlueprintBenchRecipeMutator() {}
+    private BlueprintBookRecipeMutator() {}
 
     public static String getOriginalRecipeId(String shadowRecipeId) {
         return SHADOW_TO_ORIGINAL.get(shadowRecipeId);
     }
 
     private static void log(String msg) {
-        System.out.println("[BlueprintBenchMutator] " + msg);
+        System.out.println("[BlueprintBookMutator] " + msg);
     }
 
     public static void mutate() {
@@ -973,7 +973,7 @@ public enum AffordabilityMode {
     }
 }
 
-=== FILE: src\main\java\com\CodeCreature\placeblock\ui\BlueprintBenchOpenUIInteraction.java ===
+=== FILE: src\main\java\com\CodeCreature\placeblock\ui\BlueprintBookOpenUIInteraction.java ===
 package com.CodeCreature.placeblock.ui;
 
 import com.hypixel.hytale.codec.builder.BuilderCodec;
@@ -991,11 +991,11 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import javax.annotation.Nonnull;
 
-public class BlueprintBenchOpenUIInteraction extends SimpleInstantInteraction {
+public class BlueprintBookOpenUIInteraction extends SimpleInstantInteraction {
 
-    public static final BuilderCodec<BlueprintBenchOpenUIInteraction> CODEC =
-            BuilderCodec.builder(BlueprintBenchOpenUIInteraction.class,
-                    BlueprintBenchOpenUIInteraction::new, SimpleInstantInteraction.CODEC)
+    public static final BuilderCodec<BlueprintBookOpenUIInteraction> CODEC =
+            BuilderCodec.builder(BlueprintBookOpenUIInteraction.class,
+                    BlueprintBookOpenUIInteraction::new, SimpleInstantInteraction.CODEC)
                     .build();
 
     @Override
@@ -1019,7 +1019,7 @@ public class BlueprintBenchOpenUIInteraction extends SimpleInstantInteraction {
     }
 }
 
-=== FILE: src\main\java\com\CodeCreature\placeblock\ui\BlueprintBenchPrefs.java ===
+=== FILE: src\main\java\com\CodeCreature\placeblock\ui\BlueprintBookPrefs.java ===
 package com.CodeCreature.placeblock.ui;
 
 import com.hypixel.hytale.codec.Codec;
@@ -1029,8 +1029,8 @@ import com.hypixel.hytale.codec.codecs.array.ArrayCodec;
 
 import java.util.*;
 
-public class BlueprintBenchPrefs {
-    public static final BuilderCodec<BlueprintBenchPrefs> CODEC = BuilderCodec.builder(BlueprintBenchPrefs.class, BlueprintBenchPrefs::new)
+public class BlueprintBookPrefs {
+    public static final BuilderCodec<BlueprintBookPrefs> CODEC = BuilderCodec.builder(BlueprintBookPrefs.class, BlueprintBookPrefs::new)
             .append(new KeyedCodec<>("ActiveTab", Codec.STRING, true), (p, v) -> p.activeTab = v, p -> p.activeTab).add()
             .append(new KeyedCodec<>("ActiveSetFilters", new ArrayCodec<>(Codec.STRING, String[]::new), true),
                     (p, v) -> p.activeSetFilters = Arrays.asList(v), p -> p.activeSetFilters.toArray(new String[0])).add()
@@ -1065,7 +1065,7 @@ public class BlueprintBenchPrefs {
     List<String> selectedIngredientNodes = new ArrayList<>();
 }
 
-=== FILE: src\main\java\com\CodeCreature\placeblock\ui\BlueprintBenchPrefsStore.java ===
+=== FILE: src\main\java\com\CodeCreature\placeblock\ui\BlueprintBookPrefsStore.java ===
 package com.CodeCreature.placeblock.ui;
 
 import com.hypixel.hytale.codec.ExtraInfo;
@@ -1078,9 +1078,9 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-public class BlueprintBenchPrefsStore {
+public class BlueprintBookPrefsStore {
 
-    private static final Logger LOGGER = Logger.getLogger("BlueprintBenchPrefsStore");
+    private static final Logger LOGGER = Logger.getLogger("BlueprintBookPrefsStore");
     private static Path prefsDir;
 
     public static void initialize(Path dataDirectory) {
@@ -1092,27 +1092,27 @@ public class BlueprintBenchPrefsStore {
         }
     }
 
-    public static BlueprintBenchPrefs load(UUID playerUuid) {
-        if (prefsDir == null) return new BlueprintBenchPrefs();
+    public static BlueprintBookPrefs load(UUID playerUuid) {
+        if (prefsDir == null) return new BlueprintBookPrefs();
 
         Path file = prefsDir.resolve(playerUuid + ".json");
         BsonDocument doc = BsonUtil.readDocumentNow(file);
-        if (doc == null) return new BlueprintBenchPrefs();
+        if (doc == null) return new BlueprintBookPrefs();
 
         try {
-            return BlueprintBenchPrefs.CODEC.decode(doc, new ExtraInfo());
+            return BlueprintBookPrefs.CODEC.decode(doc, new ExtraInfo());
         } catch (Exception e) {
             LOGGER.warning("[BlueprintPrefs] Failed to decode prefs for " + playerUuid + ": " + e.getMessage());
-            return new BlueprintBenchPrefs();
+            return new BlueprintBookPrefs();
         }
     }
 
-    public static void save(UUID playerUuid, BlueprintBenchPrefs prefs) {
+    public static void save(UUID playerUuid, BlueprintBookPrefs prefs) {
         if (prefsDir == null) return;
 
         Path file = prefsDir.resolve(playerUuid + ".json");
         try {
-            BsonDocument doc = BlueprintBenchPrefs.CODEC.encode(prefs, new ExtraInfo());
+            BsonDocument doc = BlueprintBookPrefs.CODEC.encode(prefs, new ExtraInfo());
             BsonUtil.writeDocument(file, doc);
         } catch (Exception e) {
             LOGGER.warning("[BlueprintPrefs] Failed to save prefs for " + playerUuid + ": " + e.getMessage());
@@ -1298,17 +1298,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         benchIds.clear();
         benchIds.addAll(benchSet);
-        LOGGER.info("[BlueprintBench] Loaded bench IDs: " + benchIds);
+        LOGGER.info("[BlueprintBook] Loaded bench IDs: " + benchIds);
 
         // Debug: log category coverage
         long withCats = allRecipes.stream().filter(r -> r.categoryIds() != null && !r.categoryIds().isEmpty()).count();
-        LOGGER.info("[BlueprintBench] Recipes with categories: " + withCats + "/" + allRecipes.size());
+        LOGGER.info("[BlueprintBook] Recipes with categories: " + withCats + "/" + allRecipes.size());
         // Debug: log distinct category IDs from recipes
         Set<String> recipeCatIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (RecipeEntry r : allRecipes) {
             if (r.categoryIds() != null) recipeCatIds.addAll(r.categoryIds());
         }
-        LOGGER.info("[BlueprintBench] Distinct recipe category IDs: " + recipeCatIds);
+        LOGGER.info("[BlueprintBook] Distinct recipe category IDs: " + recipeCatIds);
 
         this.categoryInfoMap = buildCategoryInfoMap();
 
@@ -1388,7 +1388,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         this.playerStore = store;
 
         // Load persisted preferences
-        BlueprintBenchPrefs prefs = BlueprintBenchPrefsStore.load(this.playerRef.getUuid());
+        BlueprintBookPrefs prefs = BlueprintBookPrefsStore.load(this.playerRef.getUuid());
         this.activeTab = prefs.activeTab != null ? prefs.activeTab : ALL_TAB;
         this.activeSetFilters.clear();
         this.activeSetFilters.addAll(prefs.activeSetFilters);
@@ -1426,23 +1426,23 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         this.cellSlotToRecipeIndex = new int[totalCellCount];
 
         // Load main template
-        cmd.append("Pages/BlueprintBench/BlueprintBenchPage.ui");
+        cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui");
 
         // â”€â”€ Append reusable components into empty containers (one-time init) â”€â”€
 
         // Set filter buttons â€” one per set
         for (int i = 0; i < totalSetCount; i++) {
-            cmd.append("#SetFilters", "Pages/BlueprintBench/SetFilterButton.ui");
+            cmd.append("#SetFilters", "Pages/BlueprintBook/SetFilterButton.ui");
         }
 
         // Material group icon buttons (keep MAX_GROUP_BUTTONS)
         for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
-            cmd.append("#MaterialGroups", "Pages/BlueprintBench/GroupFilterButton.ui");
+            cmd.append("#MaterialGroups", "Pages/BlueprintBook/GroupFilterButton.ui");
         }
 
         // Per-set group containers with VARIABLE cell counts
         for (int g = 0; g < totalSetCount; g++) {
-            cmd.append("#RecipeGridArea", "Pages/BlueprintBench/SetGroupContainer.ui");
+            cmd.append("#RecipeGridArea", "Pages/BlueprintBook/SetGroupContainer.ui");
             for (int c = 0; c < cellsPerSet[g]; c++) {
                 cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
                            "Common/Components/ClickableIconCell.ui");
@@ -1495,7 +1495,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         if (ingredientController != null) {
             ingredientController.buildUI(cmd, evt);
             // Restore saved selections
-            BlueprintBenchPrefs savedPrefs = BlueprintBenchPrefsStore.load(this.playerRef.getUuid());
+            BlueprintBookPrefs savedPrefs = BlueprintBookPrefsStore.load(this.playerRef.getUuid());
             if (savedPrefs.selectedIngredientNodes != null && !savedPrefs.selectedIngredientNodes.isEmpty()) {
                 ingredientController.restoreSelection(savedPrefs.selectedIngredientNodes);
             }
@@ -1535,7 +1535,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     }
 
     private void savePrefs() {
-        BlueprintBenchPrefs prefs = new BlueprintBenchPrefs();
+        BlueprintBookPrefs prefs = new BlueprintBookPrefs();
         prefs.activeTab = this.activeTab;
         prefs.activeSetFilters = new ArrayList<>(this.activeSetFilters);
         prefs.activeMaterialGroups = new ArrayList<>(this.activeMaterialGroups);
@@ -1546,7 +1546,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         prefs.selectAllCategories = this.selectAllCategories;
         prefs.selectedIngredientNodes = ingredientController != null
                 ? new ArrayList<>(ingredientController.getSelectedNodeIds()) : new ArrayList<>();
-        BlueprintBenchPrefsStore.save(this.playerRef.getUuid(), prefs);
+        BlueprintBookPrefsStore.save(this.playerRef.getUuid(), prefs);
     }
 
     @Override
@@ -2061,7 +2061,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         // Build the map with dot-notation keys to match recipe category IDs.
         Map<String, RecipeFilterPipeline.CategoryInfo> map = new LinkedHashMap<>();
         for (ItemCategory topLevel : allCats.values()) {
-            LOGGER.info("[BlueprintBench] Top-level category: id=" + topLevel.getId()
+            LOGGER.info("[BlueprintBook] Top-level category: id=" + topLevel.getId()
                     + " name=" + topLevel.getName() + " icon=" + topLevel.getIcon()
                     + " order=" + topLevel.getOrder());
             // Top-level entries (e.g. "Blocks", "Items", "Furniture")
@@ -2073,7 +2073,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             if (children != null) {
                 for (ItemCategory child : children) {
                     String dotKey = topLevel.getId() + "." + child.getId();
-                    LOGGER.info("[BlueprintBench]   Child category: dotKey=" + dotKey
+                    LOGGER.info("[BlueprintBook]   Child category: dotKey=" + dotKey
                             + " name=" + child.getName() + " icon=" + child.getIcon()
                             + " order=" + child.getOrder());
                     map.put(dotKey, new RecipeFilterPipeline.CategoryInfo(
@@ -2081,7 +2081,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 }
             }
         }
-        LOGGER.info("[BlueprintBench] Built categoryInfoMap with " + map.size() + " categories: " + map.keySet());
+        LOGGER.info("[BlueprintBook] Built categoryInfoMap with " + map.size() + " categories: " + map.keySet());
         return map;
     }
 
@@ -2096,7 +2096,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                                   UICommandBuilder cmd) {
         if (selectedRecipeId == null) {
             this.playerRef.sendMessage(
-                    Message.raw("\u00a7c[BlueprintBench] No recipe selected."));
+                    Message.raw("\u00a7c[BlueprintBook] No recipe selected."));
             return;
         }
 
@@ -2110,7 +2110,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         player.getInventory().getCombinedHotbarFirst().addItemStack(item);
 
         this.playerRef.sendMessage(
-                Message.raw("\u00a7a[BlueprintBench] Given stencil: " + entry.outputItemId().replace('_', ' ')));
+                Message.raw("\u00a7a[BlueprintBook] Given stencil: " + entry.outputItemId().replace('_', ' ')));
         LOGGER.info("[BlueprintUI] Gave player stencil for " + entry.outputItemId() + " (recipe: " + entry.recipeId() + ")");
     }
 
@@ -3726,7 +3726,7 @@ public class IngredientTreeGridController {
 
         for (IngredientGroup group : tree.getGroups()) {
             // Append group header
-            cmd.append("#IngredientTreeContainer", "Pages/BlueprintBench/IngredientGroupHeader.ui");
+            cmd.append("#IngredientTreeContainer", "Pages/BlueprintBook/IngredientGroupHeader.ui");
             elements.add(new ElementInfo(group.getId(), NodeType.META_GROUP, ElementKind.HEADER, containerIdx, -1));
 
             String headerSel = "#IngredientTreeContainer[" + containerIdx + "]";
@@ -3739,7 +3739,7 @@ public class IngredientTreeGridController {
             containerIdx++;
 
             // Append wrap grid container for this group's leaf buttons
-            cmd.append("#IngredientTreeContainer", "Pages/BlueprintBench/IngredientButtonGrid.ui");
+            cmd.append("#IngredientTreeContainer", "Pages/BlueprintBook/IngredientButtonGrid.ui");
             int gridContainerIdx = containerIdx;
             elements.add(new ElementInfo(group.getId(), NodeType.META_GROUP, ElementKind.GRID_CONTAINER, containerIdx, -1));
             containerIdx++;
@@ -3750,8 +3750,8 @@ public class IngredientTreeGridController {
             for (IngredientResourceType rt : group.getChildren()) {
                 boolean isDirectItem = rt.getIconPath() == null;
                 String template = isDirectItem
-                        ? "Pages/BlueprintBench/ExactItemFilterButton.ui"
-                        : "Pages/BlueprintBench/GroupFilterButton.ui";
+                        ? "Pages/BlueprintBook/ExactItemFilterButton.ui"
+                        : "Pages/BlueprintBook/GroupFilterButton.ui";
                 ElementKind kind = isDirectItem ? ElementKind.ITEM_BUTTON : ElementKind.LEAF_BUTTON;
 
                 cmd.append(gridSel, template);

@@ -6,7 +6,7 @@
 
 ## 1. Overview
 
-Replace the current inline-markup UI in `BlueprintSelectionPage` with two custom `.ui` template files: a main page layout (`BlueprintBenchPage.ui`) and a reusable recipe list entry (`RecipeEntry.ui`). The page lets players browse block-producing recipes, select one, and arm their held `Block_Placeholder` item with the selected recipe. This separates layout/styling concerns from Java server logic and makes the UI maintainable.
+Replace the current inline-markup UI in `BlueprintSelectionPage` with two custom `.ui` template files: a main page layout (`BlueprintBookPage.ui`) and a reusable recipe list entry (`RecipeEntry.ui`). The page lets players browse block-producing recipes, select one, and arm their held `Block_Placeholder` item with the selected recipe. This separates layout/styling concerns from Java server logic and makes the UI maintainable.
 
 ## 2. Design Priorities
 
@@ -19,7 +19,7 @@ Replace the current inline-markup UI in `BlueprintSelectionPage` with two custom
 
 ```mermaid
 classDiagram
-    class BlueprintBenchPageUI {
+    class BlueprintBookPageUI {
         <<.ui file>>
         #Title : Label
         #CountLabel : Label
@@ -56,14 +56,14 @@ classDiagram
         +CODEC : BuilderCodec
     }
 
-    class BlueprintBenchOpenUIInteraction {
+    class BlueprintBookOpenUIInteraction {
         +firstRun(type, context, cooldown) void
     }
 
-    BlueprintSelectionPage --> BlueprintBenchPageUI : loads via append
+    BlueprintSelectionPage --> BlueprintBookPageUI : loads via append
     BlueprintSelectionPage --> RecipeEntryUI : appends N items
     BlueprintSelectionPage --> EventPayload : deserializes events
-    BlueprintBenchOpenUIInteraction --> BlueprintSelectionPage : creates
+    BlueprintBookOpenUIInteraction --> BlueprintSelectionPage : creates
 ```
 
 ## 4. Responsibility Map
@@ -71,13 +71,13 @@ classDiagram
 ```mermaid
 graph TB
     subgraph "Client (.ui files)"
-        PAGE_UI["BlueprintBenchPage.ui<br/>Page structure"]
+        PAGE_UI["BlueprintBookPage.ui<br/>Page structure"]
         ENTRY_UI["RecipeEntry.ui<br/>List item template"]
         COMMON["Common.ui<br/>Shared styles"]
     end
 
     subgraph "Server (Java)"
-        INTERACTION["BlueprintBenchOpenUIInteraction<br/>Block right-click handler"]
+        INTERACTION["BlueprintBookOpenUIInteraction<br/>Block right-click handler"]
         PAGE["BlueprintSelectionPage<br/>Page logic + state"]
         META["PlaceBlockMetadata<br/>Arms placeholder item"]
     end
@@ -101,7 +101,7 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant P as Player
-    participant INT as BlueprintBenchOpenUIInteraction
+    participant INT as BlueprintBookOpenUIInteraction
     participant PAGE as BlueprintSelectionPage
     participant CLIENT as Client UI
 
@@ -109,9 +109,9 @@ sequenceDiagram
     INT->>PAGE: new BlueprintSelectionPage(playerRef)
     INT->>PAGE: openCustomPage(ref, store, page)
     PAGE->>PAGE: build(ref, cmd, evt, store)
-    PAGE->>CLIENT: cmd.append("Pages/BlueprintBench/BlueprintBenchPage.ui")
+    PAGE->>CLIENT: cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui")
     loop Each visible recipe
-        PAGE->>CLIENT: cmd.append("#RecipeList", "Pages/BlueprintBench/RecipeEntry.ui")
+        PAGE->>CLIENT: cmd.append("#RecipeList", "Pages/BlueprintBook/RecipeEntry.ui")
         PAGE->>CLIENT: cmd.set("#RecipeList[i].#RecipeName.Text", name)
         PAGE->>CLIENT: evt.addEventBinding(Activating, "#RecipeList[i]", recipeId)
     end
@@ -177,10 +177,10 @@ sequenceDiagram
 
 ## 7. `.ui` File Contents
 
-### 7.1 `BlueprintBenchPage.ui`
+### 7.1 `BlueprintBookPage.ui`
 
-**Path:** `src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchPage.ui`
-**Loaded via:** `commandBuilder.append("Pages/BlueprintBench/BlueprintBenchPage.ui")`
+**Path:** `src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui`
+**Loaded via:** `commandBuilder.append("Pages/BlueprintBook/BlueprintBookPage.ui")`
 
 ```
 // Blueprint Bench — main page layout
@@ -314,8 +314,8 @@ Group {
 
 ### 7.2 `RecipeEntry.ui`
 
-**Path:** `src/main/resources/Common/UI/Custom/Pages/BlueprintBench/RecipeEntry.ui`
-**Loaded via:** `commandBuilder.append("#RecipeList", "Pages/BlueprintBench/RecipeEntry.ui")`
+**Path:** `src/main/resources/Common/UI/Custom/Pages/BlueprintBook/RecipeEntry.ui`
+**Loaded via:** `commandBuilder.append("#RecipeList", "Pages/BlueprintBook/RecipeEntry.ui")`
 
 ```
 // Blueprint Bench — single recipe list entry
@@ -372,7 +372,7 @@ public void build(@NonNull Ref<EntityStore> ref,
                   @NonNull Store<EntityStore> store) {
 
     // Load page template from .ui file
-    cmd.append("Pages/BlueprintBench/BlueprintBenchPage.ui");
+    cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui");
 
     // Bind search input — ValueChanged fires on every keystroke
     evt.addEventBinding(
@@ -399,7 +399,7 @@ public void build(@NonNull Ref<EntityStore> ref,
 
 ### 8.2 Changes to `buildRecipeList()`
 
-Replace `"Pages/BasicTextButton.ui"` with `"Pages/BlueprintBench/RecipeEntry.ui"` and use `#RecipeName.Text` instead of `.TextSpans`:
+Replace `"Pages/BasicTextButton.ui"` with `"Pages/BlueprintBook/RecipeEntry.ui"` and use `#RecipeName.Text` instead of `.TextSpans`:
 
 ```java
 private void buildRecipeList(UICommandBuilder cmd, UIEventBuilder evt) {
@@ -410,7 +410,7 @@ private void buildRecipeList(UICommandBuilder cmd, UIEventBuilder evt) {
         RecipeEntry entry = filteredRecipes.get(i);
 
         // Append recipe entry from .ui template
-        cmd.append("#RecipeList", "Pages/BlueprintBench/RecipeEntry.ui");
+        cmd.append("#RecipeList", "Pages/BlueprintBook/RecipeEntry.ui");
 
         // Set the display name
         cmd.set("#RecipeList[" + i + "].#RecipeName.Text", entry.recipeId());
@@ -418,7 +418,7 @@ private void buildRecipeList(UICommandBuilder cmd, UIEventBuilder evt) {
         // Highlight if selected
         if (entry.recipeId().equals(this.selectedRecipeId)) {
             cmd.set("#RecipeList[" + i + "].Style",
-                    Value.ref("Pages/BlueprintBench/RecipeEntry.ui", "SelectedStyle"));
+                    Value.ref("Pages/BlueprintBook/RecipeEntry.ui", "SelectedStyle"));
         }
 
         // Bind click event
@@ -459,14 +459,14 @@ private void updateDetailPanel(UICommandBuilder cmd) {
 
             // Enable confirm button
             cmd.set("#ConfirmButton.Style",
-                    Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "ConfirmButtonStyle"));
+                    Value.ref("Pages/BlueprintBook/BlueprintBookPage.ui", "ConfirmButtonStyle"));
         }
     } else {
         cmd.set("#OutputName.Text", "No recipe selected");
         cmd.set("#CostSummary.Text", "");
         // Disable confirm button (gray style)
         cmd.set("#ConfirmButton.Style",
-                Value.ref("Pages/BlueprintBench/BlueprintBenchPage.ui", "DisabledConfirmStyle"));
+                Value.ref("Pages/BlueprintBook/BlueprintBookPage.ui", "DisabledConfirmStyle"));
     }
 }
 ```
@@ -506,7 +506,7 @@ public void handleDataEvent(@NonNull Ref<EntityStore> ref,
 
 ## 9. Selector Map
 
-### `BlueprintBenchPage.ui`
+### `BlueprintBookPage.ui`
 
 | Selector | Element | Purpose | Set by server |
 |----------|---------|---------|---------------|
@@ -530,8 +530,8 @@ public void handleDataEvent(@NonNull Ref<EntityStore> ref,
 
 | File | Named Expression | Used for |
 |------|-----------------|----------|
-| `BlueprintBenchPage.ui` | `@ConfirmButtonStyle` | Enabled confirm button |
-| `BlueprintBenchPage.ui` | `@DisabledConfirmStyle` | Disabled confirm button (no selection) |
+| `BlueprintBookPage.ui` | `@ConfirmButtonStyle` | Enabled confirm button |
+| `BlueprintBookPage.ui` | `@DisabledConfirmStyle` | Disabled confirm button (no selection) |
 | `RecipeEntry.ui` | `@EntryStyle` | Default recipe entry appearance |
 | `RecipeEntry.ui` | `@SelectedStyle` | Highlighted/selected recipe entry |
 
@@ -566,12 +566,12 @@ No changes to the existing `EventPayload` codec — the fields (`searchQuery`, `
 ```
 src/main/resources/Common/UI/Custom/
 └── Pages/
-    └── BlueprintBench/
-        ├── BlueprintBenchPage.ui          ← Main page layout
+    └── BlueprintBook/
+        ├── BlueprintBookPage.ui          ← Main page layout
         └── RecipeEntry.ui                 ← Recipe list item template
 
 src/main/java/com/UnobstructedThirdPerson/placeblock/ui/
-├── BlueprintBenchOpenUIInteraction.java   ← No changes
+├── BlueprintBookOpenUIInteraction.java   ← No changes
 └── BlueprintSelectionPage.java            ← Modified: use .ui files instead of appendInline()
 ```
 
@@ -579,12 +579,12 @@ src/main/java/com/UnobstructedThirdPerson/placeblock/ui/
 
 | File | Change | Detail |
 |------|--------|--------|
-| `BlueprintSelectionPage.java` | **Modify `build()`** | Replace `appendInline()` call with `cmd.append("Pages/BlueprintBench/BlueprintBenchPage.ui")`. Replace `#SelectButton` event binding with `#ConfirmButton`. |
-| `BlueprintSelectionPage.java` | **Modify `buildRecipeList()`** | Replace `"Pages/BasicTextButton.ui"` with `"Pages/BlueprintBench/RecipeEntry.ui"`. Use `#RecipeName.Text` instead of `.TextSpans`. Use `Value.ref("Pages/BlueprintBench/RecipeEntry.ui", "SelectedStyle")` for selection highlight. |
+| `BlueprintSelectionPage.java` | **Modify `build()`** | Replace `appendInline()` call with `cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui")`. Replace `#SelectButton` event binding with `#ConfirmButton`. |
+| `BlueprintSelectionPage.java` | **Modify `buildRecipeList()`** | Replace `"Pages/BasicTextButton.ui"` with `"Pages/BlueprintBook/RecipeEntry.ui"`. Use `#RecipeName.Text` instead of `.TextSpans`. Use `Value.ref("Pages/BlueprintBook/RecipeEntry.ui", "SelectedStyle")` for selection highlight. |
 | `BlueprintSelectionPage.java` | **Rename `updateFooter()` → `updateDetailPanel()`** | Expand to set `#OutputName.Text`, `#CostSummary.Text`, and toggle `#ConfirmButton.Style` between enabled/disabled styles. |
 | `BlueprintSelectionPage.java` | **Modify `handleDataEvent()`** | Change `"Select".equals(data.action)` to `"Confirm".equals(data.action)`. Call `updateDetailPanel()` instead of `updateFooter()`. |
 | `BlueprintSelectionPage.java` | **Remove `BUTTON_STYLE` / `BUTTON_STYLE_SELECTED` constants** | These referenced `Pages/BasicTextButton.ui` — no longer needed. |
-| `BlueprintBenchOpenUIInteraction.java` | **No changes** | Already creates `BlueprintSelectionPage` and opens it correctly. |
+| `BlueprintBookOpenUIInteraction.java` | **No changes** | Already creates `BlueprintSelectionPage` and opens it correctly. |
 | `manifest.json` | **No changes** | Already has `"IncludesAssetPack": true`. |
 
 ### What can be deleted after migration
@@ -606,7 +606,7 @@ src/main/java/com/UnobstructedThirdPerson/placeblock/ui/
 
 **Problem:** The original design only checked for a held `Block_Placeholder` at Confirm time. The vision says the player "interacts with the bench while holding a Block_Placeholder item" — the UI should not open without one.
 
-**Fix applied to `BlueprintBenchOpenUIInteraction.java`:**
+**Fix applied to `BlueprintBookOpenUIInteraction.java`:**
 - Added `PlaceBlockMetadata.isPlaceBlock(heldItem)` check in `firstRun()` BEFORE opening the page
 - If not holding a placeholder: sends `"§e[PlaceBlock] Hold a Block_Placeholder to use the Blueprint Bench."` and returns
 - The Confirm-time check in `BlueprintSelectionPage.handleDataEvent()` remains as a safety net
@@ -626,7 +626,7 @@ src/main/java/com/UnobstructedThirdPerson/placeblock/ui/
    - Each `RecipeEntry` gains a `boolean affordable` field, computed at page-build and on search
    - Uses `CraftingManager.getInputMaterials(recipe, 1)` to get required materials
    - Uses `player.getInventory().getCombinedArmorHotbarStorage().canRemoveMaterials(materials)` for dry-run check
-   - If unaffordable: `cmd.set("#RecipeList[i].Style", Value.ref("Pages/BlueprintBench/RecipeEntry.ui", "UnaffordableStyle"))`
+   - If unaffordable: `cmd.set("#RecipeList[i].Style", Value.ref("Pages/BlueprintBook/RecipeEntry.ui", "UnaffordableStyle"))`
    - Affordable recipes sort above unaffordable ones
 
 3. **New named style references:**
@@ -643,7 +643,7 @@ src/main/java/com/UnobstructedThirdPerson/placeblock/ui/
 - [x] Responsibility map included
 - [x] Sequence diagram included
 - [x] UI layout design with visual mockup
-- [x] `.ui` file contents specified (BlueprintBenchPage.ui + RecipeEntry.ui)
+- [x] `.ui` file contents specified (BlueprintBookPage.ui + RecipeEntry.ui)
 - [x] Java integration pseudocode for build(), buildRecipeList(), updateDetailPanel(), handleDataEvent()
 - [x] Selector map — all `#Id` selectors documented with purpose and server usage
 - [x] Event binding map — all events documented with data keys and values

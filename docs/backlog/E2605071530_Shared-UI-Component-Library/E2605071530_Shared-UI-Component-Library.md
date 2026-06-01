@@ -10,11 +10,11 @@ created: 2026-05-07
 # Shared UI Component Library
 
 ## Goal
-Create a reusable component library in `Common/Components/` that eliminates duplicate UI element definitions across BlueprintBench and StencilRadial. Consumers stamp shared components like `$Comp.@ItemIconCell` instead of re-defining icon cells, filter buttons, and cost displays from scratch per page.
+Create a reusable component library in `Common/Components/` that eliminates duplicate UI element definitions across BlueprintBook and StencilRadial. Consumers stamp shared components like `$Comp.@ItemIconCell` instead of re-defining icon cells, filter buttons, and cost displays from scratch per page.
 
 ## Success Criteria
 - [ ] Common element patterns (icon cells, filter buttons, cost displays, segments) are defined once in a shared location
-- [ ] Both BlueprintBench and StencilRadial pages consume shared components instead of page-specific duplicates
+- [ ] Both BlueprintBook and StencilRadial pages consume shared components instead of page-specific duplicates
 - [ ] Page-specific .ui files for migrated components are deleted
 - [ ] All Java selectors are updated to match shared component IDs
 - [ ] No visual regressions — pages look identical after migration
@@ -27,7 +27,7 @@ Create a reusable component library in `Common/Components/` that eliminates dupl
 | F2605071536 | Migration to Shared Components | backlog |
 
 ## Context
-The BlueprintBench and StencilRadial UIs share many visual patterns — icon cells with dim overlays, filter toggle buttons, cost ingredient displays — but each page defines its own version with slightly different IDs and sizing. This leads to:
+The BlueprintBook and StencilRadial UIs share many visual patterns — icon cells with dim overlays, filter toggle buttons, cost ingredient displays — but each page defines its own version with slightly different IDs and sizing. This leads to:
 - Duplicate definitions that drift apart over time
 - Developers needing to remember per-component affordances (dim states, hover, click targets)
 - New features re-inventing the same elements

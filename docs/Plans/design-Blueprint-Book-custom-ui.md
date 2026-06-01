@@ -93,7 +93,7 @@ sequenceDiagram
 - Replaces held item with the unarmed version
 
 **`/placeblock list [category]`**
-- Lists all shadow recipe IDs (from `BlueprintBenchRecipeMutator`), optionally filtered by bench category
+- Lists all shadow recipe IDs (from `BlueprintBookRecipeMutator`), optionally filtered by bench category
 - Shows recipe ID + output item name + input summary
 
 **`/placeblock info`**
@@ -196,7 +196,7 @@ Listen for the bench's window opening event and replace the `StructuralCraftingW
 
 ### 4.5 Recipe Population
 
-The recipe list comes from `BlueprintBenchRecipeMutator`'s shadow recipes. At page construction:
+The recipe list comes from `BlueprintBookRecipeMutator`'s shadow recipes. At page construction:
 1. Iterate `CraftingRecipe.getAssetMap()` for recipes with `Blueprint` bench requirement
 2. For each recipe, check affordability via `ResourceScanner.canAfford()` against current inventory
 3. Sort: affordable first, then alphabetical
@@ -227,7 +227,7 @@ graph LR
         D["PlaceBlockIndicatorListener"]
         E["PlaceBlockConfig / ConfigLoader"]
         F["PlaceBlockMenuInteraction"]
-        G["BlueprintBenchRecipeMutator"]
+        G["BlueprintBookRecipeMutator"]
     end
 
     subgraph "REMOVE"
@@ -250,7 +250,7 @@ graph LR
 | **`PlaceBlockIndicatorListener`** | **KEEP — unchanged** | Updates placeholder color based on resource availability. Orthogonal to arming source. |
 | **`PlaceBlockConfig` / `PlaceBlockConfigLoader`** | **KEEP — unchanged** | Chest radius config used by ResourceScanner. |
 | **`PlaceBlockMenuInteraction`** | **KEEP — repurpose in Phase B** | Currently a stub. In Phase B, this interaction can be the trigger that opens `BlueprintSelectionPage` when the player right-clicks the bench while holding a placeholder. Already registered as `"PlaceBlock_Menu"` codec. |
-| **`BlueprintBenchRecipeMutator`** | **KEEP — role changes** | Shadow recipes still needed as the canonical list of "what can be built." Phase B uses them to populate the selection page. The shadow recipes' `BenchRequirement` with `Blueprint` ID is still useful for filtering, even if no `StructuralCraftingWindow` reads them. |
+| **`BlueprintBookRecipeMutator`** | **KEEP — role changes** | Shadow recipes still needed as the canonical list of "what can be built." Phase B uses them to populate the selection page. The shadow recipes' `BenchRequirement` with `Blueprint` ID is still useful for filtering, even if no `StructuralCraftingWindow` reads them. |
 | **`PlaceBlockBenchInterceptor`** | **REMOVE** | This entire class exists to intercept `CraftRecipeEvent.Pre` at the `StructuralCraftingWindow`. With the custom UI, there's no crafting event to intercept. All its reflection machinery (`BenchState`, `StructuralCraftingWindow.inputContainer`, `CraftingManager` position fields) becomes dead code. |
 
 ### Bench Block JSON

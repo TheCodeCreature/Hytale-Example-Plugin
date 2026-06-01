@@ -1,6 +1,6 @@
 // Blueprint Bench — single recipe list entry
 // Server sets TextSpans and applies @SelectedEntryStyle or @UnaffordableEntryStyle
-// See docs/Plans/design-blueprint-bench-ui.md for design spec
+// See docs/Plans/design-Blueprint-Book-ui.md for design spec
 
 $E = "../../Styles/Entries.ui";
 

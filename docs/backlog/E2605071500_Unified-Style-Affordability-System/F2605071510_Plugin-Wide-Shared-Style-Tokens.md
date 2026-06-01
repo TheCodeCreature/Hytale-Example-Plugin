@@ -11,20 +11,20 @@ created: 2026-05-07
 # Plugin-Wide Shared Style Tokens
 
 ## Description
-Create a SharedStyles.ui file containing universal style tokens that apply across all UI subsystems. BlueprintBenchStyles.ui imports it and re-exports shared tokens so existing Value.ref() paths remain valid. This establishes the style hierarchy: SharedStyles.ui (universal) → per-subsystem files (specific).
+Create a SharedStyles.ui file containing universal style tokens that apply across all UI subsystems. BlueprintBookStyles.ui imports it and re-exports shared tokens so existing Value.ref() paths remain valid. This establishes the style hierarchy: SharedStyles.ui (universal) → per-subsystem files (specific).
 
 ## Acceptance Criteria
 
 ### Checklist
 - [ ] SharedStyles.ui exists at `Common/UI/Custom/SharedStyles.ui` with universal tokens
 - [ ] Tokens include: button base styles (tertiary, destructive, navigation), label foundations (overlay, subtext, header), affordability colors (normal quantity, insufficient quantity, affordable, unaffordable)
-- [ ] BlueprintBenchStyles.ui imports SharedStyles.ui and re-exports shared tokens via alias
+- [ ] BlueprintBookStyles.ui imports SharedStyles.ui and re-exports shared tokens via alias
 - [ ] All 8 Value.ref() paths in BlueprintSelectionPage.java continue to resolve correctly (no silent breakage)
-- [ ] No visual regression in BlueprintBench UI
+- [ ] No visual regression in BlueprintBook UI
 
 ### Scenarios
-**Existing BlueprintBench styles still work**
-- **Given** BlueprintBenchStyles.ui now imports SharedStyles.ui
+**Existing BlueprintBook styles still work**
+- **Given** BlueprintBookStyles.ui now imports SharedStyles.ui
 - **When** a player opens the Blueprint Bench
 - **Then** all filter buttons, recipe entries, cost cells, and detail panel display identically to before
 
@@ -37,7 +37,7 @@ Create a SharedStyles.ui file containing universal style tokens that apply acros
 | ID | Title | Status |
 |----|-------|--------|
 | S2605071511 | Create SharedStyles.ui with Universal Tokens | backlog |
-| S2605071512 | Migrate BlueprintBenchStyles.ui to Import Shared | backlog |
+| S2605071512 | Migrate BlueprintBookStyles.ui to Import Shared | backlog |
 
 ## Notes
 - Shared tokens identified by Code Reviewer: @CostQuantityStyle, @CostQuantityInsufficientStyle, @FilterActiveStyle, @FilterInactiveStyle, @TransparentButtonStyle, @DetailLabelStyle, @DetailLabelMutedStyle, @HeaderStyle, @SubtextStyle, @SectionLabelStyle

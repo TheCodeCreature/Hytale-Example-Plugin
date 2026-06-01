@@ -688,7 +688,7 @@ src/main/java/com/UnobstructedThirdPerson/placeblock/
 ├── PlaceBlockBenchInterceptor.java     ← MINOR (if re-enabled)
 ├── PlaceBlockConfig.java               ← MINOR
 ├── PlaceBlockConfigLoader.java         ← NO CHANGE
-├── BlueprintBenchRecipeMutator.java    ← NO CHANGE
+├── BlueprintBookRecipeMutator.java    ← NO CHANGE
 └── ui/
     └── BlueprintSelectionPage.java     ← MINOR (arm() rename)
 

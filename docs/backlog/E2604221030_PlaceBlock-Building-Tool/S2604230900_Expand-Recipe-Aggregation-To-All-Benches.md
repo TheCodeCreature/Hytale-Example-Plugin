@@ -17,7 +17,7 @@ As a **player**, I want **the Blueprint Bench to show placeable recipes from ALL
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] `BlueprintBenchRecipeMutator` scans ALL recipes with any `BenchRequirement`, not just "Builders" and "Furniture_Bench"
+- [ ] `BlueprintBookRecipeMutator` scans ALL recipes with any `BenchRequirement`, not just "Builders" and "Furniture_Bench"
 - [ ] Only recipes whose primary output has a `blockId` (placeable blocks) are aggregated
 - [ ] Non-block output recipes (Rope, Fibre, tools) are excluded from aggregation
 - [ ] The Blueprint Bench's category list in `Bench_Blueprint.json` covers any new categories introduced by other benches
@@ -41,7 +41,7 @@ As a **player**, I want **the Blueprint Bench to show placeable recipes from ALL
 - **Then** the recipe still appears there as before
 
 ## Technical Notes
-- Change `SOURCE_BENCH_IDS` filter in `BlueprintBenchRecipeMutator` to accept ANY bench ID
+- Change `SOURCE_BENCH_IDS` filter in `BlueprintBookRecipeMutator` to accept ANY bench ID
 - Add a `hasPlaceableOutput(recipe)` check: resolve `primaryOutput.getItemId()` → `Item.getBlockId()` must be non-null
 - Audit `Bench_Blueprint.json` categories to ensure coverage of categories from other benches
 - Contract #16: "Any recipe whose output is a placeable block or furniture item is available at the Blueprint Bench"

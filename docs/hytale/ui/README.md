@@ -44,7 +44,7 @@ Reference documentation for Hytale's server-driven Custom UI system. These docs 
 | Context | Root | Example |
 |---------|------|---------|
 | `.ui` file texture/icon path | Relative to the `.ui` file | `"../../Common/RecipesIcon.png"` |
-| `cmd.append(path)` | `Common/UI/Custom/` | `"Pages/BlueprintBench/SetFilterButton.ui"` |
+| `cmd.append(path)` | `Common/UI/Custom/` | `"Pages/BlueprintBook/SetFilterButton.ui"` |
 | `cmd.set(sel, texturePath)` | Relative to `.ui` file defining the element | Same as in-file paths |
 | `cmd.set(sel, "#hex")` | N/A — color literal | `"#2a4a6a"`, `"#141c26(0.0)"` |
 
@@ -68,7 +68,7 @@ Reference documentation for Hytale's server-driven Custom UI system. These docs 
 
 ## Our Usage
 
-Our [BlueprintBenchPage.ui](../../../src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchPage.ui) is the primary custom UI in this plugin. It demonstrates:
+Our [BlueprintBookPage.ui](../../../src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui) is the primary custom UI in this plugin. It demonstrates:
 - `$C.@Container` with `#Title` / `#Content` structure
 - `$C.@TopTabsStyle` for tab navigation
 - `$C.@HeaderSearch` for search input

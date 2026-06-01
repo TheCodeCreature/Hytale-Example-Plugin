@@ -107,7 +107,7 @@ sequenceDiagram
 | Thread Safety | ✅ `ConcurrentHashMap<String, AtomicBoolean>` — reads are lock-free, toggle uses CAS loop |
 | API Design | ✅ Fail-open (`get()` returns `true` for unknown keys), `register()` for defaults, `getAll()` returns unmodifiable snapshot |
 | Error Handling | ✅ `save()` catches exceptions, logs warning, never throws. `initialize()` handles missing file gracefully |
-| Persistence | ✅ BsonUtil for JSON I/O — consistent with existing codebase pattern (BlueprintBenchPrefsStore) |
+| Persistence | ✅ BsonUtil for JSON I/O — consistent with existing codebase pattern (BlueprintBookPrefsStore) |
 
 ### DebugLogger.java — ✅ Clean
 

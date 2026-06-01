@@ -2,7 +2,6 @@
   "logging.global" : false,
   "logging.plugin" : false,
   "logging.stencil" : false,
-  "logging.blueprint_bench" : false,
   "logging.blueprint_book" : false,
   "logging.scaling" : false,
   "logging.registry" : false,

@@ -21,7 +21,7 @@ Add per-ingredient affordability visual feedback to the stencil radial menu's co
 - [ ] Affordable ingredients display normally (no dim, gold text)
 - [ ] Affordability is checked using the shared RecipeAffordabilityResolver
 - [ ] Players can still select (arm) stencils they cannot afford — dimming is informational, not blocking
-- [ ] Visual treatment is adapted for the radial context (compact, at-a-glance) — not a clone of the BlueprintBench detail panel
+- [ ] Visual treatment is adapted for the radial context (compact, at-a-glance) — not a clone of the BlueprintBook detail panel
 
 ### Scenarios
 **Player can afford all ingredients**
@@ -54,6 +54,6 @@ Add per-ingredient affordability visual feedback to the stencil radial menu's co
 | S2605071542 | Wire Affordability Check into showCostArc | backlog |
 
 ## Notes
-- PO recommendation: tint or dim the cost icon, don't replicate full BlueprintBench treatment. Keep it "at a glance."
+- PO recommendation: tint or dim the cost icon, don't replicate full BlueprintBook treatment. Keep it "at a glance."
 - PO concern: affordability check must use same inventory scope as Contract #11 (storage + backpack + non-active hotbar)
 - Depends on F2605071530 (RecipeAffordabilityResolver) for the shared affordability check

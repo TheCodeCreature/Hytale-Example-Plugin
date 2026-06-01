@@ -187,7 +187,7 @@ Group {
 ```java
 cmd.clear("#RecipeGrid");
 for (int i = 0; i < recipes.size(); i++) {
-    cmd.append("#RecipeGrid", "Pages/BlueprintBench/RecipeCell.ui");
+    cmd.append("#RecipeGrid", "Pages/BlueprintBook/RecipeCell.ui");
     String sel = "#RecipeGrid[" + i + "]";
     cmd.set(sel + " #CellIcon.ItemId", recipes.get(i).outputItemId());
 }

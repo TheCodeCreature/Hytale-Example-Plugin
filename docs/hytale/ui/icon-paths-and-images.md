@@ -10,7 +10,7 @@ sources:
   - "docs/Resources/Common/Pages/UIGallery/Categories/ButtonsContent.ui — icon button patterns"
   - "docs/Resources/Common/Pages/UIGallery/Categories/ContainersContent.ui — TabButton Icon usage"
   - "docs/Resources/Common/Pages/UIGallery/Categories/InputContent.ui — CompactTextField Decoration Icon"
-  - "src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchPage.ui"
+  - "src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui"
 ---
 
 # Icon Paths & Image References in .ui Files
@@ -100,11 +100,11 @@ From `Bench_Furniture.json`, these crafting category icons exist in the base gam
 3. The resolved path must land within the `Common/UI/Custom/` namespace — you **cannot** navigate above it to reach the game's top-level `Common/Icons/` directories
 4. For the definitive algorithm and full reference, see [Path Resolution — Definitive Reference](./path-resolution-definitive.md)
 
-### From `Pages/BlueprintBench/` (your current location)
+### From `Pages/BlueprintBook/` (your current location)
 
 Your `.ui` file is at:
 ```
-Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchPage.ui
+Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui
 ```
 
 To reference assets in `Common/`:
@@ -120,8 +120,8 @@ These patterns are confirmed working in existing `.ui` files:
 
 | From Location | Target | Path in .ui |
 |---|---|---|
-| `Pages/BlueprintBench/*.ui` | `Common/RecipesIcon.png` | `"../../Common/RecipesIcon.png"` |
-| `Pages/BlueprintBench/*.ui` | `Common/BlockSelectorSlotBackground.png` | `"../../Common/BlockSelectorSlotBackground.png"` |
+| `Pages/BlueprintBook/*.ui` | `Common/RecipesIcon.png` | `"../../Common/RecipesIcon.png"` |
+| `Pages/BlueprintBook/*.ui` | `Common/BlockSelectorSlotBackground.png` | `"../../Common/BlockSelectorSlotBackground.png"` |
 | `Pages/UIGallery/Categories/*.ui` | `Common/RecipesIcon.png` | `"../../../Common/RecipesIcon.png"` |
 | `Pages/UIGallery/Categories/*.ui` | `Common/SearchIcon.png` | `"../../../Common/SearchIcon.png"` |
 | `Pages/*.ui` (one deep) | `Common/ContainerPanelPatch.png` | `"../Common/ContainerPanelPatch.png"` |
@@ -236,7 +236,7 @@ Group {
 
 4. **ItemCategory icons are base game assets** — they exist in the game client's `Common/` root, not in your plugin. You can reference them if the path resolves, but you cannot inspect or list them from the plugin JAR.
 
-5. **The `../../Common/` prefix** — from `Pages/BlueprintBench/*.ui`, this navigates up to `Common/UI/Custom/` and then into the sibling `Common/` directory that contains shared UI assets (RecipesIcon.png, etc.). This is NOT the same as the game-wide `Common/` root where `Icons/` lives.
+5. **The `../../Common/` prefix** — from `Pages/BlueprintBook/*.ui`, this navigates up to `Common/UI/Custom/` and then into the sibling `Common/` directory that contains shared UI assets (RecipesIcon.png, etc.). This is NOT the same as the game-wide `Common/` root where `Icons/` lives.
 
 6. **CraftingCategories icons are available** — since the native crafting UI uses them, they exist client-side. The confirmed paths from `Bench_Furniture.json` can be referenced if the path resolution supports reaching the game's `Common/Icons/` from a `.ui` file.
 

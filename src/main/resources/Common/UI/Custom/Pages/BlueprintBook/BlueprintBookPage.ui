@@ -18,24 +18,6 @@ Group {
         Style: $C.@TopTabsStyle;
         SelectedTab: "All";
         Anchor: (Height: 66, Left: 2, Right: 0);
-
-        TabButton {
-            Icon: "../../Common/RecipesIcon.png";
-            TooltipText: "All";
-            Id: "All";
-        }
-
-        TabButton {
-            Icon: "../../Common/RecipesIcon.png";
-            TooltipText: "Builders Bench";
-            Id: "Builders";
-        }
-
-        TabButton {
-            Icon: "../../Common/RecipesIcon.png";
-            TooltipText: "Furniture Bench";
-            Id: "Furniture_Bench";
-        }
     }
 
     // Main container

@@ -190,14 +190,14 @@ Group {
 
 ### 7B. StencilRadialMenuPage.java — Value.ref Constants
 
-Add two `Value.ref()` constants for cost quantity style swapping. These reference `BlueprintBenchStyles.ui` which already defines the needed styles:
+Add two `Value.ref()` constants for cost quantity style swapping. These reference `BlueprintBookStyles.ui` which already defines the needed styles:
 
 ```java
-// Per-ingredient cost affordability (reuses BlueprintBench styles)
+// Per-ingredient cost affordability (reuses BlueprintBook styles)
 private static final Value<String> COST_QTY_NORMAL =
-        Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "CostQuantityStyle");
+        Value.ref("Pages/BlueprintBook/BlueprintBookStyles.ui", "CostQuantityStyle");
 private static final Value<String> COST_QTY_INSUFFICIENT =
-        Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "CostQuantityInsufficientStyle");
+        Value.ref("Pages/BlueprintBook/BlueprintBookStyles.ui", "CostQuantityInsufficientStyle");
 ```
 
 ### 7C. StencilRadialMenuPage.java — showCostArc Signature
@@ -439,7 +439,7 @@ cmd.set("#CostSlots[" + j + "].Visible", true);
 
 #### Unit: Integration verification
 - **Files**: All modified files
-- **Contract**: Full build passes, all three subsystems render affordability identically to before (BlueprintBench, hotbar glow) plus new radial menu affordability feedback
+- **Contract**: Full build passes, all three subsystems render affordability identically to before (BlueprintBook, hotbar glow) plus new radial menu affordability feedback
 - **Dependencies**: All Wave 3 units
 - **Done when**: `gradle build` succeeds, manual verification of all three affordability paths
 

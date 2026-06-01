@@ -18,7 +18,7 @@ As a **developer**, I want **a single utility class that centralizes all debug l
 
 ### Checklist
 - [ ] `DebugLogger` class exists in `com.CodeCreature.util`
-- [ ] Enum or registry of subsystems: PLUGIN, STENCIL, BLUEPRINT_BENCH, BLUEPRINT_BOOK, SCALING, REGISTRY, CRAFTING, INGREDIENT_TREE
+- [ ] Enum or registry of subsystems: PLUGIN, STENCIL, BLUEPRINT_BOOK, BLUEPRINT_BOOK, SCALING, REGISTRY, CRAFTING, INGREDIENT_TREE
 - [ ] Delegates toggle state to `FeatureFlags` — reads `logging.global` and `logging.<subsystem>` keys
 - [ ] Does NOT own any AtomicBooleans — all toggle state lives in FeatureFlags
 - [ ] `log(Subsystem, Level, String message)` method that checks `FeatureFlags.get("logging.global") && FeatureFlags.get("logging.<subsystem>")` before delegating to the appropriate JUL Logger

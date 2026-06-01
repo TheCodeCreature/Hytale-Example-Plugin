@@ -1,7 +1,7 @@
 ---
 id: S2605291075
 type: story
-title: "Validate BlueprintBenchPrefs for Dynamic Tabs"
+title: "Validate BlueprintBookPrefs for Dynamic Tabs"
 status: backlog
 priority: medium
 feature: F2605291020
@@ -9,7 +9,7 @@ epic: E2605291000
 created: 2026-05-29
 ---
 
-# Validate BlueprintBenchPrefs for Dynamic Tabs
+# Validate BlueprintBookPrefs for Dynamic Tabs
 
 ## User Story
 As a **player**, I want **my selected tab preference to persist across sessions** so that **I don't have to re-select my bench tab every time I open the UI**.
@@ -17,7 +17,7 @@ As a **player**, I want **my selected tab preference to persist across sessions*
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] `BlueprintBenchPrefs` stores the active tab as a string bench ID
+- [ ] `BlueprintBookPrefs` stores the active tab as a string bench ID
 - [ ] If a persisted tab ID no longer exists (bench was removed or denied), gracefully fall back to "All"
 - [ ] New bench tabs can be persisted without config changes
 - [ ] Preferences file is forward-compatible — adding new benches doesn't corrupt existing prefs
@@ -29,4 +29,4 @@ As a **player**, I want **my selected tab preference to persist across sessions*
 - **Then** the player's active tab defaults to "All" without errors
 
 ## Notes
-- `BlueprintBenchPrefs` currently stores `activeTab` as a string — this should already be compatible. Main concern is error handling for stale tab IDs.
+- `BlueprintBookPrefs` currently stores `activeTab` as a string — this should already be compatible. Main concern is error handling for stale tab IDs.

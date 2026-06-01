@@ -72,11 +72,6 @@ class DebugLoggerTest {
         }
 
         @Test
-        void blueprintBenchSubsystemKey() {
-            assertEquals("logging.blueprint_bench", Subsystem.BLUEPRINT_BENCH.flagKey());
-        }
-
-        @Test
         void blueprintBookSubsystemKey() {
             assertEquals("logging.blueprint_book", Subsystem.BLUEPRINT_BOOK.flagKey());
         }

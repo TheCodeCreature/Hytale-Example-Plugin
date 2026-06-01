@@ -24,7 +24,7 @@ Extract a shared RecipeAffordabilityResolver utility that consolidates the dupli
 - [ ] BlueprintSelectionPage.updateDetailPanel() uses resolveIngredientCosts() instead of inline resolution chain
 - [ ] StencilVisualManager.scanAndSend() uses isAffordable() instead of direct canRemoveMaterials()
 - [ ] StencilRadialMenuPage.showCostArc() uses resolveIngredientCosts() instead of inline resolution chain
-- [ ] Existing behavior unchanged: BlueprintBench detail panel, stencil hotbar glow, radial menu cost display all render identically
+- [ ] Existing behavior unchanged: BlueprintBook detail panel, stencil hotbar glow, radial menu cost display all render identically
 
 ### Scenarios
 **Ingredient resolution is consistent across subsystems**

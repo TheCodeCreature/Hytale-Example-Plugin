@@ -156,7 +156,7 @@ All new types (`InputRecipe`, `TaggedRecipe`, `PipelineResult`, `AffordabilityCh
 | **Remove** `filteredRecipes` field | No longer needed — pipeline produces the final list |
 | **Add** `RecipeFilterPipeline pipeline` field | Instantiate once, reuse across filter calls |
 
-### `BlueprintBenchPage.ui` (UI template)
+### `BlueprintBookPage.ui` (UI template)
 
 | Change | Description |
 |--------|-------------|

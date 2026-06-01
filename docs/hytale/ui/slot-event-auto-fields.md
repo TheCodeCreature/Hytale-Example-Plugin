@@ -215,4 +215,4 @@ public static final BuilderCodec<MyEventData> CODEC = BuilderCodec.builder(
 ## See Also
 
 - [UI Data Binding](./ui-data-binding.md) — `@` prefix, event patterns, codec structure
-- [Custom UI for Blueprint Bench](../plugins/custom-ui-for-blueprint-bench.md) — event binding overview
+- [Custom UI for Blueprint Bench](../plugins/custom-ui-for-Blueprint-Book.md) — event binding overview

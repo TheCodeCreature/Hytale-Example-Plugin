@@ -226,8 +226,8 @@ Java `File` I/O works — plugins run in a standard JVM. You can write to any wr
 
 ### Do existing systems write JSON files?
 
-**No.** Neither `BlueprintBenchRecipeMutator` nor `DropScaler` write JSON files. They mutate assets **in memory** during `LoadAssetEvent`:
-- `BlueprintBenchRecipeMutator` creates shadow `CraftingRecipe` objects and registers them via `CraftingRecipe.getAssetStore().loadAssets()`
+**No.** Neither `BlueprintBookRecipeMutator` nor `DropScaler` write JSON files. They mutate assets **in memory** during `LoadAssetEvent`:
+- `BlueprintBookRecipeMutator` creates shadow `CraftingRecipe` objects and registers them via `CraftingRecipe.getAssetStore().loadAssets()`
 - `DropScaler` mutates `BlockGathering` objects by cloning and modifying them in memory
 
 The idea would be to generate the JSON as a **build-time or offline tool**, not at runtime.
@@ -238,7 +238,7 @@ The idea would be to generate the JSON as a **build-time or offline tool**, not 
 
 ### Enumeration logic
 
-From [BlueprintBenchRecipeMutator.java](../../src/main/java/com/UnobstructedThirdPerson/placeblock/BlueprintBenchRecipeMutator.java#L59-L65):
+From [BlueprintBookRecipeMutator.java](../../src/main/java/com/UnobstructedThirdPerson/placeblock/BlueprintBookRecipeMutator.java#L59-L65):
 
 ```java
 for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()) {

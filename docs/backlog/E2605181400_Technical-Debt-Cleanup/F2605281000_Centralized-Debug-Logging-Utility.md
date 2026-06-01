@@ -58,7 +58,7 @@ Extract all log calls (53 call sites across 18 files) and player chat messages (
 ## Notes
 - **Architecture**: FeatureFlags is a standalone, general-purpose system persisted to JSON. DebugLogger consumes FeatureFlags for its toggles but does not own them.
 - Two logging backends in use: `java.util.logging.Logger` (14 files) and `HytaleLogger` (4 files)
-- Subsystems to register as feature flags: `logging.global`, `logging.stencil`, `logging.blueprintBench`, `logging.blueprintBook`, `logging.scaling`, `logging.registry`, `logging.crafting`, `logging.ingredientTree`, `logging.plugin`
+- Subsystems to register as feature flags: `logging.global`, `logging.stencil`, `logging.BlueprintBook`, `logging.blueprintBook`, `logging.scaling`, `logging.registry`, `logging.crafting`, `logging.ingredientTree`, `logging.plugin`
 - The existing `BreakBlockDiagnostic` AtomicBoolean should be migrated to `FeatureFlags.get("diagnostics.breakLog")`
 - Two unused logger declarations exist (`StencilRadialMenuPage`, `AffordabilityCoalescer`) — clean those up during migration
 - **Chat message classification**: Only debug/diagnostic messages (7 sites) route through DebugLogger. Player feedback messages (6 sites: placement confirmations, denial reasons) remain as direct `sendMessage()` calls and are NOT toggleable.

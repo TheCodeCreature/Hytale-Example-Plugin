@@ -268,7 +268,7 @@ public void build(@NonNull Ref<EntityStore> ref,
     this.playerStore = store;
 
     // Load persisted preferences (unchanged)
-    BlueprintBenchPrefs prefs = BlueprintBenchPrefsStore.load(this.playerRef.getUuid());
+    BlueprintBookPrefs prefs = BlueprintBookPrefsStore.load(this.playerRef.getUuid());
     // ... existing preference loading ...
 
     loadRecipes();
@@ -288,32 +288,32 @@ public void build(@NonNull Ref<EntityStore> ref,
     this.cellSlotToRecipeIndex = new int[totalCellCount];
 
     // Load main template
-    cmd.append("Pages/BlueprintBench/BlueprintBenchPage.ui");
+    cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui");
 
     // ── Append reusable components — DATA-DRIVEN counts ──
 
     // Set filter sidebar buttons — one per set
     for (int i = 0; i < totalSetCount; i++) {
-        cmd.append("#SetFilters", "Pages/BlueprintBench/SetFilterButton.ui");
+        cmd.append("#SetFilters", "Pages/BlueprintBook/SetFilterButton.ui");
     }
 
     // Material group icon buttons — keep MAX_GROUP_BUTTONS (capped by pipeline)
     for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
-        cmd.append("#MaterialGroups", "Pages/BlueprintBench/GroupFilterButton.ui");
+        cmd.append("#MaterialGroups", "Pages/BlueprintBook/GroupFilterButton.ui");
     }
 
     // Per-set group containers with VARIABLE cell counts
     for (int g = 0; g < totalSetCount; g++) {
-        cmd.append("#RecipeGridArea", "Pages/BlueprintBench/SetGroupContainer.ui");
+        cmd.append("#RecipeGridArea", "Pages/BlueprintBook/SetGroupContainer.ui");
         for (int c = 0; c < cellsPerSet[g]; c++) {
             cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
-                       "Pages/BlueprintBench/RecipeIconCell.ui");
+                       "Pages/BlueprintBook/RecipeIconCell.ui");
         }
     }
 
     // Cost cells (unchanged)
     for (int i = 0; i < MAX_COST_CELLS; i++) {
-        cmd.append("#CostGrid", "Pages/BlueprintBench/CostCell.ui");
+        cmd.append("#CostGrid", "Pages/BlueprintBook/CostCell.ui");
     }
 
     // ── Bind ALL events (one-time) — unchanged except loop bounds ──

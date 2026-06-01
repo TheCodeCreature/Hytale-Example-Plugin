@@ -151,7 +151,7 @@ graph TB
 
     subgraph "UI Phase"
         TREE -->|"groups + children"| CONTROLLER["IngredientTreeGridController"]
-        CONTROLLER -->|"cmd.append / cmd.set"| UI["BlueprintBenchPage.ui\n#IngredientTreeContainer"]
+        CONTROLLER -->|"cmd.append / cmd.set"| UI["BlueprintBookPage.ui\n#IngredientTreeContainer"]
         CONTROLLER -->|"reads/writes"| SELECTION["IngredientSelectionModel"]
     end
 
@@ -217,7 +217,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant Player
-    participant UI as BlueprintBenchPage.ui
+    participant UI as BlueprintBookPage.ui
     participant BSP as BlueprintSelectionPage
     participant Ctrl as IngredientTreeGridController
     participant Sel as IngredientSelectionModel
@@ -330,7 +330,7 @@ Replaces the current `#ResourceTypesHeader` and `#CategoriesHeader` pattern with
 //              #CheckboxIcon.Background (checkbox state), #ExpandArrow.Background
 // Events: #GroupHeaderBtn (expand/collapse), #CheckboxBtn (toggle selection)
 
-$S = "BlueprintBenchStyles.ui";
+$S = "BlueprintBookStyles.ui";
 
 Group {
     Anchor: (Height: 28, Left: 0, Right: 0);
@@ -405,7 +405,7 @@ Tier 3 (ExactItem) entries need a **new template** because they use `ItemIcon` i
 // ExactItemFilterButton.ui — exact item filter button using engine ItemIcon
 // Server sets: #ItemIconEl.ItemId, #ActiveOverlay.Visible, .TooltipText
 
-$S = "BlueprintBenchStyles.ui";
+$S = "BlueprintBookStyles.ui";
 
 Group {
     Anchor: (Width: 36, Height: 36);
@@ -435,7 +435,7 @@ Group {
 }
 ```
 
-### 7d. UI Layout in BlueprintBenchPage.ui
+### 7d. UI Layout in BlueprintBookPage.ui
 
 **Layout decision:** The right column is split into two vertical sections:
 - **Top (40%):** Crafting Details — output icon, cost grid, Give Stencil button
@@ -770,7 +770,7 @@ These are new icon assets that need to be created (16×16 PNG). Alternatively, u
 | Remove | `updateResourceTypes()` | Replaced by `controller.updateUI()` |
 | Remove | `buildResourceTypeBindings()` | Replaced by controller |
 
-### 10b. BlueprintBenchPage.ui
+### 10b. BlueprintBookPage.ui
 
 | Change | Location | Description |
 |--------|----------|-------------|
@@ -785,7 +785,7 @@ These are new icon assets that need to be created (16×16 PNG). Alternatively, u
 | Add | `inputMatchesAnyExactItemId(recipe, Set<String>)` — new predicate for ExactID matching |
 | No change | `ResourceTypeChecker` interface stays the same; the controller produces a checker that combines both ResourceType and ExactID logic |
 
-### 10d. BlueprintBenchPrefs.java
+### 10d. BlueprintBookPrefs.java
 
 | Change | Description |
 |--------|-------------|
@@ -842,12 +842,12 @@ src/main/java/com/UnobstructedThirdPerson/
 │       ├── RecipeFilterPipeline.java             // Minor additions
 │       └── ResourceTypeRegistry.java            // Kept for migration; usage reduced
 │
-src/main/resources/Common/UI/Custom/Pages/BlueprintBench/
-├── BlueprintBenchPage.ui                         // Modified: #IngredientTreeContainer
+src/main/resources/Common/UI/Custom/Pages/BlueprintBook/
+├── BlueprintBookPage.ui                         // Modified: #IngredientTreeContainer
 ├── IngredientGroupHeader.ui                      // NEW: section header template
 ├── ExactItemFilterButton.ui                      // NEW: ItemIcon-based filter button
 ├── GroupFilterButton.ui                          // UNCHANGED: reused for Tier 2 entries
-└── BlueprintBenchStyles.ui                       // Add: SectionHeaderLabelStyle
+└── BlueprintBookStyles.ui                       // Add: SectionHeaderLabelStyle
 │
 src/main/resources/Common/UI/Custom/Common/Icons/Checkbox/
 ├── Unchecked.png                                 // NEW: 16x16 empty checkbox
@@ -894,7 +894,7 @@ src/main/resources/Common/UI/Custom/Common/Icons/Checkbox/
 ### Wave 3 (integration — depends on Wave 2)
 
 #### Unit: Integration Wiring
-- **Files:** `BlueprintSelectionPage.java`, `BlueprintBenchPage.ui`, `BlueprintBenchPrefs.java`, `RecipeFilterPipeline.java`
+- **Files:** `BlueprintSelectionPage.java`, `BlueprintBookPage.ui`, `BlueprintBookPrefs.java`, `RecipeFilterPipeline.java`
 - **Contract:** Wire IngredientTreeGridController into BlueprintSelectionPage, replace ResourceTypeRegistry usage, update UI layout, add preference migration
 - **Dependencies:** All Wave 1 + Wave 2 units
 - **Done when:** Full build passes; ingredient tree displays in-game; selection filters recipes correctly; preferences save/load; ResourceTypeRegistry no longer called for filtering (only for migration)

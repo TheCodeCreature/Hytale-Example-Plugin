@@ -197,7 +197,7 @@ The bottleneck is the client never sends `CraftRecipeAction` because it believes
 
 ### Primary fix: Use `itemId`-based inputs for shadow recipes
 
-Change `BlueprintBenchRecipeMutator.mutate()` to set the shadow recipe input as:
+Change `BlueprintBookRecipeMutator.mutate()` to set the shadow recipe input as:
 ```java
 inputField.set(shadow, new MaterialQuantity[]{
     new MaterialQuantity("Block_Placeholder_Blue", null, null, 1, null)

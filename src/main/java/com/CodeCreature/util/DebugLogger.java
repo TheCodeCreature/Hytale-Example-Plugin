@@ -50,9 +50,7 @@ public final class DebugLogger {
         PLUGIN,
         /** Blueprint stencil placement, sync, and visuals. */
         STENCIL,
-        /** Blueprint bench UI, recipes, affordability. */
-        BLUEPRINT_BENCH,
-        /** Blueprint book particle loop and pick-stencil. */
+        /** Blueprint book UI, recipes, affordability, particle loop and pick-stencil. */
         BLUEPRINT_BOOK,
         /** Drop scaling and placement cost scaling. */
         SCALING,
@@ -67,7 +65,7 @@ public final class DebugLogger {
          * Returns the {@link FeatureFlags} key for this subsystem.
          *
          * @return key in the form {@code "logging.<lowercase_name>"}
-         *         (e.g. {@code "logging.blueprint_bench"})
+         *         (e.g. {@code "logging.BLUEPRINT_BOOK"})
          */
         public String flagKey() {
             return "logging." + this.name().toLowerCase();

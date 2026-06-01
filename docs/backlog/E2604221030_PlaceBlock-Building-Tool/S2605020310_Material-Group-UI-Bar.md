@@ -18,7 +18,7 @@ As a **player**, I want to see a row of material group icons above the set filte
 
 ### Checklist
 - [ ] New `MaterialGroupButton.ui` component with ItemIcon and optional tooltip
-- [ ] Horizontal group bar rendered above the set filter sidebar in BlueprintBenchPage.ui
+- [ ] Horizontal group bar rendered above the set filter sidebar in BlueprintBookPage.ui
 - [ ] "All" group button at position 0
 - [ ] Each group button shows a representative item icon via ItemIcon
 - [ ] Clicking a group button toggles it (multi-select)

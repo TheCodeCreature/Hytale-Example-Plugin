@@ -7,8 +7,8 @@ import com.hypixel.hytale.codec.codecs.array.ArrayCodec;
 
 import java.util.*;
 
-public class BlueprintBenchPrefs {
-    public static final BuilderCodec<BlueprintBenchPrefs> CODEC = BuilderCodec.builder(BlueprintBenchPrefs.class, BlueprintBenchPrefs::new)
+public class BlueprintBookPrefs {
+    public static final BuilderCodec<BlueprintBookPrefs> CODEC = BuilderCodec.builder(BlueprintBookPrefs.class, BlueprintBookPrefs::new)
             .append(new KeyedCodec<>("ActiveTab", Codec.STRING, true), (p, v) -> p.activeTab = v, p -> p.activeTab).add()
             .append(new KeyedCodec<>("ActiveSetFilters", new ArrayCodec<>(Codec.STRING, String[]::new), true),
                     (p, v) -> p.activeSetFilters = Arrays.asList(v), p -> p.activeSetFilters.toArray(new String[0])).add()

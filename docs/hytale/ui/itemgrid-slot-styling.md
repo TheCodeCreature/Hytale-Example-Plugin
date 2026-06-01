@@ -241,7 +241,7 @@ ItemGrid #ItemMaterialSlot {
 }
 ```
 
-### BlueprintBenchPage.ui — No SlotBackground (plain grid)
+### BlueprintBookPage.ui — No SlotBackground (plain grid)
 
 The plugin's blueprint bench page uses grids **without** `SlotBackground` and with `RenderItemQualityBackground: false`:
 

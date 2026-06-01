@@ -277,9 +277,9 @@ src/main/java/com/UnobstructedThirdPerson/placeblock/
 ├── PlaceBlockBenchInterceptor.java    # UNCHANGED (already disabled)
 ├── PlaceBlockMenuInteraction.java     # UNCHANGED
 ├── PlaceBlockConfigLoader.java        # UNCHANGED
-├── BlueprintBenchRecipeMutator.java   # UNCHANGED
+├── BlueprintBookRecipeMutator.java   # UNCHANGED
 └── ui/
-    └── BlueprintBenchOpenUIInteraction.java  # UNCHANGED
+    └── BlueprintBookOpenUIInteraction.java  # UNCHANGED
 ```
 
 ## 12. Files to Create, Modify, and Delete

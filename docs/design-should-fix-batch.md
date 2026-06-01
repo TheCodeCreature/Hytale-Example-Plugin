@@ -17,7 +17,7 @@ Seven low-to-medium risk fixes addressing logging consistency, race conditions, 
 
 Rationale:
 - Currently package-private in `com.CodeCreature.scaling`
-- Needed by `com.CodeCreature.crafting.BlueprintBenchRecipeMutator` (Fix #3) and `com.CodeCreature.registry.RecipeFilterRegistry` (Fix #4)
+- Needed by `com.CodeCreature.crafting.BlueprintBookRecipeMutator` (Fix #3) and `com.CodeCreature.registry.RecipeFilterRegistry` (Fix #4)
 - Creating a second accessor class would duplicate the resolution pattern
 - Moving the class to a `util` package is a larger refactor than warranted
 - Making it public with a clear Javadoc contract ("internal plugin class, not API") is the simplest path
@@ -25,10 +25,10 @@ Rationale:
 **New fields to add:**
 | Field | Class | Name | Consumer |
 |-------|-------|------|----------|
-| `recipeId` | `CraftingRecipe` | `"id"` | BlueprintBenchRecipeMutator |
-| `recipeBenchRequirement` | `CraftingRecipe` | `"benchRequirement"` | BlueprintBenchRecipeMutator |
-| `recipeKnowledgeRequired` | `CraftingRecipe` | `"knowledgeRequired"` | BlueprintBenchRecipeMutator |
-| `recipeMemoriesLevel` | `CraftingRecipe` | `"requiredMemoriesLevel"` | BlueprintBenchRecipeMutator |
+| `recipeId` | `CraftingRecipe` | `"id"` | BlueprintBookRecipeMutator |
+| `recipeBenchRequirement` | `CraftingRecipe` | `"benchRequirement"` | BlueprintBookRecipeMutator |
+| `recipeKnowledgeRequired` | `CraftingRecipe` | `"knowledgeRequired"` | BlueprintBookRecipeMutator |
+| `recipeMemoriesLevel` | `CraftingRecipe` | `"requiredMemoriesLevel"` | BlueprintBookRecipeMutator |
 | `itemSet` | `Item` | `"set"` | ResourceTypeResolver, RecipeFilterRegistry |
 
 ---
@@ -52,7 +52,7 @@ Rationale:
 | `registry/RecipeFilterRegistry.java` | Add `private static final Logger LOGGER = Logger.getLogger("RecipeFilterRegistry");` <br> Change `log()` body → `LOGGER.info(msg);` |
 | `registry/BenchRecipeRegistry.java` | Add `private static final Logger LOGGER = Logger.getLogger("BenchRecipeRegistry");` <br> Change `log()` body → `LOGGER.info(msg);` |
 | `registry/BenchRecipeRegistries.java` | Add `private static final Logger LOGGER = Logger.getLogger("BenchRecipeRegistries");` <br> Change `log()` body → `LOGGER.info(msg);` |
-| `crafting/BlueprintBenchRecipeMutator.java` | Add `private static final Logger LOGGER = Logger.getLogger("BlueprintBenchRecipeMutator");` <br> Change `log()` body → `LOGGER.info(msg);` |
+| `crafting/BlueprintBookRecipeMutator.java` | Add `private static final Logger LOGGER = Logger.getLogger("BlueprintBookRecipeMutator");` <br> Change `log()` body → `LOGGER.info(msg);` |
 
 **Risk:** Low — behavioral change is only output destination (stdout → Logger handler). All existing log messages preserved verbatim.
 
@@ -122,16 +122,16 @@ public static boolean toggle() {
 
 ---
 
-### Fix #3: BlueprintBenchRecipeMutator Independent Reflection
+### Fix #3: BlueprintBookRecipeMutator Independent Reflection
 
-**Approach:** Add four fields to `AssetFieldAccessor` (`recipeId`, `recipeBenchRequirement`, `recipeKnowledgeRequired`, `recipeMemoriesLevel`). Remove the 5-field local resolution from `BlueprintBenchRecipeMutator.mutate()` and read from `AssetFieldAccessor.INSTANCE`. Note: `recipeInput` already exists in `AssetFieldAccessor`.
+**Approach:** Add four fields to `AssetFieldAccessor` (`recipeId`, `recipeBenchRequirement`, `recipeKnowledgeRequired`, `recipeMemoriesLevel`). Remove the 5-field local resolution from `BlueprintBookRecipeMutator.mutate()` and read from `AssetFieldAccessor.INSTANCE`. Note: `recipeInput` already exists in `AssetFieldAccessor`.
 
 **Files to modify:**
 
 | File | Change |
 |------|--------|
 | `scaling/AssetFieldAccessor.java` | Add 4 new fields under the `// CraftingRecipe` section: <br> `final Field recipeId;` → `resolve(CraftingRecipe.class, "id")` <br> `final Field recipeBenchRequirement;` → `resolve(CraftingRecipe.class, "benchRequirement")` <br> `final Field recipeKnowledgeRequired;` → `resolve(CraftingRecipe.class, "knowledgeRequired")` <br> `final Field recipeMemoriesLevel;` → `resolve(CraftingRecipe.class, "requiredMemoriesLevel")` |
-| `crafting/BlueprintBenchRecipeMutator.java` | Remove local field resolution in `mutate()` (lines 38-50). Replace with: <br> `AssetFieldAccessor f = AssetFieldAccessor.INSTANCE;` <br> Use `f.recipeId`, `f.recipeInput`, `f.recipeBenchRequirement`, `f.recipeKnowledgeRequired`, `f.recipeMemoriesLevel` at each `.set()` call. <br> Remove the early-return error path (fail-fast now happens at startup). Add import for `AssetFieldAccessor`. |
+| `crafting/BlueprintBookRecipeMutator.java` | Remove local field resolution in `mutate()` (lines 38-50). Replace with: <br> `AssetFieldAccessor f = AssetFieldAccessor.INSTANCE;` <br> Use `f.recipeId`, `f.recipeInput`, `f.recipeBenchRequirement`, `f.recipeKnowledgeRequired`, `f.recipeMemoriesLevel` at each `.set()` call. <br> Remove the early-return error path (fail-fast now happens at startup). Add import for `AssetFieldAccessor`. |
 
 **Risk:** Medium — same initialization-order consideration as Fix #4. The mutator runs after `DropScaler.apply()` which already uses `AssetFieldAccessor`, so the instance is guaranteed to exist.
 
@@ -228,7 +228,7 @@ Wave 1 (independent — can be done in parallel):
 
 Wave 2 (depends on each other, do together):
   • Fix #4 (Item.set consolidation) — makes AssetFieldAccessor public, adds INSTANCE + itemSet
-  • Fix #3 (BlueprintBenchRecipeMutator consolidation) — adds 4 more fields, consumes INSTANCE
+  • Fix #3 (BlueprintBookRecipeMutator consolidation) — adds 4 more fields, consumes INSTANCE
 ```
 
 Recommended: Do Fix #4 and Fix #3 as a single commit since they both modify `AssetFieldAccessor`.

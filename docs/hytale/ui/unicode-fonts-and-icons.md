@@ -167,8 +167,8 @@ Group #CategoriesHeaderRow {
 ```java
 // Toggle icon
 cmd.set("#CategoriesArrow.Background", 
-    collapsed ? "Pages/BlueprintBench/ArrowRight.png" 
-              : "Pages/BlueprintBench/ArrowDown.png");
+    collapsed ? "Pages/BlueprintBook/ArrowRight.png" 
+              : "Pages/BlueprintBook/ArrowDown.png");
 
 // Toggle body visibility
 cmd.set("#CategoriesBody.Visible", !collapsed);
@@ -206,13 +206,13 @@ Create two 16×16 (or 12×12) transparent `.png` files:
 
 Place them at:
 ```
-src/main/resources/Common/UI/Custom/Pages/BlueprintBench/ArrowDown.png
-src/main/resources/Common/UI/Custom/Pages/BlueprintBench/ArrowRight.png
+src/main/resources/Common/UI/Custom/Pages/BlueprintBook/ArrowDown.png
+src/main/resources/Common/UI/Custom/Pages/BlueprintBook/ArrowRight.png
 ```
 
 Reference in `.ui` files as `"ArrowDown.png"` (same directory, relative path).
 
-Reference from Java `cmd.set()` as `"Pages/BlueprintBench/ArrowDown.png"` (relative to `Common/UI/Custom/`).
+Reference from Java `cmd.set()` as `"Pages/BlueprintBook/ArrowDown.png"` (relative to `Common/UI/Custom/`).
 
 ---
 

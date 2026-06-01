@@ -49,7 +49,7 @@ com/
     │   ├── PlaceBlockCostUtil.java        ── per-unit placement cost: input / outputQty
     │   ├── RecipeAffordabilityResolver.java ── full resolution chain: cost → resolve → check
     │   ├── ResolvedIngredient.java        ── immutable record: resolved ingredient status
-    │   ├── BlueprintBenchRecipeMutator.java ── creates shadow Blueprint_ recipes at load
+    │   ├── BlueprintBookRecipeMutator.java ── creates shadow Blueprint_ recipes at load
     │   ├── ResourceScanner.java           ── (stub) scan inventory + nearby chests
     │   └── ResourceSnapshot.java          ── immutable record: item counts + sources
     │
@@ -63,9 +63,9 @@ com/
     ├── ui/                               ── LAYER 4: All user-facing UI
     │   ├── bench/                         ── Blueprint Bench UI
     │   │   ├── BlueprintSelectionPage.java    ── main bench UI: grid, filters, detail, tree
-    │   │   ├── BlueprintBenchOpenUIInteraction.java ── interaction: opens bench page
-    │   │   ├── BlueprintBenchPrefs.java       ── serializable bench UI preferences
-    │   │   ├── BlueprintBenchPrefsStore.java  ── file-based per-player prefs persistence
+    │   │   ├── BlueprintBookOpenUIInteraction.java ── interaction: opens bench page
+    │   │   ├── BlueprintBookPrefs.java       ── serializable bench UI preferences
+    │   │   ├── BlueprintBookPrefsStore.java  ── file-based per-player prefs persistence
     │   │   ├── AffordabilityMode.java         ── enum: ALL, INVENTORY, RESOURCE
     │   │   ├── RecipeFilterPipeline.java      ── sequential filter pipeline for display
     │   │   └── ResourceTypeRegistry.java      ── static registry: 78 resource type filters
@@ -129,7 +129,7 @@ com/
      │        │           crafting/                   │
      │        │  RecipeAffordabilityResolver          │  LAYER 2
      │        │  PlaceBlockCostUtil                   │
-     │        │  BlueprintBenchRecipeMutator          │
+     │        │  BlueprintBookRecipeMutator          │
      │        └──────────────────┬───────────────────┘
      │                           │
      │                           ▼
@@ -214,7 +214,7 @@ com/
 | 19 | `placeblock/PlaceBlockCostUtil.java` | `crafting/PlaceBlockCostUtil.java` |
 | 20 | `placeblock/RecipeAffordabilityResolver.java` | `crafting/RecipeAffordabilityResolver.java` |
 | 21 | `placeblock/ResolvedIngredient.java` | `crafting/ResolvedIngredient.java` |
-| 22 | `placeblock/BlueprintBenchRecipeMutator.java` | `crafting/BlueprintBenchRecipeMutator.java` |
+| 22 | `placeblock/BlueprintBookRecipeMutator.java` | `crafting/BlueprintBookRecipeMutator.java` |
 | 23 | `placeblock/ResourceScanner.java` | `crafting/ResourceScanner.java` |
 | 24 | `placeblock/ResourceSnapshot.java` | `crafting/ResourceSnapshot.java` |
 
@@ -231,9 +231,9 @@ com/
 | # | Old Path | New Path |
 |---|---|---|
 | 30 | `placeblock/ui/BlueprintSelectionPage.java` | `ui/bench/BlueprintSelectionPage.java` |
-| 31 | `placeblock/ui/BlueprintBenchOpenUIInteraction.java` | `ui/bench/BlueprintBenchOpenUIInteraction.java` |
-| 32 | `placeblock/ui/BlueprintBenchPrefs.java` | `ui/bench/BlueprintBenchPrefs.java` |
-| 33 | `placeblock/ui/BlueprintBenchPrefsStore.java` | `ui/bench/BlueprintBenchPrefsStore.java` |
+| 31 | `placeblock/ui/BlueprintBookOpenUIInteraction.java` | `ui/bench/BlueprintBookOpenUIInteraction.java` |
+| 32 | `placeblock/ui/BlueprintBookPrefs.java` | `ui/bench/BlueprintBookPrefs.java` |
+| 33 | `placeblock/ui/BlueprintBookPrefsStore.java` | `ui/bench/BlueprintBookPrefsStore.java` |
 | 34 | `placeblock/ui/AffordabilityMode.java` | `ui/bench/AffordabilityMode.java` |
 | 35 | `placeblock/ui/RecipeFilterPipeline.java` | `ui/bench/RecipeFilterPipeline.java` |
 | 36 | `placeblock/ui/ResourceTypeRegistry.java` | `ui/bench/ResourceTypeRegistry.java` |
@@ -293,7 +293,7 @@ Only files where the current name is genuinely confusing in context:
 - `BenchRecipeRegistries` in `registry/` — still specific enough, distinguishes from `RecipeFilterRegistry`
 - `RecipeFilterRegistry` in `registry/` — the "Filter" qualifier differentiates it from `BenchRecipeRegistry`, so it should NOT be shortened
 - `PlaceBlockCostUtil` in `crafting/` — the "PlaceBlock" prefix still adds clarity since this is per-block-placement cost, not generic recipe cost
-- `BlueprintBenchRecipeMutator` in `crafting/` — "BlueprintBench" prefix is essential; it's specifically for Blueprint_ shadow recipes
+- `BlueprintBookRecipeMutator` in `crafting/` — "BlueprintBook" prefix is essential; it's specifically for Blueprint_ shadow recipes
 
 No file needs renaming. The package context already provides the disambiguation that was missing before.
 

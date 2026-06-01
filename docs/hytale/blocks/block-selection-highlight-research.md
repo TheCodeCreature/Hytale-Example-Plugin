@@ -64,7 +64,7 @@ In your item JSON, add an `InteractionConfig` block:
 
 ### Verdict
 
-**The Blueprint Book already has interactions** (`BlueprintBook_PickStencil` as Primary, `BlueprintBench_OpenUI` as Secondary). The `DisplayOutlines` flag is inherited from `InteractionConfiguration` and defaults to `true`. **The block outline should already be showing when the player aims at a block while holding the Blueprint Book** — as long as one of its interactions is active on the client side.
+**The Blueprint Book already has interactions** (`BlueprintBook_PickStencil` as Primary, `BlueprintBook_OpenUI` as Secondary). The `DisplayOutlines` flag is inherited from `InteractionConfiguration` and defaults to `true`. **The block outline should already be showing when the player aims at a block while holding the Blueprint Book** — as long as one of its interactions is active on the client side.
 
 If the outline is NOT showing, it's because `SimpleInstantInteraction` (which `BlueprintBookPickStencilInteraction` extends) fires once and completes immediately — the client may not be running a persistent interaction to maintain the outline display.
 

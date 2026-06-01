@@ -41,7 +41,7 @@ Group {
     Group { Anchor: (Height: 1); Background: #333333; }
     Group { Anchor: (Height: 8); }
 
-    // Match BlueprintBenchPage CostGrid structure exactly:
+    // Match BlueprintBookPage CostGrid structure exactly:
     // Parent Group with Width + LayoutMode: Top, grid with FlexWeight: 1
     Group {
         Anchor: (Width: 240);

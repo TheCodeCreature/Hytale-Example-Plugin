@@ -198,14 +198,14 @@ Current config:
 ```json
 {
   "Interactions": {
-    "Use": "BlueprintBench_OpenUI",
+    "Use": "BlueprintBook_OpenUI",
     "Secondary": "BlueprintBook_PickStencil"
   }
 }
 ```
 
 This produces:
-- **E** (Use) → label derived from `BlueprintBench_OpenUI`
+- **E** (Use) → label derived from `BlueprintBook_OpenUI`
 - **Right Click** (Secondary) → label derived from `BlueprintBook_PickStencil`
 
 No `Primary` or `Ability1` mapping → no Left Click or Q tips.
@@ -220,7 +220,7 @@ To add more HUD tips, add more `InteractionType` keys with corresponding `RootIn
     "Primary": "SomeRootInteraction",
     "Secondary": "BlueprintBook_PickStencil",
     "Ability1": "SomeAbilityInteraction",
-    "Use": "BlueprintBench_OpenUI"
+    "Use": "BlueprintBook_OpenUI"
   }
 }
 ```

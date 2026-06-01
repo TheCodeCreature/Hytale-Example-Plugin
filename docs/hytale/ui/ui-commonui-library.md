@@ -7,7 +7,7 @@ sources:
   - "https://hytale-docs.com/docs/api/server-internals/ui-reference (Common.ui Components + Styles)"
   - "hytalemodding.dev/en/docs/official-documentation/custom-ui/common-styling"
   - "docs/hytale/plugins/ui-file-system.md"
-  - "src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchPage.ui"
+  - "src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui"
 ---
 
 # CommonUI Library Reference (`Common.ui`)
@@ -196,9 +196,9 @@ $C.@Container {
 }
 ```
 
-### How Our BlueprintBenchPage Uses It
+### How Our BlueprintBookPage Uses It
 
-Our [BlueprintBenchPage.ui](../../../src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchPage.ui) uses `$C.@Container` as the main wrapper, placing content inside `#Title` and `#Content`:
+Our [BlueprintBookPage.ui](../../../src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui) uses `$C.@Container` as the main wrapper, placing content inside `#Title` and `#Content`:
 
 ```
 $C.@Container {
@@ -347,7 +347,7 @@ $C.@HeaderSearch {}    // Used in Container #Title for search functionality
 | `@DefaultSliderStyle` | Slider styling |
 | `@DefaultTextTooltipStyle` | Tooltip styling |
 | `@DefaultColorPickerStyle` | Color picker styling |
-| `@TopTabsStyle` | Tab navigation styling (used by BlueprintBenchPage) |
+| `@TopTabsStyle` | Tab navigation styling (used by BlueprintBookPage) |
 
 ---
 
@@ -365,7 +365,7 @@ Custom styles can extend Common.ui styles using the spread operator:
 );
 ```
 
-This pattern is used extensively in our BlueprintBenchPage to create custom styles that inherit base properties from the engine's Common.ui.
+This pattern is used extensively in our BlueprintBookPage to create custom styles that inherit base properties from the engine's Common.ui.
 
 ---
 
@@ -408,9 +408,9 @@ Or using `PatchStyle` for 9-slice texture backgrounds:
 
 ---
 
-## Patterns from Our BlueprintBenchPage
+## Patterns from Our BlueprintBookPage
 
-Our [BlueprintBenchPage.ui](../../../src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchPage.ui) demonstrates several CommonUI patterns:
+Our [BlueprintBookPage.ui](../../../src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui) demonstrates several CommonUI patterns:
 
 ### 1. Style Inheritance
 

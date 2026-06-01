@@ -37,7 +37,7 @@ Verify and adjust the Blueprint Bench UI to properly handle dynamically discover
 | ID | Title | Status |
 |----|-------|--------|
 | S2605291070 | Verify UI Tab Rendering with N Benches | backlog |
-| S2605291075 | Validate BlueprintBenchPrefs for Dynamic Tabs | backlog |
+| S2605291075 | Validate BlueprintBookPrefs for Dynamic Tabs | backlog |
 
 ## Notes
 - `BlueprintSelectionPage.loadRecipes()` already collects bench IDs dynamically from entries. The main risk is whether the Hytale `#BenchTabs` UI component handles many tabs gracefully.

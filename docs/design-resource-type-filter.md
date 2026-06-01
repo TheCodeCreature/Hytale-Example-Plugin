@@ -11,10 +11,10 @@ The Resource Type Input Filter replaces the deprecated placeholder list section 
 | File | Change |
 |------|--------|
 | `BlueprintSelectionPage.java` | Replace `affordabilityEnabled: boolean` with `AffordabilityMode` enum; add `activeResourceTypes` set; add `buildResourceTypeBindings()`, `updateResourceTypes()`, `updateAffordabilityToggle()`; modify `applyFilter()`, `handleDataEvent()`, `savePrefs()`, `build()` |
-| `BlueprintBenchPrefs.java` | Replace `affordabilityEnabled: boolean` with `affordabilityMode: String`; add `activeResourceTypes: List<String>`; add `resourceTypesExpanded: boolean`; update CODEC |
+| `BlueprintBookPrefs.java` | Replace `affordabilityEnabled: boolean` with `affordabilityMode: String`; add `activeResourceTypes: List<String>`; add `resourceTypesExpanded: boolean`; update CODEC |
 | `RecipeFilterPipeline.java` | Add `ResourceTypeChecker` interface; add `tagResourceTypeMatch()` stage; modify `execute()` signature to accept resource type state; update `PipelineResult` if needed |
-| `BlueprintBenchPage.ui` | Replace `#InputSlotLabel`, `#NoPlaceholdersLabel`, `#PlaceholderList` section (lines 253-291) with `#ResourceTypeGrid` section |
-| `BlueprintBenchStyles.ui` | Add `@ResourceTypeGridLabelStyle` if needed (or reuse `@SectionLabelStyle`) |
+| `BlueprintBookPage.ui` | Replace `#InputSlotLabel`, `#NoPlaceholdersLabel`, `#PlaceholderList` section (lines 253-291) with `#ResourceTypeGrid` section |
+| `BlueprintBookStyles.ui` | Add `@ResourceTypeGridLabelStyle` if needed (or reuse `@SectionLabelStyle`) |
 
 ### Files Created
 
@@ -33,7 +33,7 @@ The Resource Type Input Filter replaces the deprecated placeholder list section 
 
 ## 3. UI Layout Changes
 
-Replace the placeholder section in `BlueprintBenchPage.ui` (lines 253-291) with a resource type icon grid.
+Replace the placeholder section in `BlueprintBookPage.ui` (lines 253-291) with a resource type icon grid.
 
 **Remove:**
 ```
@@ -225,7 +225,7 @@ The button text updates to show the current mode's label.
 
 ### 6.3 Prefs Migration
 
-`BlueprintBenchPrefs.affordabilityEnabled` (boolean) is replaced by `BlueprintBenchPrefs.affordabilityMode` (String). Migration:
+`BlueprintBookPrefs.affordabilityEnabled` (boolean) is replaced by `BlueprintBookPrefs.affordabilityMode` (String). Migration:
 - `true` → `"INVENTORY_DRIVEN"`
 - `false` → `"ALL"`
 
@@ -233,9 +233,9 @@ The CODEC uses `Codec.STRING` with the enum name. On load, `AffordabilityMode.va
 
 ### 6.4 Resource Type Selections Storage
 
-`BlueprintBenchPrefs.activeResourceTypes: List<String>` — persisted as a string array. On load, restored into `Set<String> activeResourceTypes` on `BlueprintSelectionPage`.
+`BlueprintBookPrefs.activeResourceTypes: List<String>` — persisted as a string array. On load, restored into `Set<String> activeResourceTypes` on `BlueprintSelectionPage`.
 
-`BlueprintBenchPrefs.resourceTypesExpanded: boolean` — persists collapse state of the resource types section header.
+`BlueprintBookPrefs.resourceTypesExpanded: boolean` — persists collapse state of the resource types section header.
 
 ## 7. Build Phase
 
@@ -246,7 +246,7 @@ Changes to `BlueprintSelectionPage.build()`:
 
 // Resource type icon buttons (one per resource type)
 for (int i = 0; i < MAX_RESOURCE_TYPE_BUTTONS; i++) {
-    cmd.append("#ResourceTypeGrid", "Pages/BlueprintBench/GroupFilterButton.ui");
+    cmd.append("#ResourceTypeGrid", "Pages/BlueprintBook/GroupFilterButton.ui");
 }
 
 // Bind resource type events
@@ -442,8 +442,8 @@ graph TB
     subgraph "Build Phase (one-time)"
         A[BlueprintSelectionPage.build] -->|append| B["#ResourceTypeGrid ← GroupFilterButton.ui × 78"]
         A -->|bind| C[buildResourceTypeBindings → evt per button]
-        A -->|read| D[BlueprintBenchPrefs.affordabilityMode]
-        A -->|read| E[BlueprintBenchPrefs.activeResourceTypes]
+        A -->|read| D[BlueprintBookPrefs.affordabilityMode]
+        A -->|read| E[BlueprintBookPrefs.activeResourceTypes]
     end
 
     subgraph "Event Phase"
@@ -487,8 +487,8 @@ graph TB
 | UI append/bind/update for resource type grid | `BlueprintSelectionPage` |
 | Recipe ↔ resource type matching logic | `BlueprintSelectionPage.recipeMatchesResourceTypes()` |
 | Pipeline stage for resource type tagging | `RecipeFilterPipeline` |
-| Persistence of mode + selections | `BlueprintBenchPrefs` + `BlueprintBenchPrefsStore` |
-| UI layout (grid container) | `BlueprintBenchPage.ui` |
+| Persistence of mode + selections | `BlueprintBookPrefs` + `BlueprintBookPrefsStore` |
+| UI layout (grid container) | `BlueprintBookPage.ui` |
 | Icon button template | `GroupFilterButton.ui` (reused) |
 
 ## 12. Skeleton Code
@@ -647,13 +647,13 @@ public PipelineResult execute(
 - **Dependencies**: none
 - **Done when**: `getCount()` returns 78. `getAll()` returns entries in alphabetical order. `getIconPath("Hardwood")` returns `"Hardwood.png"`.
 
-#### Unit: BlueprintBenchPage.ui — Layout Change
-- **Files**: `BlueprintBenchPage.ui`
+#### Unit: BlueprintBookPage.ui — Layout Change
+- **Files**: `BlueprintBookPage.ui`
 - **Contract**: Replace `#InputSlotLabel` / `#NoPlaceholdersLabel` / `#PlaceholderList` section with `#ResourceTypesHeader` / `#ClearResourceTypesBtn` / `#ResourceTypeGrid` section.
 - **Dependencies**: none
 - **Done when**: UI file parses. `#ResourceTypeGrid` container exists with `LayoutMode: LeftCenterWrap`. Old placeholder IDs are removed.
 
-#### Unit: BlueprintBenchPrefs.java — Schema Update
+#### Unit: BlueprintBookPrefs.java — Schema Update
 - **Methods**: Updated CODEC with `affordabilityMode`, `activeResourceTypes`, `resourceTypesExpanded`
 - **Contract**: Replace `affordabilityEnabled: boolean` with `affordabilityMode: String`. Add `activeResourceTypes: List<String>`. Add `resourceTypesExpanded: boolean`. CODEC must handle missing fields with defaults.
 - **Dependencies**: none
@@ -670,7 +670,7 @@ public PipelineResult execute(
 #### Unit: BlueprintSelectionPage.java — Field + Prefs Migration
 - **Methods**: Replace `affordabilityEnabled` field, update `build()` prefs loading, update `savePrefs()`
 - **Contract**: Replace `boolean affordabilityEnabled` with `AffordabilityMode affordabilityMode`. Add `Set<String> activeResourceTypes`. Add `boolean resourceTypesExpanded`. Update `build()` to read new prefs fields. Update `savePrefs()` to write new prefs fields.
-- **Dependencies**: `AffordabilityMode.java`, `BlueprintBenchPrefs.java` (Wave 1)
+- **Dependencies**: `AffordabilityMode.java`, `BlueprintBookPrefs.java` (Wave 1)
 - **Done when**: Field declared. `build()` loads `affordabilityMode` from prefs with fallback. `savePrefs()` writes mode string and resource type list.
 
 ### Wave 3 (depends on Wave 2)
@@ -690,7 +690,7 @@ public PipelineResult execute(
 ### Wave 4 (integration — depends on Wave 3)
 
 #### Unit: Integration Wiring
-- **Files**: `BlueprintSelectionPage.java` (`build()` call order), `BlueprintBenchPage.ui` (verified)
+- **Files**: `BlueprintSelectionPage.java` (`build()` call order), `BlueprintBookPage.ui` (verified)
 - **Contract**: Wire all new components into the existing build/update lifecycle. Ensure `updateResourceTypes()` is called in the correct update sequence alongside `updateMaterialGroups()`, `updateSetFilters()`, `updateRecipeGrid()`.
 - **Dependencies**: All Wave 3 units
 - **Done when**: Full build passes. Opening bench shows resource type grid with icons. Cycling affordability mode updates button text. Selecting resource types in Resource Driven mode filters recipes. Prefs persist across bench open/close.

@@ -28,7 +28,7 @@ com/
     ├── command/                         # Chat commands (/placeblock, /bookParticle)
     │   └── placeblock/subcommands/     # Stencil test command
     ├── crafting/                        # Recipe resolution and affordability
-    │   ├── BlueprintBenchRecipeMutator  # Creates shadow "Blueprint_*" recipes at load time
+    │   ├── BlueprintBookRecipeMutator  # Creates shadow "Blueprint_*" recipes at load time
     │   ├── PlaceBlockCostUtil           # Per-unit cost calculation (inputQty / outputQty)
     │   ├── RecipeAffordabilityResolver  # Full resolution chain: cost → resolve → check
     │   ├── ResolvedIngredient           # Immutable result record
@@ -61,12 +61,12 @@ com/
     │   └── StencilVisualManager         # Packet-based affordability glow on stencils
     ├── ui/                               # UI pages and controllers
     │   ├── bench/                        # Blueprint Bench crafting UI
-    │   │   ├── BlueprintBenchOpenUIInteraction
+    │   │   ├── BlueprintBookOpenUIInteraction
     │   │   ├── BlueprintSelectionPage   # Main bench page (grid, filters, ingredient tree)
     │   │   ├── RecipeFilterPipeline     # Pure-function pipeline (tab→search→tag→sort)
     │   │   ├── ResourceTypeRegistry     # Static resource type filter data
-    │   │   ├── BlueprintBenchPrefs      # Serializable per-player preferences
-    │   │   ├── BlueprintBenchPrefsStore # File I/O for prefs
+    │   │   ├── BlueprintBookPrefs      # Serializable per-player preferences
+    │   │   ├── BlueprintBookPrefsStore # File I/O for prefs
     │   │   └── AffordabilityMode        # Enum: ALL, INVENTORY_DRIVEN, RESOURCE_DRIVEN
     │   ├── blueprintbook/               # Blueprint Book interactions
     │   │   ├── BlueprintBookParticleLoop# Scheduled entity highlight on aimed blocks
@@ -97,7 +97,7 @@ Plugin.setup()
   ├── Register LoadAssetEvent handler
   ├── Register ECS systems (PlacementCostScaler, StencilPlacementSystem, etc.)
   ├── Initialize prefs store
-  └── Register codec interactions (BlueprintBench, BlueprintBook)
+  └── Register codec interactions (BlueprintBook, BlueprintBook)
 
 LoadAssetEvent triggers:
   ├── DropScaler.apply()
@@ -110,7 +110,7 @@ LoadAssetEvent triggers:
   │   ├── Phase 3b: Natural block processing
   │   ├── Phase 4: Register synthetic ItemDropLists
   │   └── Phase 5: Scale stack sizes
-  └── BlueprintBenchRecipeMutator.mutate()
+  └── BlueprintBookRecipeMutator.mutate()
       └── Creates shadow "Blueprint_*" recipes for every placeable output
 ```
 
@@ -142,7 +142,7 @@ graph TB
         P3B[Phase 3b: Natural Blocks]:::orange
         P4[Phase 4: Synthetic Drop Lists]:::green
         P5[Phase 5: Stack Sizes]:::green
-        BBRM[BlueprintBenchRecipeMutator]:::green
+        BBRM[BlueprintBookRecipeMutator]:::green
     end
 
     subgraph "Reflection Layer"
@@ -212,7 +212,7 @@ Stencils intercept `PlaceBlockEvent`, consume recipe ingredients from inventory,
 graph TB
     subgraph "Asset Loading - one-time"
         DS[DropScaler.apply]:::green
-        BBRM[BlueprintBenchRecipeMutator.mutate]:::green
+        BBRM[BlueprintBookRecipeMutator.mutate]:::green
     end
 
     subgraph "Runtime Event Handlers"

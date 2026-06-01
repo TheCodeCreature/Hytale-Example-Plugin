@@ -23,12 +23,12 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
  *
  * <p>Must run during {@code LoadAssetEvent}, after {@code DropScaler.apply()}.
  */
-public final class BlueprintBenchRecipeMutator {
+public final class BlueprintBookRecipeMutator {
 
     private static final String BLUEPRINT_ID = "Blueprint";
     private static final Map<String, String> SHADOW_TO_ORIGINAL = new HashMap<>();
 
-    private BlueprintBenchRecipeMutator() {}
+    private BlueprintBookRecipeMutator() {}
 
     public static String getOriginalRecipeId(String shadowRecipeId) {
         return SHADOW_TO_ORIGINAL.get(shadowRecipeId);
@@ -85,14 +85,14 @@ public final class BlueprintBenchRecipeMutator {
                 shadowRecipes.add(shadow);
                 SHADOW_TO_ORIGINAL.put(shadowId, originalId);
             } catch (Exception e) {
-                DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBenchMutator] ERROR creating shadow for recipe " + recipe.getId() + ": " + e.getMessage());
+                DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBookMutator] ERROR creating shadow for recipe " + recipe.getId() + ": " + e.getMessage());
             }
         }
 
         if (!shadowRecipes.isEmpty()) {
             try {
                 CraftingRecipe.getAssetStore().loadAssets("Hytale:Hytale", shadowRecipes);
-                DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBenchMutator] Registered " + shadowRecipes.size() + " shadow Blueprint recipes.");
+                DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBookMutator] Registered " + shadowRecipes.size() + " shadow Blueprint recipes.");
 
                 // Diagnostic: verify shadow recipes are in the asset map
                 int found = 0, missing = 0;
@@ -102,10 +102,10 @@ public final class BlueprintBenchRecipeMutator {
                         found++;
                     } else {
                         missing++;
-                        DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBenchMutator] MISSING from asset map: " + shadow.getId());
+                        DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBookMutator] MISSING from asset map: " + shadow.getId());
                     }
                 }
-                DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBenchMutator] Asset map verification: " + found + " found, " + missing + " missing.");
+                DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBookMutator] Asset map verification: " + found + " found, " + missing + " missing.");
 
                 // Also log a sample shadow recipe's details for debugging
                 if (!shadowRecipes.isEmpty()) {
@@ -113,17 +113,17 @@ public final class BlueprintBenchRecipeMutator {
                     MaterialQuantity[] sampleInput = sample.getInput();
                     MaterialQuantity sampleOutput = sample.getPrimaryOutput();
                     BenchRequirement[] sampleReqs = sample.getBenchRequirement();
-                    DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBenchMutator] Sample shadow: id=" + sample.getId()
+                    DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBookMutator] Sample shadow: id=" + sample.getId()
                             + " input=" + (sampleInput != null ? sampleInput.length + " entries, rtId=" + (sampleInput.length > 0 ? sampleInput[0].getResourceTypeId() : "none") : "null")
                             + " output=" + (sampleOutput != null ? sampleOutput.getItemId() : "null")
                             + " benchReq=" + (sampleReqs != null ? sampleReqs.length + " entries, id=" + (sampleReqs.length > 0 ? sampleReqs[0].id : "none") : "null"));
                 }
             } catch (Exception e) {
-                DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBenchMutator] ERROR registering shadow recipes: " + e.getMessage());
+                DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBookMutator] ERROR registering shadow recipes: " + e.getMessage());
                 e.printStackTrace();
             }
         } else {
-            DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBenchMutator] WARNING: No shadow recipes created.");
+            DebugLogger.log(CRAFTING, Level.INFO, "[BlueprintBookMutator] WARNING: No shadow recipes created.");
         }
     }
 

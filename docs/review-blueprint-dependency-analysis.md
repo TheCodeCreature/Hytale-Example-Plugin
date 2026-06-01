@@ -28,7 +28,7 @@ graph TB
         end
 
         subgraph PLACEBLOCK["PlaceBlock Package"]
-            PB1["BlueprintBenchRecipeMutator"]
+            PB1["BlueprintBookRecipeMutator"]
             PB2["PlaceBlockCostUtil"]
             PB3["RecipeAffordabilityResolver"]
             PB4["ResolvedIngredient"]
@@ -38,9 +38,9 @@ graph TB
 
         subgraph PLACEBLOCK_UI["PlaceBlock UI"]
             UI1["BlueprintSelectionPage"]
-            UI2["BlueprintBenchOpenUIInteraction"]
-            UI3["BlueprintBenchPrefs"]
-            UI4["BlueprintBenchPrefsStore"]
+            UI2["BlueprintBookOpenUIInteraction"]
+            UI3["BlueprintBookPrefs"]
+            UI4["BlueprintBookPrefsStore"]
             UI5["AffordabilityMode"]
             UI6["RecipeFilterPipeline"]
             UI7["ResourceTypeRegistry"]
@@ -174,7 +174,7 @@ graph TB
 
 | # | File | Key Dependencies (internal) | Reason |
 |---|------|---------------------------|--------|
-| 11 | `placeblock/BlueprintBenchRecipeMutator.java` | _(Hytale API only)_ | Creates shadow Blueprint_ recipes at asset load time |
+| 11 | `placeblock/BlueprintBookRecipeMutator.java` | _(Hytale API only)_ | Creates shadow Blueprint_ recipes at asset load time |
 | 12 | `placeblock/PlaceBlockCostUtil.java` | _(Hytale API only)_ | Per-unit placement cost computation (recipe input / output qty) |
 | 13 | `placeblock/RecipeAffordabilityResolver.java` | `PlaceBlockCostUtil`, `BenchCategory`, `NaturalResourceRegistry`, `ResourceTypeResolver` | Full ingredient resolution chain + inventory affordability check |
 | 14 | `placeblock/ResolvedIngredient.java` | _(none — data record)_ | Immutable result of ingredient resolution |
@@ -186,9 +186,9 @@ graph TB
 | # | File | Key Dependencies (internal) | Reason |
 |---|------|---------------------------|--------|
 | 17 | `placeblock/ui/BlueprintSelectionPage.java` | `PlaceBlockCostUtil`, `RecipeAffordabilityResolver`, `ResolvedIngredient`, `StencilMetadata`, `BenchCategory`, `FilteredRecipeEntry`, `RecipeFilterRegistry`, `IngredientTree*`, `RecipeFilterPipeline` | Main Blueprint Bench UI page — recipe grid, filters, detail panel |
-| 18 | `placeblock/ui/BlueprintBenchOpenUIInteraction.java` | `BlueprintSelectionPage` | Interaction type that opens the Blueprint Bench custom page |
-| 19 | `placeblock/ui/BlueprintBenchPrefs.java` | `AffordabilityMode` | Serializable preferences for bench UI state |
-| 20 | `placeblock/ui/BlueprintBenchPrefsStore.java` | `BlueprintBenchPrefs` | File-based persistence for per-player bench preferences |
+| 18 | `placeblock/ui/BlueprintBookOpenUIInteraction.java` | `BlueprintSelectionPage` | Interaction type that opens the Blueprint Bench custom page |
+| 19 | `placeblock/ui/BlueprintBookPrefs.java` | `AffordabilityMode` | Serializable preferences for bench UI state |
+| 20 | `placeblock/ui/BlueprintBookPrefsStore.java` | `BlueprintBookPrefs` | File-based persistence for per-player bench preferences |
 | 21 | `placeblock/ui/AffordabilityMode.java` | _(none — enum)_ | Three-state affordability filter mode |
 | 22 | `placeblock/ui/RecipeFilterPipeline.java` | _(Hytale API only)_ | Sequential filter pipeline for recipe display |
 | 23 | `placeblock/ui/ResourceTypeRegistry.java` | _(none — static data)_ | Static registry of resource type filter entries with icons |

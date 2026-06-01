@@ -47,7 +47,7 @@ classDiagram
         -pruneIncompatibleSetFilters() void
     }
 
-    class BlueprintBenchPrefs {
+    class BlueprintBookPrefs {
         +List~String~ activeMaterialGroups
     }
 
@@ -55,7 +55,7 @@ classDiagram
     RecipeFilterPipeline --> PipelineResult : returns
     PipelineResult *-- MaterialGroup : contains
     BlueprintSelectionPage --> RecipeFilterPipeline : delegates to
-    BlueprintSelectionPage --> BlueprintBenchPrefs : persists via
+    BlueprintSelectionPage --> BlueprintBookPrefs : persists via
 ```
 
 ## 4. Responsibility Map
@@ -199,7 +199,7 @@ Group { Anchor: (Width: 164); LayoutMode: TopScrolling; ...
 
 ### 7.2 MaterialGroupButton.ui Component
 
-New file: `src/main/resources/Common/UI/Custom/Pages/BlueprintBench/MaterialGroupButton.ui`
+New file: `src/main/resources/Common/UI/Custom/Pages/BlueprintBook/MaterialGroupButton.ui`
 
 Each button is 30×30px. At 164px sidebar width with 2px left/right padding = 160px usable → 5 buttons per row (30px each + 2px implicit wrap spacing). 15 buttons = 3 rows ≈ 96px tall.
 
@@ -282,7 +282,7 @@ Add to initialization sequence (after existing `for` loops that append SetFilter
 ```java
 // Material group buttons: 1 "All" + MAX_GROUP_BUTTONS indexed buttons
 for (int i = 0; i < 1 + MAX_GROUP_BUTTONS; i++) {
-    cmd.append("#MaterialGroups", "Pages/BlueprintBench/MaterialGroupButton.ui");
+    cmd.append("#MaterialGroups", "Pages/BlueprintBook/MaterialGroupButton.ui");
 }
 ```
 
@@ -313,13 +313,13 @@ for (int i = 0; i < 1 + MAX_GROUP_BUTTONS; i++) {
 
 ## 9. Prefs Changes
 
-### 9.1 BlueprintBenchPrefs — New Field
+### 9.1 BlueprintBookPrefs — New Field
 
 ```java
 List<String> activeMaterialGroups = new ArrayList<>();
 ```
 
-### 9.2 BlueprintBenchPrefs — Updated CODEC
+### 9.2 BlueprintBookPrefs — Updated CODEC
 
 Add a new codec entry:
 
@@ -349,11 +349,11 @@ src/main/
 ├── java/com/UnobstructedThirdPerson/placeblock/ui/
 │   ├── RecipeFilterPipeline.java          ← MODIFIED: new record, methods, updated execute()
 │   ├── BlueprintSelectionPage.java        ← MODIFIED: new state, events, update methods
-│   ├── BlueprintBenchPrefs.java           ← MODIFIED: new field + codec entry
-│   └── BlueprintBenchPrefsStore.java      ← UNCHANGED
+│   ├── BlueprintBookPrefs.java           ← MODIFIED: new field + codec entry
+│   └── BlueprintBookPrefsStore.java      ← UNCHANGED
 │
-└── resources/Common/UI/Custom/Pages/BlueprintBench/
-    ├── BlueprintBenchPage.ui              ← MODIFIED: add #MaterialGroups container
+└── resources/Common/UI/Custom/Pages/BlueprintBook/
+    ├── BlueprintBookPage.ui              ← MODIFIED: add #MaterialGroups container
     ├── MaterialGroupButton.ui             ← NEW: icon button component
     ├── SetFilterButton.ui                 ← UNCHANGED
     └── RecipeIconCell.ui                  ← UNCHANGED
@@ -390,14 +390,14 @@ src/main/
 | Update `onDismiss()` | Clear group button visibility |
 | Update all flows that call `updateSetFilters` | Also call `updateMaterialGroups` |
 
-### BlueprintBenchPrefs.java
+### BlueprintBookPrefs.java
 
 | Change | Description |
 |--------|-------------|
 | Add `activeMaterialGroups` field | `List<String>`, default empty |
 | Update CODEC | Add `"ActiveMaterialGroups"` string array codec entry |
 
-### BlueprintBenchPage.ui
+### BlueprintBookPage.ui
 
 | Change | Description |
 |--------|-------------|
@@ -560,7 +560,7 @@ private void pruneIncompatibleSetFilters() {
 - [x] Pipeline execute() signature change documented
 - [x] PipelineResult record change documented
 - [x] Prefs CODEC change documented
-- [x] BlueprintBenchPage.ui insertion point documented
+- [x] BlueprintBookPage.ui insertion point documented
 - [x] Open Questions section populated (5 items)
 - [x] Event payload format documented (`"GroupFilter:All"`, `"GroupFilter:idx:N"`)
 - [x] Pruning logic for set filter compatibility documented

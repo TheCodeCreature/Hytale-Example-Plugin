@@ -42,7 +42,7 @@ public class IngredientTreeGridController {
 
         for (IngredientGroup group : tree.getGroups()) {
             // Append group header
-            cmd.append("#IngredientTreeContainer", "Pages/BlueprintBench/IngredientGroupHeader.ui");
+            cmd.append("#IngredientTreeContainer", "Pages/BlueprintBook/IngredientGroupHeader.ui");
             elements.add(new ElementInfo(group.getId(), NodeType.META_GROUP, ElementKind.HEADER, containerIdx, -1));
 
             String headerSel = "#IngredientTreeContainer[" + containerIdx + "]";
@@ -55,7 +55,7 @@ public class IngredientTreeGridController {
             containerIdx++;
 
             // Append wrap grid container for this group's leaf buttons
-            cmd.append("#IngredientTreeContainer", "Pages/BlueprintBench/IngredientButtonGrid.ui");
+            cmd.append("#IngredientTreeContainer", "Pages/BlueprintBook/IngredientButtonGrid.ui");
             int gridContainerIdx = containerIdx;
             elements.add(new ElementInfo(group.getId(), NodeType.META_GROUP, ElementKind.GRID_CONTAINER, containerIdx, -1));
             containerIdx++;
@@ -66,8 +66,8 @@ public class IngredientTreeGridController {
             for (IngredientResourceType rt : group.getChildren()) {
                 boolean isDirectItem = rt.getIconPath() == null;
                 String template = isDirectItem
-                        ? "Pages/BlueprintBench/ExactItemFilterButton.ui"
-                        : "Pages/BlueprintBench/GroupFilterButton.ui";
+                        ? "Pages/BlueprintBook/ExactItemFilterButton.ui"
+                        : "Pages/BlueprintBook/GroupFilterButton.ui";
                 ElementKind kind = isDirectItem ? ElementKind.ITEM_BUTTON : ElementKind.LEAF_BUTTON;
 
                 cmd.append(gridSel, template);

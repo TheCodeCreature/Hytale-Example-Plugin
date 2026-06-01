@@ -8,7 +8,7 @@ The arm/disarm flow is **structurally correct** — `PlaceBlockMetadata.arm()`/`
 
 ```mermaid
 graph TB
-    subgraph UI["BlueprintBenchPage.ui"]
+    subgraph UI["BlueprintBookPage.ui"]
         RecipeGrid["#RecipeGrid\nItemGrid"]
         PlaceholderList["#PlaceholderList\nDynamic rows"]
         RowInputSlot["#RowInputSlot\nItemGrid per row"]
@@ -80,7 +80,7 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant UI as BlueprintBenchPage.ui
+    participant UI as BlueprintBookPage.ui
     participant BSP as BlueprintSelectionPage
     participant PBM as PlaceBlockMetadata
     participant BPRM as BlockPreviewReskinManager

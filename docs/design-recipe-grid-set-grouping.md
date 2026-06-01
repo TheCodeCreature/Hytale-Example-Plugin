@@ -115,8 +115,8 @@ sequenceDiagram
 ## 6. Package Structure
 
 ```
-src/main/resources/Common/UI/Custom/Pages/BlueprintBench/
-├── BlueprintBenchPage.ui          ← MODIFIED: #RecipeGrid → #RecipeGridArea (Top layout)
+src/main/resources/Common/UI/Custom/Pages/BlueprintBook/
+├── BlueprintBookPage.ui          ← MODIFIED: #RecipeGrid → #RecipeGridArea (Top layout)
 ├── RecipeIconCell.ui              ← UNCHANGED
 ├── SetGroupContainer.ui           ← NEW: per-set group with label + wrapping cell grid
 ├── SetFilterButton.ui             ← UNCHANGED
@@ -130,7 +130,7 @@ src/main/java/com/UnobstructedThirdPerson/placeblock/ui/
 
 ## 7. Integration Changes Required
 
-### 7.1 BlueprintBenchPage.ui (lines 193–207)
+### 7.1 BlueprintBookPage.ui (lines 193–207)
 
 **Current** — flat wrapping grid:
 ```ui
@@ -190,7 +190,7 @@ private final int[] cellSlotToRecipeIndex = new int[MAX_RECIPE_CELLS];
 ```java
 // Recipe icon cells
 for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
-    cmd.append("#RecipeGrid", "Pages/BlueprintBench/RecipeIconCell.ui");
+    cmd.append("#RecipeGrid", "Pages/BlueprintBook/RecipeIconCell.ui");
 }
 ```
 
@@ -198,11 +198,11 @@ for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
 ```java
 // Per-set group containers (each contains a label + wrapping cell grid)
 for (int g = 0; g < MAX_SET_GROUPS; g++) {
-    cmd.append("#RecipeGridArea", "Pages/BlueprintBench/SetGroupContainer.ui");
+    cmd.append("#RecipeGridArea", "Pages/BlueprintBook/SetGroupContainer.ui");
     // Append recipe cells into each group's #GroupCells container
     for (int c = 0; c < CELLS_PER_GROUP; c++) {
         cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
-                   "Pages/BlueprintBench/RecipeIconCell.ui");
+                   "Pages/BlueprintBook/RecipeIconCell.ui");
     }
 }
 ```
@@ -438,13 +438,13 @@ Group {
 ### Wave 1 (no dependencies — can run in parallel)
 
 #### Unit: SetGroupContainer.ui
-- **File**: `src/main/resources/Common/UI/Custom/Pages/BlueprintBench/SetGroupContainer.ui`
+- **File**: `src/main/resources/Common/UI/Custom/Pages/BlueprintBook/SetGroupContainer.ui`
 - **Contract**: Static UI template defining a per-set group container with a label and a wrapping cell grid
 - **Dependencies**: none
 - **Done when**: File exists, renders correctly when appended by the engine
 
-#### Unit: BlueprintBenchPage.ui layout change
-- **File**: `src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchPage.ui`
+#### Unit: BlueprintBookPage.ui layout change
+- **File**: `src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui`
 - **Changes**: Rename `#RecipeGrid` → `#RecipeGridArea`, change `LayoutMode` from `LeftCenterWrap` to `Top`
 - **Dependencies**: none
 - **Done when**: The `#RecipeGridArea` container exists with `LayoutMode: Top`

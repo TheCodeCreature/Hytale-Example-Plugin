@@ -204,7 +204,7 @@ For `resourceTypeId`-based input: uses `testRemoveResourceFromSlot()` which chec
 
 Shadow recipes ARE synced to the client:
 
-1. `BlueprintBenchRecipeMutator.mutate()` calls `CraftingRecipe.getAssetStore().loadAssets()`
+1. `BlueprintBookRecipeMutator.mutate()` calls `CraftingRecipe.getAssetStore().loadAssets()`
 2. Inside `AssetStore.loadAssets0()`, it calls `handleRemoveOrUpdate()`
 3. `HytaleAssetStore.handleRemoveOrUpdate()`:
    - **Invalidates `cachedInitPackets`** (`this.cachedInitPackets = null`)

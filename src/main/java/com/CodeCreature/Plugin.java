@@ -4,9 +4,9 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.CodeCreature.command.ParticleCommand;
 import com.CodeCreature.command.debug.DebugCommand;
 import com.CodeCreature.command.placeblock.PlaceBlockCommand;
-import com.CodeCreature.crafting.BlueprintBenchRecipeMutator;
-import com.CodeCreature.ui.bench.BlueprintBenchOpenUIInteraction;
-import com.CodeCreature.ui.bench.BlueprintBenchPrefsStore;
+import com.CodeCreature.crafting.BlueprintBookRecipeMutator;
+import com.CodeCreature.ui.bench.BlueprintBookOpenUIInteraction;
+import com.CodeCreature.ui.bench.BlueprintBookPrefsStore;
 import com.CodeCreature.util.DebugLogger;
 import com.CodeCreature.util.FeatureFlags;
 import com.CodeCreature.scaling.BreakBlockDiagnostic;
@@ -68,13 +68,13 @@ public class Plugin extends JavaPlugin {
         // Diagnostic: log block drop config on break (toggle via /Debug BreakLog)
         this.getEntityStoreRegistry().registerSystem(new BreakBlockDiagnostic());
 
-        BlueprintBenchPrefsStore.initialize(this.getDataDirectory());
+        BlueprintBookPrefsStore.initialize(this.getDataDirectory());
         FeatureFlags.initialize(this.getDataDirectory());
         com.CodeCreature.registry.BenchRegistry.initialize(this.getDataDirectory());
 
         // Register Blueprint Bench interaction type (opens custom UI page)
         this.getCodecRegistry(Interaction.CODEC)
-                .register("BlueprintBench_OpenUI", BlueprintBenchOpenUIInteraction.class, BlueprintBenchOpenUIInteraction.CODEC);
+                .register("BlueprintBook_OpenUI", BlueprintBookOpenUIInteraction.class, BlueprintBookOpenUIInteraction.CODEC);
 
         // Register Blueprint Book pick-stencil interaction type
         this.getCodecRegistry(Interaction.CODEC)
@@ -134,6 +134,6 @@ public class Plugin extends JavaPlugin {
 
     private static void onAssetsLoaded(LoadAssetEvent event) {
         DropScaler.apply();
-        BlueprintBenchRecipeMutator.mutate();
+        BlueprintBookRecipeMutator.mutate();
     }
 }

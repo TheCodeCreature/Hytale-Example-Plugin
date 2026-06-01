@@ -1,5 +1,5 @@
 // Item-icon filter toggle — follows @FilterToggleButton convention with ItemIcon
-// cmd.append() path unchanged: Pages/BlueprintBench/ExactItemFilterButton.ui
+// cmd.append() path unchanged: Pages/BlueprintBook/ExactItemFilterButton.ui
 // Cannot compose @FilterToggleButton directly because icon element is ItemIcon, not Group
 
 $BG = "../../Styles/Backgrounds.ui";

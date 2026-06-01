@@ -2,7 +2,7 @@
 
 > **Date:** 2026-04-29  
 > **Scope:** Staged changes for Load-Update Separation pattern  
-> **Files reviewed:** `BlueprintSelectionPage.java`, `BlueprintBenchPage.ui`, `SetFilterButton.ui`, `CostCell.ui`, `PlaceholderRow.ui`, `ItemGridTestPage.java`, `design-load-update-separation.md`
+> **Files reviewed:** `BlueprintSelectionPage.java`, `BlueprintBookPage.ui`, `SetFilterButton.ui`, `CostCell.ui`, `PlaceholderRow.ui`, `ItemGridTestPage.java`, `design-load-update-separation.md`
 
 ## Executive Summary
 
@@ -205,7 +205,7 @@ applyFilter();
 | **Severity** | Info |
 | **Location** | `docs/design-load-update-separation.md` — Sections 6.2–6.4 vs actual `.ui` / `.java` |
 
-**Finding:** The design doc (Section 6) describes fully pre-allocating all dynamic nodes with unique IDs directly in `BlueprintBenchPage.ui` (e.g., `#FilterAll`, `#Filter0`–`#Filter19`, `#Row0`–`#Row8`, `#Cost0`–`#Cost7`). The actual implementation takes a different (and better) approach: keeping containers empty in the `.ui` and appending reusable component templates (`SetFilterButton.ui`, `CostCell.ui`, `PlaceholderRow.ui`) during `build()`, addressed via indexed selectors (`#SetFilters[0]`, `#CostGrid[N]`, `#PlaceholderList[N]`).
+**Finding:** The design doc (Section 6) describes fully pre-allocating all dynamic nodes with unique IDs directly in `BlueprintBookPage.ui` (e.g., `#FilterAll`, `#Filter0`–`#Filter19`, `#Row0`–`#Row8`, `#Cost0`–`#Cost7`). The actual implementation takes a different (and better) approach: keeping containers empty in the `.ui` and appending reusable component templates (`SetFilterButton.ui`, `CostCell.ui`, `PlaceholderRow.ui`) during `build()`, addressed via indexed selectors (`#SetFilters[0]`, `#CostGrid[N]`, `#PlaceholderList[N]`).
 
 This means:
 - Section 6 (981 lines of pre-allocated .ui markup) is misleading — that code was never implemented

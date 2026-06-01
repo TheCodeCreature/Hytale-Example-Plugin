@@ -150,17 +150,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         benchIds.clear();
         benchIds.addAll(benchSet);
-        DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintBench] Loaded bench IDs: " + benchIds);
+        DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[BlueprintBook] Loaded bench IDs: " + benchIds);
 
         // Debug: log category coverage
         long withCats = allRecipes.stream().filter(r -> r.categoryIds() != null && !r.categoryIds().isEmpty()).count();
-        DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintBench] Recipes with categories: " + withCats + "/" + allRecipes.size());
+        DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[BlueprintBook] Recipes with categories: " + withCats + "/" + allRecipes.size());
         // Debug: log distinct category IDs from recipes
         Set<String> recipeCatIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (RecipeEntry r : allRecipes) {
             if (r.categoryIds() != null) recipeCatIds.addAll(r.categoryIds());
         }
-        DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintBench] Distinct recipe category IDs: " + recipeCatIds);
+        DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[BlueprintBook] Distinct recipe category IDs: " + recipeCatIds);
 
         this.categoryInfoMap = buildCategoryInfoMap();
 
@@ -240,7 +240,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         this.playerStore = store;
 
         // Load persisted preferences
-        BlueprintBenchPrefs prefs = BlueprintBenchPrefsStore.load(this.playerRef.getUuid());
+        BlueprintBookPrefs prefs = BlueprintBookPrefsStore.load(this.playerRef.getUuid());
         this.activeTab = prefs.activeTab != null ? prefs.activeTab : ALL_TAB;
         this.activeSetFilters.clear();
         this.activeSetFilters.addAll(prefs.activeSetFilters);
@@ -254,8 +254,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         // Ingredient filter selections restored after tree is built (see loadRecipes)
 
         loadRecipes();
+        validateActiveTab();
 
-        // â”€â”€ Compute data-driven layout â”€â”€
+        // ── Compute data-driven layout ──
         MaxLayoutInfo maxLayout = computeMaxLayout();
         this.totalSetCount = maxLayout.setCount();
         this.maxLayoutSetNames = maxLayout.setNames().clone();
@@ -282,23 +283,27 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         this.detailController = new DetailPanelController();
 
         // Load main template
-        cmd.append("Pages/BlueprintBench/BlueprintBenchPage.ui");
-
+        cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui");
+        // ── Append bench tab buttons dynamically ──
+        // "All" tab + one tab per discovered bench ID
+        for (int i = 0; i < 1 + benchIds.size(); i++) {
+            cmd.append("#BenchTabs", "Pages/BlueprintBook/BenchTabButton.ui");
+        }
         // â”€â”€ Append reusable components into empty containers (one-time init) â”€â”€
 
         // Set filter buttons â€” one per set
         for (int i = 0; i < totalSetCount; i++) {
-            cmd.append("#SetFilters", "Pages/BlueprintBench/SetFilterButton.ui");
+            cmd.append("#SetFilters", "Pages/BlueprintBook/SetFilterButton.ui");
         }
 
         // Material group icon buttons (keep MAX_GROUP_BUTTONS)
         for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
-            cmd.append("#MaterialGroups", "Pages/BlueprintBench/GroupFilterButton.ui");
+            cmd.append("#MaterialGroups", "Pages/BlueprintBook/GroupFilterButton.ui");
         }
 
         // Per-set group containers with VARIABLE cell counts
         for (int g = 0; g < totalSetCount; g++) {
-            cmd.append("#RecipeGridArea", "Pages/BlueprintBench/SetGroupContainer.ui");
+            cmd.append("#RecipeGridArea", "Pages/BlueprintBook/SetGroupContainer.ui");
             for (int c = 0; c < cellsPerSet[g]; c++) {
                 cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
                            "Common/Components/ClickableIconCell.ui");
@@ -342,7 +347,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 EventData.of("Action", "GiveBlueprint")
         );
 
-        buildBenchTabs(evt);
+        buildBenchTabs(cmd, evt);
         buildSetFilterBindings(evt);
         buildMaterialGroupBindings(evt);
         gridController.buildBindings(evt);
@@ -351,7 +356,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         if (ingredientController != null) {
             ingredientController.buildUI(cmd, evt);
             // Restore saved selections
-            BlueprintBenchPrefs savedPrefs = BlueprintBenchPrefsStore.load(this.playerRef.getUuid());
+            BlueprintBookPrefs savedPrefs = BlueprintBookPrefsStore.load(this.playerRef.getUuid());
             if (savedPrefs.selectedIngredientNodes != null && !savedPrefs.selectedIngredientNodes.isEmpty()) {
                 ingredientController.restoreSelection(savedPrefs.selectedIngredientNodes);
             }
@@ -389,7 +394,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     }
 
     private void savePrefs() {
-        BlueprintBenchPrefs prefs = new BlueprintBenchPrefs();
+        BlueprintBookPrefs prefs = new BlueprintBookPrefs();
         prefs.activeTab = this.activeTab;
         prefs.activeSetFilters = new ArrayList<>(this.activeSetFilters);
         prefs.activeMaterialGroups = new ArrayList<>(this.activeMaterialGroups);
@@ -400,7 +405,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         prefs.selectAllCategories = this.selectAllCategories;
         prefs.selectedIngredientNodes = ingredientController != null
                 ? new ArrayList<>(ingredientController.getSelectedNodeIds()) : new ArrayList<>();
-        BlueprintBenchPrefsStore.save(this.playerRef.getUuid(), prefs);
+        BlueprintBookPrefsStore.save(this.playerRef.getUuid(), prefs);
     }
 
     @Override
@@ -608,7 +613,23 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         }
     }
 
-    private void buildBenchTabs(UIEventBuilder evt) {
+    private void buildBenchTabs(UICommandBuilder cmd, UIEventBuilder evt) {
+        // Set Id and TooltipText on each dynamically appended tab button
+        int tabIndex = 0;
+
+        // Tab 0: "All"
+        cmd.set("#BenchTabs[" + tabIndex + "].Id", ALL_TAB);
+        cmd.set("#BenchTabs[" + tabIndex + "].TooltipText", tabDisplayName(ALL_TAB));
+        tabIndex++;
+
+        // Tabs 1..N: one per bench ID
+        for (String benchId : benchIds) {
+            cmd.set("#BenchTabs[" + tabIndex + "].Id", benchId);
+            cmd.set("#BenchTabs[" + tabIndex + "].TooltipText", tabDisplayName(benchId));
+            tabIndex++;
+        }
+
+        // Bind the tab-change event
         evt.addEventBinding(
                 CustomUIEventBindingType.SelectedTabChanged, "#BenchTabs",
                 EventData.of("@SelectedTab", "#BenchTabs.SelectedTab"),
@@ -624,6 +645,21 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private static String tabDisplayName(String tabId) {
         if (tabId == null) return "";
         return tabId.replace('_', ' ');
+    }
+
+    /**
+     * Validates that {@link #activeTab} corresponds to a currently known bench ID.
+     * Falls back to {@link #ALL_TAB} if the saved tab is stale (e.g., a bench was
+     * removed from the registry since the preference was saved).
+     */
+    private void validateActiveTab() {
+        if (ALL_TAB.equals(activeTab)) return;
+        if (!benchIds.contains(activeTab)) {
+            DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING,
+                    "[BlueprintBook] Saved activeTab '" + activeTab +
+                    "' not in current benchIds " + benchIds + "; resetting to All");
+            activeTab = ALL_TAB;
+        }
     }
 
     private void buildSetFilterBindings(UIEventBuilder evt) {
@@ -754,7 +790,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         // Build the map with dot-notation keys to match recipe category IDs.
         Map<String, RecipeFilterPipeline.CategoryInfo> map = new LinkedHashMap<>();
         for (ItemCategory topLevel : allCats.values()) {
-            DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintBench] Top-level category: id=" + topLevel.getId()
+            DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[BlueprintBook] Top-level category: id=" + topLevel.getId()
                     + " name=" + topLevel.getName() + " icon=" + topLevel.getIcon()
                     + " order=" + topLevel.getOrder());
             // Top-level entries (e.g. "Blocks", "Items", "Furniture")
@@ -766,7 +802,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             if (children != null) {
                 for (ItemCategory child : children) {
                     String dotKey = topLevel.getId() + "." + child.getId();
-                    DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintBench]   Child category: dotKey=" + dotKey
+                    DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[BlueprintBook]   Child category: dotKey=" + dotKey
                             + " name=" + child.getName() + " icon=" + child.getIcon()
                             + " order=" + child.getOrder());
                     map.put(dotKey, new RecipeFilterPipeline.CategoryInfo(
@@ -774,7 +810,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 }
             }
         }
-        DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintBench] Built categoryInfoMap with " + map.size() + " categories: " + map.keySet());
+        DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[BlueprintBook] Built categoryInfoMap with " + map.size() + " categories: " + map.keySet());
         return map;
     }
 
@@ -788,8 +824,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private void giveSelectedBlueprint(Store<EntityStore> store, Ref<EntityStore> ref,
                                   UICommandBuilder cmd) {
         if (selectedRecipeId == null) {
-            DebugLogger.chat(this.playerRef, BLUEPRINT_BENCH,
-                    "\u00a7c[BlueprintBench] No recipe selected.");
+            DebugLogger.chat(this.playerRef, BLUEPRINT_BOOK,
+                    "\u00a7c[BlueprintBook] No recipe selected.");
             return;
         }
 
@@ -802,9 +838,9 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         ItemStack item = StencilMetadata.createStencil(entry.outputItemId(), entry.recipeId());
         player.getInventory().getCombinedHotbarFirst().addItemStack(item);
 
-        DebugLogger.chat(this.playerRef, BLUEPRINT_BENCH,
-                "\u00a7a[BlueprintBench] Given stencil: " + entry.outputItemId().replace('_', ' '));
-        DebugLogger.log(BLUEPRINT_BENCH, Level.INFO, "[BlueprintUI] Gave player stencil for " + entry.outputItemId() + " (recipe: " + entry.recipeId() + ")");
+        DebugLogger.chat(this.playerRef, BLUEPRINT_BOOK,
+                "\u00a7a[BlueprintBook] Given stencil: " + entry.outputItemId().replace('_', ' '));
+        DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[BlueprintUI] Gave player stencil for " + entry.outputItemId() + " (recipe: " + entry.recipeId() + ")");
     }
 
     @Nullable

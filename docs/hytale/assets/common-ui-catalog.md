@@ -9,7 +9,7 @@ sources:
   - "decompiled SelectOverrideRespawnPointPage.java, ServerFileBrowser.java"
   - "decompiled PrefabPage.java, PrefabEditorSaveSettingsPage.java, PrefabEditorLoadSettingsPage.java"
   - "docs/Resources/Common/Pages/EntitySpawnPage.ui — full .ui markup"
-  - "src/main/resources/Common/UI/Custom/Pages/BlueprintBench/*.ui — plugin .ui files"
+  - "src/main/resources/Common/UI/Custom/Pages/BlueprintBook/*.ui — plugin .ui files"
   - "hytalemodding.dev/en/docs/official-documentation/custom-ui/common-styling"
   - "hytalemodding.dev/en/docs/official-documentation/custom-ui/markup"
   - "hytalemodding.dev/en/docs/guides/plugin/ui (community guide)"
@@ -277,7 +277,7 @@ $C.@CheckBoxWithLabel #CoordsOption {
 | **Type** | Template (Group) |
 | **Produces** | Decorative horizontal divider/separator line |
 | **Accepts** | (none documented) |
-| **Source** | `EntitySpawnPage.ui` line 142, `BlueprintBenchPage.ui` lines 300, 326 |
+| **Source** | `EntitySpawnPage.ui` line 142, `BlueprintBookPage.ui` lines 300, 326 |
 
 ```
 // .ui usage — insert between content sections
@@ -709,7 +709,7 @@ Styles are named expressions that define appearance properties. Use the spread o
 | **Type** | LabelStyle |
 | **Produces** | Base label appearance (default font, size, color) |
 | **Usage** | As `Style:` value or spread into custom styles |
-| **Source** | `EntitySpawnPage.ui` lines 74, 152, 172, 187, 198; `BlueprintBenchPage.ui` lines 10–34 |
+| **Source** | `EntitySpawnPage.ui` lines 74, 152, 172, 187, 198; `BlueprintBookPage.ui` lines 10–34 |
 
 ```
 // .ui — direct use
@@ -795,7 +795,7 @@ private static final Value<String> TAB_STYLE_INACTIVE =
 |----------|-------|
 | **Type** | ScrollbarStyle |
 | **Produces** | Standard scrollbar for `TopScrolling` / `LeftScrolling` layout groups |
-| **Source** | `EntitySpawnPage.ui` lines 56, 120; `BlueprintBenchPage.ui` lines 173, 215, 291 |
+| **Source** | `EntitySpawnPage.ui` lines 56, 120; `BlueprintBookPage.ui` lines 173, 215, 291 |
 
 ```
 // .ui — set on a scrollable group

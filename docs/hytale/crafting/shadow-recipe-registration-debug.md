@@ -2,7 +2,7 @@
 topic: "Debug: Shadow Recipe Registration Chain for Blueprint Bench"
 category: "Crafting / Recipe Registration"
 updated: 2026-04-23
-sources: ["CraftingPlugin.java (decompiled)", "BenchRecipeRegistry.java (decompiled)", "StructuralCraftingWindow.java (decompiled)", "AssetStore.java (decompiled)", "CraftingManager.java (decompiled)", "CraftingRecipe.java (decompiled)", "BenchRequirement.java (decompiled)", "BlueprintBenchRecipeMutator.java", "LoadedAssetsEvent.java (decompiled)", "LoadAssetEvent.java (decompiled)"]
+sources: ["CraftingPlugin.java (decompiled)", "BenchRecipeRegistry.java (decompiled)", "StructuralCraftingWindow.java (decompiled)", "AssetStore.java (decompiled)", "CraftingManager.java (decompiled)", "CraftingRecipe.java (decompiled)", "BenchRequirement.java (decompiled)", "BlueprintBookRecipeMutator.java", "LoadedAssetsEvent.java (decompiled)", "LoadAssetEvent.java (decompiled)"]
 ---
 
 # Debug: Shadow Recipe Registration Chain for Blueprint Bench
@@ -15,14 +15,14 @@ The full chain from `loadAssets()` → `LoadedAssetsEvent` → `onRecipeLoad()` 
 
 ## 1. The Complete Chain — Annotated
 
-### Step 1: `BlueprintBenchRecipeMutator.mutate()`
+### Step 1: `BlueprintBookRecipeMutator.mutate()`
 
 Called from `onAssetsLoaded(LoadAssetEvent)` in `UnobstructedThirdPersonPlugin`, **after** all assets are loaded:
 
 ```
 UnobstructedThirdPersonPlugin.onAssetsLoaded(LoadAssetEvent)
   └── DropScaler.apply()
-  └── BlueprintBenchRecipeMutator.mutate()
+  └── BlueprintBookRecipeMutator.mutate()
 ```
 
 Creates shadow recipes via:
@@ -328,7 +328,7 @@ private void updateRecipes() {
 
 **How to verify**:
 ```java
-// Add after loadAssets() in BlueprintBenchRecipeMutator.mutate()
+// Add after loadAssets() in BlueprintBookRecipeMutator.mutate()
 for (CraftingRecipe shadow : shadowRecipes) {
     CraftingRecipe found = CraftingRecipe.getAssetMap().getAsset(shadow.getId());
     log("Asset map lookup for '" + shadow.getId() + "': " + (found != null ? "FOUND" : "NOT FOUND"));
@@ -350,7 +350,7 @@ for (CraftingRecipe shadow : shadowRecipes) {
 
 **How to verify**:
 ```java
-// Add after loadAssets() in BlueprintBenchRecipeMutator.mutate()
+// Add after loadAssets() in BlueprintBookRecipeMutator.mutate()
 // Use reflection to access CraftingPlugin.registries
 Field regField = CraftingPlugin.class.getDeclaredField("registries");
 regField.setAccessible(true);
@@ -402,7 +402,7 @@ if (regs.containsKey("Blueprint")) {
 4. ★ LoadAssetEvent fires (all assets loaded)
    └── onAssetsLoaded()
        └── DropScaler.apply()
-       └── BlueprintBenchRecipeMutator.mutate()
+       └── BlueprintBookRecipeMutator.mutate()
            ├── Creates shadow CraftingRecipe objects via copy constructor + reflection
            ├── Calls CraftingRecipe.getAssetStore().loadAssets("Hytale:Hytale", shadowRecipes)
            │   ├── loadAllChildren() puts shadows into loadedAssets map
@@ -434,7 +434,7 @@ if (regs.containsKey("Blueprint")) {
 
 ### Is `loadAssets()` synchronous?
 
-**Yes.** `AssetStore.loadAssets()` is a blocking call. It acquires the write lock, processes assets, dispatches events, and returns. When `BlueprintBenchRecipeMutator.mutate()` returns, all shadow recipes should be in the asset map and the "Blueprint" registry should exist.
+**Yes.** `AssetStore.loadAssets()` is a blocking call. It acquires the write lock, processes assets, dispatches events, and returns. When `BlueprintBookRecipeMutator.mutate()` returns, all shadow recipes should be in the asset map and the "Blueprint" registry should exist.
 
 ### Could `onRecipeLoad()` have already run?
 
@@ -467,7 +467,7 @@ The `data` field being null is notable. `AssetExtraInfo.Data` contains metadata 
 
 ### Step A: Verify shadow recipes are in the asset map (FAILURE POINT #1)
 
-Add to `BlueprintBenchRecipeMutator.mutate()`, after `loadAssets()`:
+Add to `BlueprintBookRecipeMutator.mutate()`, after `loadAssets()`:
 
 ```java
 int found = 0, missing = 0;

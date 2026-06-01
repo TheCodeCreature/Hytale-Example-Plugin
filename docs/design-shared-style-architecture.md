@@ -2,15 +2,15 @@
 
 ## 1. Overview
 
-This design establishes a two-tier style hierarchy for the plugin's UI: a **SharedStyles.ui** file containing 16 universal style tokens used across all subsystems, and **per-subsystem style files** (BlueprintBenchStyles.ui, StencilRadialStyles.ui) containing subsystem-specific tokens. BlueprintBenchStyles.ui becomes a facade that re-exports shared tokens so existing `Value.ref()` paths remain valid. StencilRadial `.ui` files replace all inline styles with named references.
+This design establishes a two-tier style hierarchy for the plugin's UI: a **SharedStyles.ui** file containing 16 universal style tokens used across all subsystems, and **per-subsystem style files** (BlueprintBookStyles.ui, StencilRadialStyles.ui) containing subsystem-specific tokens. BlueprintBookStyles.ui becomes a facade that re-exports shared tokens so existing `Value.ref()` paths remain valid. StencilRadial `.ui` files replace all inline styles with named references.
 
 ## 2. Design Priorities
 
 1. **Zero visual regression** — every extracted style must exactly match its inline source
-2. **Value.ref() path stability** — all 8 runtime lookups in BlueprintSelectionPage.java must continue resolving via `Pages/BlueprintBench/BlueprintBenchStyles.ui`
+2. **Value.ref() path stability** — all 8 runtime lookups in BlueprintSelectionPage.java must continue resolving via `Pages/BlueprintBook/BlueprintBookStyles.ui`
 3. **Framework-native patterns** — use `$Alias = "path.ui"` import and `$Alias.@TokenName` referencing, matching established conventions
 4. **Simplicity** — flat token lists, no nested inheritance hierarchies beyond what already exists
-5. **Extensibility** — new subsystems import SharedStyles.ui directly; no knowledge of BlueprintBench required
+5. **Extensibility** — new subsystems import SharedStyles.ui directly; no knowledge of BlueprintBook required
 
 ## 3. File Hierarchy Diagram
 
@@ -19,9 +19,9 @@ graph TB
     CommonUI["Common.ui\n(Hytale Engine)"]
     SharedStyles["SharedStyles.ui\n(NEW — 16 universal tokens)"]
 
-    subgraph BlueprintBench["Pages/BlueprintBench/"]
-        BBS["BlueprintBenchStyles.ui\n(8 bench-only + 10 re-exports)"]
-        BBConsumers["9 .ui consumers\n(BlueprintBenchPage, RecipeEntry,\nCostCell, etc.)"]
+    subgraph BlueprintBook["Pages/BlueprintBook/"]
+        BBS["BlueprintBookStyles.ui\n(8 bench-only + 10 re-exports)"]
+        BBConsumers["9 .ui consumers\n(BlueprintBookPage, RecipeEntry,\nCostCell, etc.)"]
     end
 
     subgraph StencilRadial["Pages/StencilRadial/"]
@@ -63,7 +63,7 @@ graph TB
         SB_UTL["Utility Buttons\n@TransparentButtonStyle\n@DestructiveButtonStyle\n@NavButtonStyle"]
     end
 
-    subgraph BBS["BlueprintBenchStyles.ui — 8 Bench-Only"]
+    subgraph BBS["BlueprintBookStyles.ui — 8 Bench-Only"]
         direction TB
         BB_ENT["Entry Styles\n@EntryStyle\n@SelectedEntryStyle\n@UnaffordableEntryStyle"]
         BB_BTN["Bench Buttons\n@SectionHeaderStyle\n@WrapSecondaryButtonStyle\n@SelectedCellButtonStyle"]
@@ -107,9 +107,9 @@ src/main/resources/Common/UI/Custom/
 ├── Common.ui                              (Hytale engine — unchanged)
 ├── SharedStyles.ui                        (NEW — 16 universal tokens)
 └── Pages/
-    ├── BlueprintBench/
-    │   ├── BlueprintBenchStyles.ui        (MODIFIED — facade + 8 bench-only)
-    │   ├── BlueprintBenchPage.ui          (unchanged)
+    ├── BlueprintBook/
+    │   ├── BlueprintBookStyles.ui        (MODIFIED — facade + 8 bench-only)
+    │   ├── BlueprintBookPage.ui          (unchanged)
     │   ├── RecipeEntry.ui                 (unchanged — $S refs still resolve)
     │   ├── CostCell.ui                    (unchanged)
     │   ├── RecipeIconCell.ui              (unchanged)
@@ -194,7 +194,7 @@ $C = "Common.ui";
 // Label Styles — Affordability State
 // ═══════════════════════════════════════════════════════
 
-// Panel variant (BlueprintBench detail panel — no outline, inherits DefaultLabelStyle)
+// Panel variant (BlueprintBook detail panel — no outline, inherits DefaultLabelStyle)
 @CostQuantityStyle = LabelStyle(
     ...$C.@DefaultLabelStyle,
     FontSize: 11, TextColor: #ffffff,
@@ -294,9 +294,9 @@ $C = "Common.ui";
 );
 ```
 
-### 7C. BlueprintBenchStyles.ui (MODIFIED)
+### 7C. BlueprintBookStyles.ui (MODIFIED)
 
-**Path:** `Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchStyles.ui`
+**Path:** `Common/UI/Custom/Pages/BlueprintBook/BlueprintBookStyles.ui`
 
 Changes:
 - **Added:** `$Shared = "../../SharedStyles.ui"` import
@@ -305,10 +305,10 @@ Changes:
 
 ```
 // Blueprint Bench — shared styles
-// Imported by BlueprintBenchPage.ui and referenced by Java Value.ref
+// Imported by BlueprintBookPage.ui and referenced by Java Value.ref
 //
 // FACADE PATTERN: Universal tokens are re-exported from SharedStyles.ui so that
-// Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "TokenName") continues
+// Value.ref("Pages/BlueprintBook/BlueprintBookStyles.ui", "TokenName") continues
 // to resolve. New subsystems should import SharedStyles.ui directly instead.
 
 $C = "../../Common.ui";
@@ -600,7 +600,7 @@ Group {
 
 ---
 
-## 8. BlueprintBenchStyles.ui Migration Detail
+## 8. BlueprintBookStyles.ui Migration Detail
 
 ### Styles Moving to SharedStyles.ui (replaced with re-export alias)
 
@@ -617,7 +617,7 @@ Group {
 | `@FilterInactiveStyle` | TextButtonStyle | Yes | `@FilterInactiveStyle = $Shared.@FilterInactiveStyle;` |
 | `@TransparentButtonStyle` | TextButtonStyle | Yes | `@TransparentButtonStyle = $Shared.@TransparentButtonStyle;` |
 
-### Styles Remaining in BlueprintBenchStyles.ui
+### Styles Remaining in BlueprintBookStyles.ui
 
 | Token Name | Type | Reason |
 |---|---|---|
@@ -632,7 +632,7 @@ Group {
 
 ### Value.ref() Path Validation
 
-All 8 constants in `BlueprintSelectionPage.java` reference `"Pages/BlueprintBench/BlueprintBenchStyles.ui"`. After migration, BlueprintBenchStyles.ui re-exports these tokens from SharedStyles.ui. The `Value.ref()` path resolves the token name within BlueprintBenchStyles.ui's scope, which includes re-exported aliases.
+All 8 constants in `BlueprintSelectionPage.java` reference `"Pages/BlueprintBook/BlueprintBookStyles.ui"`. After migration, BlueprintBookStyles.ui re-exports these tokens from SharedStyles.ui. The `Value.ref()` path resolves the token name within BlueprintBookStyles.ui's scope, which includes re-exported aliases.
 
 | Java Constant | Token Name | Resolution Path |
 |---|---|---|
@@ -651,7 +651,7 @@ All 8 constants in `BlueprintSelectionPage.java` reference `"Pages/BlueprintBenc
 
 | File | Change | Detail |
 |---|---|---|
-| `BlueprintBenchStyles.ui` | Modify | Add `$Shared` import, replace 10 inline definitions with re-export aliases |
+| `BlueprintBookStyles.ui` | Modify | Add `$Shared` import, replace 10 inline definitions with re-export aliases |
 | `StencilRadialMenu.ui` | Modify | Replace `$C` with `$Shared`+`$S`, replace 3 inline TextButtonStyles + 1 inline LabelStyle with references |
 | `StencilRadialSegment.ui` | Modify | Replace `$C` with `$Shared`+`$S`, replace 1 inline ButtonStyle + 1 inline LabelStyle with references |
 | `StencilRadialCostSlot.ui` | Modify | Add `$Shared` import, replace 2 inline LabelStyles with references |
@@ -661,7 +661,7 @@ All 8 constants in `BlueprintSelectionPage.java` reference `"Pages/BlueprintBenc
 
 ## 10. Open Questions
 
-1. **Re-export alias syntax:** Does `@TokenName = $Import.@TokenName;` work as a direct alias in the Hytale .ui DSL? This is the preferred re-export mechanism but is **unverified**. If it doesn't work, the fallback is to keep the full inline definitions in BlueprintBenchStyles.ui and add a comment noting the canonical source is SharedStyles.ui. **Test this first before proceeding with the full migration.**
+1. **Re-export alias syntax:** Does `@TokenName = $Import.@TokenName;` work as a direct alias in the Hytale .ui DSL? This is the preferred re-export mechanism but is **unverified**. If it doesn't work, the fallback is to keep the full inline definitions in BlueprintBookStyles.ui and add a comment noting the canonical source is SharedStyles.ui. **Test this first before proceeding with the full migration.**
 
 2. **ButtonStyle named type:** The `@RadialSegmentButtonStyle = ButtonStyle(...)` syntax assumes the `.ui` DSL supports `ButtonStyle` as a named type prefix (analogous to `TextButtonStyle` and `LabelStyle`). The existing code uses only inline `Style: (Hovered: ..., Pressed: ...)` for `Button` elements. If `ButtonStyle(...)` is not a recognized type, keep the style inline in `StencilRadialSegment.ui` and document the gap.
 
@@ -682,13 +682,13 @@ All 8 constants in `BlueprintSelectionPage.java` reference `"Pages/BlueprintBenc
 - [ ] Create `Common/UI/Custom/Pages/StencilRadial/StencilRadialStyles.ui` with 2 tokens
 - [ ] Server starts without UI parse errors
 
-## BlueprintBench Migration
-- [ ] Modify `BlueprintBenchStyles.ui`: add $Shared import, replace 10 definitions with re-export aliases
-- [ ] Open BlueprintBench — verify filter buttons toggle correctly (active/inactive styles)
+## BlueprintBook Migration
+- [ ] Modify `BlueprintBookStyles.ui`: add $Shared import, replace 10 definitions with re-export aliases
+- [ ] Open BlueprintBook — verify filter buttons toggle correctly (active/inactive styles)
 - [ ] Verify recipe cells dim/highlight on selection (SelectedCellButtonStyle/TransparentButtonStyle)
 - [ ] Verify cost quantities show white/red for affordable/unaffordable (CostQuantityStyle/InsufficientStyle)
 - [ ] Verify detail panel output name mutes correctly (DetailLabelStyle/DetailLabelMutedStyle)
-- [ ] Verify all 9 .ui files importing $S = "BlueprintBenchStyles.ui" still render correctly
+- [ ] Verify all 9 .ui files importing $S = "BlueprintBookStyles.ui" still render correctly
 
 ## StencilRadial Extraction
 - [ ] Modify `StencilRadialMenu.ui`: replace imports and inline styles
@@ -741,11 +741,11 @@ All 8 constants in `BlueprintSelectionPage.java` reference `"Pages/BlueprintBenc
 
 ### Wave 2 (depends on Wave 1)
 
-#### Unit: BlueprintBenchStyles.ui facade migration
-- **File**: `Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchStyles.ui`
+#### Unit: BlueprintBookStyles.ui facade migration
+- **File**: `Common/UI/Custom/Pages/BlueprintBook/BlueprintBookStyles.ui`
 - **Contract**: Replace 10 inline definitions with re-export aliases from SharedStyles.ui while preserving all 8 Value.ref() resolution paths
 - **Dependencies**: Wave 1 SharedStyles.ui must exist
-- **Done when**: All 9 .ui consumers and 8 Java Value.ref() paths resolve correctly; no visual regression in BlueprintBench
+- **Done when**: All 9 .ui consumers and 8 Java Value.ref() paths resolve correctly; no visual regression in BlueprintBook
 
 #### Unit: StencilRadial .ui inline style replacement
 - **Files**: `StencilRadialMenu.ui`, `StencilRadialSegment.ui`, `StencilRadialCostSlot.ui`

@@ -32,7 +32,7 @@ classDiagram
         +countItemInInventory(CombinedItemContainer, String) int
     }
 
-    class BlueprintBenchStyles_ui {
+    class BlueprintBookStyles_ui {
         <<UI Template>>
         +@SelectedCellButtonStyle
         +@TransparentButtonStyle
@@ -56,7 +56,7 @@ classDiagram
         +#CostQty : Label
     }
 
-    class BlueprintBenchPage_ui {
+    class BlueprintBookPage_ui {
         <<UI Template>>
         +#OutputFrame : Group
         +#OutputIcon : ItemIcon
@@ -64,10 +64,10 @@ classDiagram
         +#OutputName : Label
     }
 
-    BlueprintSelectionPage --> BlueprintBenchStyles_ui : Value.ref styles
+    BlueprintSelectionPage --> BlueprintBookStyles_ui : Value.ref styles
     BlueprintSelectionPage --> RecipeIconCell_ui : cmd.set cell state
     BlueprintSelectionPage --> CostCell_ui : cmd.set cost state
-    BlueprintSelectionPage --> BlueprintBenchPage_ui : cmd.set output state
+    BlueprintSelectionPage --> BlueprintBookPage_ui : cmd.set output state
 ```
 
 ## 4. Responsibility Map
@@ -157,9 +157,9 @@ sequenceDiagram
 ## 6. Package Structure
 
 ```
-src/main/resources/Common/UI/Custom/Pages/BlueprintBench/
-├── BlueprintBenchPage.ui        ← MODIFIED (add #OutputFrame, #OutputDim)
-├── BlueprintBenchStyles.ui      ← MODIFIED (add 3 new styles)
+src/main/resources/Common/UI/Custom/Pages/BlueprintBook/
+├── BlueprintBookPage.ui        ← MODIFIED (add #OutputFrame, #OutputDim)
+├── BlueprintBookStyles.ui      ← MODIFIED (add 3 new styles)
 ├── RecipeIconCell.ui            ← UNCHANGED (no template changes needed)
 ├── CostCell.ui                  ← MODIFIED (add #CostDim overlay)
 └── ...
@@ -193,7 +193,7 @@ Add a dim overlay group between `#CostIcon` and `#CostQty`, matching the pattern
  }
 ```
 
-### 7.3 BlueprintBenchPage.ui — Add `#OutputFrame` ID and `#OutputDim` overlay
+### 7.3 BlueprintBookPage.ui — Add `#OutputFrame` ID and `#OutputDim` overlay
 
 Add an ID to the output icon background group and insert a dim overlay:
 
@@ -217,7 +217,7 @@ Add an ID to the output icon background group and insert a dim overlay:
 
 ## 8. Style Definitions
 
-Add to `BlueprintBenchStyles.ui`:
+Add to `BlueprintBookStyles.ui`:
 
 ### 8.1 `@SelectedCellButtonStyle` — Selected cell highlight
 
@@ -258,21 +258,21 @@ Add to `BlueprintSelectionPage.java` alongside existing `FILTER_ACTIVE`/`FILTER_
 ```java
 // Story 1: Selected cell highlight
 private static final Value<String> CELL_SELECTED_STYLE =
-    Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "SelectedCellButtonStyle");
+    Value.ref("Pages/BlueprintBook/BlueprintBookStyles.ui", "SelectedCellButtonStyle");
 private static final Value<String> CELL_UNSELECTED_STYLE =
-    Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "TransparentButtonStyle");
+    Value.ref("Pages/BlueprintBook/BlueprintBookStyles.ui", "TransparentButtonStyle");
 
 // Story 2: Per-ingredient cost affordability
 private static final Value<String> COST_QTY_NORMAL =
-    Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "CostQuantityStyle");
+    Value.ref("Pages/BlueprintBook/BlueprintBookStyles.ui", "CostQuantityStyle");
 private static final Value<String> COST_QTY_INSUFFICIENT =
-    Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "CostQuantityInsufficientStyle");
+    Value.ref("Pages/BlueprintBook/BlueprintBookStyles.ui", "CostQuantityInsufficientStyle");
 
 // Story 3: Output detail panel states
 private static final Value<String> DETAIL_LABEL_NORMAL =
-    Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "DetailLabelStyle");
+    Value.ref("Pages/BlueprintBook/BlueprintBookStyles.ui", "DetailLabelStyle");
 private static final Value<String> DETAIL_LABEL_MUTED =
-    Value.ref("Pages/BlueprintBench/BlueprintBenchStyles.ui", "DetailLabelMutedStyle");
+    Value.ref("Pages/BlueprintBook/BlueprintBookStyles.ui", "DetailLabelMutedStyle");
 
 // Output frame background paths (string-based Background switching)
 private static final String OUTPUT_BG_NORMAL = "../../Common/BlockSelectorSlotBackground.png";
@@ -479,9 +479,9 @@ private void hideRemainingCells(UICommandBuilder cmd, int groupIdx, int startCel
 
 | File | Change | Details |
 |------|--------|---------|
-| `BlueprintBenchStyles.ui` | Add 3 style definitions | `@SelectedCellButtonStyle`, `@CostQuantityInsufficientStyle`, `@DetailLabelMutedStyle` |
+| `BlueprintBookStyles.ui` | Add 3 style definitions | `@SelectedCellButtonStyle`, `@CostQuantityInsufficientStyle`, `@DetailLabelMutedStyle` |
 | `CostCell.ui` | Add `#CostDim` group | Dim overlay between `#CostIcon` and `#CostQty` — matches `RecipeIconCell.ui` pattern |
-| `BlueprintBenchPage.ui` | Add `#OutputFrame` ID, `#OutputDim` group | ID on existing output background group; dim overlay after `#OutputIcon` |
+| `BlueprintBookPage.ui` | Add `#OutputFrame` ID, `#OutputDim` group | ID on existing output background group; dim overlay after `#OutputIcon` |
 | `BlueprintSelectionPage.java` | Add 8 constants | 6 `Value.ref` + 2 string background paths |
 | `BlueprintSelectionPage.java` | Add `countItemInInventory()` | New private helper method |
 | `BlueprintSelectionPage.java` | Modify `updateRecipeGrid()` | Add `#CellBtn.Style` set per cell |
@@ -512,7 +512,7 @@ No files need to be deleted.
 
 ### Wave 1 (no dependencies — can run in parallel)
 
-#### Unit: BlueprintBenchStyles.ui — New style definitions
+#### Unit: BlueprintBookStyles.ui — New style definitions
 - **Changes**: Add `@SelectedCellButtonStyle`, `@CostQuantityInsufficientStyle`, `@DetailLabelMutedStyle`
 - **Contract**: Define three new styles matching the specifications in Section 8
 - **Dependencies**: none
@@ -524,7 +524,7 @@ No files need to be deleted.
 - **Dependencies**: none
 - **Done when**: `#CostDim` is targetable via `cmd.set("#CostGrid[N] #CostDim.Visible", ...)`
 
-#### Unit: BlueprintBenchPage.ui — Add output frame IDs and dim overlay
+#### Unit: BlueprintBookPage.ui — Add output frame IDs and dim overlay
 - **Changes**: Add `#OutputFrame` ID to output background group, add `#OutputDim` group inside it
 - **Contract**: Make the output icon frame targetable for background changes and add a dim overlay for unaffordable state
 - **Dependencies**: none
@@ -541,7 +541,7 @@ No files need to be deleted.
 #### Unit: Java constants — Add Value.ref and background path constants
 - **Changes**: Add `CELL_SELECTED_STYLE`, `CELL_UNSELECTED_STYLE`, `COST_QTY_NORMAL`, `COST_QTY_INSUFFICIENT`, `DETAIL_LABEL_NORMAL`, `DETAIL_LABEL_MUTED`, `OUTPUT_BG_NORMAL`, `OUTPUT_BG_EMPTY`, `OUTPUT_BG_UNAFFORDABLE`
 - **Contract**: Declare static final constants referencing the new styles from Wave 1
-- **Dependencies**: Wave 1 `BlueprintBenchStyles.ui` (style names must match)
+- **Dependencies**: Wave 1 `BlueprintBookStyles.ui` (style names must match)
 - **Done when**: Constants compile and reference valid style names
 
 #### Unit: updateRecipeGrid() + hideRemainingCells() — Selected cell highlight
@@ -553,7 +553,7 @@ No files need to be deleted.
 #### Unit: updateDetailPanel() — Per-ingredient and output-level affordability
 - **Changes**: Add inventory lookup, per-ingredient `#CostDim`/`#CostQty.Style` sets, output frame state management
 - **Contract**: Each cost cell reflects per-ingredient affordability. Output frame reflects overall recipe affordability or empty state.
-- **Dependencies**: Wave 1 `CostCell.ui`, `BlueprintBenchPage.ui`, `countItemInInventory()`; Wave 2 Java constants
+- **Dependencies**: Wave 1 `CostCell.ui`, `BlueprintBookPage.ui`, `countItemInInventory()`; Wave 2 Java constants
 - **Done when**: Selecting an affordable recipe shows normal state; selecting unaffordable recipe shows red quantities + dim overlay on insufficient ingredients + destructive output frame; deselecting shows empty state
 
 ### Wave 3 (integration — depends on Wave 2)
@@ -566,4 +566,4 @@ No files need to be deleted.
 
 ---
 
-→ @Engineer implement docs/design-blueprint-bench-visual-states.md
+→ @Engineer implement docs/design-Blueprint-Book-visual-states.md

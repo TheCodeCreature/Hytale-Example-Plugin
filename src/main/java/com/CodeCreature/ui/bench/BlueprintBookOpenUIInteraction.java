@@ -15,11 +15,11 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import javax.annotation.Nonnull;
 
-public class BlueprintBenchOpenUIInteraction extends SimpleInstantInteraction {
+public class BlueprintBookOpenUIInteraction extends SimpleInstantInteraction {
 
-    public static final BuilderCodec<BlueprintBenchOpenUIInteraction> CODEC =
-            BuilderCodec.builder(BlueprintBenchOpenUIInteraction.class,
-                    BlueprintBenchOpenUIInteraction::new, SimpleInstantInteraction.CODEC)
+    public static final BuilderCodec<BlueprintBookOpenUIInteraction> CODEC =
+            BuilderCodec.builder(BlueprintBookOpenUIInteraction.class,
+                    BlueprintBookOpenUIInteraction::new, SimpleInstantInteraction.CODEC)
                     .build();
 
     @Override

@@ -157,7 +157,7 @@ When using `TopScrolling`, the scrollable content area adjusts its total scrolla
 
 ---
 
-## Recommended Implementation for BlueprintBenchPage
+## Recommended Implementation for BlueprintBookPage
 
 ### Option A: Simple Toggle (Independent Sections)
 

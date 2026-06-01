@@ -5,7 +5,7 @@
 **Files reviewed:**
 - [src/main/java/com/UnobstructedThirdPerson/placeblock/ui/RecipeFilterPipeline.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/RecipeFilterPipeline.java)
 - [src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java)
-- [src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchPage.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchPage.ui)
+- [src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui)
 
 ---
 
@@ -74,7 +74,7 @@ graph TB
 | 8 | Architecture | 🔵 Review | [BlueprintSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L449-L483) | `isAffordable()` is defined on `BlueprintSelectionPage` and passed as a lambda to the pipeline. This is correctly on the UI side (it needs `CombinedItemContainer`), but it could be extracted to a named class implementing `AffordabilityChecker` if it grows more complex or needs reuse. Current form is fine. |
 | 9 | Integration | ✅ | [BlueprintSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L130-L139) | Toggle button pattern (`Activating` + `FILTER_ACTIVE`/`FILTER_INACTIVE` style swap) matches the existing set filter pattern. Consistent. |
 | 10 | Integration | ✅ | [BlueprintSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L488-L509) | `EventPayload` codec is clean — no leftover `@CraftableFilter` keys. All `CraftableFilter` references are fully removed from the codebase. |
-| 11 | Integration | ✅ | [BlueprintBenchPage.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchPage.ui#L112-L127) | `#AffordableToggle` and `#UncategorizedToggle` are properly placed in the sidebar, use the same `TextButton` pattern as set filters, and have matching style references. |
+| 11 | Integration | ✅ | [BlueprintBookPage.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui#L112-L127) | `#AffordableToggle` and `#UncategorizedToggle` are properly placed in the sidebar, use the same `TextButton` pattern as set filters, and have matching style references. |
 
 ---
 

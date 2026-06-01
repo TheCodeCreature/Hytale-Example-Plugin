@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-The BlueprintBench subsystem has a **well-centralized** style architecture: all 17 named styles live in a single shared file (`BlueprintBenchStyles.ui`) and are referenced by both `.ui` templates and Java `Value.ref()` constants. The **StencilRadial subsystem is the opposite** — every style is defined inline with no shared file, producing duplicated `TextButtonStyle` and `LabelStyle` blocks across three `.ui` files. Additionally, `StencilVisualManager` uses an entirely separate visual channel (packet-level `qualityIndex` overrides) for affordability that shares no code or style tokens with the BlueprintBench system.
+The BlueprintBook subsystem has a **well-centralized** style architecture: all 17 named styles live in a single shared file (`BlueprintBookStyles.ui`) and are referenced by both `.ui` templates and Java `Value.ref()` constants. The **StencilRadial subsystem is the opposite** — every style is defined inline with no shared file, producing duplicated `TextButtonStyle` and `LabelStyle` blocks across three `.ui` files. Additionally, `StencilVisualManager` uses an entirely separate visual channel (packet-level `qualityIndex` overrides) for affordability that shares no code or style tokens with the BlueprintBook system.
 
 The highest-impact change is **extracting a `StencilRadialStyles.ui`** shared file and adding affordability checking to the radial menu's cost arc display.
 
@@ -12,7 +12,7 @@ The highest-impact change is **extracting a `StencilRadialStyles.ui`** shared fi
 
 ```mermaid
 graph TB
-    subgraph "BlueprintBench System"
+    subgraph "BlueprintBook System"
         BSP["BlueprintSelectionPage.java<br/>Central UI Controller"]
         RFP["RecipeFilterPipeline.java<br/>Filter + Tag Recipes"]
         AM["AffordabilityMode.java<br/>3-state toggle enum"]
@@ -25,7 +25,7 @@ graph TB
     end
 
     subgraph "Shared Style Definitions"
-        BBS["BlueprintBenchStyles.ui<br/>17 named @styles"]
+        BBS["BlueprintBookStyles.ui<br/>17 named @styles"]
     end
 
     subgraph "Inline Styles Only"
@@ -33,7 +33,7 @@ graph TB
         SRS["StencilRadialSegment.ui<br/>inline Button.Style"]
         SRCS["StencilRadialCostSlot.ui<br/>2 inline LabelStyles"]
         IGT["ItemGridTestPage.ui<br/>1 inline @StatusStyle"]
-        BBP_IL["BlueprintBenchPage.ui<br/>1 inline LabelStyle L67"]
+        BBP_IL["BlueprintBookPage.ui<br/>1 inline LabelStyle L67"]
     end
 
     BSP --> BBS
@@ -66,7 +66,7 @@ graph TB
 
 | File | Styles Defined | Used By |
 |------|---------------|---------|
-| [BlueprintBenchStyles.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchStyles.ui) | `@HeaderStyle`, `@DetailLabelStyle`, `@SubtextStyle`, `@SectionLabelStyle`, `@FilterActiveStyle`, `@FilterInactiveStyle`, `@SectionHeaderStyle`, `@WrapSecondaryButtonStyle`, `@TransparentButtonStyle`, `@EntryStyle`, `@SelectedEntryStyle`, `@UnaffordableEntryStyle`, `@SetGroupLabelStyle`, `@CostQuantityStyle`, `@EmptyStateStyle`, `@SelectedCellButtonStyle`, `@CostQuantityInsufficientStyle`, `@DetailLabelMutedStyle` | BlueprintBenchPage.ui, RecipeEntry.ui, CostCell.ui, RecipeIconCell.ui, MaterialGroupButton.ui, GroupFilterButton.ui, ExactItemFilterButton.ui, SetGroupContainer.ui, IngredientGroupHeader.ui + Java `Value.ref()` |
+| [BlueprintBookStyles.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookStyles.ui) | `@HeaderStyle`, `@DetailLabelStyle`, `@SubtextStyle`, `@SectionLabelStyle`, `@FilterActiveStyle`, `@FilterInactiveStyle`, `@SectionHeaderStyle`, `@WrapSecondaryButtonStyle`, `@TransparentButtonStyle`, `@EntryStyle`, `@SelectedEntryStyle`, `@UnaffordableEntryStyle`, `@SetGroupLabelStyle`, `@CostQuantityStyle`, `@EmptyStateStyle`, `@SelectedCellButtonStyle`, `@CostQuantityInsufficientStyle`, `@DetailLabelMutedStyle` | BlueprintBookPage.ui, RecipeEntry.ui, CostCell.ui, RecipeIconCell.ui, MaterialGroupButton.ui, GroupFilterButton.ui, ExactItemFilterButton.ui, SetGroupContainer.ui, IngredientGroupHeader.ui + Java `Value.ref()` |
 
 ### 3B. UI Files With Inline Styles (No Shared File)
 
@@ -75,8 +75,8 @@ graph TB
 | [StencilRadialMenu.ui](../src/main/resources/Common/UI/Custom/Pages/StencilRadial/StencilRadialMenu.ui#L39-L83) | 3× `TextButtonStyle(...)` (CloseBtn, PrevBtn, NextBtn) + 1× `Label.Style: (...)` on PageLabel | Close button red states, nav button tertiary states, page counter label |
 | [StencilRadialSegment.ui](../src/main/resources/Common/UI/Custom/Pages/StencilRadial/StencilRadialSegment.ui#L12-L16) | 1× `Button.Style: (Hovered:..., Pressed:...)` + 1× `Label.Style: (...)` | Segment hover/pressed colors, segment label font |
 | [StencilRadialCostSlot.ui](../src/main/resources/Common/UI/Custom/Pages/StencilRadial/StencilRadialCostSlot.ui#L21-L27) | 2× `Label.Style: (...)` (CostQty, CostName) | Cost quantity badge, cost name label |
-| [ItemGridTestPage.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBench/ItemGridTestPage.ui#L5-L8) | 1× `@StatusStyle = LabelStyle(...)` (local) | Test page status/event labels |
-| [BlueprintBenchPage.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchPage.ui#L67) | 1× `Style: (FontSize: 18, TextColor:..., RenderBold: true)` on `#ActiveBenchLabel` | Active bench label (inline, not using `$S.@HeaderStyle` or similar) |
+| [ItemGridTestPage.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBook/ItemGridTestPage.ui#L5-L8) | 1× `@StatusStyle = LabelStyle(...)` (local) | Test page status/event labels |
+| [BlueprintBookPage.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui#L67) | 1× `Style: (FontSize: 18, TextColor:..., RenderBold: true)` on `#ActiveBenchLabel` | Active bench label (inline, not using `$S.@HeaderStyle` or similar) |
 
 ---
 
@@ -86,7 +86,7 @@ graph TB
 
 **File:** [BlueprintSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java)
 
-**Style constants (all `Value.ref()` to BlueprintBenchStyles.ui):**
+**Style constants (all `Value.ref()` to BlueprintBookStyles.ui):**
 
 | Constant | Style Referenced | Used For |
 |----------|-----------------|----------|
@@ -153,13 +153,13 @@ graph TB
 |---|----------|----------|----------|--------|
 | 1 | Redundancy | 🟡 Should Fix | [StencilRadialMenu.ui](../src/main/resources/Common/UI/Custom/Pages/StencilRadial/StencilRadialMenu.ui#L39-L83) | 3 inline `TextButtonStyle` blocks repeat identical `LabelStyle` tuples (FontSize/TextColor/Alignment) across `Default`/`Hovered`/`Pressed` states. PrevBtn and NextBtn are exact duplicates. Should be extracted to a shared `StencilRadialStyles.ui`. |
 | 2 | Redundancy | 🟡 Should Fix | [StencilRadialSegment.ui](../src/main/resources/Common/UI/Custom/Pages/StencilRadial/StencilRadialSegment.ui#L12-L16) | Inline `Button.Style` with hardcoded hex colors (`#1a2030`, `#3a7bd5`, `#2a5ba0`). These hover/pressed colors exist nowhere else — no way to theme or reuse. |
-| 3 | Redundancy | 🟡 Should Fix | [StencilRadialCostSlot.ui](../src/main/resources/Common/UI/Custom/Pages/StencilRadial/StencilRadialCostSlot.ui#L21-L27) | Two inline `LabelStyle` definitions for cost quantity and cost name. BlueprintBench's `CostCell.ui` uses the shared `$S.@CostQuantityStyle` for the same purpose — these should share a style. |
-| 4 | Anti-pattern | 🟡 Should Fix | [StencilRadialMenuPage.java](../src/main/java/com/UnobstructedThirdPerson/stencil/StencilRadialMenuPage.java#L358-L395) | `showCostArc()` resolves and displays recipe ingredients but performs **no affordability check** against player inventory. The BlueprintBench detail panel does per-ingredient `sufficient` checks with dimming and red text — the radial menu shows costs without any such feedback. |
+| 3 | Redundancy | 🟡 Should Fix | [StencilRadialCostSlot.ui](../src/main/resources/Common/UI/Custom/Pages/StencilRadial/StencilRadialCostSlot.ui#L21-L27) | Two inline `LabelStyle` definitions for cost quantity and cost name. BlueprintBook's `CostCell.ui` uses the shared `$S.@CostQuantityStyle` for the same purpose — these should share a style. |
+| 4 | Anti-pattern | 🟡 Should Fix | [StencilRadialMenuPage.java](../src/main/java/com/UnobstructedThirdPerson/stencil/StencilRadialMenuPage.java#L358-L395) | `showCostArc()` resolves and displays recipe ingredients but performs **no affordability check** against player inventory. The BlueprintBook detail panel does per-ingredient `sufficient` checks with dimming and red text — the radial menu shows costs without any such feedback. |
 | 5 | Anti-pattern | 🟠 QA | [StencilVisualManager.java](../src/main/java/com/UnobstructedThirdPerson/stencil/StencilVisualManager.java#L340-L360) | Affordability checking in `scanAndSend()` uses `container.canRemoveMaterials()` directly, completely bypassing `AffordabilityMode` and `RecipeFilterPipeline.AffordabilityChecker`. Two independent affordability code paths exist with no shared abstraction. |
 | 6 | Redundancy | 🟠 QA | [BlueprintSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L790-L830) + [StencilRadialMenuPage.java](../src/main/java/com/UnobstructedThirdPerson/stencil/StencilRadialMenuPage.java#L358-L395) | Both files independently call `PlaceBlockCostUtil.getPerUnitCost()` → `ResourceTypeResolver.resolveInputItemId()` → `NaturalResourceRegistry.resolveToGatherableForm()` to resolve ingredient display data. This 3-step chain is duplicated. |
-| 7 | Scalability | 🔵 Review | [BlueprintBenchStyles.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchStyles.ui) | 17 styles in a single file works now but may become unwieldy if more UI subsystems (e.g., a radial menu styles section) are added. Consider whether a top-level `Styles/` directory structure is warranted as the plugin grows. |
-| 8 | Redundancy | 🔵 Review | [BlueprintBenchPage.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBench/BlueprintBenchPage.ui#L67) | `#ActiveBenchLabel` uses an inline `Style: (FontSize: 18, ...)` instead of referencing `$S.@HeaderStyle` or a dedicated style from `BlueprintBenchStyles.ui`. Minor — only one occurrence. |
-| 9 | Redundancy | 🔵 Review | [ItemGridTestPage.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBench/ItemGridTestPage.ui#L5-L8) | Defines a local `@StatusStyle` inline. Acceptable for a test page — not production UI. |
+| 7 | Scalability | 🔵 Review | [BlueprintBookStyles.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookStyles.ui) | 17 styles in a single file works now but may become unwieldy if more UI subsystems (e.g., a radial menu styles section) are added. Consider whether a top-level `Styles/` directory structure is warranted as the plugin grows. |
+| 8 | Redundancy | 🔵 Review | [BlueprintBookPage.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui#L67) | `#ActiveBenchLabel` uses an inline `Style: (FontSize: 18, ...)` instead of referencing `$S.@HeaderStyle` or a dedicated style from `BlueprintBookStyles.ui`. Minor — only one occurrence. |
+| 9 | Redundancy | 🔵 Review | [ItemGridTestPage.ui](../src/main/resources/Common/UI/Custom/Pages/BlueprintBook/ItemGridTestPage.ui#L5-L8) | Defines a local `@StatusStyle` inline. Acceptable for a test page — not production UI. |
 
 ---
 
@@ -172,7 +172,7 @@ graph TB
     INV["Player Inventory<br/>(CombinedItemContainer)"]
     AM_NODE["AffordabilityMode Toggle<br/>ALL | INVENTORY | RESOURCE"]
 
-    subgraph "BlueprintBench Path"
+    subgraph "BlueprintBook Path"
         BSP_FILTER["BlueprintSelectionPage.applyFilter()<br/>builds AffordabilityChecker lambda"]
         RFP_EXEC["RecipeFilterPipeline.execute()<br/>tags each recipe affordable=T/F"]
         GRID_VIS["updateRecipeGrid()<br/>cmd.set CellDim.Visible"]
@@ -217,8 +217,8 @@ graph TB
 
 | Channel | Trigger | Visual Mechanism | Affordability? |
 |---------|---------|-----------------|----------------|
-| **BlueprintBench grid** | Recipe selection / filter change | `#CellDim.Visible` overlay + `#CellBtn.Style` swap | ✅ Via `RecipeFilterPipeline` tagging |
-| **BlueprintBench detail panel** | Recipe selected | Per-ingredient `#CostDim.Visible` + `#CostQty.Style` color swap + `#OutputFrame.Background` + `#OutputName.Style` muting | ✅ Direct inventory count comparison |
+| **BlueprintBook grid** | Recipe selection / filter change | `#CellDim.Visible` overlay + `#CellBtn.Style` swap | ✅ Via `RecipeFilterPipeline` tagging |
+| **BlueprintBook detail panel** | Recipe selected | Per-ingredient `#CostDim.Visible` + `#CostQty.Style` color swap + `#OutputFrame.Background` + `#OutputName.Style` muting | ✅ Direct inventory count comparison |
 | **Stencil hotbar glow** | Inventory mutation | `UpdateItems` packet → `qualityIndex` override → client quality glow | ✅ Via `canRemoveMaterials()` |
 | **Stencil radial cost arc** | Segment hover | `showCostArc()` positions cost icons | ❌ Display only — no affordability feedback |
 
@@ -237,12 +237,12 @@ graph TB
 
 ## 7. Key Inconsistencies Summary
 
-1. **Stencil radial has no shared styles file** — BlueprintBench has `BlueprintBenchStyles.ui` with 17 reusable styles; StencilRadial has zero, with all styles inline across 3 `.ui` files.
+1. **Stencil radial has no shared styles file** — BlueprintBook has `BlueprintBookStyles.ui` with 17 reusable styles; StencilRadial has zero, with all styles inline across 3 `.ui` files.
 
 2. **Two independent affordability systems** — `BlueprintSelectionPage` uses `AffordabilityMode` + `RecipeFilterPipeline.AffordabilityChecker`; `StencilVisualManager` uses raw `canRemoveMaterials()`. Neither knows about the other.
 
-3. **Radial menu cost display has no affordability feedback** — `showCostArc()` shows ingredient costs on hover but never checks if the player can afford them, unlike the BlueprintBench detail panel which dims insufficient ingredients red.
+3. **Radial menu cost display has no affordability feedback** — `showCostArc()` shows ingredient costs on hover but never checks if the player can afford them, unlike the BlueprintBook detail panel which dims insufficient ingredients red.
 
 4. **Ingredient resolution chain is duplicated** — The `getPerUnitCost()` → `resolveInputItemId()` → `resolveToGatherableForm()` call chain appears in both `BlueprintSelectionPage.updateDetailPanel()` and `StencilRadialMenuPage.showCostArc()`.
 
-5. **One inline style in production BlueprintBench UI** — `#ActiveBenchLabel` in `BlueprintBenchPage.ui` uses an inline style instead of a named style from `BlueprintBenchStyles.ui`.
+5. **One inline style in production BlueprintBook UI** — `#ActiveBenchLabel` in `BlueprintBookPage.ui` uses an inline style instead of a named style from `BlueprintBookStyles.ui`.

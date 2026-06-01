@@ -100,7 +100,7 @@ public class DetailPanelController {
                         }
                     }
                 } catch (Exception e) {
-                    DebugLogger.log(BLUEPRINT_BENCH, Level.WARNING, "[BlueprintUI] Error populating cost grid: " + e.getMessage());
+                    DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING, "[BlueprintUI] Error populating cost grid: " + e.getMessage());
                 }
 
                 // Hide remaining cost cells and reset their state

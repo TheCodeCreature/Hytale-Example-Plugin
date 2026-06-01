@@ -4,7 +4,7 @@
 
 ## 1. Overview
 
-This design adds resource consumption logic to `PlaceBlockPlacementSystem.handle()` so that placing an armed PlaceBlock placeholder deducts the recipe's material cost from the player's inventory before placing the output block. The consumption is atomic (all-or-nothing) and the costs are already 12× scaled by `BlueprintBenchRecipeMutator` at recipe mutation time. Mutual exclusion with `PlacementCostScaler` is inherent and requires no code changes.
+This design adds resource consumption logic to `PlaceBlockPlacementSystem.handle()` so that placing an armed PlaceBlock placeholder deducts the recipe's material cost from the player's inventory before placing the output block. The consumption is atomic (all-or-nothing) and the costs are already 12× scaled by `BlueprintBookRecipeMutator` at recipe mutation time. Mutual exclusion with `PlacementCostScaler` is inherent and requires no code changes.
 
 ## 2. Design Priorities
 
@@ -189,7 +189,7 @@ import java.util.List;
  * <ol>
  *   <li>Looks up the armed recipe via {@link CraftingRecipe#getAssetMap()}</li>
  *   <li>Gets material costs via {@link CraftingManager#getInputMaterials}
- *       (already 12× scaled by BlueprintBenchRecipeMutator)</li>
+ *       (already 12× scaled by BlueprintBookRecipeMutator)</li>
  *   <li>Checks affordability via {@link ItemContainer#canRemoveMaterials}</li>
  *   <li>Consumes atomically via {@link ItemContainer#removeMaterials} (allOrNothing=true)</li>
  *   <li>If successful: places the recipe's output block type in the world</li>
@@ -253,7 +253,7 @@ public class PlaceBlockPlacementSystem extends EntityEventSystem<EntityStore, Pl
 
         // ──────────────────────────────────────────────────────────────
         // Resource consumption: check affordability → consume atomically
-        // Materials are already 12× scaled by BlueprintBenchRecipeMutator.
+        // Materials are already 12× scaled by BlueprintBookRecipeMutator.
         // ──────────────────────────────────────────────────────────────
 
         CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(recipeId);

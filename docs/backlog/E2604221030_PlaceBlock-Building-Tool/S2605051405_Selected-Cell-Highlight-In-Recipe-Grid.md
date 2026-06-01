@@ -17,7 +17,7 @@ As a **player**, I want **the selected recipe cell to be visually highlighted** 
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] A new `@SelectedCellStyle` TextButtonStyle is defined in BlueprintBenchStyles.ui using Primary_Square backgrounds
+- [ ] A new `@SelectedCellStyle` TextButtonStyle is defined in BlueprintBookStyles.ui using Primary_Square backgrounds
 - [ ] When a recipe cell is selected, `#CellBtn.Style` is set to `@SelectedCellStyle`
 - [ ] When a recipe cell is NOT selected, `#CellBtn.Style` remains `@TransparentButtonStyle`
 - [ ] An unaffordable selected cell shows BOTH the selected cell style AND the dim overlay simultaneously

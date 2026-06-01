@@ -6,7 +6,7 @@ sources:
   - "https://hytale-docs.com/docs/api/server-internals/custom-ui (Event Data Codec, UIEventBuilder)"
   - "https://hytale-docs.com/docs/api/server-internals/ui-reference (Java API Reference)"
   - "docs/hytale/plugins/api-reference-interactive-custom-ui.md"
-  - "docs/hytale/plugins/custom-ui-for-blueprint-bench.md"
+  - "docs/hytale/plugins/custom-ui-for-Blueprint-Book.md"
   - "decompiled CustomUIEventBindingType.java"
   - "decompiled EventData.java"
   - "decompiled UICommandBuilder.java"
@@ -305,7 +305,7 @@ private void handleRecipeSelect(Ref<EntityStore> ref, Store<EntityStore> store, 
 
 ### Complete Example
 
-**Template file (`Pages/BlueprintBench/RecipeEntry.ui`):**
+**Template file (`Pages/BlueprintBook/RecipeEntry.ui`):**
 ```
 $C = "../../Common.ui";
 
@@ -327,7 +327,7 @@ public void build(Ref<EntityStore> ref, UICommandBuilder cmd,
         Recipe recipe = recipes.get(i);
 
         // Append template — creates #RecipeList[i]
-        cmd.append("#RecipeList", "Pages/BlueprintBench/RecipeEntry.ui");
+        cmd.append("#RecipeList", "Pages/BlueprintBook/RecipeEntry.ui");
 
         // Set text on the appended element
         String selector = "#RecipeList[" + i + "]";
@@ -354,7 +354,7 @@ private void refreshList(UICommandBuilder cmd, UIEventBuilder evt) {
 
     List<Recipe> filtered = applyFilters();
     for (int i = 0; i < filtered.size(); i++) {
-        cmd.append("#RecipeList", "Pages/BlueprintBench/RecipeEntry.ui");
+        cmd.append("#RecipeList", "Pages/BlueprintBook/RecipeEntry.ui");
         cmd.set("#RecipeList[" + i + "].Text", filtered.get(i).getName());
         evt.addEventBinding(CustomUIEventBindingType.Activating,
             "#RecipeList[" + i + "]",
