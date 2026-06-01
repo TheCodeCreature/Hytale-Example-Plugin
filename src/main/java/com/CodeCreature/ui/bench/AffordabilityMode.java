@@ -5,28 +5,24 @@ package com.CodeCreature.ui.bench;
  *
  * <p>Controls how recipes are filtered and dimmed in the recipe grid:
  * <ul>
- *   <li>{@link #ALL} — no filtering, no dimming; complete catalog view</li>
  *   <li>{@link #INVENTORY_DRIVEN} — filters/dims by player inventory contents</li>
- *   <li>{@link #RESOURCE_DRIVEN} — filters/dims by player-selected resource types</li>
+ *   <li>{@link #RESOURCE_PLANNING} — filters/dims by player-selected resource types</li>
  * </ul>
  *
- * <p>The toggle cycles: INVENTORY_DRIVEN → RESOURCE_DRIVEN → ALL → INVENTORY_DRIVEN.
+ * <p>The toggle cycles: INVENTORY_DRIVEN → RESOURCE_PLANNING → ALL → INVENTORY_DRIVEN.
  */
 public enum AffordabilityMode {
-
-    /** No filtering, no dimming. All sets visible, all recipes bright. */
-    ALL,
 
     /** Filter by player inventory. Sets hidden if zero affordable recipes. Items dimmed if unaffordable. */
     INVENTORY_DRIVEN,
 
     /** Filter by selected resource types. Sets hidden if zero matching recipes. Items dimmed if no input matches. */
-    RESOURCE_DRIVEN;
+    RESOURCE_PLANNING; 
 
     /**
      * Returns the next mode in the cycling order.
      *
-     * <p>Cycle: ALL → INVENTORY_DRIVEN → RESOURCE_DRIVEN → ALL.
+     * <p>Cycle: INVENTORY_DRIVEN → RESOURCE_PLANNING → INVENTORY_DRIVEN.
      *
      * @return the next {@link AffordabilityMode} in the cycle
      */
@@ -40,16 +36,15 @@ public enum AffordabilityMode {
      * <ul>
      *   <li>ALL → "All"</li>
      *   <li>INVENTORY_DRIVEN → "Inventory Driven"</li>
-     *   <li>RESOURCE_DRIVEN → "Resource Driven"</li>
+     *   <li>RESOURCE_PLANNING → "Resource Planning"</li>
      * </ul>
      *
      * @return display label string
      */
     public String label() {
         return switch (this) {
-            case ALL -> "All";
             case INVENTORY_DRIVEN -> "Inventory Driven";
-            case RESOURCE_DRIVEN -> "Resource Driven";
+            case RESOURCE_PLANNING -> "Resource Planning";
         };
     }
 
@@ -70,11 +65,10 @@ public enum AffordabilityMode {
     public static AffordabilityMode fromString(String value) {
         if (value == null) return INVENTORY_DRIVEN;
         return switch (value) {
-            case "ALL" -> ALL;
             case "INVENTORY_DRIVEN" -> INVENTORY_DRIVEN;
-            case "RESOURCE_DRIVEN" -> RESOURCE_DRIVEN;
+            case "RESOURCE_PLANNING" -> RESOURCE_PLANNING;
             case "true" -> INVENTORY_DRIVEN;
-            case "false" -> ALL;
+            case "false" -> RESOURCE_PLANNING;
             default -> INVENTORY_DRIVEN;
         };
     }

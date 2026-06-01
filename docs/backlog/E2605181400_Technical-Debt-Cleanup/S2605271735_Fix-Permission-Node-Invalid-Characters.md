@@ -23,12 +23,12 @@ As a **plugin developer**, I want **command permission nodes to use valid charac
 
 ### Scenarios
 **Command registration**
-- **Given** the plugin group is `Camera` and name contains `[CodeCreature] Blueprint System`
+- **Given** the plugin group is `Plugin` and name contains `[CodeCreature] Plugin`
 - **When** the server starts and `setup()` registers commands
-- **Then** permission nodes are formatted as `camera.codecreature_blueprint_system.command.placeblock` (or similar sanitized form)
+- **Then** permission nodes are formatted as `plugin.codecreature_plugin.command.placeblock` (or similar sanitized form)
 
 ## Notes
-Pre-existing issue from 0.5.0. The plugin name `[CodeCreature] Blueprint System` contains brackets and spaces which are invalid in permission nodes. The error occurs at `PermissionsModule.registerPermission()`.
+Pre-existing issue from 0.5.0. The plugin name `[CodeCreature] Plugin` contains brackets which are invalid in permission nodes. The error occurs at `PermissionsModule.registerPermission()`.
 
 Potential fix locations:
 - Change `plugin_group` in `gradle.properties` (changes plugin identity)
@@ -37,5 +37,5 @@ Potential fix locations:
 
 Server log evidence:
 ```
-SEVERE: Failed to register command: placeblock - Invalid permission node: camera.[codecreature] blueprint system.command.placeblock
+SEVERE: Failed to register command: placeblock - Invalid permission node: plugin.[codecreature] plugin.command.placeblock
 ```

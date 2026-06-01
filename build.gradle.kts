@@ -5,7 +5,7 @@ plugins {
     id("hytale-mod") version "0.+"
 }
 
-group = "Camera"
+group = "Plugin"
 version = "13.0.5"
 val javaVersion = 25
 

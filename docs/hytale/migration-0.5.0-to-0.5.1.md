@@ -68,11 +68,11 @@ This produces `^0.5.1` when the detected version is `0.5.1`. **A clean rebuild (
 
 **Evidence**: 0.5.1 log shows new warnings for mod directory packs:
 ```
-[WARN] [AssetModule|P] Skipping pack at Camera_[CodeCreature] Blueprint System: missing or invalid manifest.json
+[WARN] [AssetModule|P] Skipping pack at [CodeCreature] Plugin: missing or invalid manifest.json
 [WARN] [AssetModule|P] Skipping pack at Camera_[CodeCreature] Unobstructed Third Person Camera: missing or invalid manifest.json
 ```
 
-**Impact**: Asset packs in `mods/` now require valid `manifest.json` files. Packs without them are skipped. This means the plugin's asset pack at `Camera_[CodeCreature] Blueprint System` failed to load its assets. Once the classpath manifest is fixed, the classpath-loaded plugin will work, but any mod-directory asset packs need their own valid manifests.
+**Impact**: Asset packs in `mods/` now require valid `manifest.json` files. Packs without them are skipped. This means the plugin's asset pack at `[CodeCreature] Plugin` failed to load its assets. Once the classpath manifest is fixed, the classpath-loaded plugin will work, but any mod-directory asset packs need their own valid manifests.
 
 ---
 
@@ -101,9 +101,9 @@ These APIs work in 0.5.1 but will **break in a future minor release** (likely 0.
   Invalid permission node: camera.[codecreature] blueprint system.command.placeblock
 ```
 
-The plugin's group is `Camera` and name is `[CodeCreature] Blueprint System`, producing permission nodes with brackets and spaces. The `PermissionsModule.registerPermission()` rejects these. Once the manifest is fixed, this error will re-appear in 0.5.1.
+The plugin's group is `Plugin` and name is `[CodeCreature] Plugin`, producing permission nodes with brackets. The `PermissionsModule.registerPermission()` rejects these. Once the manifest is fixed, this error will re-appear in 0.5.1.
 
-**Fix**: Change the plugin's `Group` in `manifest.json` (via `gradle.properties`) to avoid special characters, or sanitize the permission node before registration.
+**Fix**: Sanitize the permission node before registration, or ensure the group/name avoids special characters.
 
 ### 2.3 Vector Type Drift (MODERATE RISK)
 
@@ -145,7 +145,7 @@ Key locations:
 
 ### 3.2 Core Plugin Module List — STABLE
 - Both 0.5.0 and 0.5.1 load the same 37 core plugins in the same order
-- Same classpath plugins list (except `Camera:[CodeCreature] Blueprint System` is missing in 0.5.1 due to manifest failure)
+- Same classpath plugins list (except `Plugin:[CodeCreature] Plugin` is missing in 0.5.1 due to manifest failure)
 
 ### 3.3 ItemModule/AssetStore — NO NEW VALIDATION DETECTED
 - `ItemModule|P` reports `Computed damage data for 0 of 0 weapon items` in both versions
@@ -194,7 +194,7 @@ Key locations:
 | Feature | 0.5.0 Log | 0.5.1 Log |
 |---------|-----------|-----------|
 | Server Version | `0.5.0, Revision: c68d7d0d` | `0.5.1, Revision: 8a0fc430` |
-| Plugin Loaded? | Yes (`Camera:[CodeCreature] Blueprint System`) | **No** (manifest parse failure) |
+| Plugin Loaded? | Yes (`Plugin:[CodeCreature] Plugin`) | **No** (manifest parse failure) |
 | `DocumentContainingCodec` error | Not present | **New** SEVERE on line 3 |
 | Asset pack skip warnings | Not present | **New** (3 packs skipped) |
 | Pre-semver compat warning | Not present | **New** (wildcard fallback for `YYYY.MM.DD-sha`) |

@@ -18,6 +18,23 @@ Group {
         Style: $C.@TopTabsStyle;
         SelectedTab: "All";
         Anchor: (Height: 66, Left: 2, Right: 0);
+
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
+        TabButton { Icon: "../../Common/RecipesIcon.png"; TooltipText: ""; Id: ""; Visible: false; }
     }
 
     // Main container

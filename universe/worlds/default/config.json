@@ -7,7 +7,7 @@
   "Seed": 1779816555743,
   "WorldGen": {
     "Type": "Hytale",
-    "Name": "Default",
+    "Name": "PluginBuilder",
     "Version": "0.0.0"
   },
   "WorldMap": {
@@ -22,7 +22,7 @@
   "IsPvpEnabled": false,
   "IsFallDamageEnabled": true,
   "IsGameTimePaused": false,
-  "GameTime": "0001-01-01T05:30:00Z",
+  "GameTime": "0001-01-01T12:00:00Z",
   "ClientEffects": {
     "SunHeightPercent": 100.0,
     "SunAngleDegrees": 0.0,

@@ -26,6 +26,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +69,7 @@ public final class DropScaler {
         NaturalResourceRegistry.init();
         ResourceTypeResolver.initialize();
         RecipeTierClassifier.init();
-        RecipeFilterRegistry.init(RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES);
+        RecipeFilterRegistry.init(new LinkedHashSet<>(BenchRegistry.getSkipPrefixes()));
         BenchRecipeRegistries.init();
         applyModifications();
     }

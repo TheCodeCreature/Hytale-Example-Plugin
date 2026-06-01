@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -61,25 +62,17 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
  */
 public final class BenchRegistry {
 
-    /**
-     * The bench ID that receives a hardcoded {@code preferNatural = true}
-     * override for backward compatibility.
-     */
-    private static final String FURNITURE_BENCH_ID = "Furniture_Bench";
-
-    /**
-     * Bench IDs for true crafting benches (not processing/refinement).
-     * Used to prioritize crafting recipes over processing recipes when
-     * a block has recipes at both types of bench.
-     */
-    private static final Set<String> CRAFTING_BENCH_IDS = Set.of(
-            "Builders", "Furniture_Bench", "Workbench", "Fieldcraft");
-
     /** benchId → BenchConfig. Populated at init, immutable afterward. */
     private static Map<String, BenchConfig> configs = Collections.emptyMap();
 
     /** Bench IDs excluded from processing. Loaded from deny-list.json. */
     private static Set<String> denyList = Collections.emptySet();
+
+    /** Recipe ID prefixes excluded from RecipeFilterRegistry. Loaded from config. */
+    private static List<String> skipPrefixes = List.of();
+
+    /** Tab grouper mapping raw bench IDs to grouped tab IDs. */
+    private static BenchTabGrouper tabGrouper;
 
     /** Plugin data directory for loading config files. Null until {@link #initialize} is called. */
     private static Path dataDirectory;
@@ -138,6 +131,11 @@ public final class BenchRegistry {
             denyList = Collections.emptySet();
         }
 
+        // Load config early to get benchOverrides and skipPrefixes
+        Path configPath = dataDirectory != null ? dataDirectory.resolve("bench-tab-groups.json") : null;
+        BenchTabGrouper.TabGroupConfig tabConfig = BenchTabGrouper.loadConfig(configPath);
+        skipPrefixes = List.copyOf(tabConfig.skipPrefixes());
+
         Map<String, BenchConfig> discovered = new LinkedHashMap<>();
         int totalFound = 0;
         int denied = 0;
@@ -153,13 +151,27 @@ public final class BenchRegistry {
                     continue;
                 }
                 if (!discovered.containsKey(req.id)) {
-                    boolean preferNatural = FURNITURE_BENCH_ID.equals(req.id);
+                    BenchTabGrouper.BenchOverride override = tabConfig.benchOverrides().get(req.id);
+                    boolean preferNatural = (override != null) && override.preferNatural();
                     discovered.put(req.id, new BenchConfig(req.id, preferNatural));
                 }
             }
         }
 
+        // Warn about benchOverrides referencing unknown bench IDs
+        for (String overrideId : tabConfig.benchOverrides().keySet()) {
+            if (!discovered.containsKey(overrideId)) {
+                DebugLogger.log(REGISTRY, Level.WARNING,
+                        "[BenchRegistry] benchOverride for '" + overrideId +
+                        "' does not match any discovered bench");
+            }
+        }
+
         configs = Collections.unmodifiableMap(discovered);
+
+        tabGrouper = BenchTabGrouper.create(configs.keySet(),
+                dataDirectory != null ? dataDirectory.resolve("bench-tab-groups.json") : null);
+
         DebugLogger.log(REGISTRY, Level.INFO,
             "[BenchRegistry] Discovered " + totalFound + " bench references, "
                 + denied + " denied, " + configs.size() + " registered");
@@ -231,7 +243,29 @@ public final class BenchRegistry {
      * @return true if this is a crafting bench
      */
     public static boolean isCraftingBenchId(@Nonnull String benchId) {
-        return CRAFTING_BENCH_IDS.contains(benchId);
+        return configs.containsKey(benchId);
+    }
+
+    /**
+     * Returns the skip prefixes loaded from config.
+     * Used by {@link com.CodeCreature.scaling.DropScaler} to pass to
+     * {@link RecipeFilterRegistry#init(java.util.Set)}.
+     *
+     * @return unmodifiable list of skip prefixes; never null
+     */
+    @Nonnull
+    public static List<String> getSkipPrefixes() {
+        return skipPrefixes;
+    }
+
+    /**
+     * Returns the tab grouper that maps raw bench IDs to grouped tab IDs.
+     *
+     * @return the tab grouper; never null after {@link #init()} has run
+     */
+    @Nonnull
+    public static BenchTabGrouper getTabGrouper() {
+        return tabGrouper;
     }
 
     /**
@@ -300,6 +334,8 @@ public final class BenchRegistry {
     public static void reset() {
         configs = Collections.emptyMap();
         denyList = Collections.emptySet();
+        skipPrefixes = List.of();
+        tabGrouper = null;
         initialized = false;
     }
 }

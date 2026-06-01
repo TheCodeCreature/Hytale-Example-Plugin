@@ -83,7 +83,7 @@ public class IngredientTreeGridController {
         }
         this.totalContainerElements = containerIdx;
 
-        DebugLogger.log(INGREDIENT_TREE, Level.INFO, "Ingredient tree UI built: " + totalContainerElements + " container elements, "
+        DebugLogger.log(INGREDIENT_TREE, Level.FINE, () -> "Ingredient tree UI built: " + totalContainerElements + " container elements, "
                 + elements.size() + " total tracked elements (" + tree.getGroups().size() + " groups)");
 
         updateUI(cmd);

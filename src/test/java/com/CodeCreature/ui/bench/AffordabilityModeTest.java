@@ -22,12 +22,12 @@ class AffordabilityModeTest {
 
         @Test
         void inventoryDrivenCyclesToResourceDriven() {
-            assertEquals(AffordabilityMode.RESOURCE_DRIVEN, AffordabilityMode.INVENTORY_DRIVEN.next());
+            assertEquals(AffordabilityMode.RESOURCE_PLANNING, AffordabilityMode.INVENTORY_DRIVEN.next());
         }
 
         @Test
         void resourceDrivenCyclesToAll() {
-            assertEquals(AffordabilityMode.ALL, AffordabilityMode.RESOURCE_DRIVEN.next());
+            assertEquals(AffordabilityMode.ALL, AffordabilityMode.RESOURCE_PLANNING.next());
         }
 
         @Test
@@ -46,9 +46,9 @@ class AffordabilityModeTest {
 
         @Test
         void fullCycleFromResourceDrivenReturnsToResourceDriven() {
-            AffordabilityMode mode = AffordabilityMode.RESOURCE_DRIVEN;
+            AffordabilityMode mode = AffordabilityMode.RESOURCE_PLANNING;
             mode = mode.next().next().next();
-            assertEquals(AffordabilityMode.RESOURCE_DRIVEN, mode);
+            assertEquals(AffordabilityMode.RESOURCE_PLANNING, mode);
         }
     }
 
@@ -67,7 +67,7 @@ class AffordabilityModeTest {
 
         @Test
         void resourceDrivenReturnsResourceDriven() {
-            assertEquals("Resource Driven", AffordabilityMode.RESOURCE_DRIVEN.label());
+            assertEquals("Resource Driven", AffordabilityMode.RESOURCE_PLANNING.label());
         }
     }
 
@@ -86,7 +86,7 @@ class AffordabilityModeTest {
 
         @Test
         void parsesResourceDriven() {
-            assertEquals(AffordabilityMode.RESOURCE_DRIVEN, AffordabilityMode.fromString("RESOURCE_DRIVEN"));
+            assertEquals(AffordabilityMode.RESOURCE_PLANNING, AffordabilityMode.fromString("RESOURCE_DRIVEN"));
         }
 
         @Test

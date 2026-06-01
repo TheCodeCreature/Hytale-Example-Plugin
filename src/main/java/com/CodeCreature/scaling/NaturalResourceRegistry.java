@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
+import com.CodeCreature.registry.BenchRegistry;
 import com.CodeCreature.util.DebugLogger;
 import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
@@ -227,19 +228,11 @@ public final class NaturalResourceRegistry {
         return gatherableFormMap.getOrDefault(itemId, itemId);
     }
 
-    /**
-     * Bench IDs that classify a block as "crafted" (non-natural) when it has
-     * a recipe requiring one of these benches. Processing benches (Stonecutter,
-     * Refinery, Furnace, Kiln) are excluded — their recipes are refinement
-     * recipes that should NOT disqualify a block from being natural.
-     */
-    private static final Set<String> CRAFTING_BENCH_IDS = Set.of("Builders", "Furniture_Bench");
-
     private static boolean isCraftingBench(@Nonnull CraftingRecipe recipe) {
         BenchRequirement[] reqs = recipe.getBenchRequirement();
         if (reqs == null) return false;
         for (BenchRequirement req : reqs) {
-            if (req != null && req.id != null && CRAFTING_BENCH_IDS.contains(req.id)) {
+            if (req != null && req.id != null && BenchRegistry.isCraftingBenchId(req.id)) {
                 return true;
             }
         }

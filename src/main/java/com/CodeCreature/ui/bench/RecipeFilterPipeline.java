@@ -41,14 +41,14 @@ public final class RecipeFilterPipeline {
      * @param recipeId     recipe asset ID (e.g. "Wood_Hardwood_Planks")
      * @param outputItemId output item asset ID
      * @param blockTypeId  output block type ID
-     * @param benchId      primary bench ID for tab grouping
+     * @param benchIds     resolved bench group keys for tab filtering
      * @param set          {@code Item.set} value; may be {@code null}
      */
     public record InputRecipe(
             String recipeId,
             String outputItemId,
             String blockTypeId,
-            String benchId,
+            Set<String> benchIds,
             @Nullable String set,
             List<String> categoryIds
     ) {}
@@ -60,7 +60,7 @@ public final class RecipeFilterPipeline {
      * @param recipeId      recipe asset ID
      * @param outputItemId  output item asset ID
      * @param blockTypeId   output block type ID
-     * @param benchId       primary bench ID
+     * @param benchIds      resolved bench group keys
      * @param effectiveSet  never null; equals original set or {@link #UNCATEGORIZED_SET}
      * @param affordable    {@code true} if the player can craft this recipe
      *                      (raw materials OR BlockGroup interchangeability)
@@ -69,7 +69,7 @@ public final class RecipeFilterPipeline {
             String recipeId,
             String outputItemId,
             String blockTypeId,
-            String benchId,
+            Set<String> benchIds,
             String effectiveSet,
             boolean affordable,
             List<String> categoryIds
@@ -248,7 +248,7 @@ public final class RecipeFilterPipeline {
         }
         List<InputRecipe> result = new ArrayList<>();
         for (InputRecipe recipe : recipes) {
-            if (activeTab.equals(recipe.benchId())) {
+            if (recipe.benchIds().contains(activeTab)) {
                 result.add(recipe);
             }
         }
@@ -320,7 +320,7 @@ public final class RecipeFilterPipeline {
                     recipe.recipeId(),
                     recipe.outputItemId(),
                     recipe.blockTypeId(),
-                    recipe.benchId(),
+                    recipe.benchIds(),
                     effectiveSet,
                     affordable,
                     recipe.categoryIds()
@@ -340,7 +340,7 @@ public final class RecipeFilterPipeline {
                     recipe.recipeId(),
                     recipe.outputItemId(),
                     recipe.blockTypeId(),
-                    recipe.benchId(),
+                    recipe.benchIds(),
                     effectiveSet,
                     affordable,
                     recipe.categoryIds()
