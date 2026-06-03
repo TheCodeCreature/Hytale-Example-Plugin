@@ -7,6 +7,7 @@ import com.hypixel.hytale.protocol.ItemTranslationProperties;
 import com.hypixel.hytale.protocol.UpdateType;
 import com.hypixel.hytale.protocol.packets.assets.UpdateItemQualities;
 import com.hypixel.hytale.protocol.packets.assets.UpdateItems;
+import com.hypixel.hytale.protocol.packets.assets.UpdateTranslations;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemQuality;
@@ -84,6 +85,9 @@ public final class StencilVisualManager {
     /** Display name prefix prepended to the block name. */
     private static final String STENCIL_NAME_PREFIX = "[Stencil] ";
 
+    /** Localization key used for the shared stencil description. */
+    private static final String STENCIL_DESCRIPTION_KEY = "server.items.stencil.description";
+
     /**
      * Per-player visual state. Key is the player's UUID.
      * Entries are added on {@link #applyVisuals} and removed on {@link #removePlayer}.
@@ -116,6 +120,9 @@ public final class StencilVisualManager {
         // plugin-loaded qualities if the packet generator cached before our asset pack loaded.
         sendCustomQualities(playerRef);
 
+        // Ensure the client has our custom stencil translation key.
+        sendStencilTranslations(playerRef);
+
         PlayerVisualState state = new PlayerVisualState(playerRef.getUuid());
         playerStates.put(playerRef.getUuid(), state);
         scanAndSend(playerRef, player, state);
@@ -131,6 +138,22 @@ public final class StencilVisualManager {
      */
     public static void removePlayer(@Nonnull UUID uuid) {
         playerStates.remove(uuid);
+    }
+
+    /**
+     * Sends an {@code UpdateTranslations} packet so the client can resolve
+     * the shared stencil description localization key.
+     */
+    private static void sendStencilTranslations(@Nonnull PlayerRef playerRef) {
+        Map<String, String> translations = new HashMap<>();
+        translations.put(STENCIL_DESCRIPTION_KEY,
+                "A blueprint stencil for a specific block.\n"
+                + "[F] Use \u2014 Place the block using materials from your inventory.\n"
+                + "[Middle Click] Select \u2014 Quick-select this stencil in your hotbar.\n"
+                + "[G] Drop \u2014 Discard the stencil (it will be destroyed).");
+        UpdateTranslations packet = new UpdateTranslations(UpdateType.AddOrUpdate, translations);
+        playerRef.getPacketHandler().writeNoCache(packet);
+        DebugLogger.log(STENCIL, Level.INFO, "[StencilVisual] Sent stencil description translation to player");
     }
 
     /**
@@ -312,6 +335,7 @@ public final class StencilVisualManager {
             packet.qualityIndex = vis.getQualityIndex();
             packet.translationProperties = new ItemTranslationProperties();
             packet.translationProperties.name = resolveDisplayName(itemId);
+            packet.translationProperties.description = STENCIL_DESCRIPTION_KEY;
 
             update.items.put(itemId, packet);
         }

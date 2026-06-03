@@ -1,0 +1,3 @@
+items.BlueprintBook.name = Blueprint Journal
+items.BlueprintBook.description = A journal of blueprints and stencils for crafting.\n[F] Use \u2014 Open the blueprint menu.\n[Middle Click] Select \u2014 Obtain a stencil from the selected blueprint.
+items.stencil.description = A blueprint stencil for a specific block.\n[F] Use \u2014 Place the block using materials from your inventory.\n[Middle Click] Select \u2014 Quick-select this stencil in your hotbar.\n[G] Drop \u2014 Discard the stencil (it will be destroyed).

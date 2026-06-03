@@ -5,8 +5,8 @@
 		"Tool.BlueprintBook"
 	],
 	"TranslationProperties": {
-		"Name": "Blueprint Journal",
-		"Description": "A journal containing various blueprints for crafting."
+		"Name": "server.items.BlueprintBook.name",
+		"Description": "server.items.BlueprintBook.description"
 	},
 	"ItemLevel": 0,
 	"MaxStack": 1,
