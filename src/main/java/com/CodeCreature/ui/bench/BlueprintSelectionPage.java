@@ -23,6 +23,7 @@ import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCu
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
@@ -556,13 +557,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         } else if ("ToggleCategories".equals(data.action)) {
             this.categoriesExpanded = !this.categoriesExpanded;
-            cmd.set("#CategoriesHeader.Text", (categoriesExpanded ? "v " : "> ") + "Categories");
+            cmd.set("#CategoriesHeader.Text", Message.translation(categoriesExpanded
+                    ? "server.ui.blueprint.sidebar.categoriesExpanded"
+                    : "server.ui.blueprint.sidebar.categoriesCollapsed"));
             cmd.set("#MaterialGroups.Visible", categoriesExpanded);
             sendUpdate(cmd, null, false);
 
         } else if ("ToggleSets".equals(data.action)) {
             this.setsExpanded = !this.setsExpanded;
-            cmd.set("#SetsHeader.Text", (setsExpanded ? "v " : "> ") + "Sets");
+            cmd.set("#SetsHeader.Text", Message.translation(setsExpanded
+                    ? "server.ui.blueprint.sidebar.setsExpanded"
+                    : "server.ui.blueprint.sidebar.setsCollapsed"));
             cmd.set("#SetFilters.Visible", setsExpanded);
             sendUpdate(cmd, null, false);
 
@@ -624,7 +629,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         // Tab 0: "All"
         cmd.set("#BenchTabs[" + tabIndex + "].Id", ALL_TAB);
-        cmd.set("#BenchTabs[" + tabIndex + "].TooltipText", tabDisplayName(ALL_TAB));
+        cmd.set("#BenchTabs[" + tabIndex + "].TooltipText", Message.translation("server.ui.blueprint.tabs.all"));
         cmd.set("#BenchTabs[" + tabIndex + "].Visible", true);
         tabIndex++;
 
@@ -655,7 +660,11 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
     private void updateBenchTabs(UICommandBuilder cmd) {
         cmd.set("#BenchTabs.SelectedTab", activeTab);
-        cmd.set("#ActiveBenchLabel.Text", tabDisplayName(activeTab));
+        if (ALL_TAB.equals(activeTab)) {
+            cmd.set("#ActiveBenchLabel.Text", Message.translation("server.ui.blueprint.tabs.all"));
+        } else {
+            cmd.set("#ActiveBenchLabel.Text", tabDisplayName(activeTab));
+        }
     }
 
     private static String tabDisplayName(String tabId) {

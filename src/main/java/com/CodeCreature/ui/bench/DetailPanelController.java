@@ -6,6 +6,7 @@ import com.CodeCreature.registry.FilteredRecipeEntry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 
@@ -87,7 +88,7 @@ public class DetailPanelController {
 
                                 cmd.set(sel + ".Visible", true);
                                 cmd.set(sel + " #Icon.ItemId", itemId);
-                                cmd.set(sel + " #Qty.Text", "x" + requiredQty);
+                                cmd.set(sel + " #Qty.Text", Message.translation("server.ui.blueprint.detail.quantityFormat").param("qty", requiredQty));
                                 if (checkInventory) {
                                     cmd.set(sel + " #Dim.Visible", !sufficient);
                                     cmd.set(sel + " #Qty.Style", sufficient ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
@@ -126,7 +127,7 @@ public class DetailPanelController {
         }
         // No recipe selected — empty state
         cmd.set("#OutputIcon.ItemId", "");
-        cmd.set("#OutputName.Text", "No recipe selected");
+        cmd.set("#OutputName.Text", Message.translation("server.ui.blueprint.detail.noRecipeSelected"));
         cmd.set("#OutputName.Style", DETAIL_LABEL_MUTED);
         cmd.set("#OutputFrame.Background", OUTPUT_BG_EMPTY);
         cmd.set("#OutputDim.Visible", false);

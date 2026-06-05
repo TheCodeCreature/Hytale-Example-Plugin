@@ -1,5 +1,7 @@
 package com.CodeCreature.ui.bench;
 
+import com.hypixel.hytale.server.core.Message;
+
 /**
  * Three-state affordability mode for the Blueprint Bench filter system.
  *
@@ -41,10 +43,10 @@ public enum AffordabilityMode {
      *
      * @return display label string
      */
-    public String label() {
+    public Message label() {
         return switch (this) {
-            case INVENTORY_DRIVEN -> "Inventory Driven";
-            case RESOURCE_PLANNING -> "Resource Planning";
+            case INVENTORY_DRIVEN -> Message.translation("server.ui.blueprint.filter.mode.inventoryDriven");
+            case RESOURCE_PLANNING -> Message.translation("server.ui.blueprint.filter.mode.resourcePlanning");
         };
     }
 
