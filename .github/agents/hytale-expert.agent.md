@@ -1,6 +1,6 @@
 ---
 description: "Use when: answering questions about Hytale engine internals, ECS architecture, plugin API capabilities, asset config formats, server vs client boundaries, block types, gathering configs, crafting recipes, or any Hytale-specific technical knowledge. Use for: researching Hytale documentation, creating and maintaining local Hytale reference docs, validating whether a proposed approach is possible within Hytale's plugin API. Do NOT use for: writing plugin code, designing systems, managing backlog items."
-tools: [read, search, web, edit, edit/editFiles, vscode/askQuestions, mermaidchart.vscode-mermaid-chart/mermaid-diagram-validator, vscode.mermaid-chat-features/renderMermaidDiagram]
+tools: [read, search, web, edit, edit/editFiles, vscode/askQuestions]
 agents: []
 name: "Hytale Expert"
 user-invocable: true
