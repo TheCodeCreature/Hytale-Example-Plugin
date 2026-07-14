@@ -94,8 +94,8 @@ public final class BenchTabGrouper {
 
     // ─── State (immutable after construction) ───────────────────
 
-    /** Path prefix for tab icons in GroupIcons directory (relative to page .ui). */
-    private static final String ICON_PATH_PREFIX = "../../Common/GroupIcons/";
+    /** Path prefix for tab icons in local BenchIcons directory (relative to page .ui). */
+    private static final String ICON_PATH_PREFIX = "../../Common/Icons/BenchIcons/";
 
     /** Default tab icon path (relative to the .ui file). */
     private static final String DEFAULT_TAB_ICON = "../../Common/RecipesIcon.png";
@@ -575,15 +575,21 @@ public final class BenchTabGrouper {
     }
 
     /**
-     * Normalizes a configured tab icon value into a UI-relative asset path.
-     * Accepts either a bare filename (e.g. "Blocks.png") or an explicit path.
+     * Normalizes a configured tab icon value into a UI-relative BenchIcons path.
+     *
+     * <p>Only the filename portion is honored to keep icon references in local UI space.
      */
     @Nonnull
     private static String normalizeTabIconPath(@Nonnull String iconValue) {
-        if (iconValue.contains("/") || iconValue.contains("\\")) {
-            return java.util.Objects.requireNonNull(iconValue.replace('\\', '/'));
+        String normalized = iconValue.replace('\\', '/').trim();
+        int slash = normalized.lastIndexOf('/');
+        if (slash >= 0) {
+            normalized = normalized.substring(slash + 1);
         }
-        return ICON_PATH_PREFIX + iconValue;
+        if (normalized.isEmpty() || normalized.contains("..")) {
+            return DEFAULT_TAB_ICON;
+        }
+        return ICON_PATH_PREFIX + normalized;
     }
 
     /**
