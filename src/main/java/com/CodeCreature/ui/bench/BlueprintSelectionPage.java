@@ -120,7 +120,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         BenchTabGrouper grouper = BenchRegistry.getTabGrouper();
         // Debug: log grouper state
         DebugLogger.log(BLUEPRINT_BOOK, Level.FINE, () ->
-                "[BlueprintBench] Grouper tab IDs: " + grouper.getOrderedTabIds());
+            "[Stencil Crafting][BenchTabs] Grouper tab IDs: " + grouper.getOrderedTabIds());
 
         Map<String, Integer> tabKeyCounts = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         for (FilteredRecipeEntry fe : RecipeFilterRegistry.getAllEntries()) {
@@ -135,7 +135,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 String resolved = grouper.resolveTabId(rawId);
                 if (!rawId.equals(resolved)) {
                     DebugLogger.log(BLUEPRINT_BOOK, Level.FINE, () ->
-                            "[BlueprintBench] Grouped: '" + rawId + "' → '" + resolved +
+                            "[Stencil Crafting][BenchTabs] Grouped: '" + rawId + "' -> '" + resolved +
                             "' (recipe: " + fe.recipeId() + ")");
                 }
             }
@@ -167,7 +167,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         benchIds.clear();
         benchIds.addAll(tabKeySet);
         DebugLogger.log(BLUEPRINT_BOOK, Level.FINE, () ->
-                "[BlueprintBench] Tab recipe counts: " + tabKeyCounts);
+            "[Stencil Crafting][BenchTabs] Tab recipe counts: " + tabKeyCounts);
         DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, () -> "[BlueprintBook] Loaded bench IDs: " + benchIds);
 
         // Debug: log category coverage
@@ -627,10 +627,18 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         // Populate pre-declared tab slots (max-slots pattern — same as updateMaterialGroups)
         int tabIndex = 0;
 
+        DebugLogger.logGateStatus(BLUEPRINT_BOOK, "BlueprintSelectionPage.buildBenchTabs");
+        final int totalBenches = benchIds.size();
+        DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, () ->
+            "[Stencil Crafting][BenchTabs] build START: loading " + totalBenches +
+                " benches (max slots: " + MAX_BENCH_TABS + "), benchIds=" + benchIds);
+
         // Tab 0: "All"
         cmd.set("#BenchTabs[" + tabIndex + "].Id", ALL_TAB);
         cmd.set("#BenchTabs[" + tabIndex + "].TooltipText", Message.translation("server.ui.blueprint.tabs.all"));
         cmd.set("#BenchTabs[" + tabIndex + "].Visible", true);
+        DebugLogger.log(BLUEPRINT_BOOK, Level.FINE, () ->
+            "[Stencil Crafting][BenchTabs] Tab #0 SET: id='All' (default, no icon override)");
         tabIndex++;
 
         // Tabs 1..N: one per bench ID
@@ -639,9 +647,23 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             cmd.set("#BenchTabs[" + tabIndex + "].Id", benchId);
             cmd.set("#BenchTabs[" + tabIndex + "].TooltipText", BenchRegistry.getTabGrouper().getDisplayName(benchId));
             cmd.set("#BenchTabs[" + tabIndex + "].Visible", true);
-            // Set bench-specific icon
-            String iconPath = BenchRegistry.getTabGrouper().resolveTabIcon(benchId);
-            cmd.set("#BenchTabs[" + tabIndex + "].Icon", iconPath);
+            // Only override icon when an explicit mapping exists.
+            // Otherwise, preserve the template's pre-seeded working icon.
+            String resolvedIcon = BenchRegistry.getTabGrouper().resolveMappedTabIcon(benchId);
+            if (resolvedIcon != null) {
+                cmd.set("#BenchTabs[" + tabIndex + "].Icon", resolvedIcon);
+                final String tabKey = benchId;
+                final String iconPath = resolvedIcon;
+                final int index = tabIndex;
+                DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, () ->
+                    "[Stencil Crafting][BenchTabs] Tab #" + index + " icon SET: tab='" + tabKey +
+                        "' resolved_path='" + iconPath + "'");
+            } else {
+                final String tabKey = benchId;
+                final int index = tabIndex;
+                DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING, () ->
+                    "[Stencil Crafting][BenchTabs] Tab #" + index + " icon SKIPPED (no mapping): tab='" + tabKey + "'");
+            }
             tabIndex++;
         }
 
@@ -649,6 +671,11 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         for (int i = tabIndex; i < MAX_BENCH_TABS; i++) {
             cmd.set("#BenchTabs[" + i + "].Visible", false);
         }
+        
+        final int finalTabIndex = tabIndex;
+        DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, () ->
+            "[Stencil Crafting][BenchTabs] build COMPLETE: " + finalTabIndex + " tabs populated, " +
+                (MAX_BENCH_TABS - finalTabIndex) + " slots hidden");
 
         // Bind the tab-change event
         evt.addEventBinding(

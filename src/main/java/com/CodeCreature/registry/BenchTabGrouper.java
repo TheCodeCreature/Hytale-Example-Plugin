@@ -94,8 +94,8 @@ public final class BenchTabGrouper {
 
     // ─── State (immutable after construction) ───────────────────
 
-    /** Path prefix for tab icons in GroupIcons directory. */
-    private static final String ICON_PATH_PREFIX = "Common/GroupIcons/";
+    /** Path prefix for tab icons in GroupIcons directory (relative to page .ui). */
+    private static final String ICON_PATH_PREFIX = "../../Common/GroupIcons/";
 
     /** Default tab icon path (relative to the .ui file). */
     private static final String DEFAULT_TAB_ICON = "../../Common/RecipesIcon.png";
@@ -525,24 +525,23 @@ public final class BenchTabGrouper {
     }
 
     /**
-     * Resolves the icon path for a tab group key.
+     * Resolves an explicitly configured icon path for a tab group key.
      *
      * <p>Resolution order:
      * <ol>
      *   <li>Direct match on {@code groupKey} in configured {@code tabIcons}</li>
      *   <li>First matching bench ID from the group's constituent bench IDs</li>
-     *   <li>{@link #DEFAULT_TAB_ICON}</li>
      * </ol>
      *
      * @param groupKey the tab group key to resolve an icon for
-     * @return icon path relative to the UI file directory; never null
+     * @return configured icon path, or {@code null} when no explicit mapping exists
      */
-    @Nonnull
-    public String resolveTabIcon(@Nonnull String groupKey) {
+    @Nullable
+    public String resolveMappedTabIcon(@Nonnull String groupKey) {
         // Step 1: Direct match on group key
         String icon = tabIcons.get(groupKey);
         if (icon != null) {
-            return ICON_PATH_PREFIX + icon;
+            return normalizeTabIconPath(icon);
         }
 
         // Step 2: Try constituent bench IDs
@@ -551,13 +550,40 @@ public final class BenchTabGrouper {
             for (String benchId : group.benchIds()) {
                 icon = tabIcons.get(benchId);
                 if (icon != null) {
-                    return ICON_PATH_PREFIX + icon;
+                    return normalizeTabIconPath(icon);
                 }
             }
         }
 
-        // Step 3: Default
-        return DEFAULT_TAB_ICON;
+        return null;
+    }
+
+    /**
+     * Returns whether an explicit tab icon mapping exists for a group key or one of its members.
+     */
+    public boolean hasMappedTabIcon(@Nonnull String groupKey) {
+        return resolveMappedTabIcon(groupKey) != null;
+    }
+
+    /**
+     * Resolves the icon path for a tab group key, with default fallback.
+     */
+    @Nonnull
+    public String resolveTabIcon(@Nonnull String groupKey) {
+        String mapped = resolveMappedTabIcon(groupKey);
+        return mapped != null ? mapped : DEFAULT_TAB_ICON;
+    }
+
+    /**
+     * Normalizes a configured tab icon value into a UI-relative asset path.
+     * Accepts either a bare filename (e.g. "Blocks.png") or an explicit path.
+     */
+    @Nonnull
+    private static String normalizeTabIconPath(@Nonnull String iconValue) {
+        if (iconValue.contains("/") || iconValue.contains("\\")) {
+            return java.util.Objects.requireNonNull(iconValue.replace('\\', '/'));
+        }
+        return ICON_PATH_PREFIX + iconValue;
     }
 
     /**

@@ -4,6 +4,7 @@ import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -145,5 +146,28 @@ public final class DebugLogger {
      */
     public static boolean isEnabled(Subsystem sub) {
         return FeatureFlags.get("logging.global") && FeatureFlags.get(sub.flagKey());
+    }
+
+    /**
+     * Emits the current logging gate status for a subsystem without requiring
+     * any feature flags to be enabled.
+     *
+     * <p>Use this for startup diagnostics so missing logs can be traced to flag
+     * state instead of missing call sites.</p>
+     *
+     * @param sub     subsystem to inspect
+     * @param context short context label (e.g. class or flow name)
+     */
+    public static void logGateStatus(Subsystem sub, String context) {
+        Objects.requireNonNull(sub, "sub");
+        String safeContext = context == null ? "unspecified" : context;
+        boolean globalEnabled = FeatureFlags.get("logging.global");
+        boolean subsystemEnabled = FeatureFlags.get(sub.flagKey());
+        boolean enabled = globalEnabled && subsystemEnabled;
+
+        LOGGER.log(Level.INFO, () ->
+                "[Stencil Crafting][Diagnostics] Logging gate: context='" + safeContext +
+                "' subsystem='" + sub.name() + "' global=" + globalEnabled +
+                " subsystem_flag=" + subsystemEnabled + " enabled=" + enabled);
     }
 }
