@@ -547,7 +547,7 @@ body {
             <div class="ingredient-section">
                 <div class="ingredient-header">
                     <span class="ingredient-header-label">Ingredients</span>
-                    <div class="affordability-toggle active" id="affordToggle" onclick="cycleAffordability()">Resource Driven</div>
+                    <div class="affordability-toggle active" id="affordToggle" onclick="cycleAffordability()">Resource Planning</div>
                     <span class="ingredient-clear" onclick="clearAllIngredients()">Clear</span>
                 </div>
                 <div class="tree-scroll" id="treeContainer"></div>
@@ -714,7 +714,7 @@ const expandedResTypes = new Set();
 const activeSets = new Set();
 const activeCats = new Set();
 let affordMode = 2;
-const AFFORD_LABELS = ["All", "Inventory Driven", "Resource Driven"];
+const AFFORD_LABELS = ["All", "Inventory Driven", "Resource Planning"];
 let selectedRecipe = null;
 
 // ══════════════════════════════════════════════════════════════

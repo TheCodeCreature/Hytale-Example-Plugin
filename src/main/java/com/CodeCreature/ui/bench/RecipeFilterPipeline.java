@@ -139,7 +139,7 @@ public final class RecipeFilterPipeline {
      * Functional interface for resource type matching.
      *
      * <p>Implementations check whether a recipe's inputs match any of the
-     * currently selected resource types. Used in Resource Driven affordability
+     * currently selected resource types. Used in Resource Planning affordability
      * mode to tag recipes as matching/non-matching.
      *
      * <p>The pipeline calls this exactly once per recipe per execution.

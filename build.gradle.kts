@@ -8,6 +8,9 @@ plugins {
 group = "Plugin"
 version = "13.0.5"
 val javaVersion = 25
+val pluginName = findProperty("plugin_name")?.toString() ?: project.name
+val pluginAuthor = findProperty("plugin_author")?.toString()?.trim().orEmpty()
+val pluginArchiveName = if (pluginAuthor.isNotEmpty()) "[$pluginAuthor] $pluginName" else pluginName
 
 repositories {
     mavenCentral()
@@ -100,6 +103,8 @@ tasks.named<ProcessResources>("processResources") {
 }
 
 tasks.withType<Jar> {
+    archiveBaseName.set(pluginArchiveName)
+    archiveFileName.set("$pluginArchiveName-${project.version}.jar")
     manifest {
         attributes["Specification-Title"] = rootProject.name
         attributes["Specification-Version"] = version
