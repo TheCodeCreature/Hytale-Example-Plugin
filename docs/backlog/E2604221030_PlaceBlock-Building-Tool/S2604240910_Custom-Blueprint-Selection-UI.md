@@ -12,12 +12,12 @@ created: 2026-04-24
 # Custom Blueprint Selection UI
 
 ## User Story
-As a **player**, I want **a dedicated Blueprint Bench UI with a recipe browser and "Select" button** so that **I can visually browse available recipes and arm my placeholder without using commands**.
+As a **player**, I want **a dedicated Stencil Crafting UI with a recipe browser and "Select" button** so that **I can visually browse available recipes and arm my placeholder without using commands**.
 
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] Blueprint Bench opens a custom `InteractiveCustomUIPage` (not StructuralCraftingWindow)
+- [ ] Stencil Crafting opens a custom `InteractiveCustomUIPage` (not StructuralCraftingWindow)
 - [ ] Left panel: input slot accepting only Block_Placeholder items
 - [ ] Center panel: scrollable/filterable recipe list showing placeable block recipes
 - [ ] Recipes filtered by player inventory (show all, distinguish affordable vs. not)
@@ -27,8 +27,8 @@ As a **player**, I want **a dedicated Blueprint Bench UI with a recipe browser a
 - [ ] `PlaceBlockBenchInterceptor` is removed — no longer needed
 
 ### Scenarios
-**Open Blueprint Bench**
-- **Given** the Blueprint Bench block is placed in the world
+**Open Stencil Crafting**
+- **Given** the Stencil Crafting block is placed in the world
 - **When** the player interacts with it
 - **Then** the custom selection UI opens (NOT the standard crafting window)
 

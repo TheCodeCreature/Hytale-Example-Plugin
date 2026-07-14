@@ -2,7 +2,7 @@
 
 ## Overview
 
-Add per-tab icons to the Blueprint Bench UI via a `tabIcons` map in `bench-tab-groups.json`. Each tab resolves its icon through a three-step fallback: group key → constituent bench IDs → default `RecipesIcon.png`.
+Add per-tab icons to the Stencil Crafting UI via a `tabIcons` map in `bench-tab-groups.json`. Each tab resolves its icon through a three-step fallback: group key → constituent bench IDs → default `RecipesIcon.png`.
 
 ## 1. Config Schema Change
 

@@ -1,4 +1,4 @@
-// Blueprint Bench — main page layout
+// Stencil Crafting — main page layout
 // Server appends reusable .ui components (SetFilterButton, CostCell, ResourceTypeFilterButton) during build()
 // Server updates via cmd.set() only in handleDataEvent() — no append/clear after build()
 
@@ -48,7 +48,7 @@ Group {
                 Anchor: (Full: 0);
 
                 $C.@Title {
-                    @Text = "Blueprint Bench:";
+                    @Text = "Stencil Crafting:";
                 }
 
                 Label #ActiveBenchLabel {

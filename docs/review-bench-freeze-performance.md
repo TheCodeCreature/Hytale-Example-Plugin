@@ -1,8 +1,8 @@
-# Performance Review: Blueprint Bench UI — Server Freeze Analysis
+# Performance Review: Stencil Crafting UI — Server Freeze Analysis
 
 ## Executive Summary
 
-The Blueprint Bench UI has two compounding performance problems that explain both symptoms. **On every menu open**, `build()` runs the full filter pipeline **3 times** (once inside `loadRecipes()`, once in `computeMaxLayout()`, once for initial display), each time copying ~500+ recipes through ~10 intermediate `ArrayList` allocations and running ~500 affordability checks (each doing asset map lookups + inventory scans). This explains the **~1-second freeze on open**. **On every interaction**, `handleDataEvent()` runs the pipeline again, writes to a BSON file on disk (`savePrefs()`), and — in the `pruneInvalidMaterialGroups()` path — can run the pipeline **twice** per event. Since there is **no debouncing**, rapid tab switching or search typing queues up N heavyweight operations back-to-back on the server thread, explaining the **complete lock-up after repeated use**.
+The Stencil Crafting UI has two compounding performance problems that explain both symptoms. **On every menu open**, `build()` runs the full filter pipeline **3 times** (once inside `loadRecipes()`, once in `computeMaxLayout()`, once for initial display), each time copying ~500+ recipes through ~10 intermediate `ArrayList` allocations and running ~500 affordability checks (each doing asset map lookups + inventory scans). This explains the **~1-second freeze on open**. **On every interaction**, `handleDataEvent()` runs the pipeline again, writes to a BSON file on disk (`savePrefs()`), and — in the `pruneInvalidMaterialGroups()` path — can run the pipeline **twice** per event. Since there is **no debouncing**, rapid tab switching or search typing queues up N heavyweight operations back-to-back on the server thread, explaining the **complete lock-up after repeated use**.
 
 ---
 

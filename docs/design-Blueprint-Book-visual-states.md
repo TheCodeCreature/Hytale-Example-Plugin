@@ -1,13 +1,13 @@
-# Design: Blueprint Bench Visual States
+# Design: Stencil Crafting Visual States
 
-**Feature:** F2605051400 — Blueprint Bench Visual State Enhancements  
+**Feature:** F2605051400 — Stencil Crafting Visual State Enhancements  
 **Stories:** S2605051405 (Selected Cell Highlight), S2605051410 (Per-Ingredient Cost Affordability), S2605051415 (Output Detail Panel States)
 
 ---
 
 ## 1. Overview
 
-This design adds three interconnected visual state layers to the Blueprint Bench UI: (1) selected-cell highlight on the recipe icon grid, (2) per-ingredient affordability feedback on cost cells, and (3) tri-state output detail panel (empty, affordable, unaffordable). All state changes use `cmd.set()` within the existing `updateRecipeGrid()` and `updateDetailPanel()` methods — no structural changes to the build/update lifecycle.
+This design adds three interconnected visual state layers to the Stencil Crafting UI: (1) selected-cell highlight on the recipe icon grid, (2) per-ingredient affordability feedback on cost cells, and (3) tri-state output detail panel (empty, affordable, unaffordable). All state changes use `cmd.set()` within the existing `updateRecipeGrid()` and `updateDetailPanel()` methods — no structural changes to the build/update lifecycle.
 
 ## 2. Design Priorities
 

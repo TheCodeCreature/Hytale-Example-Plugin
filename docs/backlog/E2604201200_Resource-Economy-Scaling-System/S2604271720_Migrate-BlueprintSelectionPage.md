@@ -21,11 +21,11 @@ As a **developer**, I want **BlueprintSelectionPage to query the shared RecipeFi
 - [ ] `resolveIngredientItemId()` is removed — delegates to `ResourceTypeResolver`
 - [ ] `ALLOWED_BENCHES` is removed — reads from the shared bench ID list
 - [ ] UI-specific concerns (set grouping, tab/set filtering, affordability, search) remain in `BlueprintSelectionPage`
-- [ ] No visible change to the Blueprint Bench UI behavior
+- [ ] No visible change to the Stencil Crafting UI behavior
 
 ### Scenarios
 **Same UI with shared data source**
-- **Given** a player opens the Blueprint Bench
+- **Given** a player opens the Stencil Crafting
 - **When** recipes load from the shared registry
 - **Then** the same tabs, set filters, icons, and ingredient displays appear as before
 

@@ -302,7 +302,7 @@ $C.@Container {
     #Title {
         Group {
             LayoutMode: Left;
-            $C.@Title { @Text = "Blueprint Bench:"; }     // stamp Title token
+            $C.@Title { @Text = "Stencil Crafting:"; }     // stamp Title token
             $C.@HeaderSearch {}                             // stamp HeaderSearch token
         }
     }

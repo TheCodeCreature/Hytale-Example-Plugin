@@ -11,7 +11,7 @@ created: 2026-04-30
 # Stencil Test Command
 
 ## Description
-A server command that gives the player a blueprint stencil item for a specified block type and recipe, enabling rapid manual testing of the stencil placement flow without requiring Blueprint Bench integration.
+A server command that gives the player a blueprint stencil item for a specified block type and recipe, enabling rapid manual testing of the stencil placement flow without requiring Stencil Crafting integration.
 
 ## Acceptance Criteria
 

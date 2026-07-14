@@ -20,7 +20,7 @@ When holding the Blueprint Book, middle-clicking on a placed block resolves it t
 - [ ] Middle-click on a natural block (no recipe) does nothing
 - [ ] Middle-click on an unencountered recipe does nothing (encounter gate)
 - [ ] Stencil is placed in the active hotbar slot
-- [ ] The produced stencil is identical to one obtained from the Blueprint Bench
+- [ ] The produced stencil is identical to one obtained from the Stencil Crafting
 
 ### Scenarios
 **Pick a crafted block**

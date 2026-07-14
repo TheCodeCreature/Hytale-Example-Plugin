@@ -14,13 +14,13 @@ cancellation-reason: "StructuralCraftingWindow client-side recipe dimming is uns
 # CraftRecipeEvent Interceptor for Placeholder
 
 ## User Story
-As a **player**, I want **the Blueprint Bench to intercept crafting when my placeholder is in the input slot** so that **the placeholder gets armed with the recipe instead of being consumed**.
+As a **player**, I want **the Stencil Crafting to intercept crafting when my placeholder is in the input slot** so that **the placeholder gets armed with the recipe instead of being consumed**.
 
 ## Acceptance Criteria
 
 ### Checklist
 - [ ] `PlaceBlockBenchInterceptor` listens for `CraftRecipeEvent.Pre`
-- [ ] Interceptor only fires when the bench is a Blueprint Bench (`Bench.Id: "Blueprint"`)
+- [ ] Interceptor only fires when the bench is a Stencil Crafting (`Bench.Id: "Blueprint"`)
 - [ ] Interceptor only fires when a `Block_Placeholder` is in the input slot
 - [ ] Interceptor cancels the crafting event — no resources consumed, no output produced
 - [ ] Interceptor arms the placeholder via `PlaceBlockMetadata.setArmedRecipeId()`
@@ -28,13 +28,13 @@ As a **player**, I want **the Blueprint Bench to intercept crafting when my plac
 - [ ] Standard crafting at all other benches is completely unaffected
 
 ### Scenarios
-**Placeholder at Blueprint Bench**
-- **Given** a `Block_Placeholder` is in the Blueprint Bench input slot
+**Placeholder at Stencil Crafting**
+- **Given** a `Block_Placeholder` is in the Stencil Crafting input slot
 - **When** the player clicks a recipe
 - **Then** `CraftRecipeEvent.Pre` is cancelled, placeholder is armed
 
-**Normal item at Blueprint Bench**
-- **Given** a normal crafting ingredient is in the Blueprint Bench input slot
+**Normal item at Stencil Crafting**
+- **Given** a normal crafting ingredient is in the Stencil Crafting input slot
 - **When** the player clicks a recipe
 - **Then** standard crafting occurs normally
 

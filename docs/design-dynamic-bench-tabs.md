@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-The Blueprint Bench UI currently hardcodes 3 `TabButton` children inside `#BenchTabs`, but the server discovers N bench IDs dynamically at runtime via `RecipeFilterRegistry`. This design replaces the hardcoded tabs with a reusable `BenchTabButton.ui` template that is dynamically appended in `build()`, following the exact same pattern used for `SetFilterButton.ui` in `#SetFilters`.
+The Stencil Crafting UI currently hardcodes 3 `TabButton` children inside `#BenchTabs`, but the server discovers N bench IDs dynamically at runtime via `RecipeFilterRegistry`. This design replaces the hardcoded tabs with a reusable `BenchTabButton.ui` template that is dynamically appended in `build()`, following the exact same pattern used for `SetFilterButton.ui` in `#SetFilters`.
 
 ## 2. Design Priorities
 
@@ -362,6 +362,6 @@ Nothing needs to be deleted after migration — this is a clean extension of the
 
 #### Unit: Manual verification
 - **Files**: none (runtime test)
-- **Contract**: Launch the Blueprint Bench UI and verify: (a) all discovered bench IDs appear as tabs, (b) tab switching works, (c) prefs persist and restore correctly, (d) stale prefs fall back to "All"
+- **Contract**: Launch the Stencil Crafting UI and verify: (a) all discovered bench IDs appear as tabs, (b) tab switching works, (c) prefs persist and restore correctly, (d) stale prefs fall back to "All"
 - **Dependencies**: all Wave 2 units
 - **Done when**: All 4 verification criteria pass

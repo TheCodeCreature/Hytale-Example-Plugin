@@ -7,12 +7,12 @@
 
 ## 1. Overview
 
-This is a Hytale server plugin (~40 classes) implementing a **12× resource economy** with a **Blueprint Stencil building tool**, **Blueprint Bench crafting UI**, **Blueprint Book block-picker**, and **Stencil Radial Menu**. The architecture is cleanly separated by concern (scaling, crafting, stencil lifecycle, UI), registries are initialized in a defined sequence, and documentation is thorough.
+This is a Hytale server plugin (~40 classes) implementing a **12× resource economy** with a **Blueprint Stencil building tool**, **Stencil Crafting crafting UI**, **Blueprint Book block-picker**, and **Stencil Radial Menu**. The architecture is cleanly separated by concern (scaling, crafting, stencil lifecycle, UI), registries are initialized in a defined sequence, and documentation is thorough.
 
 | System | Purpose |
 |--------|---------|
 | **Resource Scaling** | Multiplies all natural block drops by 12× and scales crafting costs to match, creating a more granular resource economy |
-| **Blueprint Bench** | Custom crafting UI that shows all placeable-block recipes, filterable by material type, set, affordability, and ingredient tree |
+| **Stencil Crafting** | Custom crafting UI that shows all placeable-block recipes, filterable by material type, set, affordability, and ingredient tree |
 | **Blueprint Stencil** | Items tagged with BSON metadata that let players place specific blocks by consuming recipe ingredients instead of the block item itself |
 | **Blueprint Book** | Held item that raycasts at blocks and picks up their recipe as a stencil; shows particle highlights on valid targets |
 | **Stencil Radial Menu** | Middle-click radial for quick stencil switching between items in the same "set" |
@@ -60,7 +60,7 @@ com/
     │   ├── StencilSyncSystem            # Inventory listener: restores qty 2 after placement
     │   └── StencilVisualManager         # Packet-based affordability glow on stencils
     ├── ui/                               # UI pages and controllers
-    │   ├── bench/                        # Blueprint Bench crafting UI
+    │   ├── bench/                        # Stencil Crafting crafting UI
     │   │   ├── BlueprintBookOpenUIInteraction
     │   │   ├── BlueprintSelectionPage   # Main bench page (grid, filters, ingredient tree)
     │   │   ├── RecipeFilterPipeline     # Pure-function pipeline (tab→search→tag→sort)

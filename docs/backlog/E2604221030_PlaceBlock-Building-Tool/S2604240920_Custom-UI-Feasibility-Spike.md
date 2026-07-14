@@ -12,7 +12,7 @@ created: 2026-04-24
 # Custom UI Feasibility Spike
 
 ## User Story
-As a **developer**, I want **to test the InteractiveCustomUIPage system's capabilities** so that **I know whether to use inline UI, .ui template files, or a hybrid approach for the Blueprint Bench**.
+As a **developer**, I want **to test the InteractiveCustomUIPage system's capabilities** so that **I know whether to use inline UI, .ui template files, or a hybrid approach for the Stencil Crafting**.
 
 ## Acceptance Criteria
 

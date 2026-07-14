@@ -1,4 +1,4 @@
-# Review: Load-Update Separation — Blueprint Bench Custom UI
+# Review: Load-Update Separation — Stencil Crafting Custom UI
 
 > **Date:** 2026-04-29  
 > **Scope:** Staged changes for Load-Update Separation pattern  

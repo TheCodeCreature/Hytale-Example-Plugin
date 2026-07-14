@@ -22,7 +22,7 @@ Arms a `Block_Placeholder` with a target recipe so the player can place blocks i
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] `CraftRecipeEvent.Pre` is intercepted when the input item is a `Block_Placeholder` at the Blueprint Bench
+- [ ] `CraftRecipeEvent.Pre` is intercepted when the input item is a `Block_Placeholder` at the Stencil Crafting
 - [ ] Standard crafting is cancelled — no items consumed, no output produced
 - [ ] The placeholder is armed with the recipe ID and target block type via BsonDocument metadata
 - [ ] The armed placeholder's quality swaps to Green (Uncommon) if resources are available
@@ -32,8 +32,8 @@ Arms a `Block_Placeholder` with a target recipe so the player can place blocks i
 - [ ] The armed placeholder retains its metadata across relog and server restart
 
 ### Scenarios
-**Player selects a recipe at the Blueprint Bench**
-- **Given** a `Block_Placeholder` is in the Blueprint Bench input slot
+**Player selects a recipe at the Stencil Crafting**
+- **Given** a `Block_Placeholder` is in the Stencil Crafting input slot
 - **When** the player clicks a recipe (e.g., "Cobble Wall")
 - **Then** crafting is cancelled, the placeholder is armed with "Cobble Wall" recipe metadata
 
@@ -53,7 +53,7 @@ Arms a `Block_Placeholder` with a target recipe so the player can place blocks i
 - **Then** the placeholder retains the armed recipe in their inventory
 
 **Normal crafting unaffected**
-- **Given** a normal crafting ingredient (not a placeholder) is in the Blueprint Bench input slot
+- **Given** a normal crafting ingredient (not a placeholder) is in the Stencil Crafting input slot
 - **When** the player selects a recipe
 - **Then** standard crafting occurs — resources consumed, output produced
 

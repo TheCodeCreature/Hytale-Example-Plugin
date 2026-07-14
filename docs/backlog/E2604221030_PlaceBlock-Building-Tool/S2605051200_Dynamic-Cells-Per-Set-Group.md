@@ -12,7 +12,7 @@ created: 2026-05-05
 # Dynamic Cells Per Set Group
 
 ## User Story
-As a **player**, I want **each set group in the Blueprint Bench grid to show all its items** so that **I can browse and select any recipe in a set without items being silently hidden**.
+As a **player**, I want **each set group in the Stencil Crafting grid to show all its items** so that **I can browse and select any recipe in a set without items being silently hidden**.
 
 ## Acceptance Criteria
 
@@ -26,12 +26,12 @@ As a **player**, I want **each set group in the Blueprint Bench grid to show all
 ### Scenarios
 **Set with 15 items**
 - **Given** the "Tavern" set has 15 recipes in the pipeline output
-- **When** the player views the Blueprint Bench grid
+- **When** the player views the Stencil Crafting grid
 - **Then** all 15 Tavern items are visible in the Tavern group
 
 **Set with 3 items**
 - **Given** the "Wool Red" set has 3 recipes
-- **When** the player views the Blueprint Bench grid
+- **When** the player views the Stencil Crafting grid
 - **Then** all 3 items display (no empty slots padded beyond the 3)
 
 ## Notes

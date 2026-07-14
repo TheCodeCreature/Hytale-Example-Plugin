@@ -1,4 +1,4 @@
-# Blueprint Bench Custom UI — Design Document
+# Stencil Crafting Custom UI — Design Document
 
 > **Date:** 2026-04-25
 > **Status:** Ready for implementation
@@ -105,7 +105,7 @@ sequenceDiagram
     participant PAGE as BlueprintSelectionPage
     participant CLIENT as Client UI
 
-    P->>INT: Right-click Blueprint Bench
+    P->>INT: Right-click Stencil Crafting
     INT->>PAGE: new BlueprintSelectionPage(playerRef)
     INT->>PAGE: openCustomPage(ref, store, page)
     PAGE->>PAGE: build(ref, cmd, evt, store)
@@ -138,7 +138,7 @@ sequenceDiagram
 
 ```
 ┌──────────────────────────────────────────────────┐
-│  Blueprint Bench                    [42 recipes]  │  ← Header (Title + CountLabel)
+│  Stencil Crafting                    [42 recipes]  │  ← Header (Title + CountLabel)
 ├──────────────────────────────────────────────────┤
 │  🔍 Search recipes...                             │  ← SearchInput (TextField)
 ├──────────────────────────────────────────────────┤
@@ -183,7 +183,7 @@ sequenceDiagram
 **Loaded via:** `commandBuilder.append("Pages/BlueprintBook/BlueprintBookPage.ui")`
 
 ```
-// Blueprint Bench — main page layout
+// Stencil Crafting — main page layout
 // Server populates #RecipeList dynamically via append() calls
 
 $Common = "../../Common.ui";
@@ -242,7 +242,7 @@ Group {
         LayoutMode: Left;
 
         Label #Title {
-            Text: "Blueprint Bench";
+            Text: "Stencil Crafting";
             FlexWeight: 1;
             Style: @HeaderStyle;
         }
@@ -318,7 +318,7 @@ Group {
 **Loaded via:** `commandBuilder.append("#RecipeList", "Pages/BlueprintBook/RecipeEntry.ui")`
 
 ```
-// Blueprint Bench — single recipe list entry
+// Stencil Crafting — single recipe list entry
 // Server sets #RecipeName.Text and applies SelectedStyle when active
 
 @DefaultStyle = LabelStyle(
@@ -608,7 +608,7 @@ src/main/java/com/UnobstructedThirdPerson/placeblock/ui/
 
 **Fix applied to `BlueprintBookOpenUIInteraction.java`:**
 - Added `PlaceBlockMetadata.isPlaceBlock(heldItem)` check in `firstRun()` BEFORE opening the page
-- If not holding a placeholder: sends `"§e[PlaceBlock] Hold a Block_Placeholder to use the Blueprint Bench."` and returns
+- If not holding a placeholder: sends `"§e[PlaceBlock] Hold a Block_Placeholder to use the Stencil Crafting."` and returns
 - The Confirm-time check in `BlueprintSelectionPage.handleDataEvent()` remains as a safety net
 
 ### Violation 2: Affordability indicators on recipe entries

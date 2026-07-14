@@ -1,4 +1,4 @@
-# Blueprint Bench Custom UI — Architectural Recommendation
+# Stencil Crafting Custom UI — Architectural Recommendation
 
 > **Date:** 2026-04-23  
 > **Status:** Recommendation (not full design doc — skeleton deferred until Phase B)  
@@ -9,7 +9,7 @@
 Abandon the `StructuralCraftingWindow` + `CraftRecipeEvent.Pre` interception approach. Replace with:
 
 - **Phase A (immediate):** `/placeblock` command to test arming + placement pipeline without any UI
-- **Phase B (production):** `InteractiveCustomUIPage` opened when player interacts with Blueprint Bench block, using `appendInline()` for UI layout
+- **Phase B (production):** `InteractiveCustomUIPage` opened when player interacts with Stencil Crafting block, using `appendInline()` for UI layout
 
 The interceptor (`PlaceBlockBenchInterceptor`) is removed. Shadow recipes and the mutator survive but change role. The placement pipeline (`PlaceBlockPlacementSystem`, `ResourceScanner`, `PlaceBlockMetadata`) is **completely unchanged**.
 
@@ -23,7 +23,7 @@ graph TB
     end
 
     subgraph "Phase B: Custom UI"
-        INTERACT["Player right-clicks Blueprint Bench"] --> INTERCEPT["Block interaction intercepted"]
+        INTERACT["Player right-clicks Stencil Crafting"] --> INTERCEPT["Block interaction intercepted"]
         INTERCEPT --> PAGE["BlueprintSelectionPage opened"]
         PAGE --> LIST["Recipe list populated from shadow recipes"]
         LIST --> SELECT["Player clicks Select"]
@@ -150,7 +150,7 @@ public class BlueprintSelectionPage
     
     // Constructor receives: playerRef, list of eligible shadow recipes, held placeholder color
     // build() → constructs UI via appendInline() with:
-    //   - Title: "Blueprint Bench"
+    //   - Title: "Stencil Crafting"
     //   - Recipe list (scrollable) with item icons and names
     //   - "Select" button bound to Activating event
     //   - Affordable/unaffordable visual distinction
@@ -185,7 +185,7 @@ The UI will be simpler than a full `StructuralCraftingWindow` but functional:
 **Two approaches, investigate both:**
 
 **Option 1: Block interaction codec (preferred)**  
-Register a new interaction type (like `PortableBenchInteraction`) on the Blueprint Bench block's item/interaction codec. When the player right-clicks the bench while holding a placeholder, open `BlueprintSelectionPage` instead of the standard bench.
+Register a new interaction type (like `PortableBenchInteraction`) on the Stencil Crafting block's item/interaction codec. When the player right-clicks the bench while holding a placeholder, open `BlueprintSelectionPage` instead of the standard bench.
 
 This requires changing the bench block JSON to use a custom interaction type instead of (or alongside) the default bench interaction. The `PortableBenchInteraction` pattern proves this works — it opens a page via `player.getPageManager().setPageWithWindows()`.
 

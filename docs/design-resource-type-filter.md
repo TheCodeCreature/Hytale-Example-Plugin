@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-The Resource Type Input Filter replaces the deprecated placeholder list section in the Blueprint Bench's right column with an icon grid of ~78 resource types. It introduces a three-state affordability mode (All / Inventory Driven / Resource Driven) that determines how recipes are filtered and dimmed. In Resource Driven mode, selected resource type icons filter recipes whose inputs match ANY selected type (loose OR), dimming non-matching recipes within visible sets and hiding sets with zero matches. The feature reuses the existing `GroupFilterButton.ui` template, mirrors the `MaterialGroups` build/bind/update pattern, and integrates as a new stage in `RecipeFilterPipeline`.
+The Resource Type Input Filter replaces the deprecated placeholder list section in the Stencil Crafting's right column with an icon grid of ~78 resource types. It introduces a three-state affordability mode (All / Inventory Driven / Resource Driven) that determines how recipes are filtered and dimmed. In Resource Driven mode, selected resource type icons filter recipes whose inputs match ANY selected type (loose OR), dimming non-matching recipes within visible sets and hiding sets with zero matches. The feature reuses the existing `GroupFilterButton.ui` template, mirrors the `MaterialGroups` build/bind/update pattern, and integrates as a new stage in `RecipeFilterPipeline`.
 
 ## 2. Scope
 

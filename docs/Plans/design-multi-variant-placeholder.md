@@ -119,7 +119,7 @@ graph TB
 
 ## 5. Sequence Diagram
 
-### Primary flow: Player arms a placeholder via Blueprint Bench UI
+### Primary flow: Player arms a placeholder via Stencil Crafting UI
 
 ```mermaid
 sequenceDiagram

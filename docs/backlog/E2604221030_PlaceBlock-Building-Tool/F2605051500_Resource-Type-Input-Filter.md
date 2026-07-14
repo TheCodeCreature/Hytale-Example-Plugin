@@ -11,7 +11,7 @@ created: 2026-05-05
 # Resource Type Input Filter
 
 ## Description
-Replace the deprecated placeholder list section in the Blueprint Bench right column with a searchable resource type icon grid. This acts as a third affordability/filter mode: players toggle resource type icons ON/OFF to discover recipes that use those resource types as inputs. The filter uses a loose OR — selecting multiple resource types shows recipes that use ANY of the selected types.
+Replace the deprecated placeholder list section in the Stencil Crafting right column with a searchable resource type icon grid. This acts as a third affordability/filter mode: players toggle resource type icons ON/OFF to discover recipes that use those resource types as inputs. The filter uses a loose OR — selecting multiple resource types shows recipes that use ANY of the selected types.
 
 ## Acceptance Criteria
 
@@ -28,7 +28,7 @@ Replace the deprecated placeholder list section in the Blueprint Bench right col
 
 ### Scenarios
 **Player opens bench**
-- **Given** the Blueprint Bench opens
+- **Given** the Stencil Crafting opens
 - **When** the page loads
 - **Then** the affordability mode is "Inventory Driven" (default)
 

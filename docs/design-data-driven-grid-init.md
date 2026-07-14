@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-The Blueprint Bench UI currently pre-allocates a fixed pool of UI elements using hardcoded constants (`MAX_SET_GROUPS=80`, `CELLS_PER_GROUP=30`, `MAX_SET_FILTERS=20`), creating up to 2,400 recipe cells regardless of actual data. This wastes memory and caps visible sets at an arbitrary number. This refactor replaces the hardcoded pool with a **data-driven build**: at first load, the full filter pipeline runs with no filtering to discover the maximum set count and per-set recipe counts, then allocates exactly the right number of UI elements. Subsequent interactions only use `cmd.set()` to toggle visibility — never `cmd.append()`.
+The Stencil Crafting UI currently pre-allocates a fixed pool of UI elements using hardcoded constants (`MAX_SET_GROUPS=80`, `CELLS_PER_GROUP=30`, `MAX_SET_FILTERS=20`), creating up to 2,400 recipe cells regardless of actual data. This wastes memory and caps visible sets at an arbitrary number. This refactor replaces the hardcoded pool with a **data-driven build**: at first load, the full filter pipeline runs with no filtering to discover the maximum set count and per-set recipe counts, then allocates exactly the right number of UI elements. Subsequent interactions only use `cmd.set()` to toggle visibility — never `cmd.append()`.
 
 ## 2. Design Priorities
 

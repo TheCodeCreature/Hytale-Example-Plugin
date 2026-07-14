@@ -28,7 +28,7 @@ Give builders a portable tool that eliminates the walk-back-to-bench interruptio
 | F2605071720 | Recipe Encounter Tracking | backlog |
 
 ## Context
-The existing Blueprint Bench (physical block) provides full recipe browsing, filtering, and stencil arming. The Blueprint Book is a field-convenience layer that operates on a strict subset of known recipes. It stays within the deferred-placement paradigm (stencils only, no resource consumption at acquisition time). The physical bench remains authoritative for discovery and full catalog access.
+The existing Stencil Crafting (physical block) provides full recipe browsing, filtering, and stencil arming. The Blueprint Book is a field-convenience layer that operates on a strict subset of known recipes. It stays within the deferred-placement paradigm (stencils only, no resource consumption at acquisition time). The physical bench remains authoritative for discovery and full catalog access.
 
 ## Design Doc
 See `docs/design-blueprint-book.md` for full system design.

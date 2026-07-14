@@ -1,4 +1,4 @@
-// Blueprint Bench — single ingredient cost cell
+// Stencil Crafting — single ingredient cost cell
 // ItemSlotButton provides auto item tooltips
 // Server sets #CostIcon.ItemId and #CostQty.Text
 

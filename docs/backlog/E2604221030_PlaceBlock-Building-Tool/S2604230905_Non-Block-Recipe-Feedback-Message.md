@@ -1,7 +1,7 @@
 ---
 id: S2604230905
 type: story
-title: "Non-Block Recipe Feedback at Blueprint Bench"
+title: "Non-Block Recipe Feedback at Stencil Crafting"
 status: backlog
 priority: critical
 feature: F2604221040
@@ -9,7 +9,7 @@ epic: E2604221030
 created: 2026-04-23
 ---
 
-# Non-Block Recipe Feedback at Blueprint Bench
+# Non-Block Recipe Feedback at Stencil Crafting
 
 ## User Story
 As a **player**, I want **clear feedback when I select a non-placeable recipe with my placeholder** so that **I understand why the tool didn't arm**.
@@ -24,7 +24,7 @@ As a **player**, I want **clear feedback when I select a non-placeable recipe wi
 
 ### Scenarios
 **Non-block recipe selected with placeholder**
-- **Given** a `Block_Placeholder` is in the Blueprint Bench input slot
+- **Given** a `Block_Placeholder` is in the Stencil Crafting input slot
 - **When** the player clicks a recipe for "Rope" (non-block output)
 - **Then** the player sees: "§c[PlaceBlock] This recipe does not produce a placeable block."
 - **And** the craft event is cancelled

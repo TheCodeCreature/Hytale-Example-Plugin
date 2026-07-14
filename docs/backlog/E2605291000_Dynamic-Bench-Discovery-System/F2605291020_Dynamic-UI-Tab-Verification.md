@@ -11,7 +11,7 @@ created: 2026-05-29
 # Dynamic UI Tab Verification
 
 ## Description
-Verify and adjust the Blueprint Bench UI to properly handle dynamically discovered bench tabs. Only benches whose recipes produce placeable blocks should get a tab — non-block recipe benches (e.g., tool-only crafting) are excluded from the tab bar. The UI already discovers tabs from `RecipeFilterRegistry`, but needs validation with more than the current 2 bench tabs.
+Verify and adjust the Stencil Crafting UI to properly handle dynamically discovered bench tabs. Only benches whose recipes produce placeable blocks should get a tab — non-block recipe benches (e.g., tool-only crafting) are excluded from the tab bar. The UI already discovers tabs from `RecipeFilterRegistry`, but needs validation with more than the current 2 bench tabs.
 
 ## Acceptance Criteria
 
@@ -25,12 +25,12 @@ Verify and adjust the Blueprint Bench UI to properly handle dynamically discover
 ### Scenarios
 **Many tabs render correctly**
 - **Given** BenchRegistry has discovered 6 bench IDs
-- **When** a player opens the Blueprint Bench UI
+- **When** a player opens the Stencil Crafting UI
 - **Then** 7 tabs appear (All + 6 benches) and all are selectable
 
 **Persisted tab survives restart**
 - **Given** a player selected the "Workbench" tab and closed the UI
-- **When** the player reopens the Blueprint Bench UI
+- **When** the player reopens the Stencil Crafting UI
 - **Then** "Workbench" is still the active tab
 
 ## Stories

@@ -1,11 +1,11 @@
 ---
-topic: "Debug: Shadow Recipe Registration Chain for Blueprint Bench"
+topic: "Debug: Shadow Recipe Registration Chain for Stencil Crafting"
 category: "Crafting / Recipe Registration"
 updated: 2026-04-23
 sources: ["CraftingPlugin.java (decompiled)", "BenchRecipeRegistry.java (decompiled)", "StructuralCraftingWindow.java (decompiled)", "AssetStore.java (decompiled)", "CraftingManager.java (decompiled)", "CraftingRecipe.java (decompiled)", "BenchRequirement.java (decompiled)", "BlueprintBookRecipeMutator.java", "LoadedAssetsEvent.java (decompiled)", "LoadAssetEvent.java (decompiled)"]
 ---
 
-# Debug: Shadow Recipe Registration Chain for Blueprint Bench
+# Debug: Shadow Recipe Registration Chain for Stencil Crafting
 
 ## Executive Summary
 

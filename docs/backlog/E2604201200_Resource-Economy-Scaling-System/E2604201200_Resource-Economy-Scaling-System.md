@@ -10,7 +10,7 @@ created: 2026-04-20
 # Resource Economy Scaling System
 
 ## Goal
-Provide a unified system for scaling crafting recipes, filtering recipe data, and managing bench-aware resource resolution across the plugin. Both the Blueprint Bench UI and the DropScaler pipeline share overlapping logic for recipe scanning, bench matching, and ResourceType resolution — this epic consolidates that into a single source of truth.
+Provide a unified system for scaling crafting recipes, filtering recipe data, and managing bench-aware resource resolution across the plugin. Both the Stencil Crafting UI and the DropScaler pipeline share overlapping logic for recipe scanning, bench matching, and ResourceType resolution — this epic consolidates that into a single source of truth.
 
 ## Success Criteria
 - [ ] One shared recipe registry serves both BlueprintSelectionPage and BenchRecipeRegistry

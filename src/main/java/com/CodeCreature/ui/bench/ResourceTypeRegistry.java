@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Static registry of all known resource types available in the Blueprint Bench
+ * Static registry of all known resource types available in the Stencil Crafting
  * resource type filter grid.
  *
  * <p>Each entry maps a {@code resourceTypeId} to an icon filename located at

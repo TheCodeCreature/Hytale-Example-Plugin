@@ -12,7 +12,7 @@ Replace the hardcoded `ResourceTypeRegistry` (73 static entries, 7 meta-filter g
 
 ## 2. Design Priorities
 
-1. **Reusability** — The tree data model, three-state checkbox, and collapsible group header are generic components usable in any context, not coupled to the Blueprint Bench
+1. **Reusability** — The tree data model, three-state checkbox, and collapsible group header are generic components usable in any context, not coupled to the Stencil Crafting
 2. **Simplicity** — Build once, read many; immutable tree; minimal state management
 3. **Framework-native patterns** — Use `Visible` toggling for collapse/expand (no engine extensions), `cmd.set()` for all state updates, single `TopScrolling` container
 4. **Testability** — Tree builder and selection model are pure logic with no UI dependencies

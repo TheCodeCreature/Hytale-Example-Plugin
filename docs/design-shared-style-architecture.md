@@ -304,7 +304,7 @@ Changes:
 - **Kept:** 8 bench-specific styles unchanged
 
 ```
-// Blueprint Bench — shared styles
+// Stencil Crafting — shared styles
 // Imported by BlueprintBookPage.ui and referenced by Java Value.ref
 //
 // FACADE PATTERN: Universal tokens are re-exported from SharedStyles.ui so that

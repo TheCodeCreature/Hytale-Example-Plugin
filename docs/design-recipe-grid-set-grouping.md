@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-Restructure the Blueprint Bench recipe grid from a flat `LeftCenterWrap` cell pool into per-set vertical groups, each headed by a static text label (e.g., "Ancient", "Kweebec", "Stone"). The design preserves the build-once / update-via-`cmd.set()` pattern and the `RecipeSelect:idx:i` event format by adding a lightweight **cell-slot-to-recipe indirection map**.
+Restructure the Stencil Crafting recipe grid from a flat `LeftCenterWrap` cell pool into per-set vertical groups, each headed by a static text label (e.g., "Ancient", "Kweebec", "Stone"). The design preserves the build-once / update-via-`cmd.set()` pattern and the `RecipeSelect:idx:i` event format by adding a lightweight **cell-slot-to-recipe indirection map**.
 
 ## 2. Design Priorities
 

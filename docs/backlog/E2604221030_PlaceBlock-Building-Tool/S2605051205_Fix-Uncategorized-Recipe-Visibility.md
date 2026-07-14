@@ -12,7 +12,7 @@ created: 2026-05-05
 # Fix Uncategorized Recipe Visibility
 
 ## User Story
-As a **player**, I want **recipes without a set assignment to appear in the grid when the Uncategorized toggle is on** so that **no recipes are silently hidden from the Blueprint Bench**.
+As a **player**, I want **recipes without a set assignment to appear in the grid when the Uncategorized toggle is on** so that **no recipes are silently hidden from the Stencil Crafting**.
 
 ## Acceptance Criteria
 

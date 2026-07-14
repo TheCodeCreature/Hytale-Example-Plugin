@@ -112,7 +112,7 @@ When a player crafts at a bench, recipe costs are scaled per-input to match the 
 When a player places blocks into the world, the economy enforces costs:
 
 - **Natural blocks** (stone, wood, dirt): PlacementCostScaler consumes 11 extra items at placement time, making each placement cost 12× total. This ensures the gather→place loop is symmetric.
-- **Crafted blocks** (walls, fences, decorations): The **PlaceBlock Building Tool** enables a deferred-consumption workflow. Instead of crafting a block into inventory and then placing it, the player selects a recipe at the **Blueprint Bench** — a dedicated workbench block placed in the world — arms a placeholder tool with that recipe, and places the block directly into the world. Resources are consumed from the player's inventory **at placement time**, not at recipe selection time.
+- **Crafted blocks** (walls, fences, decorations): The **PlaceBlock Building Tool** enables a deferred-consumption workflow. Instead of crafting a block into inventory and then placing it, the player selects a recipe at the **Stencil Crafting** — a dedicated workbench block placed in the world — arms a placeholder tool with that recipe, and places the block directly into the world. Resources are consumed from the player's inventory **at placement time**, not at recipe selection time.
 - **Auto-craft for stencils** (Contracts #15–#18): When placing crafted blocks via the stencil tool, if the player is missing some or all recipe intermediates, the system automatically resolves the deficit to raw materials. The intermediates are never physically created — raw materials are consumed directly. This eliminates the need to interrupt a build workflow to visit a crafting bench. Auto-craft prefers existing intermediates first (Contract #16), preserves break-return behavior unchanged (Contract #17), and displays both direct and raw costs in the UI (Contract #18).
 
 The Build phase is the **output** side of the economy — how resources leave the player's inventory and enter the world. Both placement systems ensure that `gather → build → break` is a closed loop: whatever was consumed to place a block is returned when it's broken.
@@ -125,18 +125,18 @@ The building economy uses three distinct bench types. Each serves a different pl
 |-------|------|----------|--------------|---------------|
 | **Builders Bench** | Physical block in world | Craft → item goes to inventory | Structural crafting categories (walls, stairs, doors, etc.) | Walk up, interact, craft normally |
 | **Portable Bench** | Handheld item (F-press) | Craft anywhere → item goes to inventory | Same categories as a physical bench, but mobile | Hold item, press F, craft on the go |
-| **Blueprint Bench** | Physical block in world | Select recipe → arm placeholder → place blocks directly | ALL placeable recipes from ANY registered bench | Walk up, interact with placeholder, select recipe, go build |
+| **Stencil Crafting** | Physical block in world | Select recipe → arm placeholder → place blocks directly | ALL placeable recipes from ANY registered bench | Walk up, interact with placeholder, select recipe, go build |
 
-**Why the Blueprint Bench exists alongside the Builders Bench:**
-The Builders Bench is a standard crafting station — you put in materials, you get a finished item in your inventory. The Blueprint Bench serves a fundamentally different purpose: it doesn't craft items at all. Instead, it **arms a tool** that lets you place blocks directly into the world, consuming resources only when you place each block. The Builders Bench answers "I need 5 walls in my inventory." The Blueprint Bench answers "I want to build a house wall by wall, right now."
+**Why the Stencil Crafting exists alongside the Builders Bench:**
+The Builders Bench is a standard crafting station — you put in materials, you get a finished item in your inventory. The Stencil Crafting serves a fundamentally different purpose: it doesn't craft items at all. Instead, it **arms a tool** that lets you place blocks directly into the world, consuming resources only when you place each block. The Builders Bench answers "I need 5 walls in my inventory." The Stencil Crafting answers "I want to build a house wall by wall, right now."
 
-The Blueprint Bench is a **new block**, cloned from the Builders Bench asset (`Bench_Builders`) but configured with a wider recipe scope — all placeable block and furniture recipes across all registered benches. It does NOT modify the existing Builders Bench.
+The Stencil Crafting is a **new block**, cloned from the Builders Bench asset (`Bench_Builders`) but configured with a wider recipe scope — all placeable block and furniture recipes across all registered benches. It does NOT modify the existing Builders Bench.
 
 ### PlaceBlock Building Tool — Player Experience
 
 The PlaceBlock tool transforms the building experience from a craft-then-place workflow into a **select-then-build** workflow:
 
-1. **At the Blueprint Bench**: The player walks up to a placed Blueprint Bench block in the world and interacts with it while holding a `Block_Placeholder` item. The bench displays all placeable recipes from every registered bench, filtered by what the player can afford (checking inventory). Selecting a recipe transforms the placeholder to show the selected block's icon — **no resources are consumed yet**.
+1. **At the Stencil Crafting**: The player walks up to a placed Stencil Crafting block in the world and interacts with it while holding a `Block_Placeholder` item. The bench displays all placeable recipes from every registered bench, filtered by what the player can afford (checking inventory). Selecting a recipe transforms the placeholder to show the selected block's icon — **no resources are consumed yet**.
 
 2. **In the world**: The armed placeholder integrates with the engine's block preview system, showing a ghost of the selected block at valid placement positions. The player sees real-time feedback via rarity-based color indicators:
    - **Blue** (Tool quality): No recipe selected — placeholder is unarmed
@@ -149,7 +149,7 @@ The PlaceBlock tool transforms the building experience from a craft-then-place w
 
 ```mermaid
 flowchart LR
-    A["Player opens Blueprint Bench\nwith Block_Placeholder"] --> B["Selects 'Cobble Wall' recipe\n(no resources consumed)"]
+    A["Player opens Stencil Crafting\nwith Block_Placeholder"] --> B["Selects 'Cobble Wall' recipe\n(no resources consumed)"]
     B --> C["Placeholder shows Cobble Wall icon\n(Green = 48 cobblestone available)"]
     C --> D["Right-click to place\n(48 cobblestone consumed\nfrom inventory)"]
     D --> E["Cobble Wall block exists in world"]
@@ -189,8 +189,8 @@ flowchart LR
 - **Consuming resources at recipe selection time in the PlaceBlock flow.** This would eliminate the core value of the building tool — the ability to freely browse recipes and change your mind. The deferred-consumption model is intentional.
 - **Allowing both PlacementCostScaler and PlaceBlock tool to fire on the same PlaceBlockEvent.** This would double-charge the player. The systems must be mutually exclusive based on whether the placed item is a natural block or an armed placeholder.
 - **Storing "placed-via-PlaceBlock" metadata on blocks.** Once placed, a block is just a block. Adding placement-source metadata would create a hidden distinction that violates Contract #14 and complicates the break-return logic.
-- **Using the Portable Bench (F-press handheld) for the PlaceBlock arming flow.** The Portable Bench is a craft-anywhere convenience tool that produces inventory items. The Blueprint Bench is a physically-placed workbench block that arms placeholder tools for deferred placement. These are fundamentally different workflows and must not be conflated.
-- **Modifying the existing Builders Bench to support PlaceBlock arming.** The Builders Bench is a standard crafting station. The Blueprint Bench is a new, separate block that coexists alongside it. Merging them would confuse two distinct player workflows (craft-to-inventory vs. arm-and-place).
+- **Using the Portable Bench (F-press handheld) for the PlaceBlock arming flow.** The Portable Bench is a craft-anywhere convenience tool that produces inventory items. The Stencil Crafting is a physically-placed workbench block that arms placeholder tools for deferred placement. These are fundamentally different workflows and must not be conflated.
+- **Modifying the existing Builders Bench to support PlaceBlock arming.** The Builders Bench is a standard crafting station. The Stencil Crafting is a new, separate block that coexists alongside it. Merging them would confuse two distinct player workflows (craft-to-inventory vs. arm-and-place).
 - **Returning raw materials when breaking a block placed via auto-craft.** Contract #4 is absolute: breaking returns recipe intermediates. Auto-craft is a consumption convenience that affects what leaves the player's inventory, NOT what comes back. A block placed via auto-craft (cobblestone consumed) must return bricks on break — same as a block placed via direct intermediates. This is the designed value exchange, not a bug.
 - **Enabling auto-craft at standard crafting benches.** Auto-craft is exclusively a stencil (PlaceBlock tool) feature. Bench crafting requires exact ingredients. Allowing auto-craft at benches would blur the distinction between the two workflows and remove the incentive for players to pre-craft intermediates.
 - **Silently auto-crafting without showing the player what will be consumed.** The UI must display both direct recipe costs and raw material costs (Contract #18). A player should never be surprised by what was deducted from their inventory after a stencil placement.

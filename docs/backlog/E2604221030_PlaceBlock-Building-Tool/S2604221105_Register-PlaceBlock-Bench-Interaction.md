@@ -1,7 +1,7 @@
 ---
 id: S2604221105
 type: story
-title: "Create Blueprint Bench Block Asset"
+title: "Create Stencil Crafting Block Asset"
 status: backlog
 priority: high
 feature: F2604221035
@@ -10,22 +10,22 @@ created: 2026-04-22
 updated: 2026-04-22
 ---
 
-# Create Blueprint Bench Block Asset
+# Create Stencil Crafting Block Asset
 
 ## User Story
-As a **player**, I want a **Blueprint Bench block I can place in the world** so that **I can interact with it to browse and select recipes for my PlaceBlock tool**.
+As a **player**, I want a **Stencil Crafting block I can place in the world** so that **I can interact with it to browse and select recipes for my PlaceBlock tool**.
 
 ## Acceptance Criteria
 
 ### Checklist
 - [ ] `Bench_Blueprint.json` item asset exists, cloned from `Bench_Builders.json`
-- [ ] Blueprint Bench has `Bench.Id: "Blueprint"` (distinct from `"Builders"`)
-- [ ] Blueprint Bench has `Bench.Type: "StructuralCrafting"`
-- [ ] Blueprint Bench has `BlockEntity.Components.BenchBlock: {}`
-- [ ] Blueprint Bench has combined categories from both Builders and Furniture benches
-- [ ] Blueprint Bench can be given via admin command, placed in the world, and right-clicked
+- [ ] Stencil Crafting has `Bench.Id: "Blueprint"` (distinct from `"Builders"`)
+- [ ] Stencil Crafting has `Bench.Type: "StructuralCrafting"`
+- [ ] Stencil Crafting has `BlockEntity.Components.BenchBlock: {}`
+- [ ] Stencil Crafting has combined categories from both Builders and Furniture benches
+- [ ] Stencil Crafting can be given via admin command, placed in the world, and right-clicked
 - [ ] Right-clicking opens a StructuralCrafting window with recipe categories
-- [ ] Blueprint Bench has distinct visual/icon from the Builders Bench (reuse or modify model/texture)
+- [ ] Stencil Crafting has distinct visual/icon from the Builders Bench (reuse or modify model/texture)
 
 ### Scenarios
 **Bench is placeable**
@@ -34,7 +34,7 @@ As a **player**, I want a **Blueprint Bench block I can place in the world** so 
 - **Then** a bench block appears with proper model and hitbox
 
 **Bench opens on interaction**
-- **Given** a Blueprint Bench is placed in the world
+- **Given** a Stencil Crafting is placed in the world
 - **When** the player right-clicks it
 - **Then** a StructuralCrafting window opens
 

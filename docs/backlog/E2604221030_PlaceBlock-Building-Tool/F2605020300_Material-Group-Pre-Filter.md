@@ -11,7 +11,7 @@ created: 2026-05-02
 # Material Group Pre-Filter
 
 ## Description
-A horizontal row of icon buttons above the set filter sidebar in the Blueprint Bench UI. Each button represents a material group (Wood, Rock, Furniture, etc.) auto-derived from set name prefixes. Acts as a pre-filter: selecting "Wood" hides non-Wood sets from the left sidebar column.
+A horizontal row of icon buttons above the set filter sidebar in the Stencil Crafting UI. Each button represents a material group (Wood, Rock, Furniture, etc.) auto-derived from set name prefixes. Acts as a pre-filter: selecting "Wood" hides non-Wood sets from the left sidebar column.
 
 ## Acceptance Criteria
 

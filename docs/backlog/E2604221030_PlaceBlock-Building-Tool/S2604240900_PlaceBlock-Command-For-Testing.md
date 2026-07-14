@@ -49,6 +49,6 @@ As a **player**, I want **a `/placeblock` command to assign, clear, list, and in
 - **Then** they see a list of original recipe IDs that can be assigned
 
 ## Notes
-- This is a temporary testing tool — will be superseded by the custom Blueprint Bench UI (Phase 2b)
+- This is a temporary testing tool — will be superseded by the custom Stencil Crafting UI (Phase 2b)
 - Uses existing `PlaceBlockMetadata` for all state operations
 - Resolves original recipe IDs from shadow recipes via `BlueprintBookRecipeMutator.getOriginalRecipeId()`

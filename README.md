@@ -1,8 +1,8 @@
-# Hytale Plugin Template
+# Stencil Crafting Plugin
 
-A template for Hytale java plugins. Created by [Up](https://github.com/UpcraftLP), and slightly modified by Kaupenjoe. 
+A Hytale Java plugin centered on Stencil Crafting workflows, with the Blueprint Book as the in-game stencil tool.
 
-### Configuring the Template
+### Configuring the Project
 If you for example installed the game in a non-standard location, you will need to tell the project about that.
 The recommended way is to create a file at `%USERPROFILE%/.gradle/gradle.properties` to set these properties globally.
 

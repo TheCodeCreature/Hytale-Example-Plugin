@@ -1,4 +1,4 @@
-// Blueprint Bench — single recipe icon cell (static, no drag)
+// Stencil Crafting — single recipe icon cell (static, no drag)
 // Group root for background, ItemIcon for display, TextButton overlay for clicks
 // Server sets #CellIcon.ItemId and #CellDim.Visible via #RecipeGrid[i]
 

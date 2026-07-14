@@ -2,7 +2,7 @@
 
 ## 1. Problem Statement
 
-The Blueprint Bench UI causes two server-thread freezes:
+The Stencil Crafting UI causes two server-thread freezes:
 
 1. **~1s freeze on every menu open** — `build()` runs the filter pipeline 3 times over 500+ recipes, rebuilds the `InputRecipe` list identically in 3 places, and emits 60+ INFO-level log lines with eager string concatenation.
 2. **Complete freeze after repeated interactions** — `savePrefs()` performs synchronous disk I/O on every single event, and `pruneInvalidMaterialGroups()` can trigger a second pipeline run within the same event cycle.
@@ -457,7 +457,7 @@ None. All changes are internal to `BlueprintSelectionPage` and involve no API ch
 
 #### Unit: Smoke test
 - **Files**: none (manual validation)
-- **Contract**: Open the Blueprint Bench menu, switch tabs, toggle filters, search, select recipes, close. Verify identical UI behavior. Check server log output volume is reduced.
+- **Contract**: Open the Stencil Crafting menu, switch tabs, toggle filters, search, select recipes, close. Verify identical UI behavior. Check server log output volume is reduced.
 - **Dependencies**: all Waves 1-3
 - **Done when**: No regressions in UI behavior. Server log confirms single pipeline execution per `build()` and no `savePrefs` disk writes during interaction.
 

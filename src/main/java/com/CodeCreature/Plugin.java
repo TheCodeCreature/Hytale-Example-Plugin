@@ -72,9 +72,9 @@ public class Plugin extends JavaPlugin {
         FeatureFlags.initialize(this.getDataDirectory());
         com.CodeCreature.registry.BenchRegistry.initialize(this.getDataDirectory());
 
-        // Register Blueprint Bench interaction type (opens custom UI page)
+        // Register Stencil Crafting interaction type (opens custom UI page)
         this.getCodecRegistry(Interaction.CODEC)
-                .register("BlueprintBook_OpenUI", BlueprintBookOpenUIInteraction.class, BlueprintBookOpenUIInteraction.CODEC);
+            .register("StencilCrafting_OpenUI", BlueprintBookOpenUIInteraction.class, BlueprintBookOpenUIInteraction.CODEC);
 
         // Register Blueprint Book pick-stencil interaction type
         this.getCodecRegistry(Interaction.CODEC)

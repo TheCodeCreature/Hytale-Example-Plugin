@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-The Bench Tab Grouping system allows multiple discovered bench IDs to be combined into single UI tabs in the Blueprint Bench page. It supports two modes: **auto-merge** (benches with similar names are grouped automatically by shared prefix) and **manual merge** (explicit JSON configuration maps arbitrary bench IDs into named groups). A single new class, `BenchTabGrouper`, sits between raw bench ID discovery and tab construction, mapping raw IDs to group keys so that the existing `RecipeFilterPipeline` requires **zero changes**.
+The Bench Tab Grouping system allows multiple discovered bench IDs to be combined into single UI tabs in the Stencil Crafting page. It supports two modes: **auto-merge** (benches with similar names are grouped automatically by shared prefix) and **manual merge** (explicit JSON configuration maps arbitrary bench IDs into named groups). A single new class, `BenchTabGrouper`, sits between raw bench ID discovery and tab construction, mapping raw IDs to group keys so that the existing `RecipeFilterPipeline` requires **zero changes**.
 
 ## 2. Design Priorities
 

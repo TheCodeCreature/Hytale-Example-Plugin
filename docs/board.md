@@ -38,7 +38,7 @@ pie title Backlog Distribution
 | F2605281000 | Feature | Centralized Debug Logging Utility | E2605181400 | high |
 | F2605261200 | Feature | Decompile Update API Compatibility | E2605181400 | critical |
 | S2605261205 | Story | Fix Missing Vector Types After Decompile Update | E2605181400 | critical |
-| F2605181420 | Feature | Blueprint Bench Page Decomposition | E2605181400 | medium |
+| F2605181420 | Feature | Stencil Crafting Page Decomposition | E2605181400 | medium |
 | S2605051200 | Story | Dynamic Cells Per Set Group | E2604221030 | high |
 | S2605051205 | Story | Fix Uncategorized Recipe Visibility | E2604221030 | high |
 | E2604221030 | Epic | PlaceBlock Building Tool | — | high |
@@ -139,7 +139,7 @@ pie title Backlog Distribution
 | S2604271720 | Story | Migrate BlueprintSelectionPage to Shared Registry | E2604201200 | high |
 | S2604271730 | Story | Migrate BenchRecipeRegistry to Shared Registry | E2604201200 | high |
 | S2604271740 | Story | Unify Bench ID Definitions | E2604201200 | high |
-| F2604221035 | Feature | Blueprint Bench Block Asset | E2604221030 | high |
+| F2604221035 | Feature | Stencil Crafting Block Asset | E2604221030 | high |
 | F2604221040 | Feature | Recipe Selection & Placeholder Transformation | E2604221030 | high |
 | F2604221045 | Feature | Block Preview & Placement | E2604221030 | high |
 | S2604221100 | Story | Create Block_Placeholder Item Assets | E2604221030 | high |
@@ -176,7 +176,7 @@ pie title Backlog Distribution
 ### E2604221030 — PlaceBlock Building Tool
 **Status:** in-progress | **Priority:** high
 
-Select-then-build workflow at the **Blueprint Bench**. Player arms a placeholder tool with a recipe, sees a ghost block preview, and right-clicks to place — consuming resources at placement time from inventory.
+Select-then-build workflow at the **Stencil Crafting**. Player arms a placeholder tool with a recipe, sees a ghost block preview, and right-clicks to place — consuming resources at placement time from inventory.
 
 **UI PIVOT (2026-04-24):** StructuralCraftingWindow approach abandoned — client dims recipes because the placeholder doesn't match expected materials. Moving to:
 - **Phase 2a:** Command-based arming (`/placeblock assign|clear|list|info`) for pipeline testing
@@ -187,10 +187,10 @@ Select-then-build workflow at the **Blueprint Bench**. Player arms a placeholder
 |-------|--------|--------|
 | Builders Bench | "I need items" | Crafted item → inventory |
 | Portable Bench | "I need items, away from bench" | Same, but mobile |
-| **Blueprint Bench** | "I want to build in the world" | Armed placeholder → deferred placement |
+| **Stencil Crafting** | "I want to build in the world" | Armed placeholder → deferred placement |
 
 **Phases:**
-1. ~~Bench Asset~~ — **Done.** Blueprint Bench JSON, shadow recipes, PlaceBlock ResourceType
+1. ~~Bench Asset~~ — **Done.** Stencil Crafting JSON, shadow recipes, PlaceBlock ResourceType
 2. **Recipe Selection** — In progress. Phase 2a (command testing) active. Phase 2b (custom UI) backlog.
 3. **Placement** — Backlog. Block preview, right-click handler, atomic resource consumption
 4. **Feedback** — Backlog. Rarity indicators, inventory change events

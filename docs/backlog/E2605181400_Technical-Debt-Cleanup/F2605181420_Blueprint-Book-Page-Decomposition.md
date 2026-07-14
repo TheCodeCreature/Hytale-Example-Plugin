@@ -1,14 +1,14 @@
 ---
 id: F2605181420
 type: feature
-title: "Blueprint Bench Page Decomposition"
+title: "Stencil Crafting Page Decomposition"
 status: done
 priority: medium
 epic: E2605181400
 created: 2026-05-18
 ---
 
-# Blueprint Bench Page Decomposition
+# Stencil Crafting Page Decomposition
 
 ## Description
 Extract two render-only controllers from `BlueprintSelectionPage` following the proven `IngredientTreeGridController` pattern: `GridLayoutController` owns grid rendering and indirection arrays (~150 lines), `DetailPanelController` owns the cost/output detail panel (~100 lines). The page remains the event entry point per `InteractiveCustomUIPage` contract but delegates rendering to these focused controllers.

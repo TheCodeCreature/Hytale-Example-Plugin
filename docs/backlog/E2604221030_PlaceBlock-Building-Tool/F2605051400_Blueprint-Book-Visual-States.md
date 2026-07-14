@@ -1,17 +1,17 @@
 ---
 id: F2605051400
 type: feature
-title: "Blueprint Bench Visual States"
+title: "Stencil Crafting Visual States"
 status: backlog
 priority: high
 epic: E2604221030
 created: 2026-05-05
 ---
 
-# Blueprint Bench Visual States
+# Stencil Crafting Visual States
 
 ## Description
-Enhance the Blueprint Bench UI with interconnected visual state feedback across three areas: selected cell highlighting in the recipe grid, per-ingredient affordability in the cost grid, and output item detail panel states (no-recipe, affordable, unaffordable).
+Enhance the Stencil Crafting UI with interconnected visual state feedback across three areas: selected cell highlighting in the recipe grid, per-ingredient affordability in the cost grid, and output item detail panel states (no-recipe, affordable, unaffordable).
 
 ## Acceptance Criteria
 

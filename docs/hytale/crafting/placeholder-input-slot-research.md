@@ -362,7 +362,7 @@ If `Block_Placeholder` matches ALL ResourceTypeIds, the option grid shows ALL st
 
 ---
 
-## 11. Blueprint Bench Investigation — Why Items Are Not Highlighted
+## 11. Stencil Crafting Investigation — Why Items Are Not Highlighted
 
 ### 11.1 Root Cause: CraftingPlugin Registry Not Updated After Mutation
 
@@ -530,7 +530,7 @@ if (inputMaterials.size() == 1 && CraftingManager.matches(inputMaterials.getFirs
 
 Furniture recipes typically have multiple inputs (e.g., `Wood_All × 3 + Ingredient_Fibre × 4`). Since `inputs.size() != 1`, they are always excluded from the option grid. This is by design — StructuralCrafting is built for single-input "transform one material into structural variants" workflows.
 
-**Impact on the Blueprint Bench:**
+**Impact on the Stencil Crafting:**
 - Builders recipes (single input) → ✅ Will appear in option grid after re-indexing fix
 - Furniture recipes (multi input) → ❌ Will NOT appear in option grid
 - Furniture recipe inputs WILL contribute to `generateInventoryHints` (highlighting) because `matchesAnyRecipe()` checks `input[inputSlotIndex]` without the `size() == 1` filter — this could cause misleading highlights for items that match Furniture recipes but can't actually be crafted at this bench
@@ -575,7 +575,7 @@ The recommended approach from Section 6 (Approach A) remains valid. Add a compre
 
 ### 12.2 Collecting Required ResourceTypeIds
 
-After the Section 11 fix (re-indexing via `loadAssets()`), the Blueprint BenchRecipeRegistry will exist. We can collect ResourceTypeIds from it:
+After the Section 11 fix (re-indexing via `loadAssets()`), the Stencil CraftingRecipeRegistry will exist. We can collect ResourceTypeIds from it:
 
 ```java
 // After BlueprintBookRecipeMutator.mutate() + loadAssets() re-indexing

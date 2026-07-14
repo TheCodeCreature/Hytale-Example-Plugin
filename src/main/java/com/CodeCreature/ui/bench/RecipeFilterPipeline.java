@@ -4,7 +4,7 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 /**
- * Sequential, composable filter pipeline for Blueprint Bench recipes.
+ * Sequential, composable filter pipeline for Stencil Crafting recipes.
  *
  * <p>Replaces the interleaved filtering logic previously split across
  * {@code BlueprintSelectionPage.applyFilter()} and {@code buildRecipeList()}.

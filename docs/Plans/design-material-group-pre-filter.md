@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-The Material Group Pre-Filter adds a horizontal row of icon buttons above the set filter sidebar in the Blueprint Bench UI. Each button represents a **material group** auto-derived from set name prefixes (e.g., "Wood" from `Wood_Hardwood`, "Rock" from `Rock_Shale_Brick`). Selecting one or more groups filters the set sidebar to only show matching sets, acting as a two-tier filter: groups → sets → recipes.
+The Material Group Pre-Filter adds a horizontal row of icon buttons above the set filter sidebar in the Stencil Crafting UI. Each button represents a **material group** auto-derived from set name prefixes (e.g., "Wood" from `Wood_Hardwood`, "Rock" from `Rock_Shale_Brick`). Selecting one or more groups filters the set sidebar to only show matching sets, acting as a two-tier filter: groups → sets → recipes.
 
 This reduces cognitive load when the set list grows large (20+ sets across multiple material families) by letting players narrow to a material family before picking individual sets.
 

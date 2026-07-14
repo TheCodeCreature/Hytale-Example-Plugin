@@ -25,7 +25,7 @@ Create a SharedStyles.ui file containing universal style tokens that apply acros
 ### Scenarios
 **Existing BlueprintBook styles still work**
 - **Given** BlueprintBookStyles.ui now imports SharedStyles.ui
-- **When** a player opens the Blueprint Bench
+- **When** a player opens the Stencil Crafting
 - **Then** all filter buttons, recipe entries, cost cells, and detail panel display identically to before
 
 **SharedStyles.ui is importable by new subsystems**

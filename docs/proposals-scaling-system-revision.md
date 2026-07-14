@@ -73,7 +73,7 @@ Regardless of which proposal is adopted, these player-facing guarantees must hol
 |---|----------|-----------|
 | **C1** | **Gather→Craft→Place→Break is a lossless closed loop.** Whatever the player spends to place a block, they get back when they break it. | Trust relationship between player and economy. |
 | **C2** | **Multi-tier crafting preserves vanilla cost ratios.** A Tier-N item costs M× its vanilla raw material cost, not M^N. | Exponential costs make mid-to-late content inaccessible. |
-| **C3** | **Per-placement costs are legible.** The Blueprint Bench and Stencil Radial must display costs a player can mentally trace back to "how many blocks do I mine?" | If costs are incomprehensible, the building tool fails. |
+| **C3** | **Per-placement costs are legible.** The Stencil Crafting and Stencil Radial must display costs a player can mentally trace back to "how many blocks do I mine?" | If costs are incomprehensible, the building tool fails. |
 | **C4** | **Granularity enables sub-block precision.** Recipes that produce N items from 1 input must resolve to whole-number per-unit costs. | Stencil per-placement consumption can't handle fractions. |
 | **C5** | **The system is invisible to the player.** No lag, no unexplained mismatches, no economy artifacts. | The economy is infrastructure, not a visible feature. |
 | **C6** | **Break returns recipe ingredients, not raw materials** (for crafted blocks). Breaking stairs returns bricks, not cobblestone. | Ingredient-return enables fluid rebuilding within the crafting tier. |
@@ -130,7 +130,7 @@ All downstream systems read `recipe.getInput()` — they don't care whether the 
 |-----------|-------|
 | Simplest fix — 1 new class, 1 modified method | Must correctly classify `ResourceTypeId` inputs (abstract → concrete resolution) |
 | No multiplier change — best integer divisibility (12) | Items that are both natural AND craftable need careful handling |
-| All downstream systems untouched | Blueprint Bench shows small numbers for crafted inputs (e.g., "3 brick") next to large raw-input numbers (e.g., "12 stone") — minor UX inconsistency |
+| All downstream systems untouched | Stencil Crafting shows small numbers for crafted inputs (e.g., "3 brick") next to large raw-input numbers (e.g., "12 stone") — minor UX inconsistency |
 | Preserves crafting identity — break returns intermediates | |
 | Low risk — easy to roll back | |
 

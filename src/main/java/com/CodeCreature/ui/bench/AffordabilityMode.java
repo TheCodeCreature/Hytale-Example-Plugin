@@ -3,7 +3,7 @@ package com.CodeCreature.ui.bench;
 import com.hypixel.hytale.server.core.Message;
 
 /**
- * Three-state affordability mode for the Blueprint Bench filter system.
+ * Three-state affordability mode for the Stencil Crafting filter system.
  *
  * <p>Controls how recipes are filtered and dimmed in the recipe grid:
  * <ul>

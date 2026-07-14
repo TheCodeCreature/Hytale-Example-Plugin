@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-The codebase contains **~100 source files** across 15 packages. The **blueprint system** (Blueprint Book, Blueprint Bench, Stencil, PlaceBlock UI) accounts for **~50 files** — roughly half the codebase. The remaining **~50 files** belong to four independent systems: Camera Transparency, Shape Engine, Drop Scaling/Resource Economy, Portable Bench, Movement, Preview, and Debug utilities. The critical boundary is the `resourcecollection/` package, which is **shared infrastructure** — 7 files are required by the blueprint system, while 11 files serve only the drop-scaling pipeline.
+The codebase contains **~100 source files** across 15 packages. The **blueprint system** (Blueprint Book, Stencil Crafting, Stencil, PlaceBlock UI) accounts for **~50 files** — roughly half the codebase. The remaining **~50 files** belong to four independent systems: Camera Transparency, Shape Engine, Drop Scaling/Resource Economy, Portable Bench, Movement, Preview, and Debug utilities. The critical boundary is the `resourcecollection/` package, which is **shared infrastructure** — 7 files are required by the blueprint system, while 11 files serve only the drop-scaling pipeline.
 
 ## System Dependency Diagram
 
@@ -181,12 +181,12 @@ graph TB
 | 15 | `placeblock/ResourceScanner.java` | _(TODO — not yet implemented)_ | Future: scan player inventory + chests for resources |
 | 16 | `placeblock/ResourceSnapshot.java` | _(none — data record)_ | Immutable resource snapshot for affordability checks |
 
-### `placeblock/ui/` — Blueprint Bench UI (8 files)
+### `placeblock/ui/` — Stencil Crafting UI (8 files)
 
 | # | File | Key Dependencies (internal) | Reason |
 |---|------|---------------------------|--------|
-| 17 | `placeblock/ui/BlueprintSelectionPage.java` | `PlaceBlockCostUtil`, `RecipeAffordabilityResolver`, `ResolvedIngredient`, `StencilMetadata`, `BenchCategory`, `FilteredRecipeEntry`, `RecipeFilterRegistry`, `IngredientTree*`, `RecipeFilterPipeline` | Main Blueprint Bench UI page — recipe grid, filters, detail panel |
-| 18 | `placeblock/ui/BlueprintBookOpenUIInteraction.java` | `BlueprintSelectionPage` | Interaction type that opens the Blueprint Bench custom page |
+| 17 | `placeblock/ui/BlueprintSelectionPage.java` | `PlaceBlockCostUtil`, `RecipeAffordabilityResolver`, `ResolvedIngredient`, `StencilMetadata`, `BenchCategory`, `FilteredRecipeEntry`, `RecipeFilterRegistry`, `IngredientTree*`, `RecipeFilterPipeline` | Main Stencil Crafting UI page — recipe grid, filters, detail panel |
+| 18 | `placeblock/ui/BlueprintBookOpenUIInteraction.java` | `BlueprintSelectionPage` | Interaction type that opens the Stencil Crafting custom page |
 | 19 | `placeblock/ui/BlueprintBookPrefs.java` | `AffordabilityMode` | Serializable preferences for bench UI state |
 | 20 | `placeblock/ui/BlueprintBookPrefsStore.java` | `BlueprintBookPrefs` | File-based persistence for per-player bench preferences |
 | 21 | `placeblock/ui/AffordabilityMode.java` | _(none — enum)_ | Three-state affordability filter mode |

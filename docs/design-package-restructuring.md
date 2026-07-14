@@ -61,7 +61,7 @@ com/
     │   └── StencilVisualManager.java      ── per-player visual affordability overrides
     │
     ├── ui/                               ── LAYER 4: All user-facing UI
-    │   ├── bench/                         ── Blueprint Bench UI
+    │   ├── bench/                         ── Stencil Crafting UI
     │   │   ├── BlueprintSelectionPage.java    ── main bench UI: grid, filters, detail, tree
     │   │   ├── BlueprintBookOpenUIInteraction.java ── interaction: opens bench page
     │   │   ├── BlueprintBookPrefs.java       ── serializable bench UI preferences
@@ -172,7 +172,7 @@ com/
 | `crafting/` | **D** — Dependency Inversion | `RecipeAffordabilityResolver` depends on abstractions from `scaling/` (`BenchCategory`, `ResourceTypeResolver`, `NaturalResourceRegistry`) — not on `DropScaler` or processors. |
 | `stencil/` | **S** — Single Responsibility | One concern: stencil item lifecycle — metadata, placement interception, sync, destruction, visual feedback. |
 | `stencil/` | **L** — Liskov Substitution | `StencilMetadata.isStencil()` is a pure predicate on any `ItemStack`. Stencil items are substitutable wherever items are expected; the ECS systems only add behavior. |
-| `ui/bench/` | **S** — Single Responsibility | One concern: Blueprint Bench UI rendering and interaction. |
+| `ui/bench/` | **S** — Single Responsibility | One concern: Stencil Crafting UI rendering and interaction. |
 | `ui/ingredienttree/` | **S** — Single Responsibility | One concern: the ingredient filter tree data structure and its UI controller. |
 | `ui/radial/` | **S** — Single Responsibility | One concern: stencil radial menu input + rendering. |
 | `ui/blueprintbook/` | **S** — Single Responsibility | One concern: blueprint book visual feedback and stencil-creation interaction. |
@@ -347,7 +347,7 @@ Updated migration for this fix:
 | `registry/` | 4 | Recipe indexing: per-bench registries, filter registry, filtered entry records |
 | `crafting/` | 6 | Cost resolution: affordability, cost calculation, recipe mutation, inventory scanning |
 | `stencil/` | 4 | Stencil lifecycle: placement, sync, drop destruction, visual overrides |
-| `ui/bench/` | 7 | Blueprint Bench UI: page, interaction, prefs, filters |
+| `ui/bench/` | 7 | Stencil Crafting UI: page, interaction, prefs, filters |
 | `ui/ingredienttree/` | 10 | Ingredient tree: data structure, builder, controller, nodes, enums |
 | `ui/radial/` | 3 | Radial menu: page, input listener, segment data |
 | `ui/blueprintbook/` | 2 | Blueprint book: particle effects, pick interaction |

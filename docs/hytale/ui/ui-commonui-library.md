@@ -204,7 +204,7 @@ Our [BlueprintBookPage.ui](../../../src/main/resources/Common/UI/Custom/Pages/Bl
 $C.@Container {
     #Title {
         Group { LayoutMode: Left;
-            $C.@Title { @Text = "Blueprint Bench:"; }
+            $C.@Title { @Text = "Stencil Crafting:"; }
             $C.@Title #ActiveBenchLabel { Text: "All"; }
         }
         $C.@HeaderSearch {}

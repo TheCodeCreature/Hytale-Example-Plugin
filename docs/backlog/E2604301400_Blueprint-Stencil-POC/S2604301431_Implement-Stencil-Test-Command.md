@@ -12,7 +12,7 @@ created: 2026-04-30
 # Implement Stencil Test Command
 
 ## User Story
-As a **developer**, I want a `/stencil` command that gives me a blueprint stencil item so that I can test the stencil placement flow without needing the Blueprint Bench UI.
+As a **developer**, I want a `/stencil` command that gives me a blueprint stencil item so that I can test the stencil placement flow without needing the Stencil Crafting UI.
 
 ## Acceptance Criteria
 

@@ -1,4 +1,4 @@
-// Blueprint Bench — single recipe list entry
+// Stencil Crafting — single recipe list entry
 // Server sets TextSpans and applies @SelectedEntryStyle or @UnaffordableEntryStyle
 // See docs/Plans/design-Blueprint-Book-ui.md for design spec
 

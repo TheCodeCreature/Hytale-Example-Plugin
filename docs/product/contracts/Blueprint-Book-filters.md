@@ -1,13 +1,13 @@
 ---
-area: "Blueprint Bench Filter System"
+area: "Stencil Crafting Filter System"
 updated: 2026-05-05
 ---
 
-# Blueprint Bench Filters — Behavioral Contract
+# Stencil Crafting Filters — Behavioral Contract
 
 ## Player Experience Goal
 
-The Blueprint Bench is the player's **building catalog**. When a player opens it, they should instantly orient: "What can I build right now with what I have?" The filter system must feel like **progressive narrowing** — each control reduces the visible set logically, and no filter interaction produces a confusing or empty result that contradicts what the player just saw.
+The Stencil Crafting is the player's **building catalog**. When a player opens it, they should instantly orient: "What can I build right now with what I have?" The filter system must feel like **progressive narrowing** — each control reduces the visible set logically, and no filter interaction produces a confusing or empty result that contradicts what the player just saw.
 
 ## Filter Controls — What Each One Does
 

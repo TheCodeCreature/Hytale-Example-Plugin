@@ -18,7 +18,7 @@ import com.CodeCreature.util.DebugLogger;
 import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
- * Owns detail panel rendering for the Blueprint Bench selection page.
+ * Owns detail panel rendering for the Stencil Crafting selection page.
  * Renders the output icon, name, and per-ingredient cost grid with
  * affordability coloring.
  */

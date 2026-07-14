@@ -17,7 +17,7 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Maps raw bench IDs (discovered from recipes) into grouped tab IDs for
- * the Blueprint Bench UI.
+ * the Stencil Crafting UI.
  *
  * <p>Supports two grouping modes:
  * <ul>

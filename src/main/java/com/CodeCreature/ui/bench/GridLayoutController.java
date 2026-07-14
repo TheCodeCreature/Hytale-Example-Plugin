@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Owns grid rendering for the Blueprint Bench selection page.
+ * Owns grid rendering for the Stencil Crafting selection page.
  * Manages cell layout, set group containers, and the indirection map
  * that translates flat slot indices to displayed recipe indices.
  */

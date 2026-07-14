@@ -229,7 +229,7 @@ playerRef.getPacketHandler().writeNoCache(update);
 | `overlay` | `Value<PatchStyle>` | **Custom overlay texture** |
 | `icon` | `Value<PatchStyle>` | Custom icon override |
 
-**Relevance**: `ItemGridSlot` is for custom UI pages (like the Blueprint Bench), not the native hotbar. The hotbar rendering uses the `ItemBase` data directly. However, if we build a custom UI panel for stencil management, `ItemGridSlot` gives us `overlay`, `background`, and `name` overrides per-slot.
+**Relevance**: `ItemGridSlot` is for custom UI pages (like the Stencil Crafting), not the native hotbar. The hotbar rendering uses the `ItemBase` data directly. However, if we build a custom UI panel for stencil management, `ItemGridSlot` gives us `overlay`, `background`, and `name` overrides per-slot.
 
 ---
 
@@ -412,7 +412,7 @@ There is no server-side API for per-slot overlays, borders, or custom highlights
 
 ### What ItemGridSlot.overlay Does
 
-`ItemGridSlot.overlay` is available for custom UI grids (`.ui` files), NOT the native hotbar. If the Blueprint Bench UI uses `ItemGridSlot`, it CAN have per-slot overlays. The native hotbar cannot.
+`ItemGridSlot.overlay` is available for custom UI grids (`.ui` files), NOT the native hotbar. If the Stencil Crafting UI uses `ItemGridSlot`, it CAN have per-slot overlays. The native hotbar cannot.
 
 ---
 
