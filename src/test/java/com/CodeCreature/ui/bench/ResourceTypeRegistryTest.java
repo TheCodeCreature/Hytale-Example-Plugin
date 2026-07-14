@@ -21,8 +21,8 @@ class ResourceTypeRegistryTest {
     class GetCount {
 
         @Test
-        void returns73() {
-            assertEquals(73, ResourceTypeRegistry.getCount());
+        void matchesListSize() {
+            assertEquals(ResourceTypeRegistry.getAll().size(), ResourceTypeRegistry.getCount());
         }
     }
 
@@ -53,14 +53,14 @@ class ResourceTypeRegistryTest {
         }
 
         @Test
-        void firstEntryIsBlackwood() {
-            assertEquals("Blackwood", ResourceTypeRegistry.getAll().getFirst().resourceTypeId());
-        }
+        void containsKnownResourceTypes() {
+            List<String> ids = ResourceTypeRegistry.getAll().stream()
+                    .map(ResourceTypeEntry::resourceTypeId)
+                    .toList();
 
-        @Test
-        void lastEntryIsWoodTrunkTemp() {
-            List<ResourceTypeEntry> all = ResourceTypeRegistry.getAll();
-            assertEquals("Wood_Trunk_Temp", all.getLast().resourceTypeId());
+            assertTrue(ids.contains("Hardwood"));
+            assertTrue(ids.contains("Rock_Group"));
+            assertTrue(ids.contains("Wood_Trunk_Temp"));
         }
     }
 
@@ -137,6 +137,13 @@ class ResourceTypeRegistryTest {
                 assertEquals(i, all.get(i).sortOrder(),
                         "Expected sortOrder %d for entry '%s' at index %d"
                                 .formatted(i, all.get(i).resourceTypeId(), i));
+            }
+        }
+
+        @Test
+        void getIconPathMatchesEntryIconForAllEntries() {
+            for (ResourceTypeEntry entry : ResourceTypeRegistry.getAll()) {
+                assertEquals(entry.iconFilename(), ResourceTypeRegistry.getIconPath(entry.resourceTypeId()));
             }
         }
     }

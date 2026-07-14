@@ -17,7 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class StencilInputListenerTest {
@@ -38,6 +40,16 @@ class StencilInputListenerTest {
         Packet packet = createPacketWithInteraction(InteractionType.Pick);
 
         assertDoesNotThrow(() -> StencilInputListener.onOutboundPacket(playerRef, packet));
+    }
+
+    @Test
+    void onOutboundPacketSkipsUnsupportedInteractionWithoutEntityLookup() {
+        PlayerRef playerRef = mock(PlayerRef.class);
+        Packet packet = createPacketWithInteraction(null);
+
+        assertDoesNotThrow(() -> StencilInputListener.onOutboundPacket(playerRef, packet));
+
+        verify(playerRef, never()).getReference();
     }
 
     @Test

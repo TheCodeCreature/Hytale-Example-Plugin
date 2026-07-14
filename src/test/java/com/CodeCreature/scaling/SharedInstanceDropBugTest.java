@@ -356,14 +356,12 @@ class SharedInstanceDropBugTest {
         }
 
         /**
-         * Rail has a Crafting-bench recipe (not StructuralCrafting).
-         * BenchRecipeRegistries only tracks configured benches (Builders,
-         * Furniture_Bench), so Rail should NOT be in it. But
-         * NaturalResourceRegistry should still exclude Rail
-         * (isCraftingBench covers Workbench too).
+         * Rail has a Crafting-bench recipe (Workbench). The dynamic
+         * bench registry now discovers bench IDs directly from recipes,
+         * so Workbench recipes are included.
          */
         @Test
-        void railWithCraftingBenchNotInBenchRecipeRegistries() {
+        void railWithCraftingBenchIncludedInBenchRecipeRegistries() {
             BlockType rail = blockType("Rail",
                     gathering(new BlockBreakingDropType("SoftBlocks", 0, 1, null, null),
                             null, null, null));
@@ -386,9 +384,9 @@ class SharedInstanceDropBugTest {
 
             assertFalse(NaturalResourceRegistry.isNaturalBlock("Rail"),
                     "Rail should NOT be natural (has Crafting-bench recipe)");
-            assertFalse(BenchRecipeRegistries.hasRecipeAnywhere("Rail"),
-                    "Rail should NOT be in BenchRecipeRegistries "
-                            + "(Workbench is not a registered bench)");
+            assertTrue(BenchRecipeRegistries.hasRecipeAnywhere("Rail"),
+                    "Rail should be in BenchRecipeRegistries "
+                            + "(Workbench is now discovered as a registered bench)");
         }
 
         /**

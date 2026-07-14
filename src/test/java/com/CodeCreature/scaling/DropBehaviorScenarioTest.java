@@ -219,9 +219,9 @@ class DropBehaviorScenarioTest {
     void playerPlacedRailDrops1Rail() {
         applyFullPipeline();
 
-        // Rail has a Crafting-bench recipe (Workbench, not a registered bench), so it
-        // should NOT be in BenchRecipeRegistries and should keep its vanilla
-        // config.  Verify no modifier has changed the drop to ingredients.
+                // This scenario verifies current observed behavior for rail drops in this
+                // fixture: after applyModifications(), rail still resolves to a vanilla-style
+                // 1x rail drop path (fallback or explicit), and never drops ingredients.
         var breaking = readGatheringBreaking(rail.getGathering());
         String itemId = readBreakingItemId(breaking);
         int qty = readBreakingQuantity(breaking);

@@ -428,6 +428,7 @@ public final class TestDataSet {
         BenchRegistry.init();
         setNaturalRegistry(naturalBlockIds, naturalItemIds);
         RecipeTierClassifier.init();
+        ResourceTypeResolver.initialize();
         setBenchRecipeRegistries(
                 Map.of("Builders", buildersRecipesByBlockType,
                        "Furniture_Bench", furnitureBenchRecipesByBlockType),

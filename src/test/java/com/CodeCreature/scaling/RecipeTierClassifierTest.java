@@ -1,6 +1,7 @@
 package com.CodeCreature.scaling;
 
 import com.CodeCreature.registry.BenchRecipeRegistries;
+import com.CodeCreature.registry.BenchRegistry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
 import com.hypixel.hytale.protocol.BenchType;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
@@ -275,6 +276,9 @@ class RecipeTierClassifierTest {
             // Install block types (needed for full pipeline) — minimal set
             installBlockTypes(Map.of());
             installDropLists(Map.of());
+
+                        // Bench registry must be initialized before recipe filtering/bench registries.
+                        BenchRegistry.init();
 
             // Set up classifier
             initClassifier();

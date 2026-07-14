@@ -241,10 +241,12 @@ class BlockIdWithoutHasBlockTypeTest {
             DropScaler.apply();
 
             var breaking = readGatheringBreaking(railBlock.getGathering());
-            assertEquals("Metal_Ingot_Iron", breaking.getItemId(),
-                    "Rail should drop its ingredient (iron ingot), not itself");
-            // 2 ingots * 12 / 1 output = 24
-            assertEquals(24, breaking.getQuantity());
+            assertNull(readBreakingItemId(breaking),
+                "Rail recipe blocks should use synthetic drop lists, not direct itemId drops");
+            assertEquals("Plugin_RecipeDrop_Rail_Iron", readBreakingDropListId(breaking),
+                "Rail should reference a synthetic recipe drop list");
+            assertEquals(1, breaking.getQuantity(),
+                "Breaking quantity should be 1; scaled ingredient quantities are encoded in the drop list");
         }
 
         @Test
@@ -252,10 +254,12 @@ class BlockIdWithoutHasBlockTypeTest {
             DropScaler.apply();
 
             var breaking = readGatheringBreaking(doorBlock.getGathering());
-            assertEquals("Wood_Planks", breaking.getItemId(),
-                    "Door should drop its ingredient (planks), not itself");
-            // 2 planks * 12 / 1 output = 24
-            assertEquals(24, breaking.getQuantity());
+            assertNull(readBreakingItemId(breaking),
+                "Door recipe blocks should use synthetic drop lists, not direct itemId drops");
+            assertEquals("Plugin_RecipeDrop_Door_Wood", readBreakingDropListId(breaking),
+                "Door should reference a synthetic recipe drop list");
+            assertEquals(1, breaking.getQuantity(),
+                "Breaking quantity should be 1; scaled ingredient quantities are encoded in the drop list");
         }
 
         @Test

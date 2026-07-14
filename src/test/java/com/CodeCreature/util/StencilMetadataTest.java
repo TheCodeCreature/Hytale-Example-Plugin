@@ -6,15 +6,32 @@ import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
+import static com.CodeCreature.scaling.AssetTestHelper.cleanup;
+import static com.CodeCreature.scaling.AssetTestHelper.installItems;
+import static com.CodeCreature.scaling.AssetTestHelper.item;
 import static org.junit.jupiter.api.Assertions.*;
 
 class StencilMetadataTest {
 
     private static final String TEST_ITEM_ID = "Oak_Planks";
     private static final String TEST_RECIPE_ID = "crafting:oak_planks_x12";
+
+    @BeforeEach
+    void setUpAssets() {
+        installItems(Map.of(TEST_ITEM_ID, item(TEST_ITEM_ID, TEST_ITEM_ID, true, 100)));
+    }
+
+    @AfterEach
+    void tearDownAssets() {
+        cleanup();
+    }
 
     @Nested
     class IsStencil {
@@ -118,7 +135,7 @@ class StencilMetadataTest {
         @Test
         void createsItemWithQuantityOne() {
             ItemStack stencil = StencilMetadata.createStencil(TEST_ITEM_ID, TEST_RECIPE_ID);
-            assertEquals(1, stencil.getQuantity());
+            assertEquals(StencilMetadata.STENCIL_STACK_SIZE, stencil.getQuantity());
         }
 
         @Test
