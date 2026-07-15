@@ -1,0 +1,20 @@
+{
+  "autoMergeEnabled": true,
+  "suffixes": ["bench", "workstation"],
+  "groups": [],
+  "tabIcons": {
+    "Alchemybench": "Bench_Alchemy.png",
+    "Arcanebench": "Bench_Arcane.png",
+    "Architects": "Bench_Architects.png",
+    "Builders": "Bench_Architects.png",
+    "Campfire": "Bench_Campfire.png",
+    "Cookingbench": "Bench_Cooking.png",
+    "Farmingbench": "Bench_Farming.png",
+    "Fieldcraft": "Tool_Hatchet_Crude.png",
+    "Furnace": "Bench_Furnace.png",
+    "Furniture_Bench": "Bench_Furniture.png",
+    "Furniture_Misc": "Furniture_Village_Bench.png",
+    "Salvagebench": "Bench_Salvage.png",
+    "Workbench": "Bench_WorkBench.png"
+  }
+}

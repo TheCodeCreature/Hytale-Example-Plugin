@@ -6,6 +6,7 @@ import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -62,6 +63,9 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
  */
 public final class BenchRegistry {
 
+    private static final String BENCH_TAB_GROUPS_FILE = "bench-tab-groups.json";
+    private static final String DEFAULT_BENCH_TAB_GROUPS_RESOURCE = "/bench-tab-groups.json";
+
     /** benchId → BenchConfig. Populated at init, immutable afterward. */
     private static Map<String, BenchConfig> configs = Collections.emptyMap();
 
@@ -90,6 +94,7 @@ public final class BenchRegistry {
      */
     public static void initialize(@Nonnull Path dataDir) {
         BenchRegistry.dataDirectory = dataDir;
+        seedDefaultBenchTabGroupsConfig(dataDir);
     }
 
     /**
@@ -132,7 +137,7 @@ public final class BenchRegistry {
         }
 
         // Load config early to get benchOverrides and skipPrefixes
-        Path configPath = dataDirectory != null ? dataDirectory.resolve("bench-tab-groups.json") : null;
+        Path configPath = dataDirectory != null ? dataDirectory.resolve(BENCH_TAB_GROUPS_FILE) : null;
         BenchTabGrouper.TabGroupConfig tabConfig = BenchTabGrouper.loadConfig(configPath);
         skipPrefixes = List.copyOf(tabConfig.skipPrefixes());
 
@@ -170,11 +175,45 @@ public final class BenchRegistry {
         configs = Collections.unmodifiableMap(discovered);
 
         tabGrouper = BenchTabGrouper.create(configs.keySet(),
-                dataDirectory != null ? dataDirectory.resolve("bench-tab-groups.json") : null);
+                dataDirectory != null ? dataDirectory.resolve(BENCH_TAB_GROUPS_FILE) : null);
 
         DebugLogger.log(REGISTRY, Level.INFO,
             "[BenchRegistry] Discovered " + totalFound + " bench references, "
                 + denied + " denied, " + configs.size() + " registered");
+    }
+
+
+    private static void seedDefaultBenchTabGroupsConfig(@Nonnull Path dataDir) {
+        Path target = dataDir.resolve(BENCH_TAB_GROUPS_FILE);
+        if (Files.exists(target)) {
+            return;
+        }
+
+        try {
+            Files.createDirectories(dataDir);
+        } catch (IOException e) {
+            DebugLogger.log(REGISTRY, Level.WARNING,
+                    "[BenchRegistry] Failed to create data directory for default config: " +
+                            dataDir + " (" + e.getMessage() + ")");
+            return;
+        }
+
+        try (InputStream in = BenchRegistry.class.getResourceAsStream(DEFAULT_BENCH_TAB_GROUPS_RESOURCE)) {
+            if (in == null) {
+                DebugLogger.log(REGISTRY, Level.WARNING,
+                        "[BenchRegistry] Missing bundled default " + BENCH_TAB_GROUPS_FILE +
+                                " at " + DEFAULT_BENCH_TAB_GROUPS_RESOURCE);
+                return;
+            }
+
+            Files.copy(in, target);
+            DebugLogger.log(REGISTRY, Level.INFO,
+                    "[BenchRegistry] Seeded default " + BENCH_TAB_GROUPS_FILE + " to " + target);
+        } catch (IOException e) {
+            DebugLogger.log(REGISTRY, Level.WARNING,
+                    "[BenchRegistry] Failed to seed default " + BENCH_TAB_GROUPS_FILE +
+                            " to " + target + " (" + e.getMessage() + ")");
+        }
     }
 
     /**

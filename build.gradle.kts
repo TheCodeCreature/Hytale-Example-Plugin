@@ -9,8 +9,10 @@ group = "Plugin"
 version = "13.0.5"
 val javaVersion = 25
 val pluginName = findProperty("plugin_name")?.toString() ?: project.name
+val pluginGroup = findProperty("plugin_group")?.toString() ?: "Plugin"
 val pluginAuthor = findProperty("plugin_author")?.toString()?.trim().orEmpty()
 val pluginArchiveName = if (pluginAuthor.isNotEmpty()) "[$pluginAuthor] $pluginName" else pluginName
+val runModDirectoryName = "${pluginGroup}_${pluginName}"
 
 repositories {
     mavenCentral()
@@ -178,12 +180,12 @@ val deployCommonAssets = tasks.register<Copy>("deployCommonAssets") {
     dependsOn("processResources")
 
     from(layout.buildDirectory.dir("resources/main/Common"))
-    into("run/mods/CodeCreature.Development/Common")
+    into("run/mods/$runModDirectoryName/Common")
 
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 
     doLast {
-        println("✅ Common assets deployed to run/mods/CodeCreature.Development/Common/")
+        println("✅ Common assets deployed to run/mods/$runModDirectoryName/Common/")
     }
 }
 
