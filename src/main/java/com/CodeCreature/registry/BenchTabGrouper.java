@@ -94,11 +94,17 @@ public final class BenchTabGrouper {
 
     // ─── State (immutable after construction) ───────────────────
 
-    /** Path prefix for tab icons in local BenchIcons directory (relative to page .ui). */
-    private static final String ICON_PATH_PREFIX = "../../Common/Icons/BenchIcons/";
+    /** Preferred path prefix for bench item thumbnails (Bench_*.png). */
+    private static final String ITEMS_GENERATED_ICON_PATH_PREFIX = "Common/Icons/ItemsGenerated/";
 
-    /** Default tab icon path (relative to the .ui file). */
-    private static final String DEFAULT_TAB_ICON = "../../Common/RecipesIcon.png";
+    /** Root-relative prefix for explicit icon subpaths under Common/Icons/. */
+    private static final String ICONS_ROOT_PREFIX = "Common/Icons/";
+
+    /**
+     * Fallback tab icon when no explicit mapping exists.
+     * Root-relative from {@code Common/UI/Custom/} for use with {@code cmd.set()}.
+     */
+    private static final String DEFAULT_TAB_ICON = "Common/Icons/ItemsGenerated/Bench_WorkBench.png";
 
     /** Tab group key or bench ID → icon filename (case-insensitive lookup). */
     private final Map<String, String> tabIcons;
@@ -575,21 +581,35 @@ public final class BenchTabGrouper {
     }
 
     /**
-     * Normalizes a configured tab icon value into a UI-relative BenchIcons path.
+    * Normalizes a configured tab icon value into a UI-relative icon path.
      *
-     * <p>Only the filename portion is honored to keep icon references in local UI space.
+     * <p>Accepted forms:
+     * <ul>
+    *   <li>{@code Bench_Alchemy.png} → {@code Common/Icons/ItemsGenerated/Bench_Alchemy.png}</li>
+     *   <li>{@code ItemsGenerated/Bench_Architects.png} →
+     *       {@code Common/Icons/ItemsGenerated/Bench_Architects.png}</li>
+     *   <li>{@code Common/Icons/ItemsGenerated/Bench_Architects.png} → preserved as-is</li>
+     * </ul>
+    *
+    * <p>Any other bare filename is treated as invalid and falls back to
+    * {@link #DEFAULT_TAB_ICON}. This removes legacy implicit path resolution.
      */
     @Nonnull
     private static String normalizeTabIconPath(@Nonnull String iconValue) {
         String normalized = iconValue.replace('\\', '/').trim();
-        int slash = normalized.lastIndexOf('/');
-        if (slash >= 0) {
-            normalized = normalized.substring(slash + 1);
-        }
         if (normalized.isEmpty() || normalized.contains("..")) {
             return DEFAULT_TAB_ICON;
         }
-        return ICON_PATH_PREFIX + normalized;
+        if (normalized.startsWith(ICONS_ROOT_PREFIX)) {
+            return normalized;
+        }
+        if (normalized.contains("/")) {
+            return ICONS_ROOT_PREFIX + normalized;
+        }
+        if (normalized.startsWith("Bench_")) {
+            return ITEMS_GENERATED_ICON_PATH_PREFIX + normalized;
+        }
+        return DEFAULT_TAB_ICON;
     }
 
     /**

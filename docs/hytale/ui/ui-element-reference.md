@@ -362,7 +362,30 @@ TabNavigation #BenchTabs {
 }
 ```
 
-**Fires:** `SelectedTabChanged` when the active tab changes.
+**Fires:** `SelectedTabChanged` when the active tab changes (user interaction only — server `cmd.set` does NOT fire this event).
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `SelectedTab` | String | Id of the currently selected `TabButton` |
+
+**`SelectedTab` resolution:** The `SelectedTab` property is resolved by **`TabButton.Id` string**, not by position index. `cmd.set("#BenchTabs.SelectedTab", "Workbench")` finds and selects the child whose `Id` is `"Workbench"`.
+
+**Dynamic slot pattern gotchas:**
+
+When slots in a `.ui` template are pre-seeded with specific values (icons, IDs) and then overridden at runtime via `cmd.set("#BenchTabs[N].Id", ...)`:
+- Override commands must come **before** `cmd.set("#BenchTabs.SelectedTab", ...)` in the command batch — so the Ids are in place when `SelectedTab` resolves.
+- The template's pre-seeded `Icon` values for each slot index are **meaningless** once Ids are remapped dynamically. If the server omits an icon override (e.g., `resolveMappedTabIcon` returns null), the slot will display the pre-seeded icon from the template — which is the icon for a different bench at that position. **Always override the icon unconditionally with a fallback** rather than conditionally skipping the set:
+
+```java
+// WRONG — leaves pre-seeded template icon if resolver returns null:
+if (resolvedIcon != null) {
+    cmd.set("#BenchTabs[" + tabIndex + "].Icon", resolvedIcon);
+}
+
+// CORRECT — always override:
+cmd.set("#BenchTabs[" + tabIndex + "].Icon",
+    resolvedIcon != null ? resolvedIcon : DEFAULT_BENCH_ICON);
+```
 
 ### ScrollView
 

@@ -647,23 +647,18 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             cmd.set("#BenchTabs[" + tabIndex + "].Id", benchId);
             cmd.set("#BenchTabs[" + tabIndex + "].TooltipText", BenchRegistry.getTabGrouper().getDisplayName(benchId));
             cmd.set("#BenchTabs[" + tabIndex + "].Visible", true);
-            // Only override icon when an explicit mapping exists.
-            // Otherwise, preserve the template's pre-seeded working icon.
-            String resolvedIcon = BenchRegistry.getTabGrouper().resolveMappedTabIcon(benchId);
-            if (resolvedIcon != null) {
-                cmd.set("#BenchTabs[" + tabIndex + "].Icon", resolvedIcon);
-                final String tabKey = benchId;
-                final String iconPath = resolvedIcon;
-                final int index = tabIndex;
-                DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, () ->
-                    "[Stencil Crafting][BenchTabs] Tab #" + index + " icon SET: tab='" + tabKey +
-                        "' resolved_path='" + iconPath + "'");
-            } else {
-                final String tabKey = benchId;
-                final int index = tabIndex;
-                DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING, () ->
-                    "[Stencil Crafting][BenchTabs] Tab #" + index + " icon SKIPPED (no mapping): tab='" + tabKey + "'");
-            }
+            // Always override the icon so that the template's pre-seeded slot icons
+            // (which are at fixed positions unrelated to the runtime bench order) do not
+            // bleed through. resolveTabIcon falls back to DEFAULT_TAB_ICON when no
+            // explicit mapping exists.
+            String resolvedIcon = BenchRegistry.getTabGrouper().resolveTabIcon(benchId);
+            cmd.set("#BenchTabs[" + tabIndex + "].Icon", resolvedIcon);
+            final String tabKey = benchId;
+            final String iconPath = resolvedIcon;
+            final int index = tabIndex;
+            DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, () ->
+                "[Stencil Crafting][BenchTabs] Tab #" + index + " icon SET: tab='" + tabKey +
+                    "' resolved_path='" + iconPath + "'");
             tabIndex++;
         }
 
