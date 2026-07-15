@@ -1,9 +1,9 @@
 // Item-icon filter toggle — follows @FilterToggleButton convention with ItemIcon
-// cmd.append() path unchanged: Pages/StencilBook/ExactItemFilterButton.ui
+// cmd.append() path unchanged: Pages/StencilBook/Components/ExactItemFilterButton.ui
 // Cannot compose @FilterToggleButton directly because icon element is ItemIcon, not Group
 
-$BG = "../../Styles/Backgrounds.ui";
-$B = "../../Styles/Buttons.ui";
+$BG = "../../../Styles/Backgrounds.ui";
+$B = "../../../Styles/Buttons.ui";
 
 Group {
     Anchor: (Width: 36, Height: 36);

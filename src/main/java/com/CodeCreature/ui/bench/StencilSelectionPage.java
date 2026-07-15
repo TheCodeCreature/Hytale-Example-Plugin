@@ -296,17 +296,17 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
 
         // Set filter buttons â€” one per set
         for (int i = 0; i < totalSetCount; i++) {
-            cmd.append("#SetFilters", "Pages/StencilBook/SetFilterButton.ui");
+            cmd.append("#SetFilters", "Pages/StencilBook/Components/SetFilterButton.ui");
         }
 
         // Material group icon buttons (keep MAX_GROUP_BUTTONS)
         for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
-            cmd.append("#MaterialGroups", "Pages/StencilBook/GroupFilterButton.ui");
+            cmd.append("#MaterialGroups", "Pages/StencilBook/Components/GroupFilterButton.ui");
         }
 
         // Per-set group containers with VARIABLE cell counts
         for (int g = 0; g < totalSetCount; g++) {
-            cmd.append("#RecipeGridArea", "Pages/StencilBook/SetGroupContainer.ui");
+            cmd.append("#RecipeGridArea", "Pages/StencilBook/Components/SetGroupContainer.ui");
             for (int c = 0; c < cellsPerSet[g]; c++) {
                 cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
                            "Common/Components/ClickableIconCell.ui");
@@ -315,9 +315,9 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
 
         // Cost grid rows (fixed) with fixed cells per row.
         for (int row = 0; row < DetailPanelController.MAX_COST_ROWS; row++) {
-            cmd.append("#CostGrid", "Common/Components/CostRow.ui");
+            cmd.append("#CostGrid", "Pages/StencilBook/Components/CostRow.ui");
             for (int col = 0; col < DetailPanelController.COST_CELLS_PER_ROW; col++) {
-                cmd.append("#CostGrid[" + row + "] #CostRowCells", "Common/Components/CostCell.ui");
+                cmd.append("#CostGrid[" + row + "] #CostRowCells", "Pages/StencilBook/Components/CostCell.ui");
             }
         }
 

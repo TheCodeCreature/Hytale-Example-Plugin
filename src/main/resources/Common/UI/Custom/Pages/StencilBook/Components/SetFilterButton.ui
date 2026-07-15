@@ -2,7 +2,7 @@
 // Reusable component: server appends N instances into #SetFilters during build()
 // Server updates via cmd.set() on indexed selectors: #SetFilters[N].Visible, #Btn.Text, #Btn.Style, #Check.Value
 
-$C = "../../Common.ui";
+$C = "../../../Common.ui";
 
 Group {
     Anchor: (Height: 24);
@@ -16,7 +16,7 @@ Group {
 
     CheckBox #Check {
         Anchor: (Width: 16, Height: 16, Left: 4, Top: 4);
-        Background: (TexturePath: "../../Common/CheckBoxFrame.png", Border: 7);
+        Background: (TexturePath: "../../../Common/CheckBoxFrame.png", Border: 7);
         Padding: (Full: 2);
         Style: $C.@DefaultCheckBoxStyle;
     }

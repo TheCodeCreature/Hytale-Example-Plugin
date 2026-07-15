@@ -9,15 +9,14 @@
 //   Cell i      → #RecipeGridArea[g] #GroupCells[i]
 //   Cell button → #RecipeGridArea[g] #GroupCells[i] #CellBtn
 
-$L = "../../Styles/Labels.ui";
-$C = "../../Common.ui";
+$L = "../../../Styles/Labels.ui";
+$C = "../../../Common.ui";
 
 Group {
     LayoutMode: Top;
     Anchor: (Full: 8);
     Visible: false;
 
-    // Content area with tinted background
     Group {
         LayoutMode: Top;
         Background: $C.@TertiaryDefaultButtonBackground;

@@ -1,10 +1,10 @@
 // Shared radial segment button — framed icon with label (matches bench #OutputFrame pattern)
-// Appended N times via cmd.append("#Segments", "Common/Components/SegmentButton.ui")
+// Appended N times via cmd.append("#Segments", "Pages/StencilRadial/Components/SegmentButton.ui")
 // Java selectors: #Segments[N] #SegFrame, #Segments[N] #Icon, #Segments[N] #Dim, #Segments[N] #Btn, #Segments[N] #SegLabelText
 
-$B = "../../Styles/Buttons.ui";
-$O = "../../Styles/Overlays.ui";
-$BG = "../../Styles/Backgrounds.ui";
+$B = "../../../Styles/Buttons.ui";
+$O = "../../../Styles/Overlays.ui";
+$BG = "../../../Styles/Backgrounds.ui";
 
 Group #SegRoot {
     Anchor: (Width: 116, Height: 126);

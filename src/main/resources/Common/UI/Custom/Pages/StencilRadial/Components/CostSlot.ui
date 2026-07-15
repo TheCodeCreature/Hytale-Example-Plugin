@@ -1,10 +1,10 @@
 // Shared cost slot — icon frame with quantity and name label (radial menu variant)
-// Appended N times via cmd.append("#CostSlots", "Common/Components/CostSlot.ui")
+// Appended N times via cmd.append("#CostSlots", "Pages/StencilRadial/Components/CostSlot.ui")
 // Java selectors: #CostSlots[N] #Icon, #CostSlots[N] #Dim, #CostSlots[N] #Qty, #CostSlots[N] #Name
 
-$CP = "Components.ui";
-$O = "../../Styles/Overlays.ui";
-$BG = "../../Styles/Backgrounds.ui";
+$CP = "../../../Common/Components/Components.ui";
+$O = "../../../Styles/Overlays.ui";
+$BG = "../../../Styles/Backgrounds.ui";
 
 Group {
     Anchor: (Width: 80, Height: 90);

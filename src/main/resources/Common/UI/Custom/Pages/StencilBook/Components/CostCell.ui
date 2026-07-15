@@ -2,9 +2,9 @@
 // Appended into per-row containers: #CostGrid[row] #CostRowCells
 // Java selectors: #CostGrid[row] #CostRowCells[col] #Icon/#Qty/#Dim
 
-$CP = "Components.ui";
-$L = "../../Styles/Labels.ui";
-$BG = "../../Styles/Backgrounds.ui";
+$CP = "../../../Common/Components/Components.ui";
+$L = "../../../Styles/Labels.ui";
+$BG = "../../../Styles/Backgrounds.ui";
 
 Group {
     Anchor: (Width: 60, Height: 60);

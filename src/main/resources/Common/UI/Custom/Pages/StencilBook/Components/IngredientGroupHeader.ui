@@ -3,32 +3,28 @@
 //              #CheckboxIcon.Background (checkbox state), #ExpandArrow.Background
 // Events: #GroupHeaderBtn (expand/collapse), #CheckboxBtn (toggle selection)
 
-$B = "../../Styles/Buttons.ui";
-$L = "../../Styles/Labels.ui";
-$C = "../../Common.ui";
+$B = "../../../Styles/Buttons.ui";
+$L = "../../../Styles/Labels.ui";
+$C = "../../../Common.ui";
 
 Group {
     Anchor: (Height: 28, Left: 0, Right: 0);
     Padding: (Left: 4, Right: 4, Top: 2, Bottom: 2);
 
-    // Visual content layer — displays all elements in a row
     Group {
         Anchor: (Full: 0);
         LayoutMode: Left;
 
-        // Checkbox spacer (matches CheckBox overlay position)
         Group {
             Anchor: (Width: 20, Height: 20);
             Padding: (Top: 2, Bottom: 2, Left: 0, Right: 2);
         }
 
-        // Group icon (20x20)
         Group #GroupHeaderIcon {
             Anchor: (Width: 20, Height: 20);
             Padding: (Top: 2, Bottom: 2);
         }
 
-        // Label (fills remaining space)
         Group {
             FlexWeight: 1;
             Padding: (Left: 4);
@@ -40,24 +36,21 @@ Group {
             }
         }
 
-        // Expand/collapse arrow (16x16)
         Group #ExpandArrow {
             Anchor: (Width: 16, Height: 16);
             Padding: (Top: 4, Bottom: 4);
         }
     }
 
-    // Full-width expand/collapse click target (absolute overlay)
     TextButton #GroupHeaderBtn {
         Text: "";
         Anchor: (Full: 0);
         Style: $B.@TransparentButtonStyle;
     }
 
-    // Checkbox — last in tree, wins over GroupHeaderBtn in this area
     CheckBox #CheckboxIcon {
         Anchor: (Width: 16, Height: 16, Left: 2, Top: 4);
-        Background: (TexturePath: "../../Common/CheckBoxFrame.png", Border: 7);
+        Background: (TexturePath: "../../../Common/CheckBoxFrame.png", Border: 7);
         Padding: (Full: 2);
         Style: $C.@DefaultCheckBoxStyle;
     }

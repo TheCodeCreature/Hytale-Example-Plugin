@@ -1,5 +1,5 @@
 // Shared cost row container
-// Appended N times via cmd.append("#CostGrid", "Common/Components/CostRow.ui")
+// Appended N times via cmd.append("#CostGrid", "Pages/StencilBook/Components/CostRow.ui")
 // Java appends per-row cells to: #CostGrid[row] #CostRowCells
 
 Group {

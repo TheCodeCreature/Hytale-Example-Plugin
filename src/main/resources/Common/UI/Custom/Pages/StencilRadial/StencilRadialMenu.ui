@@ -1,5 +1,5 @@
 // Stencil Radial Menu — page root
-// Server appends StencilRadialSegment.ui instances into #Segments during build()
+// Server appends Pages/StencilRadial/Components/SegmentButton.ui instances into #Segments during build()
 // Server positions each segment absolutely via Left/Top on the appended child
 
 $C = "../../Common.ui";

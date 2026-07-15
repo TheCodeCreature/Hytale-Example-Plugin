@@ -195,7 +195,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
 
         // Pre-append cost icon slots (hidden by default)
         for (int i = 0; i < MAX_COST_SLOTS; i++) {
-            cmd.append("#CostSlots", "Common/Components/CostSlot.ui");
+            cmd.append("#CostSlots", "Pages/StencilRadial/Components/CostSlot.ui");
         }
     }
 
@@ -283,7 +283,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
     private void appendSegments(UICommandBuilder cmd, UIEventBuilder evt, int page) {
         List<RadialSegmentItem> items = getPageItems(page);
         for (int i = 0; i < SEGMENTS_PER_PAGE; i++) {
-            cmd.append("#Segments", "Common/Components/SegmentButton.ui");
+            cmd.append("#Segments", "Pages/StencilRadial/Components/SegmentButton.ui");
 
             double angle = (2 * Math.PI * i / SEGMENTS_PER_PAGE) - (Math.PI / 2);
             int left = CENTER_X + (int) (RADIUS * Math.cos(angle)) - SEGMENT_W / 2;
