@@ -7,8 +7,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -185,9 +187,6 @@ public final class BenchRegistry {
 
     private static void seedDefaultBenchTabGroupsConfig(@Nonnull Path dataDir) {
         Path target = dataDir.resolve(BENCH_TAB_GROUPS_FILE);
-        if (Files.exists(target)) {
-            return;
-        }
 
         try {
             Files.createDirectories(dataDir);
@@ -206,14 +205,52 @@ public final class BenchRegistry {
                 return;
             }
 
-            Files.copy(in, target);
-            DebugLogger.log(REGISTRY, Level.INFO,
-                    "[BenchRegistry] Seeded default " + BENCH_TAB_GROUPS_FILE + " to " + target);
+            String bundledJson = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+
+            if (!Files.exists(target)) {
+                Files.writeString(target, bundledJson, StandardCharsets.UTF_8);
+                DebugLogger.log(REGISTRY, Level.INFO,
+                        "[BenchRegistry] Seeded default " + BENCH_TAB_GROUPS_FILE + " to " + target);
+                return;
+            }
+
+            String existingJson = Files.readString(target, StandardCharsets.UTF_8);
+            if (shouldUpgradeLegacyBenchTabGroups(existingJson, bundledJson)) {
+                Path backup = target.resolveSibling(BENCH_TAB_GROUPS_FILE + ".bak-" + System.currentTimeMillis());
+                Files.copy(target, backup, StandardCopyOption.REPLACE_EXISTING);
+                Files.writeString(target, bundledJson, StandardCharsets.UTF_8);
+                DebugLogger.log(REGISTRY, Level.INFO,
+                        "[BenchRegistry] Upgraded stale " + BENCH_TAB_GROUPS_FILE + " at " + target +
+                                " (backup: " + backup + ")");
+            }
         } catch (IOException e) {
             DebugLogger.log(REGISTRY, Level.WARNING,
                     "[BenchRegistry] Failed to seed default " + BENCH_TAB_GROUPS_FILE +
                             " to " + target + " (" + e.getMessage() + ")");
         }
+    }
+
+    private static boolean shouldUpgradeLegacyBenchTabGroups(@Nonnull String existingJson,
+                                                              @Nonnull String bundledJson) {
+        try {
+            BsonDocument existingDoc = BsonDocument.parse(existingJson);
+            BsonDocument bundledDoc = BsonDocument.parse(bundledJson);
+            int existingGroups = getGroupCount(existingDoc);
+            int bundledGroups = getGroupCount(bundledDoc);
+            return existingGroups == 0 && bundledGroups > 0;
+        } catch (RuntimeException parseError) {
+            DebugLogger.log(REGISTRY, Level.WARNING,
+                    "[BenchRegistry] Could not parse existing " + BENCH_TAB_GROUPS_FILE +
+                            " for stale-check; leaving file unchanged (" + parseError.getMessage() + ")");
+            return false;
+        }
+    }
+
+    private static int getGroupCount(@Nonnull BsonDocument doc) {
+        if (!doc.containsKey("groups") || !doc.get("groups").isArray()) {
+            return 0;
+        }
+        return doc.getArray("groups").size();
     }
 
     /**

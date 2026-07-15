@@ -452,6 +452,11 @@ public final class BenchTabGrouper {
             }
         }
 
+        // Compatibility aliases: these benches are semantically the same tab family.
+        if ("fieldcraft".equals(normalized)) {
+            return "farming";
+        }
+
         return normalized;
     }
 

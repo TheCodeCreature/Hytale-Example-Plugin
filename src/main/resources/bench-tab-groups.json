@@ -1,20 +1,43 @@
 {
   "autoMergeEnabled": true,
   "suffixes": ["bench", "workstation"],
-  "groups": [],
+  "groups": [
+    {
+      "displayName": "Arcane",
+      "benchIds": ["Alchemybench", "Arcanebench"]
+    },
+    {
+      "displayName": "Armory",
+      "benchIds": ["Armor", "Armory", "Weapon_Bench"]
+    },
+    {
+      "displayName": "Building",
+      "benchIds": ["Fieldcraft", "Builders", "Architects", "Architectsbench"]
+    },
+    {
+      "displayName": "Cooking",
+      "benchIds": ["Campfire", "Cookingbench"]
+    },
+    {
+      "displayName": "Furniture",
+      "benchIds": ["Furniture_Bench", "Furniture_Misc"]
+    },
+    {
+      "displayName": "Farming",
+      "benchIds": ["Farmingbench"]
+    },
+    {
+      "displayName": "Processing",
+      "benchIds": ["Workbench", "Furnace", "Loombench", "Salvagebench", "Tannery"]
+    }
+  ],
   "tabIcons": {
-    "Alchemybench": "Bench_Alchemy.png",
-    "Arcanebench": "Bench_Arcane.png",
-    "Architects": "Bench_Architects.png",
-    "Builders": "Bench_Architects.png",
-    "Campfire": "Bench_Campfire.png",
-    "Cookingbench": "Bench_Cooking.png",
-    "Farmingbench": "Bench_Farming.png",
-    "Fieldcraft": "Tool_Hatchet_Crude.png",
-    "Furnace": "Bench_Furnace.png",
-    "Furniture_Bench": "Bench_Furniture.png",
-    "Furniture_Misc": "Furniture_Village_Bench.png",
-    "Salvagebench": "Bench_Salvage.png",
-    "Workbench": "Bench_WorkBench.png"
+    "Arcane": "Bench_Arcane.png",
+    "Armory": "Bench_Armory.png",
+    "Building": "Bench_Architects.png",
+    "Cooking": "Bench_Cooking.png",
+    "Farming": "Bench_Farming.png",
+    "Furniture": "Bench_Furniture.png",
+    "Processing": "Bench_WorkBench.png"
   }
 }
