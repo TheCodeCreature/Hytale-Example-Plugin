@@ -187,7 +187,7 @@ Group {
         // RIGHT COLUMN — Recipe Details
         // ══════════════════════════════
         Group {
-            Anchor: (Width: 310);
+            Anchor: (Width: 570);
             LayoutMode: Top;
             Padding: (Left: 12);
 
@@ -233,7 +233,7 @@ Group {
 
                 Group { Anchor: (Width: 4); }
 
-                // ── Ingredient cost grid viewport (scrolling) ──
+                // ── Ingredient cost grid (wrapping, full width) ──
                 Group {
                     Anchor: (Top: 0, Bottom: 0);
                     FlexWeight: 1;
@@ -242,7 +242,7 @@ Group {
                     Padding: (Right: 2);
 
                     Group #CostGrid {
-                        LayoutMode: Top;
+                        LayoutMode: LeftCenterWrap;
                         Anchor: (Top: 0, Left: 0, Right: 0);
                     }
                 }

@@ -1,0 +1,13 @@
+// Shared cost row container
+// Appended N times via cmd.append("#CostGrid", "Common/Components/CostRow.ui")
+// Java appends per-row cells to: #CostGrid[row] #CostRowCells
+
+Group {
+    Anchor: (Height: 60, Left: 0, Right: 0);
+    LayoutMode: Left;
+    Visible: false;
+
+    Group #CostRowCells {
+        LayoutMode: Left;
+    }
+}

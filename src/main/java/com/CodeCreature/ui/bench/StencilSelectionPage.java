@@ -313,9 +313,12 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             }
         }
 
-        // Cost cells (unchanged)
-        for (int i = 0; i < DetailPanelController.MAX_COST_CELLS; i++) {
-            cmd.append("#CostGrid", "Common/Components/CostCell.ui");
+        // Cost grid rows (fixed) with fixed cells per row.
+        for (int row = 0; row < DetailPanelController.MAX_COST_ROWS; row++) {
+            cmd.append("#CostGrid", "Common/Components/CostRow.ui");
+            for (int col = 0; col < DetailPanelController.COST_CELLS_PER_ROW; col++) {
+                cmd.append("#CostGrid[" + row + "] #CostRowCells", "Common/Components/CostCell.ui");
+            }
         }
 
         // â”€â”€ Bind ALL events (one-time) â”€â”€

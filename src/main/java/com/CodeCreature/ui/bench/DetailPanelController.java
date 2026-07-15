@@ -24,7 +24,9 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
  */
 public class DetailPanelController {
 
-    static final int MAX_COST_CELLS = 8;
+    static final int COST_CELLS_PER_ROW = 3;
+    static final int MAX_COST_ROWS = 10;
+    static final int MAX_COST_CELLS = COST_CELLS_PER_ROW * MAX_COST_ROWS;
 
     private static final Value<String> COST_QTY_NORMAL =
             Value.ref("Styles/Labels.ui", "CostQuantityStyle");
@@ -80,7 +82,7 @@ public class DetailPanelController {
                         if (!ingredients.isEmpty()) {
                             for (ResolvedIngredient ing : ingredients) {
                                 if (costIdx >= MAX_COST_CELLS) break;
-                                String sel = "#CostGrid[" + costIdx + "]";
+                                String sel = costCellSelector(costIdx);
                                 String itemId = ing.resolvedItemId();
                                 int requiredQty = ing.requiredQty();
                                 boolean sufficient = ing.sufficient();
@@ -106,11 +108,12 @@ public class DetailPanelController {
 
                 // Hide remaining cost cells and reset their state
                 for (int i = costIdx; i < MAX_COST_CELLS; i++) {
-                    String sel = "#CostGrid[" + i + "]";
+                    String sel = costCellSelector(i);
                     cmd.set(sel + ".Visible", false);
                     cmd.set(sel + " #Dim.Visible", false);
                     cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
                 }
+                setCostRowVisibility(cmd, costIdx);
 
                 // Output frame state — affordable vs unaffordable
                 if (checkInventory) {
@@ -132,11 +135,12 @@ public class DetailPanelController {
         cmd.set("#OutputFrame.Background", OUTPUT_BG_EMPTY);
         cmd.set("#OutputDim.Visible", false);
         for (int i = 0; i < MAX_COST_CELLS; i++) {
-            String sel = "#CostGrid[" + i + "]";
+            String sel = costCellSelector(i);
             cmd.set(sel + ".Visible", false);
             cmd.set(sel + " #Dim.Visible", false);
             cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
         }
+        setCostRowVisibility(cmd, 0);
     }
 
     /**
@@ -144,7 +148,21 @@ public class DetailPanelController {
      */
     public void clearUI(UICommandBuilder cmd) {
         for (int i = 0; i < MAX_COST_CELLS; i++) {
-            cmd.set("#CostGrid[" + i + "].Visible", false);
+            cmd.set(costCellSelector(i) + ".Visible", false);
+        }
+        setCostRowVisibility(cmd, 0);
+    }
+
+    private static String costCellSelector(int costIdx) {
+        int row = costIdx / COST_CELLS_PER_ROW;
+        int col = costIdx % COST_CELLS_PER_ROW;
+        return "#CostGrid[" + row + "] #CostRowCells[" + col + "]";
+    }
+
+    private static void setCostRowVisibility(UICommandBuilder cmd, int visibleCellCount) {
+        int visibleRows = (visibleCellCount + COST_CELLS_PER_ROW - 1) / COST_CELLS_PER_ROW;
+        for (int row = 0; row < MAX_COST_ROWS; row++) {
+            cmd.set("#CostGrid[" + row + "].Visible", row < visibleRows);
         }
     }
 
