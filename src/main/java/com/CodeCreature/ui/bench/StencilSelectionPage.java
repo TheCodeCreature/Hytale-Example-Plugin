@@ -1,6 +1,7 @@
 package com.CodeCreature.ui.bench;
 
 import com.CodeCreature.crafting.PlaceBlockCostUtil;
+import com.CodeCreature.ui.common.IconPathResolver;
 import com.CodeCreature.ui.ingredienttree.IngredientTree;
 import com.CodeCreature.ui.ingredienttree.IngredientTreeBuilder;
 import com.CodeCreature.ui.ingredienttree.IngredientTreeGridController;
@@ -292,7 +293,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         // Load main template
         cmd.append("Pages/StencilBook/StencilBookPage.ui");
 
-        // â”€â”€ Append reusable components into empty containers (one-time init) â”€â”€
+        //  Append reusable components into empty containers (one-time init) 
 
         // Set filter buttons â€” one per set
         for (int i = 0; i < totalSetCount; i++) {
@@ -321,7 +322,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             }
         }
 
-        // â”€â”€ Bind ALL events (one-time) â”€â”€
+        //  Bind ALL events (one-time) 
 
         // Search input
         evt.addEventBinding(
@@ -374,7 +375,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 EventData.of("Action", "ClearIngredients"));
         // Single pipeline run — after controllers exist, before UI update
         applyFilter();
-        // â”€â”€ Set initial state â”€â”€
+        //  Set initial state 
         updateAffordabilityToggle(cmd);
 
         updateBenchTabs(cmd);
@@ -798,11 +799,8 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 cmd.set(sel + " #ActiveOverlay.Visible", active);
                 // Set icon
                 String iconFile = group.iconPath();
-                if (iconFile != null && iconFile.contains("/")) {
-                    iconFile = iconFile.substring(iconFile.lastIndexOf('/') + 1);
-                }
                 if (iconFile != null && !iconFile.isEmpty()) {
-                    cmd.set(sel + " #FilterIcon.Background", "Common/GroupIcons/" + iconFile);
+                    cmd.set(sel + " #FilterIcon.Background", iconFile);
                 }
             } else {
                 cmd.set(sel + ".Visible", false);
@@ -846,8 +844,9 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                     + " name=" + topLevel.getName() + " icon=" + topLevel.getIcon()
                     + " order=" + topLevel.getOrder());
             // Top-level entries (e.g. "Blocks", "Items", "Furniture")
-            map.put(topLevel.getId(), new RecipeFilterPipeline.CategoryInfo(
-                    topLevel.getId(), capitalize(topLevel.getId()), topLevel.getIcon(), topLevel.getOrder()));
+                map.put(topLevel.getId(), new RecipeFilterPipeline.CategoryInfo(
+                    topLevel.getId(), capitalize(topLevel.getId()),
+                    IconPathResolver.normalizeCategoryIcon(topLevel.getIcon()), topLevel.getOrder()));
 
             // Child entries with dot-notation keys (e.g. "Blocks.Metal", "Furniture.Beds")
             ItemCategory[] children = topLevel.getChildren();
@@ -858,7 +857,8 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                             + " name=" + child.getName() + " icon=" + child.getIcon()
                             + " order=" + child.getOrder());
                     map.put(dotKey, new RecipeFilterPipeline.CategoryInfo(
-                            dotKey, capitalize(child.getId()), child.getIcon(), child.getOrder()));
+                            dotKey, capitalize(child.getId()),
+                            IconPathResolver.normalizeCategoryIcon(child.getIcon()), child.getOrder()));
                 }
             }
         }

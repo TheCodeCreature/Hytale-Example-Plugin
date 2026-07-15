@@ -2,14 +2,15 @@ package com.CodeCreature.ui.ingredienttree;
 
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
-import com.hypixel.hytale.server.core.asset.type.item.config.ResourceType;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.protocol.ItemResourceType;
+import com.CodeCreature.scaling.ResourceTypeResolver;
 
 import java.util.*;
 import java.util.logging.Level;
 
 import com.CodeCreature.util.DebugLogger;
+import javax.annotation.Nullable;
 import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 public final class IngredientTreeBuilder {
@@ -80,15 +81,14 @@ public final class IngredientTreeBuilder {
 
         DebugLogger.log(INGREDIENT_TREE, Level.FINE, () -> "Collected " + directItemIds.size() + " direct item IDs");
 
-        // ── Step 2: Resolve icons for each resource type ID ──
-        Map<String, String> iconMap = new HashMap<>();
+        // ── Step 2: Resolve representative item IDs for each resource type ID ──
+        Map<String, String> representativeItemIdMap = new HashMap<>();
         for (String resId : resourceTypeIds) {
-            ResourceType rtAsset = ResourceType.getAssetMap().getAsset(resId);
-            if (rtAsset != null && rtAsset.getIcon() != null) {
-                iconMap.put(resId, rtAsset.getIcon());
-            } else {
-                iconMap.put(resId, "Icons/ResourceTypes/" + resId + ".png");
+            String representativeItemId = resolveRepresentativeItemIdForResourceType(resId);
+            if (representativeItemId != null) {
+                representativeItemIdMap.put(resId, representativeItemId);
             }
+            // Absent key = unresolvable; UI falls back to blank icon instead of broken texture path.
         }
 
         // ── Step 3: Group by ID prefix (first segment before '_') ──
@@ -127,12 +127,12 @@ public final class IngredientTreeBuilder {
             String groupId = "grp:" + prefix;
             String displayName = prefix.replace('_', ' ');
 
-            // Group icon: try Any_{Prefix}.png first, then use first child's icon
-            String groupIconPath = resolveGroupIcon(prefix, resIds, iconMap, directItemIds);
+            // Group header icon uses ItemIcon with a representative item id.
+            String groupDisplayItemId = resolveGroupDisplayItemId(resIds, representativeItemIdMap, directItemIds);
 
             // Placeholder group for parent back-references in RT nodes
             IngredientGroup placeholderGroup = new IngredientGroup(
-                    groupId, displayName, groupIconPath, List.of());
+                    groupId, displayName, null, groupDisplayItemId, List.of());
 
             // Build resource type children sorted alphabetically
             List<String> sortedResIds = new ArrayList<>(resIds);
@@ -140,25 +140,25 @@ public final class IngredientTreeBuilder {
 
             List<IngredientResourceType> rtNodes = new ArrayList<>();
             for (String resId : sortedResIds) {
-                String rtIconPath;
+                String rtDisplayItemId;
+                boolean isDirectItem;
                 if (directItemIds.contains(resId)) {
-                    // Direct item — no icon path (GridController uses ItemIcon)
-                    rtIconPath = null;
+                    // Direct item — render directly via its own ItemId.
+                    rtDisplayItemId = resId;
+                    isDirectItem = true;
                 } else {
-                    rtIconPath = iconMap.getOrDefault(resId, "Common/Icons/ResourceTypes/" + resId + ".png");
-                    if (!rtIconPath.startsWith("Common/")) {
-                        rtIconPath = "Common/" + rtIconPath;
-                    }
+                    rtDisplayItemId = representativeItemIdMap.get(resId);
+                    isDirectItem = false;
                 }
                 String rtDisplayName = resId.replace('_', ' ');
 
                 IngredientResourceType rt = new IngredientResourceType(
-                        resId, rtDisplayName, rtIconPath, placeholderGroup, List.of());
+                        resId, rtDisplayName, null, rtDisplayItemId, isDirectItem, placeholderGroup, List.of());
                 rtNodes.add(rt);
             }
 
             IngredientGroup realGroup = new IngredientGroup(
-                    groupId, displayName, groupIconPath, rtNodes);
+                    groupId, displayName, null, groupDisplayItemId, rtNodes);
             groups.add(realGroup);
 
             // Index nodes
@@ -181,50 +181,44 @@ public final class IngredientTreeBuilder {
         return underscore > 0 ? resId.substring(0, underscore) : resId;
     }
 
-    private static String resolveGroupIcon(String prefix, List<String> resIds, Map<String, String> iconMap, Set<String> directItemIds) {
-        // Check if any child has an "Any_{prefix}" style icon
+    @Nullable
+    private static String resolveGroupDisplayItemId(List<String> resIds,
+                                                    Map<String, String> representativeItemIdMap,
+                                                    Set<String> directItemIds) {
+        // Walk the list in order and take the first child that yields a representative item id.
         for (String resId : resIds) {
-            String icon = iconMap.get(resId);
-            if (icon != null) {
-                String filename = extractFilename(icon);
-                if (filename.startsWith("Any_")) {
-                    return "Common/Icons/ResourceTypes/" + filename;
-                }
+            if (directItemIds.contains(resId)) {
+                return resId;
             }
-        }
-        // Fall back to first child that has an icon in the resource type map
-        for (String resId : resIds) {
-            String icon = iconMap.get(resId);
-            if (icon != null) {
-                if (!icon.startsWith("Common/")) {
-                    icon = "Common/" + icon;
-                }
-                return icon;
-            }
-        }
-        // No resource type icons — try looking up the first direct item's resource type icon
-        for (String resId : resIds) {
-            if (!directItemIds.contains(resId)) continue;
-            Item item = Item.getAssetMap().getAsset(resId);
-            if (item == null || item.getResourceTypes() == null) continue;
-            for (ItemResourceType irt : item.getResourceTypes()) {
-                if (irt.id == null) continue;
-                ResourceType rtAsset = ResourceType.getAssetMap().getAsset(irt.id);
-                if (rtAsset != null && rtAsset.getIcon() != null) {
-                    String icon = rtAsset.getIcon();
-                    if (!icon.startsWith("Common/")) {
-                        icon = "Common/" + icon;
-                    }
-                    return icon;
-                }
+            String representativeItemId = representativeItemIdMap.get(resId);
+            if (representativeItemId != null) {
+                return representativeItemId;
             }
         }
         return null;
     }
 
-    private static String extractFilename(String path) {
-        if (path == null || path.isEmpty()) return "";
-        int lastSlash = path.lastIndexOf('/');
-        return lastSlash >= 0 ? path.substring(lastSlash + 1) : path;
+    @Nullable
+    private static String resolveRepresentativeItemIdForResourceType(String resId) {
+        List<String> indexedMatches = ResourceTypeResolver.getAllMatchingItemIds(resId);
+        if (!indexedMatches.isEmpty()) {
+            return indexedMatches.get(0);
+        }
+
+        // Fallback for cases where resolver index has not been initialized yet.
+        List<String> fallbackMatches = new ArrayList<>();
+        for (Map.Entry<String, Item> entry : Item.getAssetMap().getAssetMap().entrySet()) {
+            Item item = entry.getValue();
+            if (item == null || item.getResourceTypes() == null) continue;
+            for (ItemResourceType rt : item.getResourceTypes()) {
+                if (resId.equals(rt.id)) {
+                    fallbackMatches.add(entry.getKey());
+                    break;
+                }
+            }
+        }
+        fallbackMatches.sort(String.CASE_INSENSITIVE_ORDER);
+        return fallbackMatches.isEmpty() ? null : fallbackMatches.get(0);
     }
+
 }

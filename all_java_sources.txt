@@ -1403,7 +1403,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
 
         loadRecipes();
 
-        // â”€â”€ Compute data-driven layout â”€â”€
+        //  Compute data-driven layout 
         MaxLayoutInfo maxLayout = computeMaxLayout();
         this.totalSetCount = maxLayout.setCount();
         this.maxLayoutSetNames = maxLayout.setNames().clone();
@@ -1428,7 +1428,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         // Load main template
         cmd.append("Pages/StencilBook/StencilBookPage.ui");
 
-        // â”€â”€ Append reusable components into empty containers (one-time init) â”€â”€
+        //  Append reusable components into empty containers (one-time init) 
 
         // Set filter buttons â€” one per set
         for (int i = 0; i < totalSetCount; i++) {
@@ -1454,7 +1454,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             cmd.append("#CostGrid", "Common/Components/CostCell.ui");
         }
 
-        // â”€â”€ Bind ALL events (one-time) â”€â”€
+        //  Bind ALL events (one-time) 
 
         // Search input
         evt.addEventBinding(
@@ -1505,7 +1505,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         evt.addEventBinding(CustomUIEventBindingType.Activating, "#ClearIngredientsBtn",
                 EventData.of("Action", "ClearIngredients"));
 
-        // â”€â”€ Set initial state â”€â”€
+        //  Set initial state 
         updateAffordabilityToggle(cmd);
 
         updateBenchTabs(cmd);
@@ -2215,7 +2215,7 @@ public final class RecipeFilterPipeline {
     /** Tab value that means "show all tabs". */
     private static final String ALL_TAB = "All";
 
-    // â”€â”€â”€ Input / Output types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Input / Output types 
 
     /**
      * A recipe entering the pipeline. Contains only registry-sourced data;
@@ -2332,7 +2332,7 @@ public final class RecipeFilterPipeline {
         boolean matchesResourceType(InputRecipe recipe);
     }
 
-    // â”€â”€â”€ Pipeline execution â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Pipeline execution 
 
     /**
      * Executes the full filter pipeline.
@@ -2412,7 +2412,7 @@ public final class RecipeFilterPipeline {
         return new PipelineResult(sorted, visibleSets, currentGroups);
     }
 
-    // â”€â”€â”€ Individual stages (package-private for testing) â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Individual stages (package-private for testing) 
 
     /**
      * Stage 1: Retain recipes matching the active bench tab.
@@ -3474,7 +3474,7 @@ public final class IngredientTreeBuilder {
             return new IngredientTree(List.of(), Map.of());
         }
 
-        // â”€â”€ Step 1: Collect resource type IDs from recipe inputs â”€â”€
+        //  Step 1: Collect resource type IDs from recipe inputs 
         Set<String> resourceTypeIds = new LinkedHashSet<>();
 
         for (CraftingRecipe recipe : allRecipes) {
@@ -3501,7 +3501,7 @@ public final class IngredientTreeBuilder {
 
         LOG.fine(() -> "Collected " + resourceTypeIds.size() + " resource type IDs");
 
-        // â”€â”€ Step 1b: Collect direct item IDs (items not covered by any collected resource type) â”€â”€
+        //  Step 1b: Collect direct item IDs (items not covered by any collected resource type) 
         Set<String> directItemIds = new LinkedHashSet<>();
 
         for (CraftingRecipe recipe : allRecipes) {
@@ -3533,7 +3533,7 @@ public final class IngredientTreeBuilder {
 
         LOG.fine(() -> "Collected " + directItemIds.size() + " direct item IDs");
 
-        // â”€â”€ Step 2: Resolve icons for each resource type ID â”€â”€
+        //  Step 2: Resolve icons for each resource type ID 
         Map<String, String> iconMap = new HashMap<>();
         for (String resId : resourceTypeIds) {
             ResourceType rtAsset = ResourceType.getAssetMap().getAsset(resId);
@@ -3544,7 +3544,7 @@ public final class IngredientTreeBuilder {
             }
         }
 
-        // â”€â”€ Step 3: Group by ID prefix (first segment before '_') â”€â”€
+        //  Step 3: Group by ID prefix (first segment before '_') 
         Map<String, List<String>> prefixGroups = new LinkedHashMap<>();
         for (String resId : resourceTypeIds) {
             String prefix = extractPrefix(resId);
@@ -3555,7 +3555,7 @@ public final class IngredientTreeBuilder {
             prefixGroups.computeIfAbsent(prefix, k -> new ArrayList<>()).add(itemId);
         }
 
-        // â”€â”€ Step 4: Merge single-member groups into a shared "Other" group â”€â”€
+        //  Step 4: Merge single-member groups into a shared "Other" group 
         List<String> otherResIds = new ArrayList<>();
         Iterator<Map.Entry<String, List<String>>> it = prefixGroups.entrySet().iterator();
         while (it.hasNext()) {
@@ -3569,7 +3569,7 @@ public final class IngredientTreeBuilder {
             prefixGroups.put("Other", otherResIds);
         }
 
-        // â”€â”€ Step 5: Build immutable tree objects â”€â”€
+        //  Step 5: Build immutable tree objects 
         List<IngredientGroup> groups = new ArrayList<>();
         Map<String, IngredientTreeNode> nodeIndex = new HashMap<>();
 
@@ -4885,14 +4885,14 @@ public final class DropScaler {
         int multiplier = ResourceConstants.RESOURCE_MULTIPLIER;
         AssetFieldAccessor f = new AssetFieldAccessor();
 
-        // â”€â”€ Phase 1: Scale all crafting costs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        //  Phase 1: Scale all crafting costs 
         int recipesScaled = scaleCraftingCosts(f, multiplier);
 
-        // â”€â”€ Phase 2: Classify blocks by bench category â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        //  Phase 2: Classify blocks by bench category 
         BenchBlockClassifier classifier = new BenchBlockClassifier();
         classifier.classify();
 
-        // â”€â”€ Phase 3: Process blocks â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        //  Phase 3: Process blocks 
 
         // Phase 3a: Recipe blocks â€” parallel per category
         List<BenchCategoryProcessor> processors = List.of(
@@ -4956,7 +4956,7 @@ public final class DropScaler {
             }
         }
 
-        // â”€â”€ Phase 4: Register synthetic drop lists â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        //  Phase 4: Register synthetic drop lists 
         if (!syntheticDropLists.isEmpty()) {
             try {
                 ItemDropList.getAssetStore().loadAssets(
@@ -4967,7 +4967,7 @@ public final class DropScaler {
             }
         }
 
-        // â”€â”€ Phase 5: Scale natural item stack sizes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        //  Phase 5: Scale natural item stack sizes 
         int stacksBoosted = scaleStackSizes(f, multiplier);
 
         log("Pipeline complete: " + recipesScaled + " recipes scaled, "
@@ -5025,7 +5025,7 @@ public final class DropScaler {
             BlockGathering gathering = cloneGathering(originalGathering);
             f.blockTypeGathering.set(bt, gathering);
 
-            // â”€â”€ Scale breaking drops â”€â”€
+            //  Scale breaking drops 
             BlockBreakingDropType breaking = gathering.getBreaking();
             if (breaking != null) {
                 if (breaking.getDropListId() != null) {
@@ -5040,7 +5040,7 @@ public final class DropScaler {
                 }
             }
 
-            // â”€â”€ Scale soft/harvest/physics drops â”€â”€
+            //  Scale soft/harvest/physics drops 
             SoftBlockDropType soft = gathering.getSoft();
             if (soft != null && !processedConfigs.contains(soft)) {
                 scaleDropConfig(soft, soft.getItemId(), soft.getDropListId(),
@@ -5722,7 +5722,7 @@ public final class RecipeFilterRegistry {
     /** Default skip prefixes used by both consumers. */
     public static final Set<String> DEFAULT_SKIP_PREFIXES = Set.of("Stencil_", "Salvage");
 
-    // â”€â”€â”€ Reflection for Item.set â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Reflection for Item.set 
     private static final Field ITEM_SET_FIELD;
     static {
         Field f = null;
@@ -5735,7 +5735,7 @@ public final class RecipeFilterRegistry {
         ITEM_SET_FIELD = f;
     }
 
-    // â”€â”€â”€ Registry state (immutable after init) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Registry state (immutable after init) 
 
     /** All entries, sorted by recipe ID (case-insensitive). */
     private static List<FilteredRecipeEntry> entries = Collections.emptyList();
@@ -6199,7 +6199,7 @@ public final class ResourceTypeResolver {
         }
     }
 
-    // â”€â”€â”€ Resource type filter matching â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Resource type filter matching 
 
     /**
      * Checks whether any input of the given recipe matches any of the
@@ -7096,7 +7096,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
-    // â”€â”€ Layout constants â”€â”€
+    //  Layout constants 
 
     /** Number of segment buttons displayed per page. */
     private static final int SEGMENTS_PER_PAGE = 6;
@@ -7116,7 +7116,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
     /** Segment button height in pixels (icon + label). */
     private static final int SEGMENT_H = 126;
 
-    // â”€â”€ Cost arc constants â”€â”€
+    //  Cost arc constants 
 
     /** Radii for cost icon rings (inner, middle, outer). */
     private static final int[] COST_RADII = {290, 395, 500};
@@ -7149,7 +7149,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
     private static final Value<String> SEG_UNSELECTED_STYLE =
             Value.ref("Styles/Buttons.ui", "TransparentButtonStyle");
 
-    // â”€â”€ State â”€â”€
+    //  State 
 
     private int currentPage = 0;
     private final String activeRecipeId;
@@ -7402,7 +7402,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
         return (int) Math.ceil((double) allItems.size() / SEGMENTS_PER_PAGE);
     }
 
-    // â”€â”€ Cost Arc â”€â”€
+    //  Cost Arc 
 
     /**
      * Applies affordability styling to a single segment frame.
@@ -7500,7 +7500,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
         }
     }
 
-    // â”€â”€ Event Payload â”€â”€
+    //  Event Payload 
 
     /**
      * Typed event data for radial menu interactions. Only the {@code action}
@@ -7958,7 +7958,7 @@ public final class StencilVisualManager {
         return STENCIL_NAME_PREFIX + itemId.replace('_', ' ');
     }
 
-    // â”€â”€ Inner classes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Inner classes 
 
     /**
      * Tracks the last-sent visual state for all stencil items of a single player.
@@ -8478,9 +8478,9 @@ public final class AssetTestHelper {
 
     private AssetTestHelper() {}
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     //  Object creation
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
 
     /** Creates a BlockType with the given id and optional gathering config. */
     public static BlockType blockType(String id, BlockGathering gathering) {
@@ -8590,9 +8590,9 @@ public final class AssetTestHelper {
         return new MaterialQuantity(null, resourceTypeId, null, quantity, null);
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     //  Asset store installation
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
 
     /**
      * Installs a fake BlockType asset store backed by the given map.
@@ -8680,9 +8680,9 @@ public final class AssetTestHelper {
         }
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     //  Registry pre-population (bypasses init() for isolated tests)
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
 
     public static void setNaturalRegistry(Set<String> naturalBlockTypes, Set<String> naturalItemIds) {
         setStaticField(NaturalResourceRegistry.class, "naturalBlockTypes",
@@ -8728,9 +8728,9 @@ public final class AssetTestHelper {
                 Collections.unmodifiableMap(regs));
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     //  Field readers (for verifying modifications)
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
 
     public static int readBreakingQuantity(BlockBreakingDropType breaking) {
         return readIntField(BlockBreakingDropType.class, breaking, "quantity");
@@ -8790,9 +8790,9 @@ public final class AssetTestHelper {
         }
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     //  Cleanup
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
 
     /** Nulls out all installed static ASSET_STORE fields and resets registries. */
     public static void cleanup() {
@@ -8805,13 +8805,13 @@ public final class AssetTestHelper {
         setStaticField(BenchRecipeRegistries.class, "registries", Collections.emptyMap());
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     //  Internal reflection utilities
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     //  Internal: Concrete AssetStore subclass for testing
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
 
     /**
      * Minimal concrete AssetStore that only implements enough to serve
@@ -8962,7 +8962,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class BlockIdWithoutHasBlockTypeTest {
 
-    // â”€â”€ Blocks with hasBlockType=false but blockId set (the bug scenario) â”€â”€
+    //  Blocks with hasBlockType=false but blockId set (the bug scenario) 
     private BlockBreakingDropType railBreaking;
     private BlockType railBlock;
     private Item railItem;            // hasBlockType=false, blockId="Rail_Iron"
@@ -8973,7 +8973,7 @@ class BlockIdWithoutHasBlockTypeTest {
     private Item doorItem;            // hasBlockType=false, blockId="Door_Wood"
     private CraftingRecipe doorRecipe;
 
-    // â”€â”€ Supporting natural items â”€â”€
+    //  Supporting natural items 
     private BlockBreakingDropType logBreaking;
     private BlockType logBlock;
     private Item logItem;
@@ -8981,7 +8981,7 @@ class BlockIdWithoutHasBlockTypeTest {
     private Item ironIngotItem;
     private Item planksItem;
 
-    // â”€â”€ Asset maps â”€â”€
+    //  Asset maps 
     private Map<String, BlockType> blockTypes;
     private Map<String, Item> items;
     private Map<String, CraftingRecipe> recipes;
@@ -9001,7 +9001,7 @@ class BlockIdWithoutHasBlockTypeTest {
         ironIngotItem = item("Metal_Ingot_Iron", null, false, 100);
         planksItem = item("Wood_Planks", "Wood_Planks", true, 100);
 
-        // â”€â”€ Rail: hasBlockType=false, blockId="Rail_Iron" â”€â”€
+        //  Rail: hasBlockType=false, blockId="Rail_Iron" 
         railBreaking = new BlockBreakingDropType("Metals", 1, 1, "Rail_Iron", null);
         railBlock = blockType("Rail_Iron", gathering(railBreaking, null, null, null));
         railItem = item("Rail_Iron", "Rail_Iron", false, 100);  // KEY: hasBlockType=false
@@ -9010,7 +9010,7 @@ class BlockIdWithoutHasBlockTypeTest {
                 materialQty("Rail_Iron", 1),
                 BenchType.StructuralCrafting, "Builders");
 
-        // â”€â”€ Door: hasBlockType=false, blockId="Door_Wood" â”€â”€
+        //  Door: hasBlockType=false, blockId="Door_Wood" 
         doorBreaking = new BlockBreakingDropType("Woods", 0, 1, "Door_Wood", null);
         doorBlock = blockType("Door_Wood", gathering(doorBreaking, null, null, null));
         doorItem = item("Door_Wood", "Door_Wood", false, 100);  // KEY: hasBlockType=false
@@ -9044,9 +9044,9 @@ class BlockIdWithoutHasBlockTypeTest {
         cleanup();
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     //  NaturalResourceRegistry tests
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
 
     @Nested
     class NaturalRegistryDetection {
@@ -9078,9 +9078,9 @@ class BlockIdWithoutHasBlockTypeTest {
         }
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     //  BlockRecipeRegistry tests
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
 
     @Nested
     class RecipeRegistryDetection {
@@ -9119,9 +9119,9 @@ class BlockIdWithoutHasBlockTypeTest {
         }
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     //  Drop scaling â€” the 12x bug guard
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
 
     @Nested
     class DropScalerGuard {
@@ -9152,9 +9152,9 @@ class BlockIdWithoutHasBlockTypeTest {
         }
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     //  Full pipeline test
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
 
     @Nested
     class FullPipeline {
@@ -9202,9 +9202,9 @@ class BlockIdWithoutHasBlockTypeTest {
         }
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     //  Edge case: item with null blockId and hasBlockType=false
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
 
     @Nested
     class NullBlockIdEdgeCases {
@@ -10222,7 +10222,7 @@ class ResourceTypeResolverTest {
         cleanup();
     }
 
-    // â”€â”€ Shared item builders (modeled after real Hytale asset data) â”€â”€
+    //  Shared item builders (modeled after real Hytale asset data) 
 
     /** Wood_Oak_Trunk: natural, set="Wood_Oak" (not a set-root â€” id != set). */
     private static Item logOak() {
@@ -10267,7 +10267,7 @@ class ResourceTypeResolverTest {
                 Set.of("Rock_Stone", "Wood_Log_Oak", "Wood_Log_Birch"));
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     @Nested
     class ResolveByResourceType {
 
@@ -10411,7 +10411,7 @@ class ResourceTypeResolverTest {
         }
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // 
     @Nested
     class ResolveInputItemId {
 
@@ -10940,7 +10940,7 @@ import java.util.Set;
  */
 public final class TestDataSet {
 
-    // â”€â”€ Natural block types â”€â”€
+    //  Natural block types 
     public final BlockBreakingDropType rockBreaking;
     public final BlockType rockStone;
 
@@ -10960,7 +10960,7 @@ public final class TestDataSet {
     public final HarvestingDropType leavesHarvest;  // direct itemId = Plant_Fiber
     public final BlockType leavesOak;
 
-    // â”€â”€ Recipe block types â”€â”€
+    //  Recipe block types 
     public final BlockBreakingDropType planksBreaking;
     public final BlockType woodPlanksOak;
 
@@ -10973,7 +10973,7 @@ public final class TestDataSet {
     public final BlockBreakingDropType doorBreaking;
     public final BlockType doorWoodOak;
 
-    // â”€â”€ Items â”€â”€
+    //  Items 
     public final Item itemRockStone;
     public final Item itemWoodLogOak;
     public final Item itemDirt;
@@ -10986,7 +10986,7 @@ public final class TestDataSet {
     public final Item itemDoorWoodOak;
     public final Item itemMetalIngotIron;
 
-    // â”€â”€ Recipes â”€â”€
+    //  Recipes 
     public final CraftingRecipe recipePlanksOak;   // base: 1x Wood_Log_Oak â†’ 2x Wood_Planks_Oak
     public final CraftingRecipe recipeSlabOak;     // non-base: 1x Wood_Planks_Oak â†’ 2x Wood_Slab_Oak
     public final CraftingRecipe recipeRailIron;    // non-base: 2x Metal_Ingot_Iron â†’ 1x Rail_Iron
@@ -10995,12 +10995,12 @@ public final class TestDataSet {
     public final CraftingRecipe salvageSlab;       // Salvage prefix, should be filtered
     public final CraftingRecipe recipeIngotIron;   // Processing bench, should be filtered
 
-    // â”€â”€ Extra recipe blocks (for ingredient tests) â”€â”€
+    //  Extra recipe blocks (for ingredient tests) 
     public final BlockBreakingDropType thatchBreaking;
     public final BlockType thatchBlock;
     public final Item itemThatchBlock;
 
-    // â”€â”€ Multi-ingredient recipe block (furniture bench style) â”€â”€
+    //  Multi-ingredient recipe block (furniture bench style) 
     public final BlockBreakingDropType furnitureBedBreaking;
     public final BlockType furnitureBed;
     public final Item itemFurnitureBed;
@@ -11008,30 +11008,30 @@ public final class TestDataSet {
     public final Item itemClothWoolRed;
     public final CraftingRecipe recipeFurnitureBed; // non-base: 3x Wood_Planks_Oak + 4x Ingredient_Fibre + 2x Cloth_Wool_Red â†’ 1x Furniture_Bed
 
-    // â”€â”€ Kweebec Bed: uses ResourceTypeId "Wood_All" instead of direct ItemId â”€â”€
+    //  Kweebec Bed: uses ResourceTypeId "Wood_All" instead of direct ItemId 
     public final BlockBreakingDropType kweebecBedBreaking;
     public final BlockType kweebecBed;
     public final Item itemKweebecBed;
     public final CraftingRecipe recipeKweebecBed; // non-base: 3x Wood_All (resourceTypeId) + 4x Ingredient_Fibre â†’ 1x Furniture_Kweebec_Bed
 
-    // â”€â”€ Hardwood Fence: single ResourceTypeId input "Wood_Hardwood" (Builders bench) â”€â”€
+    //  Hardwood Fence: single ResourceTypeId input "Wood_Hardwood" (Builders bench) 
     public final BlockBreakingDropType fenceHardwoodBreaking;
     public final BlockType fenceHardwood;
     public final Item itemFenceHardwood;
     public final CraftingRecipe recipeFenceHardwood; // non-base: 1x Wood_Hardwood (resourceTypeId) â†’ 2x Wood_Hardwood_Fence
 
-    // â”€â”€ Drop lists â”€â”€
+    //  Drop lists 
     public final ItemDrop bushPlantFiberDrop;
     public final ItemDrop bushBerryDrop;
     public final ItemDropList dropListBush;
 
-    // â”€â”€ Maps for installation â”€â”€
+    //  Maps for installation 
     public final Map<String, BlockType> blockTypes = new HashMap<>();
     public final Map<String, Item> items = new HashMap<>();
     public final Map<String, CraftingRecipe> recipes = new HashMap<>();
     public final Map<String, ItemDropList> dropLists = new HashMap<>();
 
-    // â”€â”€ Registry sets â”€â”€
+    //  Registry sets 
     public final Set<String> naturalBlockIds = new HashSet<>();
     public final Set<String> naturalItemIds = new HashSet<>();
     public final Map<String, CraftingRecipe> buildersRecipesByBlockType = new HashMap<>();
@@ -11041,9 +11041,9 @@ public final class TestDataSet {
     public final Set<String> baseBlockRecipeIds = new HashSet<>();
 
     public TestDataSet() {
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
         //  Natural blocks
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
 
         // Rock_Stone: breaking with gatherType, quantity=1, direct itemId
         rockBreaking = new BlockBreakingDropType("Rocks", 0, 1, "Rock_Stone", null);
@@ -11073,9 +11073,9 @@ public final class TestDataSet {
         leavesOak = blockType("Leaves_Oak",
                 gathering(null, null, leavesHarvest, null));
 
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
         //  Recipe blocks (StructuralCrafting)
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
 
         // Wood_Planks_Oak: base block, breaking with gatherType
         planksBreaking = new BlockBreakingDropType("Woods", 0, 1, "Wood_Planks_Oak", null);
@@ -11097,9 +11097,9 @@ public final class TestDataSet {
         doorWoodOak = blockType("Door_Wood_Oak",
                 gathering(doorBreaking, null, null, null));
 
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
         //  Items
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
 
         itemRockStone = item("Rock_Stone", "Rock_Stone", true, 100,
                 resourceType("Rock"));
@@ -11129,9 +11129,9 @@ public final class TestDataSet {
                 "Wood_Hardwood_Planks",
                 resourceType("Wood_Hardwood")));
 
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
         //  Recipes
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
 
         // Base block: 1x Wood_Log_Oak â†’ 2x Wood_Planks_Oak
         recipePlanksOak = recipe("Planks_Oak",
@@ -11220,9 +11220,9 @@ public final class TestDataSet {
                 materialQty("Metal_Ingot_Iron", 1),
                 BenchType.Processing);
 
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
         //  Drop lists
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
 
         bushPlantFiberDrop = new ItemDrop("Plant_Fiber", null, 1, 2);
         bushBerryDrop = new ItemDrop("Berry", null, 1, 1);
@@ -11231,9 +11231,9 @@ public final class TestDataSet {
         dropListBush = new ItemDropList("DropList_Bush",
                 new SingleItemDropContainer(bushPlantFiberDrop, 100.0));
 
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
         //  Populate maps
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
 
         // Block types
         blockTypes.put("Rock_Stone", rockStone);
@@ -11285,9 +11285,9 @@ public final class TestDataSet {
         // Drop lists
         dropLists.put("DropList_Bush", dropListBush);
 
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
         //  Registry data (what init() would compute)
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // 
 
         // Natural blocks: those with no non-Salvage crafting recipe output
         naturalBlockIds.add("Rock_Stone");

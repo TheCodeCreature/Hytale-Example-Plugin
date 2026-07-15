@@ -193,6 +193,22 @@ public final class ResourceTypeRegistry {
      * @param resourceTypeId the resource type ID to look up
      * @return the icon filename (e.g., "Hardwood.png"), or null if not found
      */
+    /**
+     * Returns the icon <b>filename token</b> for the given resource type ID — e.g.
+     * {@code "Hardwood.png"} or {@code "Any_Bone.png"}.
+     *
+     * <p><b>This is a bare filename, not a UI-ready path.</b> Callers must normalize it
+     * via {@link com.CodeCreature.ui.common.IconPathResolver#normalizeResourceTypeIcon(String)}
+     * (or the higher-level
+     * {@link com.CodeCreature.ui.common.IconPathResolver#resolveResourceTypeIcon(String)})
+     * before passing it to a UI command builder.
+     *
+     * <p>Performs a linear scan of the registry. Returns {@code null} if the
+     * resource type ID is not found.
+     *
+     * @param resourceTypeId the resource type ID to look up (e.g. {@code "Hardwood"})
+     * @return the icon filename token, or {@code null} if not found
+     */
     public static String getIconPath(String resourceTypeId) {
         for (ResourceTypeEntry entry : ENTRIES) {
             if (entry.resourceTypeId().equals(resourceTypeId)) {

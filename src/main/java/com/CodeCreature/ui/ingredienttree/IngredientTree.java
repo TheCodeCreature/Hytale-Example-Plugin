@@ -35,7 +35,7 @@ public final class IngredientTree {
         Set<String> ids = new LinkedHashSet<>();
         for (IngredientGroup group : groups) {
             for (IngredientResourceType rt : group.getChildren()) {
-                if (rt.getIconPath() != null) {
+                if (!rt.isDirectItem()) {
                     ids.add(rt.getId());
                 }
             }
@@ -47,7 +47,7 @@ public final class IngredientTree {
         Set<String> ids = new LinkedHashSet<>();
         for (IngredientGroup group : groups) {
             for (IngredientResourceType rt : group.getChildren()) {
-                if (rt.getIconPath() == null) {
+                if (rt.isDirectItem()) {
                     ids.add(rt.getId());
                 }
             }

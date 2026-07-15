@@ -1,5 +1,5 @@
 // IngredientGroupHeader — Collapsible section header with three-state checkbox
-// Server sets: #GroupHeaderLabel.Text, #GroupHeaderIcon.Background,
+// Server sets: #GroupHeaderLabel.Text, #GroupHeaderIcon.ItemId,
 //              #CheckboxIcon.Background (checkbox state), #ExpandArrow.Background
 // Events: #GroupHeaderBtn (expand/collapse), #CheckboxBtn (toggle selection)
 
@@ -20,7 +20,7 @@ Group {
             Padding: (Top: 2, Bottom: 2, Left: 0, Right: 2);
         }
 
-        Group #GroupHeaderIcon {
+        ItemIcon #GroupHeaderIcon {
             Anchor: (Width: 20, Height: 20);
             Padding: (Top: 2, Bottom: 2);
         }

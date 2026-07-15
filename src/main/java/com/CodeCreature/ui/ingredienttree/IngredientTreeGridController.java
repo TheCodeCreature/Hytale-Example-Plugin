@@ -18,7 +18,7 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 public class IngredientTreeGridController {
 
-    private enum ElementKind { HEADER, GRID_CONTAINER, LEAF_BUTTON, ITEM_BUTTON }
+    private enum ElementKind { HEADER, GRID_CONTAINER, ITEM_BUTTON }
 
     private record ElementInfo(String nodeId, NodeType nodeType, ElementKind kind, int containerIdx, int leafIdx) {}
 
@@ -64,11 +64,8 @@ public class IngredientTreeGridController {
             String gridSel = "#IngredientTreeContainer[" + gridContainerIdx + "] #GridCells";
             int leafIdx = 0;
             for (IngredientResourceType rt : group.getChildren()) {
-                boolean isDirectItem = rt.getIconPath() == null;
-                String template = isDirectItem
-                        ? "Pages/StencilBook/Components/ExactItemFilterButton.ui"
-                        : "Pages/StencilBook/Components/GroupFilterButton.ui";
-                ElementKind kind = isDirectItem ? ElementKind.ITEM_BUTTON : ElementKind.LEAF_BUTTON;
+                String template = "Pages/StencilBook/Components/ExactItemFilterButton.ui";
+                ElementKind kind = ElementKind.ITEM_BUTTON;
 
                 cmd.append(gridSel, template);
                 elements.add(new ElementInfo(rt.getId(), NodeType.RESOURCE_TYPE, kind, gridContainerIdx, leafIdx));
@@ -102,8 +99,8 @@ public class IngredientTreeGridController {
 
                     IngredientGroup group = (IngredientGroup) node;
                     cmd.set(sel + " #GroupHeaderLabel.Text", group.getDisplayName() + " (" + group.getChildCount() + ")");
-                    if (group.getIconPath() != null) {
-                        cmd.set(sel + " #GroupHeaderIcon.Background", group.getIconPath());
+                    if (group.getDisplayItemId() != null) {
+                        cmd.set(sel + " #GroupHeaderIcon.ItemId", group.getDisplayItemId());
                     }
                     cmd.set(sel + ".Visible", true);
                 }
@@ -112,20 +109,13 @@ public class IngredientTreeGridController {
                     boolean expanded = expandedGroups.contains(info.nodeId);
                     cmd.set(sel + ".Visible", expanded);
                 }
-                case LEAF_BUTTON -> {
-                    String sel = "#IngredientTreeContainer[" + info.containerIdx + "] #GridCells[" + info.leafIdx + "]";
-                    IngredientResourceType rt = (IngredientResourceType) node;
-                    boolean selected = selection.getState(info.nodeId) == CheckState.ALL;
-                    cmd.set(sel + " #FilterIcon.Background", rt.getIconPath());
-                    cmd.set(sel + " #ActiveOverlay.Visible", selected);
-                    cmd.set(sel + ".TooltipText", rt.getDisplayName());
-                    cmd.set(sel + ".Visible", true);
-                }
                 case ITEM_BUTTON -> {
                     String sel = "#IngredientTreeContainer[" + info.containerIdx + "] #GridCells[" + info.leafIdx + "]";
                     IngredientResourceType rt = (IngredientResourceType) node;
                     boolean selected = selection.getState(info.nodeId) == CheckState.ALL;
-                    cmd.set(sel + " #FilterItemIcon.ItemId", rt.getId());
+                    if (rt.getDisplayItemId() != null) {
+                        cmd.set(sel + " #FilterItemIcon.ItemId", rt.getDisplayItemId());
+                    }
                     cmd.set(sel + " #ActiveOverlay.Visible", selected);
                     cmd.set(sel + ".TooltipText", rt.getDisplayName());
                     cmd.set(sel + ".Visible", true);

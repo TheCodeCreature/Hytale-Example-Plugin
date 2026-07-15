@@ -14,6 +14,7 @@ import org.bson.BsonValue;
 
 import com.CodeCreature.util.DebugLogger;
 import static com.CodeCreature.util.DebugLogger.Subsystem.*;
+import com.CodeCreature.ui.common.IconPathResolver;
 
 /**
  * Maps raw bench IDs (discovered from recipes) into grouped tab IDs for
@@ -93,12 +94,6 @@ public final class BenchTabGrouper {
     ) {}
 
     // ─── State (immutable after construction) ───────────────────
-
-    /** Preferred path prefix for bench item thumbnails (Bench_*.png). */
-    private static final String ITEMS_GENERATED_ICON_PATH_PREFIX = "Common/Icons/ItemsGenerated/";
-
-    /** Root-relative prefix for explicit icon subpaths under Common/Icons/. */
-    private static final String ICONS_ROOT_PREFIX = "Common/Icons/";
 
     /**
      * Fallback tab icon when no explicit mapping exists.
@@ -601,20 +596,16 @@ public final class BenchTabGrouper {
      */
     @Nonnull
     private static String normalizeTabIconPath(@Nonnull String iconValue) {
-        String normalized = iconValue.replace('\\', '/').trim();
-        if (normalized.isEmpty() || normalized.contains("..")) {
+        String raw = iconValue.replace('\\', '/').trim();
+        if (raw.isEmpty() || raw.contains("..")) {
             return DEFAULT_TAB_ICON;
         }
-        if (normalized.startsWith(ICONS_ROOT_PREFIX)) {
-            return normalized;
+        // Keep bench-tab config strict: bare filenames must be Bench_*.png.
+        if (!raw.contains("/") && !raw.startsWith("Bench_")) {
+            return DEFAULT_TAB_ICON;
         }
-        if (normalized.contains("/")) {
-            return ICONS_ROOT_PREFIX + normalized;
-        }
-        if (normalized.startsWith("Bench_")) {
-            return ITEMS_GENERATED_ICON_PATH_PREFIX + normalized;
-        }
-        return DEFAULT_TAB_ICON;
+        String normalized = IconPathResolver.normalizeItemIcon(iconValue);
+        return normalized != null ? normalized : DEFAULT_TAB_ICON;
     }
 
     /**
