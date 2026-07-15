@@ -19,7 +19,7 @@ As a **plugin developer**, I want **StencilBookStyles.ui to re-export tokens fro
 ### Checklist
 - [ ] StencilBookStyles.ui imports SharedStyles.ui
 - [ ] Universal tokens previously defined inline in StencilBookStyles.ui now re-export from SharedStyles.ui
-- [ ] Bench-specific styles (@EntryStyle, @SelectedEntryStyle, @UnaffordableEntryStyle, @SetGroupLabelStyle, @EmptyStateStyle, @SelectedCellButtonStyle, @WrapSecondaryButtonStyle) remain in StencilBookStyles.ui
+- [ ] Bench-specific styles (@EntryStyle, @SelectedEntryStyle, @UnaffordableEntryStyle, @SetGroupLabelStyle, @EmptyStateStyle, @SelectedCellButtonStyle, @WrapPrimaryButtonStyle) remain in StencilBookStyles.ui
 - [ ] All 8 Value.ref() paths in StencilSelectionPage.java resolve correctly at runtime
 - [ ] All 9 .ui files that import $S = "StencilBookStyles.ui" continue to work
 - [ ] No visual regression in StencilBook UI

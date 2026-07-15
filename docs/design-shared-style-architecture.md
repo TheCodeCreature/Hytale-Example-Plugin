@@ -66,7 +66,7 @@ graph TB
     subgraph BBS["StencilBookStyles.ui — 8 Bench-Only"]
         direction TB
         BB_ENT["Entry Styles\n@EntryStyle\n@SelectedEntryStyle\n@UnaffordableEntryStyle"]
-        BB_BTN["Bench Buttons\n@SectionHeaderStyle\n@WrapSecondaryButtonStyle\n@SelectedCellButtonStyle"]
+        BB_BTN["Bench Buttons\n@SectionHeaderStyle\n@WrapPrimaryButtonStyle\n@SelectedCellButtonStyle"]
         BB_LBL["Bench Labels\n@SetGroupLabelStyle\n@EmptyStateStyle"]
     end
 
@@ -345,7 +345,7 @@ $Shared = "../../SharedStyles.ui";
               HorizontalAlignment: Start, VerticalAlignment: Center))
 );
 
-@WrapSecondaryButtonStyle = TextButtonStyle(
+@WrapPrimaryButtonStyle = TextButtonStyle(
     Default: (Background: PatchStyle(TexturePath: "../../Common/Buttons/Secondary.png", Border: $C.@ButtonBorder),
              LabelStyle: (Wrap: true, FontSize: 12, TextColor: #bdcbd3, RenderBold: true, RenderUppercase: true,
              HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -622,7 +622,7 @@ Group {
 | Token Name | Type | Reason |
 |---|---|---|
 | `@SectionHeaderStyle` | TextButtonStyle | Bench-specific collapsible section header |
-| `@WrapSecondaryButtonStyle` | TextButtonStyle | Bench-specific wrapped craft button |
+| `@WrapPrimaryButtonStyle` | TextButtonStyle | Bench-specific wrapped craft button |
 | `@EntryStyle` | TextButtonStyle | Recipe list entry display |
 | `@SelectedEntryStyle` | TextButtonStyle | Selected recipe highlight |
 | `@UnaffordableEntryStyle` | TextButtonStyle | Dimmed unaffordable recipe |

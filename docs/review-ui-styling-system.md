@@ -66,7 +66,7 @@ graph TB
 
 | File | Styles Defined | Used By |
 |------|---------------|---------|
-| [StencilBookStyles.ui](../src/main/resources/Common/UI/Custom/Pages/StencilBook/StencilBookStyles.ui) | `@HeaderStyle`, `@DetailLabelStyle`, `@SubtextStyle`, `@SectionLabelStyle`, `@FilterActiveStyle`, `@FilterInactiveStyle`, `@SectionHeaderStyle`, `@WrapSecondaryButtonStyle`, `@TransparentButtonStyle`, `@EntryStyle`, `@SelectedEntryStyle`, `@UnaffordableEntryStyle`, `@SetGroupLabelStyle`, `@CostQuantityStyle`, `@EmptyStateStyle`, `@SelectedCellButtonStyle`, `@CostQuantityInsufficientStyle`, `@DetailLabelMutedStyle` | StencilBookPage.ui, RecipeEntry.ui, CostCell.ui, RecipeIconCell.ui, MaterialGroupButton.ui, GroupFilterButton.ui, ExactItemFilterButton.ui, SetGroupContainer.ui, IngredientGroupHeader.ui + Java `Value.ref()` |
+| [StencilBookStyles.ui](../src/main/resources/Common/UI/Custom/Pages/StencilBook/StencilBookStyles.ui) | `@HeaderStyle`, `@DetailLabelStyle`, `@SubtextStyle`, `@SectionLabelStyle`, `@FilterActiveStyle`, `@FilterInactiveStyle`, `@SectionHeaderStyle`, `@WrapPrimaryButtonStyle`, `@TransparentButtonStyle`, `@EntryStyle`, `@SelectedEntryStyle`, `@UnaffordableEntryStyle`, `@SetGroupLabelStyle`, `@CostQuantityStyle`, `@EmptyStateStyle`, `@SelectedCellButtonStyle`, `@CostQuantityInsufficientStyle`, `@DetailLabelMutedStyle` | StencilBookPage.ui, RecipeEntry.ui, CostCell.ui, RecipeIconCell.ui, MaterialGroupButton.ui, GroupFilterButton.ui, ExactItemFilterButton.ui, SetGroupContainer.ui, IngredientGroupHeader.ui + Java `Value.ref()` |
 
 ### 3B. UI Files With Inline Styles (No Shared File)
 

@@ -34,6 +34,18 @@ $C = "../Common.ui";
               HorizontalAlignment: Start, VerticalAlignment: Center))
 );
 
+@WrapPrimaryButtonStyle = TextButtonStyle(
+    Default: (Background: PatchStyle(TexturePath: "../Common/Buttons/Primary.png", Border: $C.@ButtonBorder),
+             LabelStyle: (Wrap: true, FontSize: 12, TextColor: #bdcbd3, RenderBold: true, RenderUppercase: true,
+             HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: PatchStyle(TexturePath: "../Common/Buttons/Primary_Hovered.png", Border: $C.@ButtonBorder),
+             LabelStyle: (Wrap: true, FontSize: 12, TextColor: #bdcbd3, RenderBold: true, RenderUppercase: true,
+             HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: PatchStyle(TexturePath: "../Common/Buttons/Primary_Pressed.png", Border: $C.@ButtonBorder),
+             LabelStyle: (Wrap: true, FontSize: 12, TextColor: #bdcbd3, RenderBold: true, RenderUppercase: true,
+             HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
 @WrapSecondaryButtonStyle = TextButtonStyle(
     Default: (Background: PatchStyle(TexturePath: "../Common/Buttons/Secondary.png", Border: $C.@ButtonBorder),
              LabelStyle: (Wrap: true, FontSize: 12, TextColor: #bdcbd3, RenderBold: true, RenderUppercase: true,
