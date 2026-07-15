@@ -763,7 +763,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     private void updateAffordabilityToggle(UICommandBuilder cmd) {
         cmd.set("#AffordableToggle.Text", affordabilityMode.label());
         cmd.set("#AffordableToggle.Style", FILTER_ACTIVE);
-        cmd.set("#IngredientTreeContainer.Visible", affordabilityMode == AffordabilityMode.RESOURCE_PLANNING);
+        cmd.set("#IngredientSection.Visible", affordabilityMode == AffordabilityMode.RESOURCE_PLANNING);
     }
 
 

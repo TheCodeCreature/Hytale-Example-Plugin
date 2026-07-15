@@ -201,7 +201,7 @@ Group {
 
             // ── Output Icon + Cost Grid ──
             Group {
-                Anchor: (Height: 188);
+                Anchor: (Height: 170);
                 LayoutMode: Left;
 
                 Group {
@@ -253,44 +253,62 @@ Group {
             Group { Anchor: (Height: 8); }
 
             // ── Ingredient Filter Section Header ──
+            // Filter toggles
             Group {
-                Anchor: (Height: 26, Left: 0, Right: 0);
+                Anchor: (Height: 26, Left: 0, Right: 8);
                 LayoutMode: Left;
 
                 Label {
-                    Text: "INGREDIENTS";
+                    Text: "Resource Filter Options";
                     Style: $L.@SectionLabelStyle;
                     FlexWeight: 1;
                     Padding: (Left: 6);
                 }
 
-                Group {
-                    Anchor: (Width: 24, Height: 24, Right: 2);
-                    Background: $BG.@TrashIcon;
-
-                    TextButton #ClearIngredientsBtn {
-                        Text: "";
-                        Anchor: (Full: 0);
-                    }
+                TextButton #AffordableToggle {
+                    Text: "Inventory Driven";
+                    Anchor: (Height: 24);
+                    Padding: (Left: 6, Right: 6);
                 }
             }
-
-            // ── Ingredient Tree Grid ──
-            Group #IngredientTreeContainer {
-                FlexWeight: 1;
-                LayoutMode: TopScrolling;
-                ScrollbarStyle: $C.@DefaultScrollbarStyle;
-            }
             
-            Group { Anchor: (Height: 8); }
-            $C.@PanelSeparatorFancy {}
-            Group { Anchor: (Height: 8); }
-                    // Filter toggles
-                    TextButton #AffordableToggle {
-                        Text: "Inventory Driven";
-                        Anchor: (Height: 24, Left: 0, Right: 0);
-                        Padding: (Left: 6, Right: 6);
+            Group #IngredientSection {
+                LayoutMode: Top;
+                FlexWeight: 1;
+
+                Group { Anchor: (Height: 8); }
+                $C.@PanelSeparatorFancy {}
+                Group { Anchor: (Height: 8); }
+
+                Group {
+                    Anchor: (Height: 26, Left: 0, Right: 0);
+                    LayoutMode: Left;
+
+                    Label {
+                        Text: "INGREDIENTS";
+                        Style: $L.@SectionLabelStyle;
+                        FlexWeight: 1;
+                        Padding: (Left: 6);
                     }
+
+                    Group {
+                        Anchor: (Width: 24, Height: 24, Right: 2);
+                        Background: $BG.@TrashIcon;
+
+                        TextButton #ClearIngredientsBtn {
+                            Text: "";
+                            Anchor: (Full: 0);
+                        }
+                    }
+                }
+
+                // ── Ingredient Tree Grid ──
+                Group #IngredientTreeContainer {
+                    FlexWeight: 1;
+                    LayoutMode: TopScrolling;
+                    ScrollbarStyle: $C.@DefaultScrollbarStyle;
+                }
+            }
         }
 
         } // three-column layout
