@@ -365,6 +365,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             StencilBookPrefs savedPrefs = StencilBookPrefsStore.load(this.playerRef.getUuid());
             if (savedPrefs.selectedIngredientNodes != null && !savedPrefs.selectedIngredientNodes.isEmpty()) {
                 ingredientController.restoreSelection(savedPrefs.selectedIngredientNodes);
+                ingredientController.updateUI(cmd);
             }
         }
 
@@ -555,6 +556,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             updateSetFilters(cmd);
             gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
             updateDetail(cmd);
+            savePrefs();
             sendUpdate(cmd, null, false);
 
 
@@ -588,6 +590,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 updateSetFilters(cmd);
                 gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
                 updateDetail(cmd);
+                savePrefs();
             }
             sendUpdate(cmd, null, false);
 
@@ -603,6 +606,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 updateSetFilters(cmd);
                 gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
                 updateDetail(cmd);
+                savePrefs();
             }
             sendUpdate(cmd, null, false);
 
