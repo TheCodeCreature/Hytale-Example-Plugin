@@ -15,7 +15,7 @@ Restructure the Stencil Crafting recipe grid from a flat `LeftCenterWrap` cell p
 
 ```mermaid
 classDiagram
-    class BlueprintSelectionPage {
+    class StencilSelectionPage {
         -int MAX_SET_GROUPS$
         -int CELLS_PER_GROUP$
         -int MAX_RECIPE_CELLS$
@@ -55,10 +55,10 @@ classDiagram
         CellBtn : TextButton
     }
 
-    BlueprintSelectionPage --> RecipeFilterPipeline : uses
+    StencilSelectionPage --> RecipeFilterPipeline : uses
     RecipeFilterPipeline --> PipelineResult : produces
     PipelineResult --> TaggedRecipe : contains
-    BlueprintSelectionPage ..> SetGroupContainer_ui : appends N instances
+    StencilSelectionPage ..> SetGroupContainer_ui : appends N instances
     SetGroupContainer_ui *-- RecipeIconCell_ui : contains CELLS_PER_GROUP
 ```
 
@@ -81,7 +81,7 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant Page as BlueprintSelectionPage
+    participant Page as StencilSelectionPage
     participant Pipeline as RecipeFilterPipeline
     participant UI as UI Engine
 
@@ -115,8 +115,8 @@ sequenceDiagram
 ## 6. Package Structure
 
 ```
-src/main/resources/Common/UI/Custom/Pages/BlueprintBook/
-├── BlueprintBookPage.ui          ← MODIFIED: #RecipeGrid → #RecipeGridArea (Top layout)
+src/main/resources/Common/UI/Custom/Pages/StencilBook/
+├── StencilBookPage.ui          ← MODIFIED: #RecipeGrid → #RecipeGridArea (Top layout)
 ├── RecipeIconCell.ui              ← UNCHANGED
 ├── SetGroupContainer.ui           ← NEW: per-set group with label + wrapping cell grid
 ├── SetFilterButton.ui             ← UNCHANGED
@@ -124,13 +124,13 @@ src/main/resources/Common/UI/Custom/Pages/BlueprintBook/
 └── CostCell.ui                    ← UNCHANGED
 
 src/main/java/com/UnobstructedThirdPerson/placeblock/ui/
-├── BlueprintSelectionPage.java    ← MODIFIED: grouped build/update/binding/dismiss
+├── StencilSelectionPage.java    ← MODIFIED: grouped build/update/binding/dismiss
 └── RecipeFilterPipeline.java      ← UNCHANGED
 ```
 
 ## 7. Integration Changes Required
 
-### 7.1 BlueprintBookPage.ui (lines 193–207)
+### 7.1 StencilBookPage.ui (lines 193–207)
 
 **Current** — flat wrapping grid:
 ```ui
@@ -162,7 +162,7 @@ Group {
 
 The only .ui change is renaming `#RecipeGrid` to `#RecipeGridArea` and switching `LayoutMode` from `LeftCenterWrap` to `Top`. All grouping and cell structure is built server-side by appending `SetGroupContainer.ui` templates.
 
-### 7.2 BlueprintSelectionPage.java — Constants
+### 7.2 StencilSelectionPage.java — Constants
 
 **Replace:**
 ```java
@@ -176,7 +176,7 @@ private static final int CELLS_PER_GROUP = 9;       // one row of 9 columns per 
 private static final int MAX_RECIPE_CELLS = MAX_SET_GROUPS * CELLS_PER_GROUP;  // 180
 ```
 
-### 7.3 BlueprintSelectionPage.java — New Field
+### 7.3 StencilSelectionPage.java — New Field
 
 **Add:**
 ```java
@@ -184,13 +184,13 @@ private static final int MAX_RECIPE_CELLS = MAX_SET_GROUPS * CELLS_PER_GROUP;  /
 private final int[] cellSlotToRecipeIndex = new int[MAX_RECIPE_CELLS];
 ```
 
-### 7.4 BlueprintSelectionPage.java — build() Recipe Grid Section
+### 7.4 StencilSelectionPage.java — build() Recipe Grid Section
 
 **Replace** the recipe cell append block:
 ```java
 // Recipe icon cells
 for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
-    cmd.append("#RecipeGrid", "Pages/BlueprintBook/RecipeIconCell.ui");
+    cmd.append("#RecipeGrid", "Pages/StencilBook/RecipeIconCell.ui");
 }
 ```
 
@@ -198,16 +198,16 @@ for (int i = 0; i < MAX_RECIPE_CELLS; i++) {
 ```java
 // Per-set group containers (each contains a label + wrapping cell grid)
 for (int g = 0; g < MAX_SET_GROUPS; g++) {
-    cmd.append("#RecipeGridArea", "Pages/BlueprintBook/SetGroupContainer.ui");
+    cmd.append("#RecipeGridArea", "Pages/StencilBook/SetGroupContainer.ui");
     // Append recipe cells into each group's #GroupCells container
     for (int c = 0; c < CELLS_PER_GROUP; c++) {
         cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
-                   "Pages/BlueprintBook/RecipeIconCell.ui");
+                   "Pages/StencilBook/RecipeIconCell.ui");
     }
 }
 ```
 
-### 7.5 BlueprintSelectionPage.java — buildRecipeGridBindings()
+### 7.5 StencilSelectionPage.java — buildRecipeGridBindings()
 
 **Replace:**
 ```java
@@ -237,7 +237,7 @@ private void buildRecipeGridBindings(UIEventBuilder evt) {
 
 The event payload `RecipeSelect:idx:N` is preserved. `N` is now a **cell slot index** (not a direct recipe index) — the handler uses `cellSlotToRecipeIndex[N]` to resolve the actual recipe.
 
-### 7.6 BlueprintSelectionPage.java — updateRecipeGrid()
+### 7.6 StencilSelectionPage.java — updateRecipeGrid()
 
 **Replace** the current flat iteration with grouped assignment logic:
 
@@ -306,7 +306,7 @@ private void hideRemainingCells(UICommandBuilder cmd, int groupIdx, int startCel
 }
 ```
 
-### 7.7 BlueprintSelectionPage.java — onDismiss()
+### 7.7 StencilSelectionPage.java — onDismiss()
 
 **Replace:**
 ```java
@@ -324,7 +324,7 @@ for (int g = 0; g < MAX_SET_GROUPS; g++) {
 
 Hiding the group container hides all its children (label + cells), so per-cell cleanup is unnecessary.
 
-### 7.8 BlueprintSelectionPage.java — RecipeSelect Handler
+### 7.8 StencilSelectionPage.java — RecipeSelect Handler
 
 **Replace:**
 ```java
@@ -438,26 +438,26 @@ Group {
 ### Wave 1 (no dependencies — can run in parallel)
 
 #### Unit: SetGroupContainer.ui
-- **File**: `src/main/resources/Common/UI/Custom/Pages/BlueprintBook/SetGroupContainer.ui`
+- **File**: `src/main/resources/Common/UI/Custom/Pages/StencilBook/SetGroupContainer.ui`
 - **Contract**: Static UI template defining a per-set group container with a label and a wrapping cell grid
 - **Dependencies**: none
 - **Done when**: File exists, renders correctly when appended by the engine
 
-#### Unit: BlueprintBookPage.ui layout change
-- **File**: `src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui`
+#### Unit: StencilBookPage.ui layout change
+- **File**: `src/main/resources/Common/UI/Custom/Pages/StencilBook/StencilBookPage.ui`
 - **Changes**: Rename `#RecipeGrid` → `#RecipeGridArea`, change `LayoutMode` from `LeftCenterWrap` to `Top`
 - **Dependencies**: none
 - **Done when**: The `#RecipeGridArea` container exists with `LayoutMode: Top`
 
 ### Wave 2 (depends on Wave 1)
 
-#### Unit: BlueprintSelectionPage.java — constants, field, and build()
+#### Unit: StencilSelectionPage.java — constants, field, and build()
 - **Methods**: Update constants (`MAX_SET_GROUPS`, `CELLS_PER_GROUP`, `MAX_RECIPE_CELLS`), add `cellSlotToRecipeIndex` field, modify `build()` to append `SetGroupContainer.ui` instances and populate each with `RecipeIconCell.ui` cells
 - **Contract**: Pre-allocate the full grouped grid structure during the one-time build phase
 - **Dependencies**: Wave 1 (SetGroupContainer.ui must exist, `#RecipeGridArea` ID must be in the .ui file)
 - **Done when**: `build()` creates 20 groups × 9 cells = 180 pre-allocated cell slots
 
-#### Unit: BlueprintSelectionPage.java — buildRecipeGridBindings()
+#### Unit: StencilSelectionPage.java — buildRecipeGridBindings()
 - **Methods**: `buildRecipeGridBindings(UIEventBuilder)`
 - **Contract**: Bind `RecipeSelect:idx:N` events using nested selectors `#RecipeGridArea[g] #GroupCells[c] #CellBtn`, where N increments globally across all groups
 - **Dependencies**: Wave 1 (UI structure)
@@ -465,13 +465,13 @@ Group {
 
 ### Wave 3 (depends on Wave 2)
 
-#### Unit: BlueprintSelectionPage.java — updateRecipeGrid() + hideRemainingCells()
+#### Unit: StencilSelectionPage.java — updateRecipeGrid() + hideRemainingCells()
 - **Methods**: `updateRecipeGrid(UICommandBuilder)`, `hideRemainingCells(UICommandBuilder, int, int)`
 - **Contract**: Walk `displayedRecipes`, detect set boundaries, show/hide groups and cells, set labels, populate `cellSlotToRecipeIndex` mapping
 - **Dependencies**: Wave 2 (constants, field, and build structure must be in place)
 - **Done when**: Groups display correct labels, cells show correct icons, hidden cells are invisible, `cellSlotToRecipeIndex` is populated correctly
 
-#### Unit: BlueprintSelectionPage.java — RecipeSelect handler + onDismiss()
+#### Unit: StencilSelectionPage.java — RecipeSelect handler + onDismiss()
 - **Methods**: Modify `RecipeSelect:idx:` handler block, modify `onDismiss()` cleanup loop
 - **Contract**: Handler resolves `slotIdx` → `cellSlotToRecipeIndex[slotIdx]` → `displayedRecipes.get(recipeIdx)`. Dismiss hides groups instead of individual cells.
 - **Dependencies**: Wave 2 (constants, field)

@@ -151,7 +151,7 @@ graph TB
 
     subgraph "UI Phase"
         TREE -->|"groups + children"| CONTROLLER["IngredientTreeGridController"]
-        CONTROLLER -->|"cmd.append / cmd.set"| UI["BlueprintBookPage.ui\n#IngredientTreeContainer"]
+        CONTROLLER -->|"cmd.append / cmd.set"| UI["StencilBookPage.ui\n#IngredientTreeContainer"]
         CONTROLLER -->|"reads/writes"| SELECTION["IngredientSelectionModel"]
     end
 
@@ -175,7 +175,7 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant BSP as BlueprintSelectionPage
+    participant BSP as StencilSelectionPage
     participant Builder as IngredientTreeBuilder
     participant RTR as ResourceTypeResolver
     participant IAM as Item.getAssetMap()
@@ -217,8 +217,8 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant Player
-    participant UI as BlueprintBookPage.ui
-    participant BSP as BlueprintSelectionPage
+    participant UI as StencilBookPage.ui
+    participant BSP as StencilSelectionPage
     participant Ctrl as IngredientTreeGridController
     participant Sel as IngredientSelectionModel
     participant Pipe as RecipeFilterPipeline
@@ -330,7 +330,7 @@ Replaces the current `#ResourceTypesHeader` and `#CategoriesHeader` pattern with
 //              #CheckboxIcon.Background (checkbox state), #ExpandArrow.Background
 // Events: #GroupHeaderBtn (expand/collapse), #CheckboxBtn (toggle selection)
 
-$S = "BlueprintBookStyles.ui";
+$S = "StencilBookStyles.ui";
 
 Group {
     Anchor: (Height: 28, Left: 0, Right: 0);
@@ -405,7 +405,7 @@ Tier 3 (ExactItem) entries need a **new template** because they use `ItemIcon` i
 // ExactItemFilterButton.ui — exact item filter button using engine ItemIcon
 // Server sets: #ItemIconEl.ItemId, #ActiveOverlay.Visible, .TooltipText
 
-$S = "BlueprintBookStyles.ui";
+$S = "StencilBookStyles.ui";
 
 Group {
     Anchor: (Width: 36, Height: 36);
@@ -435,7 +435,7 @@ Group {
 }
 ```
 
-### 7d. UI Layout in BlueprintBookPage.ui
+### 7d. UI Layout in StencilBookPage.ui
 
 **Layout decision:** The right column is split into two vertical sections:
 - **Top (40%):** Crafting Details — output icon, cost grid, Give Stencil button
@@ -543,7 +543,7 @@ See [docs/mocks/ingredient-tree-grid-full-layout.html](mocks/ingredient-tree-gri
 
 ### 8a. Overview
 
-`IngredientTreeBuilder.build()` produces an `IngredientTree` from the full recipe set. It runs **once** during `BlueprintSelectionPage.loadRecipes()`.
+`IngredientTreeBuilder.build()` produces an `IngredientTree` from the full recipe set. It runs **once** during `StencilSelectionPage.loadRecipes()`.
 
 ### 8b. Step-by-Step Algorithm
 
@@ -754,7 +754,7 @@ These are new icon assets that need to be created (16×16 PNG). Alternatively, u
 
 ## 10. Integration Changes Required
 
-### 10a. BlueprintSelectionPage.java
+### 10a. StencilSelectionPage.java
 
 | Change | Location | Description |
 |--------|----------|-------------|
@@ -770,7 +770,7 @@ These are new icon assets that need to be created (16×16 PNG). Alternatively, u
 | Remove | `updateResourceTypes()` | Replaced by `controller.updateUI()` |
 | Remove | `buildResourceTypeBindings()` | Replaced by controller |
 
-### 10b. BlueprintBookPage.ui
+### 10b. StencilBookPage.ui
 
 | Change | Location | Description |
 |--------|----------|-------------|
@@ -785,7 +785,7 @@ These are new icon assets that need to be created (16×16 PNG). Alternatively, u
 | Add | `inputMatchesAnyExactItemId(recipe, Set<String>)` — new predicate for ExactID matching |
 | No change | `ResourceTypeChecker` interface stays the same; the controller produces a checker that combines both ResourceType and ExactID logic |
 
-### 10d. BlueprintBookPrefs.java
+### 10d. StencilBookPrefs.java
 
 | Change | Description |
 |--------|-------------|
@@ -816,7 +816,7 @@ However, the following usages are removed:
 - `#ResourceTypesHeader` — single section header
 - `#ClearResourceTypesBtn` — clear button (functionality integrated into controller)
 
-### 11c. Removed State Fields in BlueprintSelectionPage
+### 11c. Removed State Fields in StencilSelectionPage
 
 - `activeResourceTypes` (Set) → replaced by `IngredientSelectionModel`
 - `resourceTypesExpanded` (boolean) → replaced by per-group expand state in controller
@@ -838,16 +838,16 @@ src/main/java/com/UnobstructedThirdPerson/
 │       │   ├── CheckState.java                   // Enum: NONE, SOME, ALL
 │       │   ├── IngredientSelectionModel.java     // Selection state with cascade logic
 │       │   └── IngredientTreeGridController.java // UI controller: build, update, events
-│       ├── BlueprintSelectionPage.java           // Modified: uses controller
+│       ├── StencilSelectionPage.java           // Modified: uses controller
 │       ├── RecipeFilterPipeline.java             // Minor additions
 │       └── ResourceTypeRegistry.java            // Kept for migration; usage reduced
 │
-src/main/resources/Common/UI/Custom/Pages/BlueprintBook/
-├── BlueprintBookPage.ui                         // Modified: #IngredientTreeContainer
+src/main/resources/Common/UI/Custom/Pages/StencilBook/
+├── StencilBookPage.ui                         // Modified: #IngredientTreeContainer
 ├── IngredientGroupHeader.ui                      // NEW: section header template
 ├── ExactItemFilterButton.ui                      // NEW: ItemIcon-based filter button
 ├── GroupFilterButton.ui                          // UNCHANGED: reused for Tier 2 entries
-└── BlueprintBookStyles.ui                       // Add: SectionHeaderLabelStyle
+└── StencilBookStyles.ui                       // Add: SectionHeaderLabelStyle
 │
 src/main/resources/Common/UI/Custom/Common/Icons/Checkbox/
 ├── Unchecked.png                                 // NEW: 16x16 empty checkbox
@@ -894,8 +894,8 @@ src/main/resources/Common/UI/Custom/Common/Icons/Checkbox/
 ### Wave 3 (integration — depends on Wave 2)
 
 #### Unit: Integration Wiring
-- **Files:** `BlueprintSelectionPage.java`, `BlueprintBookPage.ui`, `BlueprintBookPrefs.java`, `RecipeFilterPipeline.java`
-- **Contract:** Wire IngredientTreeGridController into BlueprintSelectionPage, replace ResourceTypeRegistry usage, update UI layout, add preference migration
+- **Files:** `StencilSelectionPage.java`, `StencilBookPage.ui`, `StencilBookPrefs.java`, `RecipeFilterPipeline.java`
+- **Contract:** Wire IngredientTreeGridController into StencilSelectionPage, replace ResourceTypeRegistry usage, update UI layout, add preference migration
 - **Dependencies:** All Wave 1 + Wave 2 units
 - **Done when:** Full build passes; ingredient tree displays in-game; selection filters recipes correctly; preferences save/load; ResourceTypeRegistry no longer called for filtering (only for migration)
 

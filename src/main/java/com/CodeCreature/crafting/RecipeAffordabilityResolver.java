@@ -35,13 +35,13 @@ import java.util.Set;
  * </ol>
  *
  * <p>Duplicate resolved item IDs are merged (quantities summed), matching
- * the behavior previously inlined in {@code BlueprintSelectionPage}.
+ * the behavior previously inlined in {@code StencilSelectionPage}.
  *
  * <h3>No UI dependencies</h3>
  * This class depends only on recipe, inventory, and resource-resolution
  * classes. It has no dependency on {@code UICommandBuilder}, {@code Value},
  * {@code AffordabilityMode}, or any UI page class. This allows it to be
- * used from both UI contexts (BlueprintSelectionPage, StencilRadialMenuPage)
+ * used from both UI contexts (StencilSelectionPage, StencilRadialMenuPage)
  * and non-UI contexts (StencilVisualManager).
  *
  * <h3>Threading</h3>

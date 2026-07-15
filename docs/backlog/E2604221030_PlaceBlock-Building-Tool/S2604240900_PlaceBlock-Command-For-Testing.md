@@ -51,4 +51,4 @@ As a **player**, I want **a `/placeblock` command to assign, clear, list, and in
 ## Notes
 - This is a temporary testing tool — will be superseded by the custom Stencil Crafting UI (Phase 2b)
 - Uses existing `PlaceBlockMetadata` for all state operations
-- Resolves original recipe IDs from shadow recipes via `BlueprintBookRecipeMutator.getOriginalRecipeId()`
+- Resolves original recipe IDs from shadow recipes via `StencilBookRecipeMutator.getOriginalRecipeId()`

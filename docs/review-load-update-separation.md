@@ -2,7 +2,7 @@
 
 > **Date:** 2026-04-29  
 > **Scope:** Staged changes for Load-Update Separation pattern  
-> **Files reviewed:** `BlueprintSelectionPage.java`, `BlueprintBookPage.ui`, `SetFilterButton.ui`, `CostCell.ui`, `PlaceholderRow.ui`, `ItemGridTestPage.java`, `design-load-update-separation.md`
+> **Files reviewed:** `StencilSelectionPage.java`, `StencilBookPage.ui`, `SetFilterButton.ui`, `CostCell.ui`, `PlaceholderRow.ui`, `ItemGridTestPage.java`, `design-load-update-separation.md`
 
 ## Executive Summary
 
@@ -20,7 +20,7 @@ The Load-Update Separation is **cleanly implemented**. All `cmd.append()` / `cmd
 |---|---|
 | **Category** | Correctness |
 | **Severity** | High |
-| **Location** | `BlueprintSelectionPage.java` — `handleDataEvent()`, lines 220–236 |
+| **Location** | `StencilSelectionPage.java` — `handleDataEvent()`, lines 220–236 |
 
 **Finding:** When `data.selectedTab != null` but equals the current `activeTab`, no `sendUpdate()` is called and no other `else if` branch is entered. If the Hytale UI framework expects a response for every event, this will stall the client.
 
@@ -59,7 +59,7 @@ if (data.selectedTab != null) {
 |---|---|
 | **Category** | Correctness |
 | **Severity** | High |
-| **Location** | `BlueprintSelectionPage.java` — `handleDataEvent()`, lines 273–277 |
+| **Location** | `StencilSelectionPage.java` — `handleDataEvent()`, lines 273–277 |
 
 **Finding:** No event binding in `build()` sends a `RecipeId` field. All recipe interactions are handled via `RecipeHover` and `RecipeSelect` actions using `SlotIndex`. The `data.recipeId` path is dead code carried over from a previous implementation.
 
@@ -84,7 +84,7 @@ Additionally, this path calls `updateRecipeGrid(cmd)` even though `updateRecipeG
 |---|---|
 | **Category** | Performance |
 | **Severity** | Medium |
-| **Location** | `BlueprintSelectionPage.java` — `handleDataEvent()`, lines 324–338 |
+| **Location** | `StencilSelectionPage.java` — `handleDataEvent()`, lines 324–338 |
 
 **Finding:** Both handlers call `sendUpdate(cmd, null, false)` unconditionally, even when `slotIndex` is null or out of bounds. This sends an empty command packet to the client — a wasted network round-trip on every invalid hover event.
 
@@ -107,7 +107,7 @@ Additionally, this path calls `updateRecipeGrid(cmd)` even though `updateRecipeG
 |---|---|
 | **Category** | Performance |
 | **Severity** | Low |
-| **Location** | `BlueprintSelectionPage.java` — `handleDataEvent()`, lines 298–322 |
+| **Location** | `StencilSelectionPage.java` — `handleDataEvent()`, lines 298–322 |
 
 **Finding:** Same pattern as Finding 3. If slot validation fails (bad hotbar index or empty itemStackId), `sendUpdate(cmd, null, false)` sends an empty packet.
 
@@ -121,7 +121,7 @@ Additionally, this path calls `updateRecipeGrid(cmd)` even though `updateRecipeG
 |---|---|
 | **Category** | Maintainability |
 | **Severity** | Low |
-| **Location** | `BlueprintSelectionPage.java` — `handleDataEvent()`, lines 324–338 |
+| **Location** | `StencilSelectionPage.java` — `handleDataEvent()`, lines 324–338 |
 
 **Finding:** Both handlers set `selectedRecipeId` from `displayedRecipes.get(slotIndex)` and call `updateDetailPanel`. They are exact duplicates.
 
@@ -155,7 +155,7 @@ Additionally, this path calls `updateRecipeGrid(cmd)` even though `updateRecipeG
 |---|---|
 | **Category** | Performance |
 | **Severity** | Low |
-| **Location** | `BlueprintSelectionPage.java` — `updatePlaceholderList()`, lines 498–522 |
+| **Location** | `StencilSelectionPage.java` — `updatePlaceholderList()`, lines 498–522 |
 
 **Finding:** For each armed placeholder row, a linear scan of `allRecipes` finds the matching `outputItemId` by `blockTypeId`. With 9 hotbar slots × N recipes, this is O(9N) per update. The same linear scan exists in `armPlaceholder()`.
 
@@ -178,7 +178,7 @@ for (RecipeEntry entry : allRecipes) {
 |---|---|
 | **Category** | Robustness |
 | **Severity** | Low |
-| **Location** | `BlueprintSelectionPage.java` — `handleDataEvent()`, lines 238–260 |
+| **Location** | `StencilSelectionPage.java` — `handleDataEvent()`, lines 238–260 |
 
 **Finding:** If a `SetFilter:` action doesn't match `"All"` and doesn't start with `"idx:"`, the code falls through to `applyFilter()` + `sendUpdate()` without modifying any state. This wastes a filter recalculation for payloads that can't exist under normal operation, but also silently swallows unexpected data.
 
@@ -205,7 +205,7 @@ applyFilter();
 | **Severity** | Info |
 | **Location** | `docs/design-load-update-separation.md` — Sections 6.2–6.4 vs actual `.ui` / `.java` |
 
-**Finding:** The design doc (Section 6) describes fully pre-allocating all dynamic nodes with unique IDs directly in `BlueprintBookPage.ui` (e.g., `#FilterAll`, `#Filter0`–`#Filter19`, `#Row0`–`#Row8`, `#Cost0`–`#Cost7`). The actual implementation takes a different (and better) approach: keeping containers empty in the `.ui` and appending reusable component templates (`SetFilterButton.ui`, `CostCell.ui`, `PlaceholderRow.ui`) during `build()`, addressed via indexed selectors (`#SetFilters[0]`, `#CostGrid[N]`, `#PlaceholderList[N]`).
+**Finding:** The design doc (Section 6) describes fully pre-allocating all dynamic nodes with unique IDs directly in `StencilBookPage.ui` (e.g., `#FilterAll`, `#Filter0`–`#Filter19`, `#Row0`–`#Row8`, `#Cost0`–`#Cost7`). The actual implementation takes a different (and better) approach: keeping containers empty in the `.ui` and appending reusable component templates (`SetFilterButton.ui`, `CostCell.ui`, `PlaceholderRow.ui`) during `build()`, addressed via indexed selectors (`#SetFilters[0]`, `#CostGrid[N]`, `#PlaceholderList[N]`).
 
 This means:
 - Section 6 (981 lines of pre-allocated .ui markup) is misleading — that code was never implemented

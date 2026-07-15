@@ -58,7 +58,7 @@ classDiagram
         -syncForPlayer(PlayerRef playerRef, Inventory inventory) void
     }
 
-    class BlueprintSelectionPage {
+    class StencilSelectionPage {
         +handleDataEvent(Ref, Store, EventPayload) void
     }
 
@@ -74,7 +74,7 @@ classDiagram
     PlaceholderSyncSystem --> BlockPreviewReskinManager : syncHotbar
     PlaceholderSyncSystem --> PlaceBlockMetadata : reads variant info
     BlockPreviewReskinManager --> PlaceBlockMetadata : getVariantItemId, isGreenVariant
-    BlueprintSelectionPage --> PlaceBlockMetadata : setArmedRecipeId
+    StencilSelectionPage --> PlaceBlockMetadata : setArmedRecipeId
     PlaceBlockPlacementSystem --> PlaceBlockMetadata : isPlaceBlock, isArmed
     UnobstructedThirdPersonPlugin --> PlaceholderSyncSystem : registers listener
     UnobstructedThirdPersonPlugin --> BlockPreviewReskinManager : cleanup on disconnect
@@ -123,7 +123,7 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant UI as BlueprintSelectionPage
+    participant UI as StencilSelectionPage
     participant Meta as PlaceBlockMetadata
     participant Inv as Inventory
     participant EvtBus as Global Event Bus
@@ -162,7 +162,7 @@ src/main/java/com/UnobstructedThirdPerson/placeblock/
 ├── PlaceBlockPlacementSystem.java    (MODIFY — minimal, via isPlaceBlock change)
 ├── PlaceholderSyncSystem.java        (NEW — global event listener)
 ├── ui/
-│   └── BlueprintSelectionPage.java   (MODIFY — remove direct reskin call)
+│   └── StencilSelectionPage.java   (MODIFY — remove direct reskin call)
 
 src/main/resources/Server/Item/Items/Tool/
 ├── Block_Placeholder_Green.json      (KEEP — base template, no longer used at runtime)
@@ -230,7 +230,7 @@ Global event listener registered on `LivingEntityInventoryChangeEvent`. Bridges 
 
 **Threading:** Runs on the global event bus dispatch thread. `BlockPreviewReskinManager` uses `ConcurrentHashMap` for thread safety.
 
-### 7.4 BlueprintSelectionPage (MODIFY)
+### 7.4 StencilSelectionPage (MODIFY)
 
 **Change in `handleDataEvent` "Assign:" branch:**
 - Remove the direct `BlockPreviewReskinManager.reskin(this.playerRef, entry.blockTypeId)` call.
@@ -256,7 +256,7 @@ The base `Block_Placeholder_Green.json` is kept for backward compatibility (the 
 
 ### Scenario A: Player arms placeholder in hotbar slot 3
 
-1. `BlueprintSelectionPage.handleDataEvent` calls `PlaceBlockMetadata.setArmedRecipeId(stack, recipeId, "Oak_Planks")` → returns `ItemStack("Block_Placeholder_Green", 1, {RecipeId: "...", TargetBlockId: "Oak_Planks"})`
+1. `StencilSelectionPage.handleDataEvent` calls `PlaceBlockMetadata.setArmedRecipeId(stack, recipeId, "Oak_Planks")` → returns `ItemStack("Block_Placeholder_Green", 1, {RecipeId: "...", TargetBlockId: "Oak_Planks"})`
 2. `combined.setItemStackForSlot(3, armed)` fires `LivingEntityInventoryChangeEvent`
 3. `PlaceholderSyncSystem.accept()` → `BlockPreviewReskinManager.syncHotbar(playerRef, inventory)`
 4. `syncHotbar` iterates hotbar slots 0-8:
@@ -299,7 +299,7 @@ The base `Block_Placeholder_Green.json` is kept for backward compatibility (the 
 | `PlaceBlockMetadata.java` | `isPlaceBlock()` | Add recognition of all 9 Green variants |
 | `PlaceBlockMetadata.java` | Class body | Add `GREEN_VARIANT_PREFIX`, `HOTBAR_SIZE`, `isGreenVariant()`, `getVariantItemId()`, `toVariant()`, `toBaseGreen()` |
 | `BlockPreviewReskinManager.java` | Entire file | Full rewrite: single-variant → multi-variant tracking and sync |
-| `BlueprintSelectionPage.java` | `handleDataEvent` "Assign:" branch | Remove `BlockPreviewReskinManager.reskin(...)` call (sync system handles it) |
+| `StencilSelectionPage.java` | `handleDataEvent` "Assign:" branch | Remove `BlockPreviewReskinManager.reskin(...)` call (sync system handles it) |
 | `UnobstructedThirdPersonPlugin.java` | `setup()` | Register `PlaceholderSyncSystem` as global listener for `LivingEntityInventoryChangeEvent` |
 | `UnobstructedThirdPersonPlugin.java` | Import section | Add import for `PlaceholderSyncSystem` and `LivingEntityInventoryChangeEvent` |
 
@@ -307,7 +307,7 @@ The base `Block_Placeholder_Green.json` is kept for backward compatibility (the 
 
 | Risk | Impact | Likelihood | Mitigation |
 |------|--------|------------|------------|
-| **R1: `setItemStackForSlot` on hotbar doesn't fire `LivingEntityInventoryChangeEvent`** | Sync never triggers | Medium | Test immediately. Fallback: call `syncHotbar` explicitly after arming in `BlueprintSelectionPage`. |
+| **R1: `setItemStackForSlot` on hotbar doesn't fire `LivingEntityInventoryChangeEvent`** | Sync never triggers | Medium | Test immediately. Fallback: call `syncHotbar` explicitly after arming in `StencilSelectionPage`. |
 | **R2: Recursive event loop** — `syncHotbar` writes items back (variant conversion), which fires another `LivingEntityInventoryChangeEvent` | Infinite loop / stack overflow | Medium | Guard: if item is already the correct variant, skip the write. `syncHotbar` should be idempotent — second invocation finds everything already correct and makes zero writes. |
 | **R3: Original packet capture timing** — variants may not be loaded in the asset map when `captureOriginalPackets()` is first called | Null packet cache | Low | Call `captureOriginalPackets()` lazily on first `syncHotbar`, which happens after player connects (assets already loaded). Log severe warning if any variant is missing. |
 | **R4: Thread safety** — `syncHotbar` may be called concurrently for the same player if multiple inventory events fire rapidly | Race condition on tracking map / item writes | Medium | Outer `ConcurrentHashMap` provides per-key safety. Consider synchronizing on the player's tracking map for the inner operations. |

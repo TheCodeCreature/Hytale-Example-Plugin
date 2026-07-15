@@ -77,7 +77,7 @@ classDiagram
         +getEntry(recipeId)$ FilteredRecipeEntry
         -extractItemCategories(item)$ List~String~
     }
-    class BlueprintSelectionPage {
+    class StencilSelectionPage {
         -List~RecipeEntry~ allRecipes
         -Map~String_CategoryInfo~ categoryInfoMap
         +loadRecipes() void
@@ -90,8 +90,8 @@ classDiagram
     RecipeFilterPipeline --> CategoryInfo : lookup
     RecipeFilterPipeline --> MaterialGroup : output
     RecipeFilterRegistry --> FilteredRecipeEntry : produces
-    BlueprintSelectionPage --> RecipeFilterPipeline : delegates to
-    BlueprintSelectionPage --> RecipeFilterRegistry : queries
+    StencilSelectionPage --> RecipeFilterPipeline : delegates to
+    StencilSelectionPage --> RecipeFilterRegistry : queries
     FilteredRecipeEntry ..> InputRecipe : mapped to
 ```
 
@@ -102,7 +102,7 @@ graph TB
     subgraph Init ["Initialization — once at startup"]
         RFR["RecipeFilterRegistry.init()"] -->|"Item.getCategories()"| FRE["FilteredRecipeEntry<br/>+ categoryIds"]
     end
-    subgraph Load ["BlueprintSelectionPage.loadRecipes()"]
+    subgraph Load ["StencilSelectionPage.loadRecipes()"]
         FRE -->|"getAllEntries()"| BSP["RecipeEntry + categoryIds"]
         ICAsset["ItemCategory.getAssetMap()"] -->|"scan top-level categories"| CIM["categoryInfoMap"]
     end
@@ -155,7 +155,7 @@ sequenceDiagram
     participant RFR as RecipeFilterRegistry
     participant Item as Item Asset
     participant IC as ItemCategory Asset
-    participant BSP as BlueprintSelectionPage
+    participant BSP as StencilSelectionPage
     participant Pipe as RecipeFilterPipeline
 
     Note over RFR: init() at startup
@@ -195,7 +195,7 @@ src/main/java/com/UnobstructedThirdPerson/
 │   └── RecipeFilterRegistry.java         ← add category extraction in init()
 └── placeblock/ui/
     ├── RecipeFilterPipeline.java         ← update records, stages, add CategoryInfo
-    └── BlueprintSelectionPage.java       ← update RecipeEntry, loadRecipes, applyFilter, prune
+    └── StencilSelectionPage.java       ← update RecipeEntry, loadRecipes, applyFilter, prune
 ```
 
 ## 7. Integration Changes Required
@@ -230,7 +230,7 @@ src/main/java/com/UnobstructedThirdPerson/
 | **In `init()` loop** | After `Item outputItem = ...`, call `outputItem.getCategories()`. Convert `String[]` (nullable) to `List.of(...)` or `List.of()`. Pass to `FilteredRecipeEntry` constructor |
 | **No reflection needed** | `Item.getCategories()` is a public getter (unlike `Item.set`) |
 
-### BlueprintSelectionPage.java
+### StencilSelectionPage.java
 
 | Change | Description |
 |--------|-------------|
@@ -360,14 +360,14 @@ src/main/java/com/UnobstructedThirdPerson/
 
 - **Methods**: Delete `extractGroupPrefix()` and `filterSetsByMaterialGroups()`
 - **Contract**: These methods are replaced by `filterByMaterialGroups()` and category-based `extractMaterialGroups()`. No callers should remain after Wave 3.
-- **Dependencies**: Wave 2 (execute no longer calls them), Wave 3 (BlueprintSelectionPage no longer calls extractGroupPrefix)
+- **Dependencies**: Wave 2 (execute no longer calls them), Wave 3 (StencilSelectionPage no longer calls extractGroupPrefix)
 - **Done when**: Methods removed, no compile errors
 
 ---
 
 ### Wave 3 (depends on Wave 2)
 
-#### Unit: BlueprintSelectionPage.java — update data model and pipeline integration
+#### Unit: StencilSelectionPage.java — update data model and pipeline integration
 
 - **Methods**: `RecipeEntry` record, `loadRecipes()`, `applyFilter()`, `buildCategoryInfoMap()`, `pruneIncompatibleSetFilters()`, `updateMaterialGroups()`
 - **Contract**:

@@ -64,11 +64,11 @@ Arms a `Block_Placeholder` with a target recipe so the player can place blocks i
 | S2604221120 | Placeholder Arming via Metadata | done |
 | S2604240900 | PlaceBlock Command for Testing | in-progress |
 | S2604240920 | Custom UI Feasibility Spike | backlog |
-| S2604240910 | Custom Blueprint Selection UI | backlog |
+| S2604240910 | Custom Stencil Selection UI | backlog |
 
 ## Notes
 - **Pivot History:** The original CraftRecipeEvent.Pre + StructuralCraftingWindow approach was implemented and tested (S2604221215). Server-side interception worked, but the client dims all shadow recipes because the placeholder doesn't match the recipe's expected crafting input. This is a fundamental StructuralCraftingWindow limitation, not a bug.
-- **What Survives:** `PlaceBlockMetadata` (unchanged), `BlueprintBookRecipeMutator` (shadow recipes still useful as a recipe catalog), `PlaceBlockPlacementSystem` (unchanged, Phase 3).
+- **What Survives:** `PlaceBlockMetadata` (unchanged), `StencilBookRecipeMutator` (shadow recipes still useful as a recipe catalog), `PlaceBlockPlacementSystem` (unchanged, Phase 3).
 - **What's Removed:** `PlaceBlockBenchInterceptor` will be removed once the command (Phase 2a) validates the pipeline. No longer needed.
 - Icon transformation is NOT possible per-instance (R2 denied). The placeholder always shows a generic icon regardless of armed recipe.
 - Metadata persistence confirmed (R1): BsonDocument survives relog, death, drops, chest storage.

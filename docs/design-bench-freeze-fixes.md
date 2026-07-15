@@ -11,7 +11,7 @@ This design addresses 5 targeted fixes that eliminate the redundant work without
 
 ## 2. Design Priorities
 
-1. **Minimize blast radius** — touch only `BlueprintSelectionPage.java` and `BlueprintBookPrefsStore.java` (logging changes touch existing log call sites only)
+1. **Minimize blast radius** — touch only `StencilSelectionPage.java` and `StencilBookPrefsStore.java` (logging changes touch existing log call sites only)
 2. **Correctness** — every fix must produce identical UI output to the current implementation
 3. **Simplicity** — no new classes, no new abstractions, no async; just restructured control flow
 4. **Testability** — `RecipeFilterPipeline` public API is unchanged; all fixes are internal to the page
@@ -20,7 +20,7 @@ This design addresses 5 targeted fixes that eliminate the redundant work without
 
 ```mermaid
 classDiagram
-    class BlueprintSelectionPage {
+    class StencilSelectionPage {
         -List~InputRecipe~ cachedInputs
         -boolean filterRanThisEvent
         +build()
@@ -35,12 +35,12 @@ classDiagram
     class RecipeFilterPipeline {
         +execute() PipelineResult
     }
-    class BlueprintBookPrefsStore {
+    class StencilBookPrefsStore {
         +save()
         +load()
     }
-    BlueprintSelectionPage --> RecipeFilterPipeline : uses
-    BlueprintSelectionPage --> BlueprintBookPrefsStore : saves on dismiss only
+    StencilSelectionPage --> RecipeFilterPipeline : uses
+    StencilSelectionPage --> StencilBookPrefsStore : saves on dismiss only
 ```
 
 ## 4. Control Flow — Before vs After
@@ -65,9 +65,9 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant User
-    participant BSP as BlueprintSelectionPage
+    participant BSP as StencilSelectionPage
     participant RFP as RecipeFilterPipeline
-    participant Prefs as BlueprintBookPrefsStore
+    participant Prefs as StencilBookPrefsStore
 
     Note over BSP: build() — BEFORE fix
     BSP->>BSP: loadRecipes()
@@ -156,7 +156,7 @@ applyFilter()           // pipeline run 1 (THE ONLY RUN)
 
 The `applyFilter()` call moves to after controllers are created but before the UI update block. This is safe because `applyFilter()` only populates `displayedRecipes`, `currentSets`, `currentGroups` — it doesn't depend on controllers, and the UI update calls that follow read those fields.
 
-**Files changed:** `BlueprintSelectionPage.java`
+**Files changed:** `StencilSelectionPage.java`
 - Delete: `computeMaxLayout()` method
 - Add: `computeMaxLayoutFromInputs(List<InputRecipe>)` method
 - Modify: `loadRecipes()` — remove trailing `applyFilter()` call
@@ -185,7 +185,7 @@ The existing `onDismiss()` at line ~408 already calls `savePrefs()`. This is the
 - Prefs are cosmetic (tab position, filter state) — not gameplay-critical
 - A crash that loses prefs would also lose the session anyway
 
-**Files changed:** `BlueprintSelectionPage.java`
+**Files changed:** `StencilSelectionPage.java`
 - Delete: 8 `savePrefs()` calls in `handleDataEvent()` branches
 - No other changes
 
@@ -203,14 +203,14 @@ The existing `onDismiss()` at line ~408 already calls `savePrefs()`. This is the
 
 Current:
 ```java
-DebugLogger.log(BLUEPRINT_BOOK, Level.INFO,
-    "[BlueprintBench] Grouped: '" + rawId + "' → '" + resolved + "' (recipe: " + fe.recipeId() + ")");
+DebugLogger.log(STENCIL_BOOK, Level.INFO,
+    "[StencilBench] Grouped: '" + rawId + "' → '" + resolved + "' (recipe: " + fe.recipeId() + ")");
 ```
 
 Change to:
 ```java
-DebugLogger.log(BLUEPRINT_BOOK, Level.FINE, () ->
-    "[BlueprintBench] Grouped: '" + rawId + "' → '" + resolved + "' (recipe: " + fe.recipeId() + ")");
+DebugLogger.log(STENCIL_BOOK, Level.FINE, () ->
+    "[StencilBench] Grouped: '" + rawId + "' → '" + resolved + "' (recipe: " + fe.recipeId() + ")");
 ```
 
 This is the hottest log — fires inside a nested loop (for each recipe × for each bench ID).
@@ -223,15 +223,15 @@ Change from `Level.INFO` with eager concatenation to `Level.FINE` with lambda su
 
 **Exception:** The summary log `"Loaded bench IDs: " + benchIds` is useful for diagnosing tab issues. Keep it at `INFO` but use a supplier:
 ```java
-DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, () -> "[BlueprintBook] Loaded bench IDs: " + benchIds);
+DebugLogger.log(STENCIL_BOOK, Level.INFO, () -> "[StencilBook] Loaded bench IDs: " + benchIds);
 ```
 
 #### 6.3c: `buildCategoryInfoMap()` per-category logs (lines ~840-855)
 
 The per-category and per-child logs fire for every `ItemCategory` in the asset map. Change all from `Level.INFO` to `Level.FINE` with suppliers. Keep only the summary line at `INFO` with a supplier:
 ```java
-DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, () ->
-    "[BlueprintBook] Built categoryInfoMap with " + map.size() + " categories");
+DebugLogger.log(STENCIL_BOOK, Level.INFO, () ->
+    "[StencilBook] Built categoryInfoMap with " + map.size() + " categories");
 ```
 
 #### 6.3d: Other INFO logs in `loadRecipes()`
@@ -253,7 +253,7 @@ The log at the end of `buildUI()` uses `Level.INFO` with concatenation. Change t
 | Summary logs that stay INFO | `DebugLogger.log(SUB, Level.INFO, () -> "msg" + var)` |
 
 **Files changed:**
-- `BlueprintSelectionPage.java` — ~12 log call sites
+- `StencilSelectionPage.java` — ~12 log call sites
 - `IngredientTreeGridController.java` — 1 log call site
 
 ---
@@ -300,7 +300,7 @@ Replace the `InputRecipe` list construction in `applyFilter()` (lines 247-253) w
 
 `build()` passes `this.cachedInputs` to the new `computeMaxLayoutFromInputs()` method from Fix 1.
 
-**Files changed:** `BlueprintSelectionPage.java`
+**Files changed:** `StencilSelectionPage.java`
 - Add: field `cachedInputs`
 - Modify: `loadRecipes()` — build `cachedInputs` after sorting `allRecipes`
 - Modify: `applyFilter()` — delete input construction loop, use `cachedInputs`
@@ -367,7 +367,7 @@ This doesn't eliminate the double-run when pruning actually happens (which is co
 
 **Optimization note:** In practice, pruning almost never fires. The material groups are derived from the pipeline output, so they're already consistent with the filter state. The prune only triggers when a category disappears after an affordability or search change narrows the visible recipe set — a rare edge case. So this guard eliminates the second pipeline run for ~95%+ of interactions.
 
-**Files changed:** `BlueprintSelectionPage.java`
+**Files changed:** `StencilSelectionPage.java`
 - Modify: `pruneInvalidMaterialGroups()` — return `boolean`, remove internal `applyFilter()`
 - Modify: 5 call sites in `handleDataEvent()` — add conditional re-run
 
@@ -379,11 +379,11 @@ No new files. All changes are within existing files:
 
 ```
 src/main/java/com/CodeCreature/ui/bench/
-├── BlueprintSelectionPage.java   ← Fixes 1, 2, 3, 4, 5
+├── StencilSelectionPage.java   ← Fixes 1, 2, 3, 4, 5
 ├── RecipeFilterPipeline.java     ← NO CHANGES
 ├── GridLayoutController.java     ← NO CHANGES
 ├── DetailPanelController.java    ← NO CHANGES
-├── BlueprintBookPrefsStore.java  ← NO CHANGES
+├── StencilBookPrefsStore.java  ← NO CHANGES
 src/main/java/com/CodeCreature/ui/ingredienttree/
 ├── IngredientTreeGridController.java ← Fix 3 (1 log line)
 ├── IngredientTreeBuilder.java    ← NO CHANGES
@@ -391,7 +391,7 @@ src/main/java/com/CodeCreature/ui/ingredienttree/
 
 ## 8. Integration Changes Required
 
-None. All changes are internal to `BlueprintSelectionPage` and involve no API changes to any other class. `RecipeFilterPipeline`'s public API is untouched. No files need to be deleted.
+None. All changes are internal to `StencilSelectionPage` and involve no API changes to any other class. `RecipeFilterPipeline`'s public API is untouched. No files need to be deleted.
 
 ## 9. Open Questions
 
@@ -415,30 +415,30 @@ None. All changes are internal to `BlueprintSelectionPage` and involve no API ch
 ### Wave 1 (no dependencies — can run in parallel)
 
 #### Unit: Fix 3 — Downgrade debug logging
-- **Files**: `BlueprintSelectionPage.java`, `IngredientTreeGridController.java`
+- **Files**: `StencilSelectionPage.java`, `IngredientTreeGridController.java`
 - **Methods**: 13 `DebugLogger.log()` call sites
 - **Contract**: Change `Level.INFO` → `Level.FINE` and eager string concatenation → lambda suppliers. Keep 2 summary logs at INFO with suppliers.
 - **Dependencies**: none
 - **Done when**: No `Level.INFO` logs remain in `loadRecipes()` or `buildCategoryInfoMap()` except the 2 designated summary lines. All remaining INFO logs use suppliers.
 
 #### Unit: Fix 2 — Defer savePrefs() to onDismiss()
-- **Files**: `BlueprintSelectionPage.java`
+- **Files**: `StencilSelectionPage.java`
 - **Methods**: `handleDataEvent()` — 8 `savePrefs()` call deletions
 - **Contract**: Remove all `savePrefs()` calls from `handleDataEvent()`. `onDismiss()` already calls `savePrefs()` — no additions needed.
 - **Dependencies**: none
-- **Done when**: `savePrefs()` is called only from `onDismiss()`. `grep -n "savePrefs" BlueprintSelectionPage.java` shows exactly 2 hits: the method definition and the `onDismiss()` call.
+- **Done when**: `savePrefs()` is called only from `onDismiss()`. `grep -n "savePrefs" StencilSelectionPage.java` shows exactly 2 hits: the method definition and the `onDismiss()` call.
 
 ### Wave 2 (Fix 4 depends on understanding loadRecipes, but no compile dependency on Wave 1)
 
 #### Unit: Fix 4 — Cache InputRecipe list
-- **Files**: `BlueprintSelectionPage.java`
+- **Files**: `StencilSelectionPage.java`
 - **Methods**: Add `cachedInputs` field. Modify `loadRecipes()` to build it. Modify `applyFilter()` to use it.
 - **Contract**: `cachedInputs` is built once in `loadRecipes()` and referenced by `applyFilter()` and the new `computeMaxLayoutFromInputs()`. The list is immutable after construction.
 - **Dependencies**: none (can technically run in parallel with Wave 1, but easier to sequence)
 - **Done when**: `applyFilter()` contains no `new InputRecipe(...)` construction. `cachedInputs` field exists and is populated in `loadRecipes()`.
 
 #### Unit: Fix 5 — Guard pruneInvalidMaterialGroups()
-- **Files**: `BlueprintSelectionPage.java`
+- **Files**: `StencilSelectionPage.java`
 - **Methods**: Change `pruneInvalidMaterialGroups()` return type to `boolean`. Update 5 call sites.
 - **Contract**: `pruneInvalidMaterialGroups()` returns `true` if any groups were removed, `false` otherwise. It no longer calls `applyFilter()` internally. Callers conditionally re-run `applyFilter()` based on the return value.
 - **Dependencies**: none
@@ -447,11 +447,11 @@ None. All changes are internal to `BlueprintSelectionPage` and involve no API ch
 ### Wave 3 (depends on Wave 2 — Fix 1 uses cachedInputs from Fix 4)
 
 #### Unit: Fix 1 — Eliminate redundant pipeline executions
-- **Files**: `BlueprintSelectionPage.java`
+- **Files**: `StencilSelectionPage.java`
 - **Methods**: Delete `computeMaxLayout()`. Add `computeMaxLayoutFromInputs(List<InputRecipe>)`. Restructure `build()` call order. Remove `applyFilter()` from `loadRecipes()`.
 - **Contract**: `build()` runs the pipeline exactly once via `applyFilter()`. Max layout is computed via a simple O(N) group-by-count over `cachedInputs`. The `loadRecipes()` method no longer calls `applyFilter()`.
 - **Dependencies**: Fix 4 (needs `cachedInputs` field to exist)
-- **Done when**: `grep -n "pipeline.execute" BlueprintSelectionPage.java` shows 0 hits (all pipeline calls go through `applyFilter()` which calls `pipeline.execute()` once). `computeMaxLayout()` method is deleted. `computeMaxLayoutFromInputs()` contains no `pipeline.execute()` call.
+- **Done when**: `grep -n "pipeline.execute" StencilSelectionPage.java` shows 0 hits (all pipeline calls go through `applyFilter()` which calls `pipeline.execute()` once). `computeMaxLayout()` method is deleted. `computeMaxLayoutFromInputs()` contains no `pipeline.execute()` call.
 
 ### Wave 4 (integration validation — depends on Wave 3)
 

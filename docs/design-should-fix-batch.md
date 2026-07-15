@@ -17,7 +17,7 @@ Seven low-to-medium risk fixes addressing logging consistency, race conditions, 
 
 Rationale:
 - Currently package-private in `com.CodeCreature.scaling`
-- Needed by `com.CodeCreature.crafting.BlueprintBookRecipeMutator` (Fix #3) and `com.CodeCreature.registry.RecipeFilterRegistry` (Fix #4)
+- Needed by `com.CodeCreature.crafting.StencilBookRecipeMutator` (Fix #3) and `com.CodeCreature.registry.RecipeFilterRegistry` (Fix #4)
 - Creating a second accessor class would duplicate the resolution pattern
 - Moving the class to a `util` package is a larger refactor than warranted
 - Making it public with a clear Javadoc contract ("internal plugin class, not API") is the simplest path
@@ -25,10 +25,10 @@ Rationale:
 **New fields to add:**
 | Field | Class | Name | Consumer |
 |-------|-------|------|----------|
-| `recipeId` | `CraftingRecipe` | `"id"` | BlueprintBookRecipeMutator |
-| `recipeBenchRequirement` | `CraftingRecipe` | `"benchRequirement"` | BlueprintBookRecipeMutator |
-| `recipeKnowledgeRequired` | `CraftingRecipe` | `"knowledgeRequired"` | BlueprintBookRecipeMutator |
-| `recipeMemoriesLevel` | `CraftingRecipe` | `"requiredMemoriesLevel"` | BlueprintBookRecipeMutator |
+| `recipeId` | `CraftingRecipe` | `"id"` | StencilBookRecipeMutator |
+| `recipeBenchRequirement` | `CraftingRecipe` | `"benchRequirement"` | StencilBookRecipeMutator |
+| `recipeKnowledgeRequired` | `CraftingRecipe` | `"knowledgeRequired"` | StencilBookRecipeMutator |
+| `recipeMemoriesLevel` | `CraftingRecipe` | `"requiredMemoriesLevel"` | StencilBookRecipeMutator |
 | `itemSet` | `Item` | `"set"` | ResourceTypeResolver, RecipeFilterRegistry |
 
 ---
@@ -52,7 +52,7 @@ Rationale:
 | `registry/RecipeFilterRegistry.java` | Add `private static final Logger LOGGER = Logger.getLogger("RecipeFilterRegistry");` <br> Change `log()` body → `LOGGER.info(msg);` |
 | `registry/BenchRecipeRegistry.java` | Add `private static final Logger LOGGER = Logger.getLogger("BenchRecipeRegistry");` <br> Change `log()` body → `LOGGER.info(msg);` |
 | `registry/BenchRecipeRegistries.java` | Add `private static final Logger LOGGER = Logger.getLogger("BenchRecipeRegistries");` <br> Change `log()` body → `LOGGER.info(msg);` |
-| `crafting/BlueprintBookRecipeMutator.java` | Add `private static final Logger LOGGER = Logger.getLogger("BlueprintBookRecipeMutator");` <br> Change `log()` body → `LOGGER.info(msg);` |
+| `crafting/StencilBookRecipeMutator.java` | Add `private static final Logger LOGGER = Logger.getLogger("StencilBookRecipeMutator");` <br> Change `log()` body → `LOGGER.info(msg);` |
 
 **Risk:** Low — behavioral change is only output destination (stdout → Logger handler). All existing log messages preserved verbatim.
 
@@ -122,16 +122,16 @@ public static boolean toggle() {
 
 ---
 
-### Fix #3: BlueprintBookRecipeMutator Independent Reflection
+### Fix #3: StencilBookRecipeMutator Independent Reflection
 
-**Approach:** Add four fields to `AssetFieldAccessor` (`recipeId`, `recipeBenchRequirement`, `recipeKnowledgeRequired`, `recipeMemoriesLevel`). Remove the 5-field local resolution from `BlueprintBookRecipeMutator.mutate()` and read from `AssetFieldAccessor.INSTANCE`. Note: `recipeInput` already exists in `AssetFieldAccessor`.
+**Approach:** Add four fields to `AssetFieldAccessor` (`recipeId`, `recipeBenchRequirement`, `recipeKnowledgeRequired`, `recipeMemoriesLevel`). Remove the 5-field local resolution from `StencilBookRecipeMutator.mutate()` and read from `AssetFieldAccessor.INSTANCE`. Note: `recipeInput` already exists in `AssetFieldAccessor`.
 
 **Files to modify:**
 
 | File | Change |
 |------|--------|
 | `scaling/AssetFieldAccessor.java` | Add 4 new fields under the `// CraftingRecipe` section: <br> `final Field recipeId;` → `resolve(CraftingRecipe.class, "id")` <br> `final Field recipeBenchRequirement;` → `resolve(CraftingRecipe.class, "benchRequirement")` <br> `final Field recipeKnowledgeRequired;` → `resolve(CraftingRecipe.class, "knowledgeRequired")` <br> `final Field recipeMemoriesLevel;` → `resolve(CraftingRecipe.class, "requiredMemoriesLevel")` |
-| `crafting/BlueprintBookRecipeMutator.java` | Remove local field resolution in `mutate()` (lines 38-50). Replace with: <br> `AssetFieldAccessor f = AssetFieldAccessor.INSTANCE;` <br> Use `f.recipeId`, `f.recipeInput`, `f.recipeBenchRequirement`, `f.recipeKnowledgeRequired`, `f.recipeMemoriesLevel` at each `.set()` call. <br> Remove the early-return error path (fail-fast now happens at startup). Add import for `AssetFieldAccessor`. |
+| `crafting/StencilBookRecipeMutator.java` | Remove local field resolution in `mutate()` (lines 38-50). Replace with: <br> `AssetFieldAccessor f = AssetFieldAccessor.INSTANCE;` <br> Use `f.recipeId`, `f.recipeInput`, `f.recipeBenchRequirement`, `f.recipeKnowledgeRequired`, `f.recipeMemoriesLevel` at each `.set()` call. <br> Remove the early-return error path (fail-fast now happens at startup). Add import for `AssetFieldAccessor`. |
 
 **Risk:** Medium — same initialization-order consideration as Fix #4. The mutator runs after `DropScaler.apply()` which already uses `AssetFieldAccessor`, so the instance is guaranteed to exist.
 
@@ -167,7 +167,7 @@ public static boolean toggle() {
 
 ---
 
-### Fix #15: BlueprintBookParticleLoop Lifecycle Leak
+### Fix #15: StencilBookParticleLoop Lifecycle Leak
 
 **Approach:** Add a staleness check inside the `startUpdateLoop()` scheduled task. When `active` is set to `false` (player ref became invalid), the task should also call `INSTANCES.remove(playerRef.getUuid())` and cancel itself. This ensures cleanup happens even if `remove()` is never called externally (player crash without disconnect event). Additionally, cancel the `ScheduledFuture` from within.
 
@@ -208,7 +208,7 @@ But there's a subtlety: the task references `updateTask` which may not be assign
 
 | File | Change |
 |------|--------|
-| `ui/blueprintbook/BlueprintBookParticleLoop.java` | 1. After each `active = false;` (2 locations inside `world.execute()`), add `INSTANCES.remove(playerRef.getUuid());` <br> 2. At the start of the scheduled task lambda body (before `world.execute()`), add early-exit: `if (!active) { updateTask.cancel(false); return; }` |
+| `ui/stencilbook/StencilBookParticleLoop.java` | 1. After each `active = false;` (2 locations inside `world.execute()`), add `INSTANCES.remove(playerRef.getUuid());` <br> 2. At the start of the scheduled task lambda body (before `world.execute()`), add early-exit: `if (!active) { updateTask.cancel(false); return; }` |
 
 **Risk:** Medium — modifying concurrent lifecycle code. The `INSTANCES.remove()` call from inside the task may race with an external `start()` call for the same player. However, `start()` already handles stale entries by calling `shutdown()` on them, and `ConcurrentHashMap.remove()` is atomic, so the worst case is a redundant no-op remove. The `updateTask.cancel(false)` at the top prevents the no-op task from running indefinitely.
 
@@ -228,7 +228,7 @@ Wave 1 (independent — can be done in parallel):
 
 Wave 2 (depends on each other, do together):
   • Fix #4 (Item.set consolidation) — makes AssetFieldAccessor public, adds INSTANCE + itemSet
-  • Fix #3 (BlueprintBookRecipeMutator consolidation) — adds 4 more fields, consumes INSTANCE
+  • Fix #3 (StencilBookRecipeMutator consolidation) — adds 4 more fields, consumes INSTANCE
 ```
 
 Recommended: Do Fix #4 and Fix #3 as a single commit since they both modify `AssetFieldAccessor`.
@@ -251,7 +251,7 @@ Recommended: Do Fix #4 and Fix #3 as a single commit since they both modify `Ass
 
 ## 7. Open Questions
 
-1. **Logger names:** Should logger names match the class simple name (e.g., `"DropScaler"`) or use the fully qualified class name convention (`DropScaler.class.getName()`)? Current codebase uses short names (e.g., `"BlueprintBookParticleLoop"`, `"StencilVisualManager"`). **Recommendation:** Keep short names for consistency with existing code.
+1. **Logger names:** Should logger names match the class simple name (e.g., `"DropScaler"`) or use the fully qualified class name convention (`DropScaler.class.getName()`)? Current codebase uses short names (e.g., `"StencilBookParticleLoop"`, `"StencilVisualManager"`). **Recommendation:** Keep short names for consistency with existing code.
 
 2. **RecipeFilterRegistry soft-failure:** The current `ITEM_SET_FIELD` resolution in `RecipeFilterRegistry` uses a soft-failure pattern (sets field to null, logs to stderr, continues). After consolidation into `AssetFieldAccessor`, this becomes fail-fast. Is this acceptable? **Recommendation:** Yes — if `Item.set` doesn't exist, the entire resource-type filter system is broken anyway. Fail-fast is more honest.
 

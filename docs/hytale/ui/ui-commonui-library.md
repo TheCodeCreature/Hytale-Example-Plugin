@@ -7,7 +7,7 @@ sources:
   - "https://hytale-docs.com/docs/api/server-internals/ui-reference (Common.ui Components + Styles)"
   - "hytalemodding.dev/en/docs/official-documentation/custom-ui/common-styling"
   - "docs/hytale/plugins/ui-file-system.md"
-  - "src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui"
+  - "src/main/resources/Common/UI/Custom/Pages/StencilBook/StencilBookPage.ui"
 ---
 
 # CommonUI Library Reference (`Common.ui`)
@@ -196,9 +196,9 @@ $C.@Container {
 }
 ```
 
-### How Our BlueprintBookPage Uses It
+### How Our StencilBookPage Uses It
 
-Our [BlueprintBookPage.ui](../../../src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui) uses `$C.@Container` as the main wrapper, placing content inside `#Title` and `#Content`:
+Our [StencilBookPage.ui](../../../src/main/resources/Common/UI/Custom/Pages/StencilBook/StencilBookPage.ui) uses `$C.@Container` as the main wrapper, placing content inside `#Title` and `#Content`:
 
 ```
 $C.@Container {
@@ -347,7 +347,7 @@ $C.@HeaderSearch {}    // Used in Container #Title for search functionality
 | `@DefaultSliderStyle` | Slider styling |
 | `@DefaultTextTooltipStyle` | Tooltip styling |
 | `@DefaultColorPickerStyle` | Color picker styling |
-| `@TopTabsStyle` | Tab navigation styling (used by BlueprintBookPage) |
+| `@TopTabsStyle` | Tab navigation styling (used by StencilBookPage) |
 
 ---
 
@@ -365,7 +365,7 @@ Custom styles can extend Common.ui styles using the spread operator:
 );
 ```
 
-This pattern is used extensively in our BlueprintBookPage to create custom styles that inherit base properties from the engine's Common.ui.
+This pattern is used extensively in our StencilBookPage to create custom styles that inherit base properties from the engine's Common.ui.
 
 ---
 
@@ -408,9 +408,9 @@ Or using `PatchStyle` for 9-slice texture backgrounds:
 
 ---
 
-## Patterns from Our BlueprintBookPage
+## Patterns from Our StencilBookPage
 
-Our [BlueprintBookPage.ui](../../../src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui) demonstrates several CommonUI patterns:
+Our [StencilBookPage.ui](../../../src/main/resources/Common/UI/Custom/Pages/StencilBook/StencilBookPage.ui) demonstrates several CommonUI patterns:
 
 ### 1. Style Inheritance
 

@@ -13,14 +13,14 @@ graph TB
     subgraph "Fix 1: Plugin.onPlayerDisconnect"
         A["StencilSyncSystem.unregister()"]
         B["StencilVisualManager.removePlayer()"]
-        C["BlueprintBookParticleLoop.remove()"]
+        C["StencilBookParticleLoop.remove()"]
     end
     subgraph "Fix 2: StencilSyncSystem.register"
         D["containsKey check"]
         E["unregister stale handles"]
         F["register new handles"]
     end
-    subgraph "Fix 3: BlueprintBookParticleLoop.shutdown"
+    subgraph "Fix 3: StencilBookParticleLoop.shutdown"
         G["active = false"]
         H["cancel updateTask"]
         I["activeEntity = null"]
@@ -55,7 +55,7 @@ When `registeredPlayers.containsKey(uuid)` is true (lines 49–53), the method l
 
 No findings.
 
-### Fix 3: BlueprintBookParticleLoop.shutdown — Removed world.execute() ⚠️ NEEDS WORK
+### Fix 3: StencilBookParticleLoop.shutdown — Removed world.execute() ⚠️ NEEDS WORK
 
 **Core goal achieved:** Removing `world.execute()` from `shutdown()` eliminates the causal chain (disconnect → plugin queues world work → entity removal delayed → `removalFuture.join()` blocks → loading screen hang). The entity is non-serialized (won't persist to disk) and the 500ms effect self-expires (no visible artifact). The `if (!active)` guard at the top of `executeTick()` (line 116) prevents most post-shutdown ticks.
 
@@ -65,7 +65,7 @@ No findings.
 
 | # | Category | Severity | Location | Detail |
 |---|----------|----------|----------|--------|
-| 1 | Anti-pattern | 🟡 Should Fix | [BlueprintBookParticleLoop.java](src/main/java/com/CodeCreature/ui/blueprintbook/BlueprintBookParticleLoop.java#L268-L278) | **Data race on `activeEntity`** — `shutdown()` (Netty thread) writes `activeEntity = null` at L275 *after* the volatile write to `active` at L268, so the null is not piggybacked on the volatile's memory fence. `executeTick()` (world thread) reads `activeEntity` at L186, L191, L193 without synchronization. See detailed analysis below. |
+| 1 | Anti-pattern | 🟡 Should Fix | [StencilBookParticleLoop.java](src/main/java/com/CodeCreature/ui/stencilbook/StencilBookParticleLoop.java#L268-L278) | **Data race on `activeEntity`** — `shutdown()` (Netty thread) writes `activeEntity = null` at L275 *after* the volatile write to `active` at L268, so the null is not piggybacked on the volatile's memory fence. `executeTick()` (world thread) reads `activeEntity` at L186, L191, L193 without synchronization. See detailed analysis below. |
 
 ### Finding 1 — Detailed Analysis
 
@@ -153,4 +153,4 @@ This is the standard Java idiom for non-volatile fields accessed cross-thread (u
 
 ---
 
-→ @Engineer apply the two-part fix from Finding 1 to `BlueprintBookParticleLoop.java`
+→ @Engineer apply the two-part fix from Finding 1 to `StencilBookParticleLoop.java`

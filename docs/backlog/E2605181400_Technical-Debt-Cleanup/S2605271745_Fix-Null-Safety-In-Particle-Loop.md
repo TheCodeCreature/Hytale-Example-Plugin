@@ -1,7 +1,7 @@
 ---
 id: S2605271745
 type: story
-title: "Fix Null Safety in BlueprintBookParticleLoop"
+title: "Fix Null Safety in StencilBookParticleLoop"
 status: done
 priority: high
 feature: F2605261200
@@ -9,10 +9,10 @@ epic: E2605181400
 created: 2026-05-27
 ---
 
-# Fix Null Safety in BlueprintBookParticleLoop
+# Fix Null Safety in StencilBookParticleLoop
 
 ## User Story
-As a **player**, I want **the blueprint book highlight effect to not crash** so that **the game doesn't disconnect me when using the Blueprint Book**.
+As a **player**, I want **the stencil book highlight effect to not crash** so that **the game doesn't disconnect me when using the Stencil Book**.
 
 ## Acceptance Criteria
 

@@ -2,7 +2,7 @@
 topic: "R9 Investigation — Placeholder Item in StructuralCrafting Input Slot"
 category: "Crafting / Windows"
 updated: 2026-04-22
-sources: ["StructuralCraftingWindow.java (decompiled)", "CraftingManager.java (decompiled)", "CraftingWindow.java (decompiled)", "CraftingPlugin.java (decompiled)", "BenchRecipeRegistry.java (decompiled, engine)", "HytaleServer.java (decompiled)", "crafting-window-architecture.md", "resourcetypeid-resolution.md", "custom-bench-creation.md", "BlueprintBookRecipeMutator.java", "Bench_Blueprint.json", "Block_Placeholder_Blue.json", "Block_Placeholder_Green.json", "Block_Placeholder_Red.json"]
+sources: ["StructuralCraftingWindow.java (decompiled)", "CraftingManager.java (decompiled)", "CraftingWindow.java (decompiled)", "CraftingPlugin.java (decompiled)", "BenchRecipeRegistry.java (decompiled, engine)", "HytaleServer.java (decompiled)", "crafting-window-architecture.md", "resourcetypeid-resolution.md", "custom-bench-creation.md", "StencilBookRecipeMutator.java", "Bench_Stencil.json", "Block_Placeholder_Blue.json", "Block_Placeholder_Green.json", "Block_Placeholder_Red.json"]
 ---
 
 # R9 Investigation — Placeholder Item in StructuralCrafting Input Slot
@@ -366,7 +366,7 @@ If `Block_Placeholder` matches ALL ResourceTypeIds, the option grid shows ALL st
 
 ### 11.1 Root Cause: CraftingPlugin Registry Not Updated After Mutation
 
-**The mutation is working correctly** — `BlueprintBookRecipeMutator` successfully adds `BenchRequirement` entries with `Id: "Blueprint"` and `Type: StructuralCrafting` to each recipe's `benchRequirement` array via reflection. The in-memory `CraftingRecipe` objects are correctly modified.
+**The mutation is working correctly** — `StencilBookRecipeMutator` successfully adds `BenchRequirement` entries with `Id: "Stencil"` and `Type: StructuralCrafting` to each recipe's `benchRequirement` array via reflection. The in-memory `CraftingRecipe` objects are correctly modified.
 
 **The problem is timing.** The engine's `CraftingPlugin` builds its internal `BenchRecipeRegistry` index **before** the plugin's mutation runs, and the mutation never triggers re-indexing.
 
@@ -385,23 +385,23 @@ If `Block_Placeholder` matches ALL ResourceTypeIds, the option grid shows ALL st
            - Creates BenchRecipeRegistry entries keyed by BenchRequirement.id
            - Recipes have "Builders" and "Furniture_Bench" requirements
            - Registries created: "Builders" → [...], "Furniture_Bench" → [...]
-           - NO "Blueprint" registry created (no recipe has Blueprint requirement yet)
+           - NO "Stencil" registry created (no recipe has Stencil requirement yet)
        └── computeBenchRecipeRegistries() recomputes all registries
 
 3. LoadedAssetsEvent<Item> fires
    └── CraftingPlugin.onItemAssetLoad() generates inline recipes
        └── More LoadedAssetsEvent<CraftingRecipe> events
-       └── Still no "Blueprint" requirements on any recipe
+       └── Still no "Stencil" requirements on any recipe
 
 4. ★ LoadAssetEvent fires (ALL assets loaded)
    └── Plugin's onAssetsLoaded() runs:
        └── DropScaler.apply()
-       └── BlueprintBookRecipeMutator.mutate()
+       └── StencilBookRecipeMutator.mutate()
            - Iterates all CraftingRecipe objects
-           - Adds BenchRequirement{id:"Blueprint", type:StructuralCrafting} to each
+           - Adds BenchRequirement{id:"Stencil", type:StructuralCrafting} to each
            - Mutated count logged to console
            - ★ BUT: CraftingPlugin.registries map is NOT updated
-           - ★ No "Blueprint" BenchRecipeRegistry exists in the map
+           - ★ No "Stencil" BenchRecipeRegistry exists in the map
 ```
 
 #### Evidence chain:
@@ -410,7 +410,7 @@ If `Block_Placeholder` matches ALL ResourceTypeIds, the option grid shows ALL st
 
 ```java
 public static List<CraftingRecipe> getBenchRecipes(BenchType benchType, String benchId, String category) {
-    BenchRecipeRegistry registry = registries.get(benchId);  // ← "Blueprint" → null
+    BenchRecipeRegistry registry = registries.get(benchId);  // ← "Stencil" → null
     if (registry == null) {
         return List.of();  // ← EMPTY LIST returned
     }
@@ -424,7 +424,7 @@ public static List<CraftingRecipe> getBenchRecipes(BenchType benchType, String b
 // Called when the bench window opens — generates inventory highlights
 this.windowData.add("inventoryHints",
     CraftingManager.generateInventoryHints(
-        CraftingPlugin.getBenchRecipes(this.bench),  // ← bench.getId() = "Blueprint" → empty list
+        CraftingPlugin.getBenchRecipes(this.bench),  // ← bench.getId() = "Stencil" → empty list
         0,
         inventory.getCombinedHotbarFirst()
     ));
@@ -450,7 +450,7 @@ public static JsonArray generateInventoryHints(List<CraftingRecipe> recipes, int
 ```java
 private ObjectList<CraftingRecipe> getMatchingRecipes(ItemStack inputStack) {
     List<CraftingRecipe> recipes = CraftingPlugin.getBenchRecipes(this.bench.getType(), this.bench.getId());
-    // ← returns empty list for "Blueprint"
+    // ← returns empty list for "Stencil"
     if (recipes.isEmpty()) {
         return null;  // ← null → isValidInput returns false → item rejected
     }
@@ -458,11 +458,11 @@ private ObjectList<CraftingRecipe> getMatchingRecipes(ItemStack inputStack) {
 }
 ```
 
-**Result:** `getBenchRecipes("Blueprint")` returns empty → `generateInventoryHints` produces empty array → no items highlighted. When the player tries to place an item, `getMatchingRecipes()` returns null → `isValidInput()` returns false → item bounces back. The bench appears completely empty/broken.
+**Result:** `getBenchRecipes("Stencil")` returns empty → `generateInventoryHints` produces empty array → no items highlighted. When the player tries to place an item, `getMatchingRecipes()` returns null → `isValidInput()` returns false → item bounces back. The bench appears completely empty/broken.
 
 ### 11.2 Is It a Mutation Issue, Bench Config Issue, or Engine Behavior?
 
-**It is a registry synchronization issue.** The mutation itself is correct — the BenchRequirement objects are correctly constructed and appended. The bench JSON is correct — `Bench.Id: "Blueprint"` with `Type: StructuralCrafting` is valid. The engine behavior is correct — it queries its recipe index as designed.
+**It is a registry synchronization issue.** The mutation itself is correct — the BenchRequirement objects are correctly constructed and appended. The bench JSON is correct — `Bench.Id: "Stencil"` with `Type: StructuralCrafting` is valid. The engine behavior is correct — it queries its recipe index as designed.
 
 The gap is that **the mutation modifies recipe objects in memory without notifying the CraftingPlugin's indexing system.** The reflective mutation bypasses the engine's event-driven indexing flow.
 
@@ -479,7 +479,7 @@ private static void onRecipeLoad(LoadedAssetsEvent<...> event) {
         for (BenchRecipeRegistry registry : registries.values()) {
             registry.removeRecipe(recipe.getId());
         }
-        // 2. Re-add based on CURRENT BenchRequirements (includes "Blueprint" after mutation)
+        // 2. Re-add based on CURRENT BenchRequirements (includes "Stencil" after mutation)
         if (recipe.getBenchRequirement() != null) {
             for (BenchRequirement benchRequirement : recipe.getBenchRequirement()) {
                 BenchRecipeRegistry benchRecipeRegistry =
@@ -492,9 +492,9 @@ private static void onRecipeLoad(LoadedAssetsEvent<...> event) {
 }
 ```
 
-The `computeIfAbsent(benchRequirement.id, ...)` call will lazily create a new `BenchRecipeRegistry` for `"Blueprint"` the first time a recipe with that requirement is processed.
+The `computeIfAbsent(benchRequirement.id, ...)` call will lazily create a new `BenchRecipeRegistry` for `"Stencil"` the first time a recipe with that requirement is processed.
 
-**Recommended fix for `BlueprintBookRecipeMutator.mutate()`:**
+**Recommended fix for `StencilBookRecipeMutator.mutate()`:**
 
 ```java
 public static void mutate() {
@@ -514,7 +514,7 @@ This pattern is safe because:
 - `loadAssets()` with existing recipe IDs replaces them in the asset map (same objects, no-op for data)
 - It fires `LoadedAssetsEvent<CraftingRecipe>` which `CraftingPlugin.onRecipeLoad()` handles
 - The handler removes each recipe from all registries, then re-adds based on CURRENT requirements
-- `computeIfAbsent("Blueprint", ...)` creates the "Blueprint" registry on first encounter
+- `computeIfAbsent("Stencil", ...)` creates the "Stencil" registry on first encounter
 - `computeBenchRecipeRegistries()` recomputes material indexes for all registries
 - This is the same pattern the engine uses internally in `onItemAssetLoad()` (line 164 of CraftingPlugin.java)
 
@@ -536,13 +536,13 @@ Furniture recipes typically have multiple inputs (e.g., `Wood_All × 3 + Ingredi
 - Furniture recipe inputs WILL contribute to `generateInventoryHints` (highlighting) because `matchesAnyRecipe()` checks `input[inputSlotIndex]` without the `size() == 1` filter — this could cause misleading highlights for items that match Furniture recipes but can't actually be crafted at this bench
 
 **Recommendation:** Either:
-1. Remove Furniture recipes from Blueprint mutation (only mutate Builders recipes), OR
+1. Remove Furniture recipes from Stencil mutation (only mutate Builders recipes), OR
 2. Accept that Furniture recipes are indexed but invisible, and plan a separate window for Furniture crafting, OR
 3. Filter the `SOURCE_BENCH_IDS` set to `Set.of("Builders")` only, removing `"Furniture_Bench"`
 
 ### 11.5 Category Mismatch — Not a Blocker But Affects Sorting
 
-The `BlueprintBookRecipeMutator` copies categories from the source BenchRequirement to the new Blueprint requirement. For Builders recipes, these categories (e.g., `"WoodPlanks"`, `"Stairs"`) match the Blueprint bench's `Categories` and `HeaderCategories` arrays. For Furniture recipes, categories like `"Furniture_Beds"`, `"Furniture_Tables"` do NOT match the Blueprint bench's categories.
+The `StencilBookRecipeMutator` copies categories from the source BenchRequirement to the new Stencil requirement. For Builders recipes, these categories (e.g., `"WoodPlanks"`, `"Stairs"`) match the Stencil bench's `Categories` and `HeaderCategories` arrays. For Furniture recipes, categories like `"Furniture_Beds"`, `"Furniture_Tables"` do NOT match the Stencil bench's categories.
 
 This does NOT block recipe matching (category filtering is opt-in via the 3-arg `getBenchRecipes(type, id, category)` overload — the StructuralCraftingWindow uses the 2-arg overload with no category filter). However, it affects **sorting order**: `getSortingPriority()` assigns `Integer.MAX_VALUE` to recipes whose categories don't match the bench's `Categories` list, pushing them to the end of the option grid.
 
@@ -563,7 +563,7 @@ The `CraftingRecipe.benchRequirement` field name is also correct (used in `Asset
 
 No. The StructuralCraftingWindow does NOT cache recipes at construction time. Both `generateInventoryHints()` and `getMatchingRecipes()` call `CraftingPlugin.getBenchRecipes()` dynamically — they query the live registry on every invocation. The `inventoryRegistration` callback (registered in `onOpen0()`) also calls `generateInventoryHints()` on every inventory change.
 
-The issue is purely that the registry has no "Blueprint" entry — not that the window cached stale data. Once the registry is populated via the `loadAssets()` fix, all dynamic lookups will work correctly.
+The issue is purely that the registry has no "Stencil" entry — not that the window cached stale data. Once the registry is populated via the `loadAssets()` fix, all dynamic lookups will work correctly.
 
 ---
 
@@ -571,20 +571,20 @@ The issue is purely that the registry has no "Blueprint" entry — not that the 
 
 ### 12.1 Approach Still Valid — ResourceTypes on Placeholder
 
-The recommended approach from Section 6 (Approach A) remains valid. Add a comprehensive `ResourceTypes` array to Block_Placeholder at `LoadAssetEvent` time covering all `ResourceTypeId` values used by single-input Blueprint bench recipes.
+The recommended approach from Section 6 (Approach A) remains valid. Add a comprehensive `ResourceTypes` array to Block_Placeholder at `LoadAssetEvent` time covering all `ResourceTypeId` values used by single-input Stencil bench recipes.
 
 ### 12.2 Collecting Required ResourceTypeIds
 
 After the Section 11 fix (re-indexing via `loadAssets()`), the Stencil CraftingRecipeRegistry will exist. We can collect ResourceTypeIds from it:
 
 ```java
-// After BlueprintBookRecipeMutator.mutate() + loadAssets() re-indexing
+// After StencilBookRecipeMutator.mutate() + loadAssets() re-indexing
 Set<String> allResourceTypeIds = new HashSet<>();
 for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()) {
     BenchRequirement[] reqs = recipe.getBenchRequirement();
     if (reqs == null) continue;
     for (BenchRequirement req : reqs) {
-        if ("Blueprint".equals(req.id) && req.type == BenchType.StructuralCrafting) {
+        if ("Stencil".equals(req.id) && req.type == BenchType.StructuralCrafting) {
             MaterialQuantity[] inputs = recipe.getInput();
             // Only collect from single-input recipes (the only ones getMatchingRecipes accepts)
             if (inputs.length == 1 && inputs[0].getResourceTypeId() != null) {
@@ -623,7 +623,7 @@ Approach A (ResourceTypes on Placeholder) remains the cleanest path.
 
 ### 12.5 64-Slot Overflow — Updated Analysis
 
-If Block_Placeholder matches all ResourceTypeIds for single-input Blueprint recipes:
+If Block_Placeholder matches all ResourceTypeIds for single-input Stencil recipes:
 
 - Builders recipes alone: ~150–250 recipes across all material types × structural shapes
 - All matching recipes are returned by `getMatchingRecipes()` (no category filter)
@@ -640,7 +640,7 @@ If Block_Placeholder matches all ResourceTypeIds for single-input Blueprint reci
 
 ### 12.6 New Risk: Highlighting vs. Acceptance Mismatch for Furniture
 
-If Furniture recipes remain in the Blueprint mutation set, the placeholder would need `ResourceTypeId` values from Furniture recipes too (e.g., `Wood_All`). Items matching those ResourceTypes would be highlighted in inventory but placing them would show only Builders recipes (multi-input Furniture recipes filtered out). This creates a confusing UX where highlighted items may show fewer recipes than expected.
+If Furniture recipes remain in the Stencil mutation set, the placeholder would need `ResourceTypeId` values from Furniture recipes too (e.g., `Wood_All`). Items matching those ResourceTypes would be highlighted in inventory but placing them would show only Builders recipes (multi-input Furniture recipes filtered out). This creates a confusing UX where highlighted items may show fewer recipes than expected.
 
 **Recommendation:** In Phase 2, limit ResourceTypes on the placeholder to values from single-input recipes only. Use the collection logic in 12.2 which already filters to `inputs.length == 1`.
 
@@ -650,13 +650,13 @@ If Furniture recipes remain in the Blueprint mutation set, the placeholder would
 
 | Finding | Detail |
 |---------|--------|
-| **Root cause: no highlighting** | `CraftingPlugin`'s `BenchRecipeRegistry` has no "Blueprint" entry because recipe indexing (`LoadedAssetsEvent`) completes before the plugin's mutation (`LoadAssetEvent`). `getBenchRecipes("Blueprint")` returns empty list. |
+| **Root cause: no highlighting** | `CraftingPlugin`'s `BenchRecipeRegistry` has no "Stencil" entry because recipe indexing (`LoadedAssetsEvent`) completes before the plugin's mutation (`LoadAssetEvent`). `getBenchRecipes("Stencil")` returns empty list. |
 | **Is mutation correct?** | **Yes.** Field names, access patterns, and BenchRequirement construction are all correct. The mutation modifies the right objects correctly. |
-| **Is it a bench config issue?** | **No.** `Bench_Blueprint.json` is correct — Type, Id, Categories, BlockEntity are all valid. The bench opens correctly. |
+| **Is it a bench config issue?** | **No.** `Bench_Stencil.json` is correct — Type, Id, Categories, BlockEntity are all valid. The bench opens correctly. |
 | **Is it engine behavior?** | **Partially.** The engine's event-driven indexing is working as designed — it doesn't monitor for reflective mutations. The plugin must trigger re-indexing explicitly. |
-| **Fix for Phase 1** | After `BlueprintBookRecipeMutator.mutate()`, call `CraftingRecipe.getAssetStore().loadAssets("Hytale:Hytale", mutatedRecipes)` to fire `LoadedAssetsEvent<CraftingRecipe>` → `onRecipeLoad()` → creates "Blueprint" registry. |
+| **Fix for Phase 1** | After `StencilBookRecipeMutator.mutate()`, call `CraftingRecipe.getAssetStore().loadAssets("Hytale:Hytale", mutatedRecipes)` to fire `LoadedAssetsEvent<CraftingRecipe>` → `onRecipeLoad()` → creates "Stencil" registry. |
 | **Furniture recipe limitation** | Multi-input Furniture recipes will NOT appear in StructuralCrafting option grid (`getMatchingRecipes` requires `inputs.size() == 1`). Consider removing `Furniture_Bench` from mutation scope. |
-| **Placeholder Phase 2 plan** | Add ResourceTypes to Block_Placeholder at LoadAssetEvent time. Collect from single-input Blueprint recipes. Approach is validated as feasible. |
+| **Placeholder Phase 2 plan** | Add ResourceTypes to Block_Placeholder at LoadAssetEvent time. Collect from single-input Stencil recipes. Approach is validated as feasible. |
 | **64-slot overflow** | Still a risk. Placeholder matching all recipes produces ~150+ matches, but only 64 slots available. Accept limit or design two-phase UX. |
 | **New risk: highlight mismatch** | If Furniture recipes stay in scope, inventory hints may highlight items that produce no visible recipes when placed. Limit ResourceTypes to single-input recipes only. |
 

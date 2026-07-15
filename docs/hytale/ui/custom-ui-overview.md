@@ -6,7 +6,7 @@ sources:
   - "https://hytale-docs.com/docs/api/server-internals/custom-ui"
   - "https://hytale-docs.com/docs/api/server-internals/ui-reference"
   - "hytalemodding.dev/en/docs/official-documentation/custom-ui"
-  - "docs/hytale/plugins/custom-ui-for-Blueprint-Book.md (archived)"
+  - "docs/hytale/plugins/custom-ui-for-Stencil-Book.md (archived)"
   - "docs/hytale/plugins/custom-ui-options.md (archived)"
   - "docs/hytale/plugins/ui-file-system.md (archived)"
   - "docs/hytale/plugins/api-reference-interactive-custom-ui.md (archived)"
@@ -189,8 +189,8 @@ The path passed to `cmd.append()` is **relative to `Common/UI/Custom/`**:
 // File at: src/main/resources/Common/UI/Custom/Pages/MyPage.ui
 cmd.append("Pages/MyPage.ui");
 
-// File at: src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui
-cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui");
+// File at: src/main/resources/Common/UI/Custom/Pages/StencilBook/StencilBookPage.ui
+cmd.append("Pages/StencilBook/StencilBookPage.ui");
 ```
 
 ## Server-Side Lifecycle

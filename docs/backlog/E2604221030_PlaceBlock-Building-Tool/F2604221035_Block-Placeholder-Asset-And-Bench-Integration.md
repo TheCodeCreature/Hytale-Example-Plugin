@@ -17,8 +17,8 @@ Create a new **Stencil Crafting** workbench block, cloned from the existing `Ben
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] Stencil Crafting block asset JSON exists (`Bench_Blueprint.json`), cloned from `Bench_Builders`
-- [ ] Stencil Crafting has a unique `Bench.Id` (e.g., `"Blueprint"`)
+- [ ] Stencil Crafting block asset JSON exists (`Bench_Stencil.json`), cloned from `Bench_Builders`
+- [ ] Stencil Crafting has a unique `Bench.Id` (e.g., `"Stencil"`)
 - [ ] Stencil Crafting uses `Bench.Type: "StructuralCrafting"` (same as Builders)
 - [ ] Stencil Crafting has `BlockEntity.Components.BenchBlock: {}` for automatic chest scanning
 - [ ] Stencil Crafting can be placed in the world and right-clicked to open a crafting window
@@ -31,7 +31,7 @@ Create a new **Stencil Crafting** workbench block, cloned from the existing `Ben
 
 ### Scenarios
 **Player places Stencil Crafting**
-- **Given** a player has a `Bench_Blueprint` item
+- **Given** a player has a `Bench_Stencil` item
 - **When** they place it in the world
 - **Then** the bench block appears and can be interacted with
 

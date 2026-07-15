@@ -197,7 +197,7 @@ The bottleneck is the client never sends `CraftRecipeAction` because it believes
 
 ### Primary fix: Use `itemId`-based inputs for shadow recipes
 
-Change `BlueprintBookRecipeMutator.mutate()` to set the shadow recipe input as:
+Change `StencilBookRecipeMutator.mutate()` to set the shadow recipe input as:
 ```java
 inputField.set(shadow, new MaterialQuantity[]{
     new MaterialQuantity("Block_Placeholder_Blue", null, null, 1, null)
@@ -207,7 +207,7 @@ inputField.set(shadow, new MaterialQuantity[]{
 This makes the client's `itemId` matching work: `"Block_Placeholder_Blue" == "Block_Placeholder_Blue"` → craft button enabled.
 
 **Trade-off**: Only one placeholder color would match per recipe set. Options:
-- **Single placeholder**: Use only `Block_Placeholder_Blue` for the Blueprint bench
+- **Single placeholder**: Use only `Block_Placeholder_Blue` for the Stencil bench
 - **Per-color recipes**: Create 3 shadow recipe sets (one per color) — 3× recipes
 - **Consolidate to one placeholder item**: Replace the 3 color variants with a single `Block_Placeholder` item
 
@@ -251,7 +251,7 @@ loadAssets(shadowRecipes)
   │       └─ CraftingPlugin.onRecipeLoad()
   │           └─ BenchRecipeRegistry updated
   │
-Player opens Blueprint bench
+Player opens Stencil bench
   ├─ StructuralCraftingWindow created
   │   └─ windowData sent              ──────►  Client opens StructuralCrafting UI
   │

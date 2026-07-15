@@ -19,7 +19,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
 /**
- * Test command for creating blueprint stencil items during POC testing.
+ * Test command for creating stencil stencil items during POC testing.
  *
  * <p>Usage: {@code /placeblock stencil <itemId>}</p>
  *
@@ -35,7 +35,7 @@ public class StencilSubCommand extends AbstractPlayerCommand {
     private final RequiredArg<String> itemIdArg;
 
     public StencilSubCommand() {
-        super("stencil", "Create a blueprint stencil for testing");
+        super("stencil", "Create a stencil stencil for testing");
         this.itemIdArg = withRequiredArg("itemId", "Item ID (e.g., Wood_Hardwood_Fence)", ArgTypes.STRING);
     }
 
@@ -94,7 +94,7 @@ public class StencilSubCommand extends AbstractPlayerCommand {
     private static CraftingRecipe findRecipeByOutput(String input) {
         for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()) {
             if (recipe == null) continue;
-            if (recipe.getId().startsWith("Blueprint_")) continue;
+            if (recipe.getId().startsWith("Stencil_")) continue;
 
             MaterialQuantity primaryOutput = recipe.getPrimaryOutput();
             if (primaryOutput == null) continue;

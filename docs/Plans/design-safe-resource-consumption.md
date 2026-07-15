@@ -299,7 +299,7 @@ Replace with:
 | `PlaceBlockPlacementSystem.java` | Replace consumption block (§11) | Core fix |
 | `PlaceBlockPlacementSystem.java` | Remove `setItemStackForSlot` restore | Unnecessary; causes flicker |
 | `PlaceBlockPlacementSystem.java` | Add `CombinedItemContainer` import | New container construction |
-| `BlueprintSelectionPage.java` (line 199) | Consider using safe container for affordability display | Consistency (optional) |
+| `StencilSelectionPage.java` (line 199) | Consider using safe container for affordability display | Consistency (optional) |
 
 **No other files need modification.** The `BlockPreviewReskinManager`, `PlaceholderSyncSystem`, and `PlaceBlockMetadata` are unchanged.
 

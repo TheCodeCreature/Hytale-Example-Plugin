@@ -4,15 +4,15 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.CodeCreature.command.ParticleCommand;
 import com.CodeCreature.command.debug.DebugCommand;
 import com.CodeCreature.command.placeblock.PlaceBlockCommand;
-import com.CodeCreature.crafting.BlueprintBookRecipeMutator;
-import com.CodeCreature.ui.bench.BlueprintBookOpenUIInteraction;
-import com.CodeCreature.ui.bench.BlueprintBookPrefsStore;
+import com.CodeCreature.crafting.StencilBookRecipeMutator;
+import com.CodeCreature.ui.bench.StencilBookOpenUIInteraction;
+import com.CodeCreature.ui.bench.StencilBookPrefsStore;
 import com.CodeCreature.util.DebugLogger;
 import com.CodeCreature.util.FeatureFlags;
 import com.CodeCreature.scaling.BreakBlockDiagnostic;
 import com.CodeCreature.scaling.DropScaler;
 import com.CodeCreature.scaling.PlacementCostScaler;
-import com.CodeCreature.ui.blueprintbook.BlueprintBookParticleLoop;
+import com.CodeCreature.ui.stencilbook.StencilBookParticleLoop;
 import com.CodeCreature.stencil.StencilDropDestroySystem;
 import com.CodeCreature.stencil.StencilPlacementSystem;
 import com.CodeCreature.ui.radial.StencilInputListener;
@@ -59,7 +59,7 @@ public class Plugin extends JavaPlugin {
         // Consume extra items when placing natural blocks (12x cost to match 12x drops)
         this.getEntityStoreRegistry().registerSystem(new PlacementCostScaler());
 
-        // Blueprint stencil placement — intercepts PlaceBlockEvent for BSON-tagged block items
+        // Stencil stencil placement — intercepts PlaceBlockEvent for BSON-tagged block items
         this.getEntityStoreRegistry().registerSystem(new StencilPlacementSystem());
 
         // Stencil drop destroy — cancel world item spawn when dropping stencils (G key / drag-out)
@@ -68,19 +68,19 @@ public class Plugin extends JavaPlugin {
         // Diagnostic: log block drop config on break (toggle via /Debug BreakLog)
         this.getEntityStoreRegistry().registerSystem(new BreakBlockDiagnostic());
 
-        BlueprintBookPrefsStore.initialize(this.getDataDirectory());
+        StencilBookPrefsStore.initialize(this.getDataDirectory());
         FeatureFlags.initialize(this.getDataDirectory());
         com.CodeCreature.registry.BenchRegistry.initialize(this.getDataDirectory());
 
         // Register Stencil Crafting interaction type (opens custom UI page)
         this.getCodecRegistry(Interaction.CODEC)
-            .register("StencilCrafting_OpenUI", BlueprintBookOpenUIInteraction.class, BlueprintBookOpenUIInteraction.CODEC);
+            .register("StencilCrafting_OpenUI", StencilBookOpenUIInteraction.class, StencilBookOpenUIInteraction.CODEC);
 
-        // Register Blueprint Book pick-stencil interaction type
+        // Register Stencil Book pick-stencil interaction type
         this.getCodecRegistry(Interaction.CODEC)
-                .register("BlueprintBook_PickStencil",
-                        com.CodeCreature.ui.blueprintbook.BlueprintBookPickStencilInteraction.class,
-                        com.CodeCreature.ui.blueprintbook.BlueprintBookPickStencilInteraction.CODEC);
+                .register("StencilBook_PickStencil",
+                        com.CodeCreature.ui.stencilbook.StencilBookPickStencilInteraction.class,
+                        com.CodeCreature.ui.stencilbook.StencilBookPickStencilInteraction.CODEC);
     }
 
     private static void onPlayerReady(PlayerReadyEvent event) {
@@ -105,7 +105,7 @@ public class Plugin extends JavaPlugin {
             StencilVisualManager.applyVisuals(playerRef, player);
         }
 
-        BlueprintBookParticleLoop.start(playerRef, world);
+        StencilBookParticleLoop.start(playerRef, world);
     }
 
     private static void onPlayerDisconnect(PlayerDisconnectEvent event) {
@@ -125,15 +125,15 @@ public class Plugin extends JavaPlugin {
                     "[Plugin] Error in StencilVisualManager.removePlayer for " + playerId + ": " + e.getMessage());
         }
         try {
-            BlueprintBookParticleLoop.remove(playerId);
+            StencilBookParticleLoop.remove(playerId);
         } catch (Exception e) {
             DebugLogger.log(DebugLogger.Subsystem.PLUGIN, Level.WARNING,
-                    "[Plugin] Error in BlueprintBookParticleLoop.remove for " + playerId + ": " + e.getMessage());
+                    "[Plugin] Error in StencilBookParticleLoop.remove for " + playerId + ": " + e.getMessage());
         }
     }
 
     private static void onAssetsLoaded(LoadAssetEvent event) {
         DropScaler.apply();
-        BlueprintBookRecipeMutator.mutate();
+        StencilBookRecipeMutator.mutate();
     }
 }

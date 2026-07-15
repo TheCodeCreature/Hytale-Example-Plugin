@@ -51,7 +51,7 @@ classDiagram
         +init()$ void
     }
 
-    class BlueprintSelectionPage {
+    class StencilSelectionPage {
         -List~String~ benchIds
         +loadRecipes() void
         +buildBenchTabs() void
@@ -66,7 +66,7 @@ classDiagram
     BenchTabGrouper ..> TabGroupConfig : reads
     TabGroupConfig --> ManualGroup : contains
     BenchRegistry --> BenchTabGrouper : creates and holds
-    BlueprintSelectionPage --> BenchTabGrouper : uses to map bench IDs
+    StencilSelectionPage --> BenchTabGrouper : uses to map bench IDs
     RecipeFilterPipeline ..> BenchTabGrouper : unchanged - receives mapped IDs
 ```
 
@@ -106,7 +106,7 @@ sequenceDiagram
     participant P as Plugin.setup
     participant BR as BenchRegistry
     participant TG as BenchTabGrouper
-    participant BSP as BlueprintSelectionPage
+    participant BSP as StencilSelectionPage
     participant RFP as RecipeFilterPipeline
 
     P->>BR: initialize(dataDir)
@@ -118,7 +118,7 @@ sequenceDiagram
     TG->>TG: applyAutoMerge()
     TG-->>BR: BenchTabGrouper instance
 
-    Note over BSP: User opens Blueprint Book
+    Note over BSP: User opens Stencil Book
     BSP->>BSP: loadRecipes()
     BSP->>BR: getTabGrouper()
     loop Each recipe
@@ -244,7 +244,7 @@ AFTER:
 
 Because `RecipeEntry.benchId()` already stores the group key (mapped in `loadRecipes`), and `activeTab` is also a group key, the existing `activeTab.equals(recipe.benchId())` check works without modification.
 
-### `BlueprintBookPrefs` — **NO CHANGES**
+### `StencilBookPrefs` — **NO CHANGES**
 
 `activeTab` is already a string. It now stores a group key instead of a raw bench ID. Old persisted values that don't match a current group key are caught by `validateActiveTab()` and reset to "All".
 
@@ -257,7 +257,7 @@ src/main/java/com/CodeCreature/
 │   ├── BenchTabGrouper.java        ← NEW
 │   └── ...
 ├── ui/bench/
-│   ├── BlueprintSelectionPage.java ← MODIFIED: use grouper in loadRecipes/buildBenchTabs
+│   ├── StencilSelectionPage.java ← MODIFIED: use grouper in loadRecipes/buildBenchTabs
 │   └── ...
 ```
 
@@ -272,7 +272,7 @@ src/main/java/com/CodeCreature/
 | Add getter | `public static BenchTabGrouper getTabGrouper()` |
 | Update `reset()` | Set `tabGrouper = null` |
 
-### `BlueprintSelectionPage.java`
+### `StencilSelectionPage.java`
 
 | Change | Description |
 |--------|-------------|
@@ -285,8 +285,8 @@ src/main/java/com/CodeCreature/
 | File | Reason |
 |------|--------|
 | `RecipeFilterPipeline.java` | `filterByTab()` works unchanged — recipes already carry group keys |
-| `BlueprintBookPrefs.java` | `activeTab` field is a string — works with group keys as-is |
-| `BlueprintBookPrefsStore.java` | No changes needed |
+| `StencilBookPrefs.java` | `activeTab` field is a string — works with group keys as-is |
+| `StencilBookPrefsStore.java` | No changes needed |
 | `RecipeFilterRegistry.java` | Produces raw bench IDs — grouping happens downstream |
 
 ## 11. Open Questions
@@ -334,10 +334,10 @@ src/main/java/com/CodeCreature/
 
 ### Wave 3 (depends on Wave 2)
 
-#### Unit: BlueprintSelectionPage integration
+#### Unit: StencilSelectionPage integration
 
-- **Files**: `BlueprintSelectionPage.java`
+- **Files**: `StencilSelectionPage.java`
 - **Methods**: `loadRecipes()` (modify), `buildBenchTabs()` (modify)
 - **Contract**: Recipes carry group keys as benchId; tabs display group keys with proper display names; filter pipeline works unchanged
 - **Dependencies**: Wave 2 (BenchRegistry.getTabGrouper() must work)
-- **Done when**: Blueprint book opens with grouped tabs; selecting a grouped tab shows recipes from all constituent benches; ungrouped benches appear as individual tabs; persisted activeTab validates correctly against group keys
+- **Done when**: Stencil book opens with grouped tabs; selecting a grouped tab shows recipes from all constituent benches; ungrouped benches appear as individual tabs; persisted activeTab validates correctly against group keys

@@ -18,14 +18,14 @@ As a **player**, I want **disconnect cleanup to be resilient** so that **one sub
 
 ### Checklist
 - [ ] Each cleanup call in `onPlayerDisconnect` is wrapped in its own try-catch
-- [ ] If `StencilSyncSystem.unregister()` throws, `StencilVisualManager.removePlayer()` and `BlueprintBookParticleLoop.remove()` still run
+- [ ] If `StencilSyncSystem.unregister()` throws, `StencilVisualManager.removePlayer()` and `StencilBookParticleLoop.remove()` still run
 - [ ] Exceptions during cleanup are logged with SEVERE level
 
 ### Scenarios
 **One cleanup fails, others succeed**
 - **Given** a player disconnects and `StencilSyncSystem.unregister()` throws an exception
 - **When** the disconnect handler continues
-- **Then** `StencilVisualManager.removePlayer()` and `BlueprintBookParticleLoop.remove()` still execute
+- **Then** `StencilVisualManager.removePlayer()` and `StencilBookParticleLoop.remove()` still execute
 
 ## Notes
 Scope: `Plugin.onPlayerDisconnect()` only.

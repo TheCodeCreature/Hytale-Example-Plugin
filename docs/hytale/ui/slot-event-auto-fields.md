@@ -2,7 +2,7 @@
 topic: "Slot Event Auto-Provided Fields"
 category: "UI / Custom Pages / Events"
 updated: 2026-04-28
-sources: ["decompiled: EntitySpawnPage.java", "decompiled: CustomUIEventBinding.java", "decompiled: CustomPageEvent.java", "decompiled: ItemStack.java", "plugin: BlueprintSelectionPage.java"]
+sources: ["decompiled: EntitySpawnPage.java", "decompiled: CustomUIEventBinding.java", "decompiled: CustomPageEvent.java", "decompiled: ItemStack.java", "plugin: StencilSelectionPage.java"]
 ---
 
 # Slot Event Auto-Provided Fields
@@ -20,8 +20,8 @@ When certain `CustomUIEventBindingType` slot events fire on an `ItemGrid`, the *
 | Event Type | ID | Auto-provides `ItemStackId`? | Auto-provides Slot Index? | Confidence | Evidence |
 |---|---|---|---|---|---|
 | `Dropped` | 18 | **YES** | NO | **Confirmed** — decompiled engine code | EntitySpawnPage.java |
-| `SlotClicking` | 13 | **YES** | NO | **High** — plugin code relies on it | BlueprintSelectionPage.java |
-| `SlotMouseEntered` | 15 | **YES** | NO | **High** — plugin code relies on it | BlueprintSelectionPage.java |
+| `SlotClicking` | 13 | **YES** | NO | **High** — plugin code relies on it | StencilSelectionPage.java |
+| `SlotMouseEntered` | 15 | **YES** | NO | **High** — plugin code relies on it | StencilSelectionPage.java |
 | `SlotDoubleClicking` | 14 | **Likely YES** | NO | Inferred — same slot-event family | No direct evidence |
 | `SlotMouseExited` | 16 | **Likely YES** | NO | Inferred — same slot-event family | No direct evidence |
 | `DragCancelled` | 17 | Unknown | NO | No evidence | — |
@@ -70,7 +70,7 @@ The codec confirms `ItemStackId` is a recognized field:
 
 ## Evidence: `SlotMouseEntered` (ID 15) — Plugin Code Relies On It
 
-**Source**: `src/main/java/.../BlueprintSelectionPage.java`
+**Source**: `src/main/java/.../StencilSelectionPage.java`
 
 Binding specifies only `"Action"`:
 
@@ -100,7 +100,7 @@ Handler reads `data.itemStackId` to identify the hovered recipe:
 
 ## Evidence: `SlotClicking` (ID 13) — Plugin Code Relies On It
 
-**Source**: `src/main/java/.../BlueprintSelectionPage.java`
+**Source**: `src/main/java/.../StencilSelectionPage.java`
 
 Binding specifies only `"Action"`:
 
@@ -189,7 +189,7 @@ EventData.of("@Tab", "#BenchTabs.SelectedTab")      // works
 
 Since only `ItemStackId` (item type id) is provided and no slot index:
 
-1. **If all slots have unique item types** → match `ItemStackId` against your slot data to identify the slot (this is what `BlueprintSelectionPage` does).
+1. **If all slots have unique item types** → match `ItemStackId` against your slot data to identify the slot (this is what `StencilSelectionPage` does).
 
 2. **If multiple slots share the same item type** → `ItemStackId` alone is ambiguous. You cannot distinguish which slot was clicked/hovered. Workarounds:
    - Ensure unique items per slot (append metadata or use distinct item ids)
@@ -215,4 +215,4 @@ public static final BuilderCodec<MyEventData> CODEC = BuilderCodec.builder(
 ## See Also
 
 - [UI Data Binding](./ui-data-binding.md) — `@` prefix, event patterns, codec structure
-- [Custom UI for Stencil Crafting](../plugins/custom-ui-for-Blueprint-Book.md) — event binding overview
+- [Custom UI for Stencil Crafting](../plugins/custom-ui-for-Stencil-Book.md) — event binding overview

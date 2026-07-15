@@ -128,7 +128,7 @@ private Map<String, RecipeFilterPipeline.CategoryInfo> buildCategoryInfoMap() {
         }
     }
     
-    LOGGER.info("[BlueprintBook] Built categoryInfoMap with " + map.size()
+    LOGGER.info("[StencilBook] Built categoryInfoMap with " + map.size()
             + " categories: " + map.keySet());
     return map;
 }

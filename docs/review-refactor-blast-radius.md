@@ -1,7 +1,7 @@
 # Architecture Assessment: Finding #11 & #17 Blast Radius
 
 **Date:** 2026-05-18  
-**Scope:** Plugin.java package move + BlueprintSelectionPage decomposition  
+**Scope:** Plugin.java package move + StencilSelectionPage decomposition  
 
 ---
 
@@ -93,18 +93,18 @@ That's it. The build system (`build.gradle.kts` lines 85-92) already handles man
 
 ---
 
-## Finding #17: BlueprintSelectionPage God Class Decomposition
+## Finding #17: StencilSelectionPage God Class Decomposition
 
 ### Executive Summary
 
-`BlueprintSelectionPage` is a 1060-line class with **5 coherent state groups** and **10 distinct responsibilities**. The class is already partially decomposed (`RecipeFilterPipeline`, `IngredientTreeGridController`), but still retains layout management, detail panel rendering, event routing, and filter state coordination. The Hytale `InteractiveCustomUIPage` contract (override `build()`, `handleDataEvent()`, `onDismiss()`) constrains where seams can be cut — the page class must remain the event entry point but can delegate aggressively.
+`StencilSelectionPage` is a 1060-line class with **5 coherent state groups** and **10 distinct responsibilities**. The class is already partially decomposed (`RecipeFilterPipeline`, `IngredientTreeGridController`), but still retains layout management, detail panel rendering, event routing, and filter state coordination. The Hytale `InteractiveCustomUIPage` contract (override `build()`, `handleDataEvent()`, `onDismiss()`) constrains where seams can be cut — the page class must remain the event entry point but can delegate aggressively.
 
 ### Current Responsibility Map
 
 ```mermaid
 graph TB
-    subgraph "BlueprintSelectionPage Responsibilities"
-        BSP["BlueprintSelectionPage<br/>(1060 lines)"]:::red
+    subgraph "StencilSelectionPage Responsibilities"
+        BSP["StencilSelectionPage<br/>(1060 lines)"]:::red
 
         subgraph "State Groups"
             FS["Filter State<br/>activeTab, searchQuery,<br/>activeSetFilters, activeMaterialGroups,<br/>selectAllSets, selectAllCategories"]:::orange
@@ -124,7 +124,7 @@ graph TB
             R7["Detail Panel<br/>updateDetailPanel()"]:::orange
             R8["Category Info<br/>buildCategoryInfoMap()"]:::orange
             R9["Prefs Persistence<br/>savePrefs()"]:::green
-            R10["Give Blueprint<br/>giveSelectedBlueprint()"]:::green
+            R10["Give Stencil<br/>giveSelectedStencil()"]:::green
         end
     end
 
@@ -156,7 +156,7 @@ graph TB
 | Boundary | Lines | Methods | Cohesion |
 |----------|-------|---------|----------|
 | **Grid Layout Engine** | ~150 | `computeMaxLayout()`, `updateRecipeGrid()`, `hideRemainingCells()`, `buildRecipeGridBindings()` | Operates on `cellsPerSet`, `groupCellOffset`, `cellSlotToRecipeIndex`, `maxLayoutSetNames` |
-| **Detail Panel** | ~100 | `updateDetailPanel()`, `isAffordable()`, `giveSelectedBlueprint()` | Operates on `selectedRecipeId`, cost rendering |
+| **Detail Panel** | ~100 | `updateDetailPanel()`, `isAffordable()`, `giveSelectedStencil()` | Operates on `selectedRecipeId`, cost rendering |
 | **Filter State Coordination** | ~80 | `applyFilter()`, `pruneInvalidMaterialGroups()`, `pruneIncompatibleSetFilters()` | Operates on `activeSetFilters`, `activeMaterialGroups`, `selectAll*` |
 | **Category Info Builder** | ~40 | `buildCategoryInfoMap()`, `capitalize()` | Pure function, no state dependency |
 | **Event Router** | ~120 | `handleDataEvent()` | Dispatches to other responsibilities — must stay in page |
@@ -238,10 +238,10 @@ This is the highest-ROI split because:
 
 ```mermaid
 graph TB
-    subgraph "Target: Decomposed BlueprintSelectionPage"
-        BSP2["BlueprintSelectionPage<br/>(thin orchestrator ~250 lines)"]:::green
+    subgraph "Target: Decomposed StencilSelectionPage"
+        BSP2["StencilSelectionPage<br/>(thin orchestrator ~250 lines)"]:::green
         GLC["GridLayoutController<br/>computeMaxLayout, cellSlotToRecipeIndex,<br/>updateRecipeGrid, hideRemainingCells"]:::green
-        DPC["DetailPanelController<br/>updateDetailPanel, isAffordable,<br/>giveSelectedBlueprint"]:::green
+        DPC["DetailPanelController<br/>updateDetailPanel, isAffordable,<br/>giveSelectedStencil"]:::green
         FSM["FilterStateManager<br/>activeTab, setFilters, materialGroups,<br/>prune methods, applyFilter delegation"]:::green
         ITC["IngredientTreeGridController<br/>(already extracted)"]:::green
         RFP["RecipeFilterPipeline<br/>(already extracted)"]:::green
@@ -273,8 +273,8 @@ graph TB
 - Validate: open bench, filter recipes, verify grid renders correctly in all tabs
 
 **Wave 2:** Extract `DetailPanelController`
-- Move: `updateDetailPanel()`, `isAffordable()`, `giveSelectedBlueprint()`, cost-rendering constants
-- Validate: select recipes, verify cost display and give-blueprint action
+- Move: `updateDetailPanel()`, `isAffordable()`, `giveSelectedStencil()`, cost-rendering constants
+- Validate: select recipes, verify cost display and give-stencil action
 
 **Optional Wave 3 (if desired):** Extract `FilterStateManager`
 - Move: filter state fields + `applyFilter()` + prune methods

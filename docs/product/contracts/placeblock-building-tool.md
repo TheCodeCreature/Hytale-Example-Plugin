@@ -73,7 +73,7 @@ Once a block is placed via the PlaceBlock tool, it is identical to the same bloc
 
 The Stencil Crafting is a **new workbench block**, distinct from the existing Builders Bench (`Bench_Builders`). It does not modify, replace, or extend the Builders Bench's configuration or asset. The Builders Bench continues to function as a standard crafting station (craft → inventory). The Stencil Crafting does not produce crafted recipe outputs. It may dispense the Block_Placeholder tool itself as a utility acquisition (see Contract #17).
 
-The Stencil Crafting block is cloned from the Builders Bench asset but has its own block type identity (`Bench_Blueprint` or equivalent). The existing Builders Bench must remain unchanged.
+The Stencil Crafting block is cloned from the Builders Bench asset but has its own block type identity (`Bench_Stencil` or equivalent). The existing Builders Bench must remain unchanged.
 
 **Why this matters:** Merging the PlaceBlock workflow into the Builders Bench would confuse two distinct player intents: "I want to craft items into my inventory" vs. "I want to arm a tool and go build directly." Separate benches keep these workflows clear.
 

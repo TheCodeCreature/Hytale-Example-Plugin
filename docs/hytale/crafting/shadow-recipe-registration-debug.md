@@ -2,7 +2,7 @@
 topic: "Debug: Shadow Recipe Registration Chain for Stencil Crafting"
 category: "Crafting / Recipe Registration"
 updated: 2026-04-23
-sources: ["CraftingPlugin.java (decompiled)", "BenchRecipeRegistry.java (decompiled)", "StructuralCraftingWindow.java (decompiled)", "AssetStore.java (decompiled)", "CraftingManager.java (decompiled)", "CraftingRecipe.java (decompiled)", "BenchRequirement.java (decompiled)", "BlueprintBookRecipeMutator.java", "LoadedAssetsEvent.java (decompiled)", "LoadAssetEvent.java (decompiled)"]
+sources: ["CraftingPlugin.java (decompiled)", "BenchRecipeRegistry.java (decompiled)", "StructuralCraftingWindow.java (decompiled)", "AssetStore.java (decompiled)", "CraftingManager.java (decompiled)", "CraftingRecipe.java (decompiled)", "BenchRequirement.java (decompiled)", "StencilBookRecipeMutator.java", "LoadedAssetsEvent.java (decompiled)", "LoadAssetEvent.java (decompiled)"]
 ---
 
 # Debug: Shadow Recipe Registration Chain for Stencil Crafting
@@ -15,25 +15,25 @@ The full chain from `loadAssets()` → `LoadedAssetsEvent` → `onRecipeLoad()` 
 
 ## 1. The Complete Chain — Annotated
 
-### Step 1: `BlueprintBookRecipeMutator.mutate()`
+### Step 1: `StencilBookRecipeMutator.mutate()`
 
 Called from `onAssetsLoaded(LoadAssetEvent)` in `UnobstructedThirdPersonPlugin`, **after** all assets are loaded:
 
 ```
 UnobstructedThirdPersonPlugin.onAssetsLoaded(LoadAssetEvent)
   └── DropScaler.apply()
-  └── BlueprintBookRecipeMutator.mutate()
+  └── StencilBookRecipeMutator.mutate()
 ```
 
 Creates shadow recipes via:
 ```java
 CraftingRecipe shadow = new CraftingRecipe(recipe);     // copy constructor
-idField.set(shadow, "Blueprint_" + originalId);          // reflection
+idField.set(shadow, "Stencil_" + originalId);          // reflection
 inputField.set(shadow, new MaterialQuantity[]{           // reflection
     new MaterialQuantity(null, "PlaceBlock", null, 1, null)
 });
 benchReqField.set(shadow, new BenchRequirement[]{        // reflection
-    new BenchRequirement(BenchType.StructuralCrafting, "Blueprint", sourceReq.categories, 0)
+    new BenchRequirement(BenchType.StructuralCrafting, "Stencil", sourceReq.categories, 0)
 });
 ```
 
@@ -58,7 +58,7 @@ public AssetLoadResult<K, T> loadAssets(String packKey, List<T> assets, AssetUpd
 }
 ```
 
-**Key**: `loadAllChildren` uses `this.keyFunction.apply(asset)` which is `recipe -> recipe.id`. The `id` field was set via reflection to `"Blueprint_XXX"`. So `loadedAssets.put("Blueprint_XXX", shadow)`.
+**Key**: `loadAllChildren` uses `this.keyFunction.apply(asset)` which is `recipe -> recipe.id`. The `id` field was set via reflection to `"Stencil_XXX"`. So `loadedAssets.put("Stencil_XXX", shadow)`.
 
 ### Step 3: `AssetStore.loadAssets0()` (line 774)
 
@@ -119,12 +119,12 @@ private static void onRecipeLoad(LoadedAssetsEvent<String, CraftingRecipe, ...> 
 ```
 
 **What happens for a shadow recipe**:
-- `recipe.getBenchRequirement()` → `[BenchRequirement(StructuralCrafting, "Blueprint", ["Bricks"], 0)]`
-- `registries.computeIfAbsent("Blueprint", BenchRecipeRegistry::new)` → creates or gets "Blueprint" registry
+- `recipe.getBenchRequirement()` → `[BenchRequirement(StructuralCrafting, "Stencil", ["Bricks"], 0)]`
+- `registries.computeIfAbsent("Stencil", BenchRecipeRegistry::new)` → creates or gets "Stencil" registry
 - `benchRecipeRegistry.addRecipe(req, recipe)` → adds recipe ID to `categoryMap["Bricks"]`
 - `computeBenchRecipeRegistries()` → calls `recompute()` on all registries
 
-**Key**: The `registries` map is `static` on `CraftingPlugin`. The `"Blueprint"` entry is created lazily here via `computeIfAbsent`. The `onRecipeLoad` method uses the recipe object from the event payload, NOT from the asset map. But `addRecipe` stores only the recipe **ID** (String), not the object.
+**Key**: The `registries` map is `static` on `CraftingPlugin`. The `"Stencil"` entry is created lazily here via `computeIfAbsent`. The `onRecipeLoad` method uses the recipe object from the event payload, NOT from the asset map. But `addRecipe` stores only the recipe **ID** (String), not the object.
 
 ### Step 5: `BenchRecipeRegistry.addRecipe()` (line 44)
 
@@ -165,7 +165,7 @@ CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(recipeId);
 
 However, `putAll` ran BEFORE the event dispatch, so the asset map SHOULD have the recipe. This failure would only occur if `putAll` silently rejected the programmatic asset (e.g., due to codec validation failure).
 
-### Step 7: Player opens Blueprint bench → `StructuralCraftingWindow` created
+### Step 7: Player opens Stencil bench → `StructuralCraftingWindow` created
 
 ```java
 public StructuralCraftingWindow(BenchState benchState) {
@@ -217,7 +217,7 @@ private ObjectList<CraftingRecipe> getMatchingRecipes(ItemStack inputStack) {
 
 ```java
 public static List<CraftingRecipe> getBenchRecipes(BenchType benchType, String benchId, String category) {
-    BenchRecipeRegistry registry = registries.get(benchId);  // "Blueprint"
+    BenchRecipeRegistry registry = registries.get(benchId);  // "Stencil"
     if (registry == null) return List.of();  // ← ⚠️ FAILURE POINT #3
 
     List<CraftingRecipe> list = new ObjectArrayList<>();
@@ -328,7 +328,7 @@ private void updateRecipes() {
 
 **How to verify**:
 ```java
-// Add after loadAssets() in BlueprintBookRecipeMutator.mutate()
+// Add after loadAssets() in StencilBookRecipeMutator.mutate()
 for (CraftingRecipe shadow : shadowRecipes) {
     CraftingRecipe found = CraftingRecipe.getAssetMap().getAsset(shadow.getId());
     log("Asset map lookup for '" + shadow.getId() + "': " + (found != null ? "FOUND" : "NOT FOUND"));
@@ -341,7 +341,7 @@ for (CraftingRecipe shadow : shadowRecipes) {
 
 **Location**: `CraftingPlugin.getBenchRecipes()` line 222
 
-**Mechanism**: `registries.get("Blueprint")` returns null because `onRecipeLoad()` was never called with the shadow recipes.
+**Mechanism**: `registries.get("Stencil")` returns null because `onRecipeLoad()` was never called with the shadow recipes.
 
 **Why it could happen**:
 - `LoadedAssetsEvent` dispatch was skipped (e.g., `loadedAssets` was empty by the time `loadAssets0` checked)
@@ -350,14 +350,14 @@ for (CraftingRecipe shadow : shadowRecipes) {
 
 **How to verify**:
 ```java
-// Add after loadAssets() in BlueprintBookRecipeMutator.mutate()
+// Add after loadAssets() in StencilBookRecipeMutator.mutate()
 // Use reflection to access CraftingPlugin.registries
 Field regField = CraftingPlugin.class.getDeclaredField("registries");
 regField.setAccessible(true);
 Map<String, ?> regs = (Map<String, ?>) regField.get(null);
-log("'Blueprint' registry exists: " + regs.containsKey("Blueprint"));
-if (regs.containsKey("Blueprint")) {
-    log("Blueprint registry: " + regs.get("Blueprint"));
+log("'Stencil' registry exists: " + regs.containsKey("Stencil"));
+if (regs.containsKey("Stencil")) {
+    log("Stencil registry: " + regs.get("Stencil"));
 }
 ```
 
@@ -394,7 +394,7 @@ if (regs.containsKey("Blueprint")) {
 2. Asset stores load all JSON assets
    └── LoadedAssetsEvent<CraftingRecipe> fires (initial=true)
        └── onRecipeLoad() builds registries: "Builders", "Carpenter", "Fieldcraft", etc.
-       └── NO "Blueprint" registry (no recipe has Blueprint requirement yet)
+       └── NO "Stencil" registry (no recipe has Stencil requirement yet)
 
 3. LoadedAssetsEvent<Item> fires
    └── onItemAssetLoad() generates inline recipes → more LoadedAssetsEvent<CraftingRecipe>
@@ -402,7 +402,7 @@ if (regs.containsKey("Blueprint")) {
 4. ★ LoadAssetEvent fires (all assets loaded)
    └── onAssetsLoaded()
        └── DropScaler.apply()
-       └── BlueprintBookRecipeMutator.mutate()
+       └── StencilBookRecipeMutator.mutate()
            ├── Creates shadow CraftingRecipe objects via copy constructor + reflection
            ├── Calls CraftingRecipe.getAssetStore().loadAssets("Hytale:Hytale", shadowRecipes)
            │   ├── loadAllChildren() puts shadows into loadedAssets map
@@ -411,30 +411,30 @@ if (regs.containsKey("Blueprint")) {
            │   │   ├── assetMap.putAll() — adds shadows to CraftingRecipe asset map
            │   │   └── dispatch LoadedAssetsEvent<CraftingRecipe> (synchronous)
            │   │       └── CraftingPlugin.onRecipeLoad()
-           │   │           ├── registries.computeIfAbsent("Blueprint", ...) → creates registry
+           │   │           ├── registries.computeIfAbsent("Stencil", ...) → creates registry
            │   │           ├── addRecipe() for each shadow → adds to categoryMap
            │   │           └── computeBenchRecipeRegistries() → recompute()
            │   │               └── extractMaterialFromRecipes()
            │   │                   └── CraftingRecipe.getAssetMap().getAsset(shadowId) ← ⚠️ FP #1
            │   │                   └── adds "PlaceBlock" to allMaterialResourceType
            │   └── Returns AssetLoadResult
-           └── Logs "Registered N shadow Blueprint recipes."
+           └── Logs "Registered N shadow Stencil recipes."
 
 5. Server ready, players can join
 
-6. Player opens Blueprint bench
+6. Player opens Stencil bench
    └── StructuralCraftingWindow created
-       └── onOpen0() → getBenchRecipes("Blueprint") → generates inventory hints
+       └── onOpen0() → getBenchRecipes("Stencil") → generates inventory hints
        └── Player places placeholder → isValidInput() → getMatchingRecipes()
-           └── getBenchRecipes(StructuralCrafting, "Blueprint") ← ⚠️ FP #2
-               └── registries.get("Blueprint") → BenchRecipeRegistry
+           └── getBenchRecipes(StructuralCrafting, "Stencil") ← ⚠️ FP #2
+               └── registries.get("Stencil") → BenchRecipeRegistry
                    └── getAllRecipes()
                        └── CraftingRecipe.getAssetMap().getAsset(shadowId) ← ⚠️ FP #1 again
 ```
 
 ### Is `loadAssets()` synchronous?
 
-**Yes.** `AssetStore.loadAssets()` is a blocking call. It acquires the write lock, processes assets, dispatches events, and returns. When `BlueprintBookRecipeMutator.mutate()` returns, all shadow recipes should be in the asset map and the "Blueprint" registry should exist.
+**Yes.** `AssetStore.loadAssets()` is a blocking call. It acquires the write lock, processes assets, dispatches events, and returns. When `StencilBookRecipeMutator.mutate()` returns, all shadow recipes should be in the asset map and the "Stencil" registry should exist.
 
 ### Could `onRecipeLoad()` have already run?
 
@@ -467,7 +467,7 @@ The `data` field being null is notable. `AssetExtraInfo.Data` contains metadata 
 
 ### Step A: Verify shadow recipes are in the asset map (FAILURE POINT #1)
 
-Add to `BlueprintBookRecipeMutator.mutate()`, after `loadAssets()`:
+Add to `StencilBookRecipeMutator.mutate()`, after `loadAssets()`:
 
 ```java
 int found = 0, missing = 0;
@@ -485,7 +485,7 @@ log("Asset map verification: " + found + " found, " + missing + " missing");
 
 **If missing > 0**: The `assetMap.putAll()` is silently rejecting shadow recipes. Root cause is likely the null `data` field or a codec validation issue. Fix: investigate what `putAll` requires, or try loading via `loadAssetsWithReferences()`.
 
-### Step B: Verify "Blueprint" registry exists (FAILURE POINT #2)
+### Step B: Verify "Stencil" registry exists (FAILURE POINT #2)
 
 ```java
 try {
@@ -493,11 +493,11 @@ try {
     regField.setAccessible(true);
     @SuppressWarnings("unchecked")
     Map<String, BenchRecipeRegistry> regs = (Map<String, BenchRecipeRegistry>) regField.get(null);
-    BenchRecipeRegistry blueprintReg = regs.get("Blueprint");
-    if (blueprintReg != null) {
-        log("Blueprint registry exists: " + blueprintReg);
+    BenchRecipeRegistry stencilReg = regs.get("Stencil");
+    if (stencilReg != null) {
+        log("Stencil registry exists: " + stencilReg);
     } else {
-        log("ERROR: No 'Blueprint' registry in CraftingPlugin.registries!");
+        log("ERROR: No 'Stencil' registry in CraftingPlugin.registries!");
         log("Available registries: " + regs.keySet());
     }
 } catch (Exception e) {
@@ -510,8 +510,8 @@ try {
 Add temporary logging at bench open time (e.g., in `PlaceBlockBenchInterceptor` or via event hook):
 
 ```java
-List<CraftingRecipe> recipes = CraftingPlugin.getBenchRecipes(BenchType.StructuralCrafting, "Blueprint");
-log("getBenchRecipes('Blueprint'): " + recipes.size() + " recipes");
+List<CraftingRecipe> recipes = CraftingPlugin.getBenchRecipes(BenchType.StructuralCrafting, "Stencil");
+log("getBenchRecipes('Stencil'): " + recipes.size() + " recipes");
 for (CraftingRecipe r : recipes) {
     log("  Recipe: " + r.getId() + " | inputs: " + Arrays.toString(r.getInput()));
 }
@@ -588,9 +588,9 @@ If `output` is empty (e.g., recipe has `outputs = null` or all output items have
 
 ## 8. Secondary Issue: Category Mismatch (Not a Blocker)
 
-Shadow recipes inherit categories from `sourceReq.categories`. For example, a stone bricks recipe with `categories: ["Bricks"]` creates a shadow with `BenchRequirement(StructuralCrafting, "Blueprint", ["Bricks"], 0)`.
+Shadow recipes inherit categories from `sourceReq.categories`. For example, a stone bricks recipe with `categories: ["Bricks"]` creates a shadow with `BenchRequirement(StructuralCrafting, "Stencil", ["Bricks"], 0)`.
 
-The Blueprint bench's `Categories` list includes `"Bricks"`, so the sorting logic in `getSortingPriority()` works correctly. But categories like `"Furniture_Tables"` from non-structural recipes would get `Integer.MAX_VALUE` priority (pushed to end).
+The Stencil bench's `Categories` list includes `"Bricks"`, so the sorting logic in `getSortingPriority()` works correctly. But categories like `"Furniture_Tables"` from non-structural recipes would get `Integer.MAX_VALUE` priority (pushed to end).
 
 **This doesn't affect recipe DISPLAY** — all recipes from `getAllRecipes()` are returned regardless of category. It only affects sort order within the 64-slot grid.
 

@@ -14,7 +14,7 @@ sources: ["World.java (decompiled)", "Entity.java (decompiled)", "NPCPlugin.java
 1. **Entity spawning is tightly coupled to pre-registered entity types** — you cannot create a lightweight "marker" entity without a registered `Entity` subclass with a role/model pipeline
 2. **Particles cannot be attached to entities at spawn** — `ModelParticle` attachment requires an entity with a model, and particles play to completion once spawned (no cancel on entity removal)
 
-The existing **particle heartbeat pattern** (already implemented in `BlueprintBookParticleLoop`) is the correct approach for this use case.
+The existing **particle heartbeat pattern** (already implemented in `StencilBookParticleLoop`) is the correct approach for this use case.
 
 ---
 
@@ -351,14 +351,14 @@ But this still:
 
 ## 6. Recommended Approach: Continue Using Particle Heartbeat
 
-The `BlueprintBookParticleLoop` already implements the correct pattern:
+The `StencilBookParticleLoop` already implements the correct pattern:
 
 ```
 ┌──────────────────────────────────────────────────────┐
 │                Particle Heartbeat                     │
 │                                                       │
 │  Every 100ms:                                         │
-│  1. Check if player holds Blueprint Book              │
+│  1. Check if player holds Stencil Book              │
 │  2. Raycast to get aimed block                        │
 │  3. Check if block has a recipe                       │
 │  4. Spawn short-lived particle at block center        │
@@ -378,7 +378,7 @@ The `BlueprintBookParticleLoop` already implements the correct pattern:
 | Performance | 1 small packet per tick per player | Entity creation/destruction + NPC pipeline overhead |
 | Position tracking | Follows aim naturally (respawn at new position) | Must move entity every tick (transform update) |
 | Cleanup | Stop scheduling → particles die naturally | Must track + remove entity + handle edge cases |
-| Already implemented | ✅ `BlueprintBookParticleLoop.java` | ❌ Would need new code |
+| Already implemented | ✅ `StencilBookParticleLoop.java` | ❌ Would need new code |
 
 ### If "Instant" Disappearance is Critical
 
@@ -416,4 +416,4 @@ The 150ms fade with the heartbeat pattern is near-instant. If truly zero-frame d
 - [Particle Tick Loop Research](../particles/particle-tick-loop-research.md) — particle despawning impossibility, heartbeat pattern
 - [Particle Spawning API](../particles/particle-spawning-api.md) — `ParticleUtil` API reference
 - [Block Selection Highlight Research](../blocks/block-selection-highlight-research.md) — alternative visual approaches
-- [BlueprintBookParticleLoop.java](../../../src/main/java/com/UnobstructedThirdPerson/stencil/BlueprintBookParticleLoop.java) — current implementation
+- [StencilBookParticleLoop.java](../../../src/main/java/com/UnobstructedThirdPerson/stencil/StencilBookParticleLoop.java) — current implementation

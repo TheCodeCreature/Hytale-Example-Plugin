@@ -42,4 +42,4 @@ As a **system**, I need to **check if a player's inventory has sufficient resour
 ## Notes
 - Inventory only — no chest scanning.
 - Use `CombinedItemContainer` with `canRemoveMaterials()` — this may already provide exactly what we need.
-- Used by recipe affordability display in BlueprintSelectionPage (already done) and by PlaceBlockPlacementSystem for placement gating.
+- Used by recipe affordability display in StencilSelectionPage (already done) and by PlaceBlockPlacementSystem for placement gating.

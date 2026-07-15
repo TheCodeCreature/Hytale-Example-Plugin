@@ -25,7 +25,7 @@ Ranked by priority (established via product vision alignment):
 3. **Performance** — Recipe tree resolution is on the hot path (every affordability check, every placement). Static resolution must be pre-computed and cached; only inventory checks happen at runtime.
 4. **Simplicity** — Minimal new surface area. Reuse existing resolution infrastructure (`RecipeTierClassifier`, `ResourceTypeResolver`, `PlaceBlockCostUtil`).
 5. **Additivity** — The system is a layer on top of existing behavior. Disabling auto-craft reverts to current behavior with zero code changes to existing classes.
-6. **Transparency** — The player sees what raw materials are needed via the radial menu and blueprint bench UI.
+6. **Transparency** — The player sees what raw materials are needed via the radial menu and stencil bench UI.
 
 ---
 
@@ -209,7 +209,7 @@ Replace `RecipeAffordabilityResolver.isAffordable()` call with `RecipeAffordabil
 
 When showing the cost arc on hover, include a secondary display of raw material costs from `RecipeTreeResolver.resolveRecipeToRaw()`. Design: show direct recipe costs in the inner ring(s), and if auto-crafting would be needed, show raw material costs in an outer ring with a distinct visual treatment (e.g., different border color or icon overlay).
 
-#### BlueprintSelectionPage (detail panel)
+#### StencilSelectionPage (detail panel)
 
 Add a "Raw Materials" section below the existing cost grid in the detail panel. Show the total raw material cost from `RecipeTreeResolver.resolveRecipeToRaw()`. Conditionally visible: only when the recipe has crafted intermediate inputs.
 
@@ -333,7 +333,7 @@ sequenceDiagram
 | `RecipeAffordabilityResolver` | `isAffordableWithAutoCraft()` convenience method; direct ingredient resolution | Auto-craft planning logic (delegates to `AutoCraftPlanner`) |
 | `StencilVisualManager` | Visual indicator updates (green/red glow) | Affordability logic (delegates to `RecipeAffordabilityResolver`) |
 | `StencilRadialMenuPage` | Displaying raw cost arc on hover | Resolution, planning |
-| `BlueprintSelectionPage` | Displaying raw cost in detail panel | Resolution, planning |
+| `StencilSelectionPage` | Displaying raw cost in detail panel | Resolution, planning |
 
 ---
 
@@ -602,7 +602,7 @@ boolean affordable = container != null
 - Cost arc shows: 1× Brick (has it) + 24× Cobblestone (auto-craft for 2 bricks)
 - NOT: 3× Brick + 36× Cobblestone
 
-### 8.6 `BlueprintSelectionPage` detail panel — `ui/bench/BlueprintSelectionPage.java`
+### 8.6 `StencilSelectionPage` detail panel — `ui/bench/StencilSelectionPage.java`
 
 **New behavior:** When the player cannot afford a recipe's direct intermediates, **replace** the unaffordable intermediate ingredient(s) in the cost grid with the raw materials that auto-craft would consume. The grid reflects the actual consumption plan. If the player has sufficient intermediates for the full recipe, the grid shows the original recipe ingredients unchanged (fast path).
 
@@ -678,7 +678,7 @@ src/main/java/com/CodeCreature/
 │   └── StencilVisualManager.java    (MODIFIED — use isAffordableWithAutoCraft)
 └── ui/
     ├── bench/
-    │   └── BlueprintSelectionPage.java (MODIFIED — raw cost display)
+    │   └── StencilSelectionPage.java (MODIFIED — raw cost display)
     └── radial/
         └── StencilRadialMenuPage.java  (MODIFIED — raw cost display + affordability)
 ```
@@ -709,7 +709,7 @@ All questions resolved 2026-05-20:
 | `RecipeAffordabilityResolver.java` | Add `isAffordableWithAutoCraft()` static method | Low — additive |
 | `StencilVisualManager.java` | Swap `isAffordable()` → `isAffordableWithAutoCraft()` in `scanAndSend()` | Low — one-line change |
 | `StencilRadialMenuPage.java` | Update `applySegmentAffordability()` and `showCostArc()` for auto-craft | Medium — UI rendering |
-| `BlueprintSelectionPage.java` | Add raw cost section to detail panel | Medium — UI rendering |
+| `StencilSelectionPage.java` | Add raw cost section to detail panel | Medium — UI rendering |
 | `DropScaler.java` | Add `RecipeTreeResolver.init()` call at end of `apply()` | Low — one-line addition |
 
 ---
@@ -792,8 +792,8 @@ All questions resolved 2026-05-20:
 - **Dependencies**: Wave 2 (`RecipeAffordabilityResolver`, `RecipeTreeResolver`)
 - **Done when**: Segment frames show correct affordability with auto-craft; cost arc shows raw materials when hovering a recipe with crafted inputs
 
-#### Unit: `BlueprintSelectionPage` integration
-- **Files**: `ui/bench/BlueprintSelectionPage.java`
+#### Unit: `StencilSelectionPage` integration
+- **Files**: `ui/bench/StencilSelectionPage.java`
 - **Contract**: Add raw material cost section to detail panel. Show `RecipeTreeResolver.resolveRecipeToRaw()` output below existing cost grid.
 - **Dependencies**: Wave 2 (`RecipeTreeResolver`)
 - **Done when**: Detail panel shows "Raw Materials" section for recipes with crafted intermediate inputs; section hidden for recipes with only raw inputs

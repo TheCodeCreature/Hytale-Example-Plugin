@@ -4,7 +4,7 @@ Concrete implementation plans for 4 deferred items from the code review.
 
 ---
 
-## Item #5: BlueprintBookParticleLoop Performance Redesign
+## Item #5: StencilBookParticleLoop Performance Redesign
 
 ### Approach
 
@@ -14,7 +14,7 @@ Replace the 100ms fire-and-forget effect with `addInfiniteEffect()` so the highl
 
 | File | Change |
 |------|--------|
-| `src/main/java/com/CodeCreature/ui/blueprintbook/BlueprintBookParticleLoop.java` | Change `UPDATE_INTERVAL_MILLIS` from 100 → 500. Store `lastAffordable` boolean field. Replace `addEffect(..., UPDATE_INTERVAL_MILLIS, ...)` with `addInfiniteEffect(...)`. Add affordability diff check before entity replacement. |
+| `src/main/java/com/CodeCreature/ui/stencilbook/StencilBookParticleLoop.java` | Change `UPDATE_INTERVAL_MILLIS` from 100 → 500. Store `lastAffordable` boolean field. Replace `addEffect(..., UPDATE_INTERVAL_MILLIS, ...)` with `addInfiniteEffect(...)`. Add affordability diff check before entity replacement. |
 
 ### Acceptance Criteria
 
@@ -31,7 +31,7 @@ Replace the 100ms fire-and-forget effect with `addInfiniteEffect()` so the highl
 
 | Unit | Description | Done When |
 |------|-------------|-----------|
-| `BlueprintBookParticleLoop.java` | (a) Change constant to 500. (b) Add `private boolean lastAffordable` field. (c) In the loop body, after confirming `target.equals(lastTargetBlock) && activeEntity.isValid()`, compute `affordable` and compare to `lastAffordable` — if same, return early; if different, fall through to respawn. (d) Replace `addEffect(ref, effect, UPDATE_INTERVAL_MILLIS, OverlapBehavior.OVERWRITE, store)` with `addInfiniteEffect(ref, effect, OverlapBehavior.OVERWRITE, store)`. (e) Set `lastAffordable = affordable` after spawn. | Plugin compiles, in-game highlight persists without flickering, entity replaced only on target-change or affordability-flip. |
+| `StencilBookParticleLoop.java` | (a) Change constant to 500. (b) Add `private boolean lastAffordable` field. (c) In the loop body, after confirming `target.equals(lastTargetBlock) && activeEntity.isValid()`, compute `affordable` and compare to `lastAffordable` — if same, return early; if different, fall through to respawn. (d) Replace `addEffect(ref, effect, UPDATE_INTERVAL_MILLIS, OverlapBehavior.OVERWRITE, store)` with `addInfiniteEffect(ref, effect, OverlapBehavior.OVERWRITE, store)`. (e) Set `lastAffordable = affordable` after spawn. | Plugin compiles, in-game highlight persists without flickering, entity replaced only on target-change or affordability-flip. |
 
 ### Risk and Mitigation
 
@@ -121,11 +121,11 @@ Move `Plugin.java` from `package com;` to `package com.CodeCreature;`. This alig
 
 ---
 
-## Item #17: BlueprintSelectionPage God Class Decomposition
+## Item #17: StencilSelectionPage God Class Decomposition
 
 ### Approach
 
-Extract two "render-only" controllers from `BlueprintSelectionPage` following the proven `IngredientTreeGridController` pattern: each controller receives data and a `UICommandBuilder`, produces UI commands, and has no event routing responsibility (the page remains the sole event entry point per `InteractiveCustomUIPage` contract). Wave 1 extracts `GridLayoutController` which owns the grid rendering logic (~150 lines: `updateRecipeGrid` + `hideRemainingCells` + the indirection map fields). Wave 2 extracts `DetailPanelController` which owns the detail/cost panel rendering (~100 lines: `updateDetailPanel` + cost-grid population logic).
+Extract two "render-only" controllers from `StencilSelectionPage` following the proven `IngredientTreeGridController` pattern: each controller receives data and a `UICommandBuilder`, produces UI commands, and has no event routing responsibility (the page remains the sole event entry point per `InteractiveCustomUIPage` contract). Wave 1 extracts `GridLayoutController` which owns the grid rendering logic (~150 lines: `updateRecipeGrid` + `hideRemainingCells` + the indirection map fields). Wave 2 extracts `DetailPanelController` which owns the detail/cost panel rendering (~100 lines: `updateDetailPanel` + cost-grid population logic).
 
 ### Files to Create
 
@@ -138,11 +138,11 @@ Extract two "render-only" controllers from `BlueprintSelectionPage` following th
 
 | File | Change |
 |------|--------|
-| `src/main/java/com/CodeCreature/ui/bench/BlueprintSelectionPage.java` | Remove extracted methods and fields. Delegate to new controllers. Keep event routing in `handleDataEvent`. |
+| `src/main/java/com/CodeCreature/ui/bench/StencilSelectionPage.java` | Remove extracted methods and fields. Delegate to new controllers. Keep event routing in `handleDataEvent`. |
 
 ### Acceptance Criteria
 
-1. **`BlueprintSelectionPage` drops below 800 lines** — at least 250 lines extracted.
+1. **`StencilSelectionPage` drops below 800 lines** — at least 250 lines extracted.
 2. **Grid rendering is identical** — visual regression test: open bench, switch tabs, search, filter — all cells render with correct icons, selection highlight, and dim overlays.
 3. **Detail panel is identical** — selecting any recipe shows correct output icon, name, cost grid with affordability coloring.
 4. **Event routing unchanged** — `handleDataEvent` still dispatches `RecipeSelect:idx:*` to the grid controller's `resolveRecipeIndex()` and updates `selectedRecipeId`.
@@ -155,19 +155,19 @@ Extract two "render-only" controllers from `BlueprintSelectionPage` following th
 
 | Unit | Methods | Done When |
 |------|---------|-----------|
-| `GridLayoutController.java` | `GridLayoutController(maxLayout)`, `buildUI(cmd, evt)` (appends grid containers + binds cell events), `updateUI(cmd, displayedRecipes, selectedRecipeId)` (the full grid render loop), `resolveRecipeIndex(int slotIdx)` → `int` | Grid renders identically. `BlueprintSelectionPage` no longer contains `updateRecipeGrid`, `hideRemainingCells`, `buildRecipeGridBindings`, or the 7 grid-layout fields. |
+| `GridLayoutController.java` | `GridLayoutController(maxLayout)`, `buildUI(cmd, evt)` (appends grid containers + binds cell events), `updateUI(cmd, displayedRecipes, selectedRecipeId)` (the full grid render loop), `resolveRecipeIndex(int slotIdx)` → `int` | Grid renders identically. `StencilSelectionPage` no longer contains `updateRecipeGrid`, `hideRemainingCells`, `buildRecipeGridBindings`, or the 7 grid-layout fields. |
 
 #### Wave 2: DetailPanelController (no compile dependency on Wave 1)
 
 | Unit | Methods | Done When |
 |------|---------|-----------|
-| `DetailPanelController.java` | `DetailPanelController(affordabilityMode, maxCostCells)`, `updateUI(cmd, selectedRecipeId, allRecipes, playerInventory, affordabilityMode)` | Detail panel renders identically. `BlueprintSelectionPage` no longer contains `updateDetailPanel` body (only a one-line delegation call). |
+| `DetailPanelController.java` | `DetailPanelController(affordabilityMode, maxCostCells)`, `updateUI(cmd, selectedRecipeId, allRecipes, playerInventory, affordabilityMode)` | Detail panel renders identically. `StencilSelectionPage` no longer contains `updateDetailPanel` body (only a one-line delegation call). |
 
 #### Wave 3: Integration wiring (depends on Waves 1+2)
 
 | Unit | Description | Done When |
 |------|-------------|-----------|
-| `BlueprintSelectionPage.java` cleanup | Instantiate both controllers in `build()`. Replace all call sites of removed methods with delegation calls. Verify `handleDataEvent` routes correctly. Remove dead fields. | Full build passes, all 5 acceptance criteria met. |
+| `StencilSelectionPage.java` cleanup | Instantiate both controllers in `build()`. Replace all call sites of removed methods with delegation calls. Verify `handleDataEvent` routes correctly. Remove dead fields. | Full build passes, all 5 acceptance criteria met. |
 
 ### Risk and Mitigation
 

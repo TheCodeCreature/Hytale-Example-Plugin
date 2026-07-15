@@ -50,7 +50,7 @@ Extend `bench-tab-groups.json` with two new top-level fields. No new config file
 
   // NEW — replaces RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES
   // Recipe IDs starting with any of these prefixes are excluded from the UI.
-  "recipeSkipPrefixes": ["Blueprint_", "Salvage"],
+  "recipeSkipPrefixes": ["Stencil_", "Salvage"],
 
   // NEW — replaces BenchRegistry.FURNITURE_BENCH_ID hardcode
   // Per-bench overrides. Each entry can set preferNatural on a specific bench.
@@ -80,7 +80,7 @@ Every new field MUST have a hardcoded fallback in `loadConfig()` so the system s
 | Field | Default if missing |
 |-------|-------------------|
 | `craftingBenchIds` | All bench IDs from `BenchRegistry.allBenchIds()` (treat everything as crafting — conservative) |
-| `recipeSkipPrefixes` | `["Blueprint_", "Salvage"]` (current behavior) |
+| `recipeSkipPrefixes` | `["Stencil_", "Salvage"]` (current behavior) |
 | `benchOverrides` | Empty map (no overrides — all benches get `preferNatural = false`) |
 
 ---

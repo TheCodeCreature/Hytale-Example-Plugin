@@ -24,7 +24,7 @@ import org.jspecify.annotations.NonNull;
  * </ul>
  *
  * <p>Valid subsystem names correspond to {@link DebugLogger.Subsystem} values
- * (case-insensitive): plugin, stencil, BLUEPRINT_BOOK, blueprint_book,
+ * (case-insensitive): plugin, stencil, STENCIL_BOOK, stencil_book,
  * scaling, registry, crafting, ingredient_tree.</p>
  *
  * <p>Sends a color-coded status message to the player:

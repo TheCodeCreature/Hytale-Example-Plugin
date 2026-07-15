@@ -17,17 +17,17 @@ As a **plugin developer**, I want **all three affordability consumers to use Rec
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] BlueprintSelectionPage.updateDetailPanel() calls resolveIngredientCosts() instead of inline 3-step chain
+- [ ] StencilSelectionPage.updateDetailPanel() calls resolveIngredientCosts() instead of inline 3-step chain
 - [ ] StencilVisualManager.scanAndSend() calls isAffordable() instead of direct canRemoveMaterials()
 - [ ] StencilRadialMenuPage.showCostArc() calls resolveIngredientCosts() instead of inline 3-step chain
 - [ ] Duplicated imports of ResourceTypeResolver and NaturalResourceRegistry removed from migrated callers
 - [ ] Existing tests pass without modification
-- [ ] No visual regression in BlueprintBook, stencil hotbar glow, or radial menu
+- [ ] No visual regression in StencilBook, stencil hotbar glow, or radial menu
 
 ### Scenarios
-**BlueprintBook detail panel unchanged**
+**StencilBook detail panel unchanged**
 - **Given** updateDetailPanel() now uses resolveIngredientCosts()
-- **When** a player selects a recipe in the BlueprintBook
+- **When** a player selects a recipe in the StencilBook
 - **Then** cost cells show the same item icons, quantities, and red/white coloring as before
 
 **Stencil hotbar glow unchanged**
@@ -36,5 +36,5 @@ As a **plugin developer**, I want **all three affordability consumers to use Rec
 - **Then** stencil items in the hotbar glow green/red exactly as before
 
 ## Notes
-- BlueprintSelectionPage.isAffordable() also does BlockGroup checks — keep that as a wrapper around the resolver
-- AffordabilityMode toggle stays in BlueprintSelectionPage — not moved to resolver
+- StencilSelectionPage.isAffordable() also does BlockGroup checks — keep that as a wrapper around the resolver
+- AffordabilityMode toggle stays in StencilSelectionPage — not moved to resolver

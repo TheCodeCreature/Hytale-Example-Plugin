@@ -11,20 +11,20 @@ created: 2026-05-29
 # Particle Loop Task Queue Guard
 
 ## Description
-Add a coalescing guard to BlueprintBookParticleLoop to prevent queuing new `world.execute()` lambdas when the previous one hasn't been processed yet. This uses the same `AtomicBoolean` pattern already proven in `AffordabilityCoalescer`.
+Add a coalescing guard to StencilBookParticleLoop to prevent queuing new `world.execute()` lambdas when the previous one hasn't been processed yet. This uses the same `AtomicBoolean` pattern already proven in `AffordabilityCoalescer`.
 
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] BlueprintBookParticleLoop uses an AtomicBoolean guard so at most one world.execute() lambda is pending at any time
+- [ ] StencilBookParticleLoop uses an AtomicBoolean guard so at most one world.execute() lambda is pending at any time
 - [ ] The scheduled executor callback is a no-op when a previous lambda is still pending
 - [ ] Entity spawn/remove only happens when the world thread actually processes the lambda
 - [ ] Existing behavior (highlight entity at aimed block) is preserved
 - [ ] Effect duration is adjusted to account for variable tick timing
 
 ### Scenarios
-**Normal operation — player holds BlueprintBook**
-- **Given** a player holds a BlueprintBook and aims at a block with a recipe
+**Normal operation — player holds StencilBook**
+- **Given** a player holds a StencilBook and aims at a block with a recipe
 - **When** the scheduled executor fires every 100ms
 - **Then** at most one world.execute() lambda is pending at any time; the highlight entity updates when the world thread processes it
 

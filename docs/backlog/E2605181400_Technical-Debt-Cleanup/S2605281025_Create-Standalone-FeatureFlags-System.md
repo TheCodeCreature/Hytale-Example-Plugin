@@ -57,8 +57,8 @@ As a **developer**, I want **a standalone, general-purpose feature flag system p
 {
   "logging.global": true,
   "logging.stencil": true,
-  "logging.BlueprintBook": true,
-  "logging.blueprintBook": true,
+  "logging.StencilBook": true,
+  "logging.stencilBook": true,
   "logging.scaling": true,
   "logging.registry": true,
   "logging.crafting": true,
@@ -69,7 +69,7 @@ As a **developer**, I want **a standalone, general-purpose feature flag system p
 ```
 
 ## Notes
-- Follow `BlueprintBookPrefsStore` pattern: `initialize(Path dataDirectory)` called from `Plugin.setup()`
+- Follow `StencilBookPrefsStore` pattern: `initialize(Path dataDirectory)` called from `Plugin.setup()`
 - Use `BsonUtil.readDocumentNow()` / `BsonUtil.writeDocument()` for JSON I/O (established codebase pattern), OR plain `Files.readString()` / `Files.writeString()` with a lightweight JSON library if BSON is too heavy for simple key-value pairs
 - The system is general-purpose — not coupled to logging. Future uses could include: gameplay feature toggles, experimental features, A/B testing, etc.
 - Dot-notation keys (`logging.global`, `diagnostics.breakLog`) allow logical grouping without nested objects

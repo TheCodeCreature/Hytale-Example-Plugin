@@ -38,7 +38,7 @@ classDiagram
         +getOutputBlockTypeId(ItemStack)$ String
     }
 
-    class BlueprintSelectionPage {
+    class StencilSelectionPage {
         +handleDataEvent(Ref, Store, EventPayload) void
     }
 
@@ -50,8 +50,8 @@ classDiagram
         -onPlayerDisconnect(PlayerDisconnectEvent)$ void
     }
 
-    BlueprintSelectionPage --> PlaceBlockMetadata : arms placeholder
-    BlueprintSelectionPage --> BlockPreviewReskinManager : reskin on arm
+    StencilSelectionPage --> PlaceBlockMetadata : arms placeholder
+    StencilSelectionPage --> BlockPreviewReskinManager : reskin on arm
     UnobstructedThirdPersonPlugin --> BlockPreviewReskinManager : cleanup on disconnect
     PlaceBlockPlacementSystem --> PlaceBlockMetadata : reads target block ID
 ```
@@ -89,7 +89,7 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant P as Player
-    participant UI as BlueprintSelectionPage
+    participant UI as StencilSelectionPage
     participant PM as PlaceBlockMetadata
     participant RM as BlockPreviewReskinManager
     participant PH as PacketHandler
@@ -121,7 +121,7 @@ Static utility class that manages per-player `UpdateBlockTypes` reskins of `Bloc
 - `restore()` — sends `UpdateBlockTypes` with the original Green placeholder packet. Only sends if the player has an active reskin.
 - `cleanup()` — removes player from tracking map. No packet needed (player is disconnecting).
 
-### BlueprintSelectionPage (MODIFIED)
+### StencilSelectionPage (MODIFIED)
 
 The `handleDataEvent()` method's `"Assign:"` action branch needs one addition: after arming the placeholder via `PlaceBlockMetadata.setArmedRecipeId()`, call `BlockPreviewReskinManager.reskin(playerRef, blockTypeId)`.
 
@@ -183,7 +183,7 @@ src/main/java/com/UnobstructedThirdPerson/placeblock/
 ├── PlaceBlockMetadata.java          ← existing (no changes)
 ├── PlaceBlockPlacementSystem.java   ← existing (no changes)
 └── ui/
-    └── BlueprintSelectionPage.java  ← MODIFIED: add reskin call
+    └── StencilSelectionPage.java  ← MODIFIED: add reskin call
 
 src/main/java/com/
 └── UnobstructedThirdPersonPlugin.java  ← MODIFIED: add cleanup on disconnect
@@ -194,7 +194,7 @@ src/main/resources/Server/Item/Items/Tool/
 
 ## 9. Integration Changes Required
 
-### BlueprintSelectionPage.java — Add reskin call after arming
+### StencilSelectionPage.java — Add reskin call after arming
 
 In `handleDataEvent()`, in the `"Assign:"` branch, after:
 ```java

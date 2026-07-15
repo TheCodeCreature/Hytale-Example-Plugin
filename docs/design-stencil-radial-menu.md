@@ -2,14 +2,14 @@
 
 ## 1. Overview
 
-A Custom UI radial menu that opens when a player middle-clicks while holding a blueprint stencil item. It displays rectangular segment buttons arranged in a circular orientation around center navigation controls (prev/next page). This is a proof-of-concept using dummy items to validate the circular-layout-via-absolute-positioning pattern within Hytale's `InteractiveCustomUIPage` system.
+A Custom UI radial menu that opens when a player middle-clicks while holding a stencil stencil item. It displays rectangular segment buttons arranged in a circular orientation around center navigation controls (prev/next page). This is a proof-of-concept using dummy items to validate the circular-layout-via-absolute-positioning pattern within Hytale's `InteractiveCustomUIPage` system.
 
 **Core design principle:** Simulate a radial menu using `LayoutMode: Full` with pre-computed trigonometric positions, since Hytale has no native radial/circular layout mode.
 
 ## 2. Design Priorities
 
 1. **Simplicity** — POC with dummy data; minimal code surface
-2. **Framework-native patterns** — Follow established `InteractiveCustomUIPage` + `.ui` template conventions already proven in `BlueprintSelectionPage`
+2. **Framework-native patterns** — Follow established `InteractiveCustomUIPage` + `.ui` template conventions already proven in `StencilSelectionPage`
 3. **Testability** — Dummy item list is easily swappable for real data later
 4. **Extensibility** — Pagination and segment count are parameterized for future adjustment
 

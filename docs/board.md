@@ -29,7 +29,7 @@ pie title Backlog Distribution
 | E2605291000 | Epic | Dynamic Bench Discovery System | — | high |
 | F2605291020 | Feature | Dynamic UI Tab Rendering | E2605291000 | high |
 | S2605291070 | Story | Dynamic Tab Creation from BenchIds | E2605291000 | high |
-| S2605291075 | Story | Validate BlueprintBookPrefs for Dynamic Tabs | E2605291000 | medium |
+| S2605291075 | Story | Validate StencilBookPrefs for Dynamic Tabs | E2605291000 | medium |
 | S2605291080 | Story | Unify NaturalResourceRegistry with BenchRegistry | E2605291000 | medium |
 | F2605291015 | Feature | Config-Based Bench Deny List | E2605291000 | medium |
 | S2605291060 | Story | Add Bench Deny List to Plugin Config | E2605291000 | medium |
@@ -65,7 +65,7 @@ pie title Backlog Distribution
 | E2605071500 | Epic | Unified Style & Affordability System | — | high |
 | F2605071510 | Feature | Plugin-Wide Shared Style Tokens | E2605071500 | high |
 | S2605071511 | Story | Create SharedStyles.ui with Universal Tokens | E2605071500 | high |
-| S2605071512 | Story | Migrate BlueprintBookStyles.ui to Import Shared | E2605071500 | high |
+| S2605071512 | Story | Migrate StencilBookStyles.ui to Import Shared | E2605071500 | high |
 | F2605071520 | Feature | StencilRadial Style Extraction | E2605071500 | high |
 | S2605071521 | Story | Create StencilRadialStyles.ui | E2605071500 | high |
 | S2605071522 | Story | Replace Inline Styles in Radial UI Files | E2605071500 | high |
@@ -77,7 +77,7 @@ pie title Backlog Distribution
 | S2605071542 | Story | Wire Affordability Check into showCostArc | E2605071500 | high |
 | F2605191120 | Feature | UI Raw Cost Display | E2605191100 | medium |
 | S2605191121 | Story | Add Raw Cost to StencilRadialMenuPage | E2605191100 | medium |
-| S2605191122 | Story | Add Raw Cost to BlueprintSelectionPage | E2605191100 | medium |
+| S2605191122 | Story | Add Raw Cost to StencilSelectionPage | E2605191100 | medium |
 
 ### Done
 | ID | Type | Title | Epic | Priority |
@@ -98,10 +98,10 @@ pie title Backlog Distribution
 | S2605291045 | Story | Create GenericBenchProcessor | E2605291000 | high |
 | S2605291050 | Story | Refactor DropScaler for Dynamic Dispatch | E2605291000 | high |
 | S2605291055 | Story | Remove Hardcoded Processor Classes | E2605291000 | medium |
-| S2605271745 | Story | Fix Null Safety in BlueprintBookParticleLoop | E2605181400 | high |
+| S2605271745 | Story | Fix Null Safety in StencilBookParticleLoop | E2605181400 | high |
 | F2605291505 | Feature | Particle Loop Task Queue Guard | E2605291500 | critical |
 | F2605291600 | Feature | Disconnect Race Condition Fix | E2605291500 | critical |
-| F2605181405 | Feature | Blueprint Book Highlight Performance | E2605181400 | high |
+| F2605181405 | Feature | Stencil Book Highlight Performance | E2605181400 | high |
 | S2605191005 | Story | Build RecipeTierClassifier | E2604201200 | critical |
 | S2605191010 | Story | Modify DropScaler Phase 1 for Leaf-Only Scaling | E2604201200 | critical |
 | S2605191015 | Story | Update Vision Contracts for Leaf-Only Scaling | E2604201200 | critical |
@@ -114,7 +114,7 @@ pie title Backlog Distribution
 | S2605181416 | Story | Move Plugin.java to CodeCreature Package | E2605181400 | medium |
 | S2605181421 | Story | Extract GridLayoutController | E2605181400 | medium |
 | S2605181422 | Story | Extract DetailPanelController | E2605181400 | medium |
-| S2605181423 | Story | Wire Controllers into BlueprintSelectionPage | E2605181400 | medium |
+| S2605181423 | Story | Wire Controllers into StencilSelectionPage | E2605181400 | medium |
 | F2605191105 | Feature | Recipe Tree Resolution | E2605191100 | high |
 | S2605191106 | Story | Implement RecipeTreeResolver with Cache | E2605191100 | high |
 | S2605191107 | Story | Implement Supporting Records | E2605191100 | high |
@@ -125,18 +125,18 @@ pie title Backlog Distribution
 | S2605191116 | Story | Wire AutoCraftPlanner into StencilPlacementSystem | E2605191100 | high |
 | S2605191117 | Story | Update StencilVisualManager for Auto-Craft Affordability | E2605191100 | high |
 | S2605191118 | Story | Add RecipeTreeResolver.init() to DropScaler | E2605191100 | medium |
-| E2604301400 | Epic | Blueprint Stencil POC | — | high |
-| F2604301410 | Feature | Blueprint Stencil Placement Interception | E2604301400 | high |
-| S2604301411 | Story | Blueprint Stencil Metadata Utility | E2604301400 | high |
+| E2604301400 | Epic | Stencil Stencil POC | — | high |
+| F2604301410 | Feature | Stencil Stencil Placement Interception | E2604301400 | high |
+| S2604301411 | Story | Stencil Stencil Metadata Utility | E2604301400 | high |
 | S2604301412 | Story | PlaceBlockEvent Interception Handler | E2604301400 | high |
 | S2604301413 | Story | Atomic Resource Consumption with Slot Priority | E2604301400 | high |
-| F2604301420 | Feature | PlacementCostScaler Blueprint Guard | E2604301400 | high |
-| S2604301421 | Story | Add Blueprint BSON Guard to PlacementCostScaler | E2604301400 | high |
+| F2604301420 | Feature | PlacementCostScaler Stencil Guard | E2604301400 | high |
+| S2604301421 | Story | Add Stencil BSON Guard to PlacementCostScaler | E2604301400 | high |
 | F2604301430 | Feature | Stencil Test Command | E2604301400 | high |
 | S2604301431 | Story | Implement Stencil Test Command | E2604301400 | high |
 | F2604271700 | Feature | Unified Recipe Filter Registry | E2604201200 | high |
 | S2604271710 | Story | Extract Shared Recipe Predicate Pipeline | E2604201200 | high |
-| S2604271720 | Story | Migrate BlueprintSelectionPage to Shared Registry | E2604201200 | high |
+| S2604271720 | Story | Migrate StencilSelectionPage to Shared Registry | E2604201200 | high |
 | S2604271730 | Story | Migrate BenchRecipeRegistry to Shared Registry | E2604201200 | high |
 | S2604271740 | Story | Unify Bench ID Definitions | E2604201200 | high |
 | F2604221035 | Feature | Stencil Crafting Block Asset | E2604221030 | high |
@@ -152,7 +152,7 @@ pie title Backlog Distribution
 | S2604230900 | Story | Expand Recipe Aggregation to All Benches | E2604221030 | critical |
 | S2604240900 | Story | PlaceBlock Command for Testing | E2604221030 | critical |
 | S2604240920 | Story | Custom UI Feasibility Spike | E2604221030 | high |
-| S2604240910 | Story | Custom Blueprint Selection UI | E2604221030 | high |
+| S2604240910 | Story | Custom Stencil Selection UI | E2604221030 | high |
 | S2604271300 | Story | Placeholder Acquisition Button (Life Essence) | E2604221030 | high |
 | F2605051500 | Feature | Resource Type Input Filter | E2604221030 | high |
 | S2605051505 | Story | Replace Placeholder Section with Resource Type Grid UI | E2604221030 | high |
@@ -198,7 +198,7 @@ Select-then-build workflow at the **Stencil Crafting**. Player arms a placeholde
 **Contracts:** #10–#16 (unchanged by pivot)
 
 **Key Docs:**
-- [design-Blueprint-Book-custom-ui.md](docs/Plans/design-Blueprint-Book-custom-ui.md) — Custom UI architecture
+- [design-Stencil-Book-custom-ui.md](docs/Plans/design-Stencil-Book-custom-ui.md) — Custom UI architecture
 - [custom-ui-options.md](docs/hytale/plugins/custom-ui-options.md) — Hytale Expert UI research
 - [structural-crafting-dimming.md](docs/hytale/crafting/structural-crafting-dimming.md) — Dimming root cause analysis
 

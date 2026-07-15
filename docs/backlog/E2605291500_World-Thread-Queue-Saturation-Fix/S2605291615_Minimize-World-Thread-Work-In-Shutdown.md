@@ -17,7 +17,7 @@ As a **player**, I want **disconnect to be fast** so that **I can rejoin immedia
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] `BlueprintBookParticleLoop.shutdown()` does not call `world.execute()` to queue entity cleanup
+- [ ] `StencilBookParticleLoop.shutdown()` does not call `world.execute()` to queue entity cleanup
 - [ ] The highlight entity is cleaned up by the next `executeTick()` which detects `active=false` and removes it
 - [ ] If the scheduled task is cancelled and no more ticks fire, the entity self-expires (non-serialized, effect duration = 500ms)
 - [ ] No world thread work is added during the disconnect event handler

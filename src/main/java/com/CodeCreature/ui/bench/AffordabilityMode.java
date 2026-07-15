@@ -45,8 +45,8 @@ public enum AffordabilityMode {
      */
     public Message label() {
         return switch (this) {
-            case INVENTORY_DRIVEN -> Message.translation("server.ui.blueprint.filter.mode.inventoryDriven");
-            case RESOURCE_PLANNING -> Message.translation("server.ui.blueprint.filter.mode.resourcePlanning");
+            case INVENTORY_DRIVEN -> Message.translation("server.ui.stencil.filter.mode.inventoryDriven");
+            case RESOURCE_PLANNING -> Message.translation("server.ui.stencil.filter.mode.resourcePlanning");
         };
     }
 

@@ -131,7 +131,7 @@ This is exactly our **Approach B** from [ui-grid-layout-research.md](../plugins/
 
 ### What We Need
 
-A Custom UI ItemGrid with drag-and-drop for a blueprint bench.
+A Custom UI ItemGrid with drag-and-drop for a stencil bench.
 
 ### What the Vex Library Tells Us
 
@@ -259,6 +259,6 @@ Common patterns documented:
 - [ui-grid-layout-research.md](../plugins/ui-grid-layout-research.md) — Grid layout approaches (ItemGrid vs LeftCenterWrap)
 - [itemgrid-inventorysectionid-deep-research.md](../plugins/itemgrid-inventorysectionid-deep-research.md) — Deep dive on InventorySectionId + Windows for drag-and-drop
 - [custom-ui-item-display.md](../plugins/custom-ui-item-display.md) — ItemIcon, ItemSlot, ItemGrid element reference
-- [custom-ui-for-Blueprint-Book.md](../plugins/custom-ui-for-Blueprint-Book.md) — Blueprint bench Custom UI API
+- [custom-ui-for-Stencil-Book.md](../plugins/custom-ui-for-Stencil-Book.md) — Stencil bench Custom UI API
 - [common-ui-catalog.md](../assets/common-ui-catalog.md) — Full Common.ui template & style catalog
 - [resources.md](./resources.md) — General community resources

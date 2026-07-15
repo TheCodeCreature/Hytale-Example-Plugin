@@ -25,7 +25,7 @@ Refactor the PlaceBlock placeholder from 12 separate JSON files (1 Blue, 1 Green
 - [ ] `BlockPreviewReskinManager` uses state-derived block type IDs for reskinning
 - [ ] `PlaceholderSyncSystem` handles affordability transitions (Green ↔ Red)
 - [ ] `PlaceBlockPlacementSystem` no longer needs `SlotFilter.DENY` workaround
-- [ ] All arm/disarm callers updated (AssignSubCommand, ClearSubCommand, BlueprintSelectionPage)
+- [ ] All arm/disarm callers updated (AssignSubCommand, ClearSubCommand, StencilSelectionPage)
 - [ ] `PlaceBlockIndicatorListener` stub deleted (affordability handled by PlaceholderSyncSystem)
 
 ### Scenarios

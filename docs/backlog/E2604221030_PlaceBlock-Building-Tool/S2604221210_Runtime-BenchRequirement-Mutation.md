@@ -17,8 +17,8 @@ As a **player**, I want the **Stencil Crafting to show recipes from both Builder
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] At asset load time, all recipes with `BenchRequirement` matching "Builders" get an additional entry for "Blueprint"
-- [ ] All recipes with `BenchRequirement` matching "Furniture_Bench" get an additional entry for "Blueprint"
+- [ ] At asset load time, all recipes with `BenchRequirement` matching "Builders" get an additional entry for "Stencil"
+- [ ] All recipes with `BenchRequirement` matching "Furniture_Bench" get an additional entry for "Stencil"
 - [ ] The mutation uses the `StructuralCrafting` bench type for the new entries
 - [ ] Original bench requirements are preserved — recipes still appear at their original benches
 - [ ] The Stencil Crafting displays all mutated recipes in its categories

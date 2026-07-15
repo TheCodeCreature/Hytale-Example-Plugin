@@ -9,7 +9,7 @@ sources:
   - "AssetModule.java, AssetRegistryLoader.java — plugin asset pack loading"
   - "UICommandBuilder.java — append(), set() decompiled source"
   - "docs/Resources/Common/Pages/ — base game .ui files"
-  - "src/main/resources/Common/UI/Custom/Pages/BlueprintBook/ — plugin .ui files (verified working)"
+  - "src/main/resources/Common/UI/Custom/Pages/StencilBook/ — plugin .ui files (verified working)"
 ---
 
 # UI Path Resolution — Definitive Reference
@@ -51,14 +51,14 @@ Hytale has **two distinct path resolution contexts**: one for in-file asset refe
 The path passed to `cmd.append()` is **always relative to `Common/UI/Custom/`**, regardless of which `.ui` file is currently loaded.
 
 ```java
-// File at: src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui
-cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui");
+// File at: src/main/resources/Common/UI/Custom/Pages/StencilBook/StencilBookPage.ui
+cmd.append("Pages/StencilBook/StencilBookPage.ui");
 
 // File at: src/main/resources/Common/UI/Custom/YourPlugin/MyPage.ui
 cmd.append("YourPlugin/MyPage.ui");
 
 // Append a sub-template into a container
-cmd.append("#Container", "Pages/BlueprintBook/SetFilterButton.ui");
+cmd.append("#Container", "Pages/StencilBook/SetFilterButton.ui");
 ```
 
 Source: hytale-docs.com official tutorial + decompiled UICommandBuilder.
@@ -68,8 +68,8 @@ Source: hytale-docs.com official tutorial + decompiled UICommandBuilder.
 When setting a `Background` or other texture path via `cmd.set()`, the path is treated as a **UIPath relative to the `.ui` file that defines the target element**.
 
 ```java
-// This sets the Background on an element defined in BlueprintBookPage.ui
-// The path resolves relative to Pages/BlueprintBook/ directory
+// This sets the Background on an element defined in StencilBookPage.ui
+// The path resolves relative to Pages/StencilBook/ directory
 cmd.set("#GroupFrame.Background", "#2a4a6a");  // color literal — no path resolution
 cmd.set("#GroupFrame.Background", "../../Common/RecipesIcon.png");  // relative to the .ui file
 ```
@@ -93,8 +93,8 @@ src/main/resources/
 │           │   ├── BlockSelectorSlotBackground.png
 │           │   └── SearchIcon.png
 │           └── Pages/
-│               └── BlueprintBook/
-│                   ├── BlueprintBookPage.ui
+│               └── StencilBook/
+│                   ├── StencilBookPage.ui
 │                   ├── SetFilterButton.ui
 │                   ├── CostCell.ui
 │                   └── ...
@@ -129,10 +129,10 @@ This means:
 
 | `.ui` file location (under `Custom/`) | Target asset | Path used | Resolved to (under `Custom/`) |
 |---|---|---|---|
-| `Pages/BlueprintBook/BlueprintBookPage.ui` | `Common/RecipesIcon.png` | `"../../Common/RecipesIcon.png"` | `Common/RecipesIcon.png` |
-| `Pages/BlueprintBook/BlueprintBookPage.ui` | `Common/BlockSelectorSlotBackground.png` | `"../../Common/BlockSelectorSlotBackground.png"` | `Common/BlockSelectorSlotBackground.png` |
-| `Pages/BlueprintBook/CostCell.ui` | `Common/BlockSelectorSlotBackground.png` | `"../../Common/BlockSelectorSlotBackground.png"` | `Common/BlockSelectorSlotBackground.png` |
-| `Pages/BlueprintBook/RecipeIconCell.ui` | `Common/BlockSelectorSlotBackground.png` | `"../../Common/BlockSelectorSlotBackground.png"` | `Common/BlockSelectorSlotBackground.png` |
+| `Pages/StencilBook/StencilBookPage.ui` | `Common/RecipesIcon.png` | `"../../Common/RecipesIcon.png"` | `Common/RecipesIcon.png` |
+| `Pages/StencilBook/StencilBookPage.ui` | `Common/BlockSelectorSlotBackground.png` | `"../../Common/BlockSelectorSlotBackground.png"` | `Common/BlockSelectorSlotBackground.png` |
+| `Pages/StencilBook/CostCell.ui` | `Common/BlockSelectorSlotBackground.png` | `"../../Common/BlockSelectorSlotBackground.png"` | `Common/BlockSelectorSlotBackground.png` |
+| `Pages/StencilBook/RecipeIconCell.ui` | `Common/BlockSelectorSlotBackground.png` | `"../../Common/BlockSelectorSlotBackground.png"` | `Common/BlockSelectorSlotBackground.png` |
 | `Pages/EntitySpawnPage.ui` | `Common/BlockSelectorSlotBackground.png` | `"../Common/BlockSelectorSlotBackground.png"` | `Common/BlockSelectorSlotBackground.png` |
 | `Pages/EntitySpawnPage.ui` | `Common/BlockSelectorSlotDropIcon.png` | `"../Common/BlockSelectorSlotDropIcon.png"` | `Common/BlockSelectorSlotDropIcon.png` |
 | `Pages/EntitySpawnPage.ui` | `Common/ContainerPanelPatch.png` | `"../Common/ContainerPanelPatch.png"` | `Common/ContainerPanelPatch.png` |
@@ -144,7 +144,7 @@ This means:
 
 | `.ui` file location (under `Custom/`) | Import statement | Resolved to |
 |---|---|---|
-| `Pages/BlueprintBook/*.ui` | `$C = "../../Common.ui";` | `Common.ui` |
+| `Pages/StencilBook/*.ui` | `$C = "../../Common.ui";` | `Common.ui` |
 | `Pages/EntitySpawnPage.ui` | `$C = "../Common.ui";` | `Common.ui` |
 | `Pages/UIGallery/Categories/*.ui` | `$C = "../../../Common.ui";` | `Common.ui` |
 
@@ -154,10 +154,10 @@ This means:
 
 | Java code | Resolved to (under `Custom/`) |
 |---|---|
-| `cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui")` | `Pages/BlueprintBook/BlueprintBookPage.ui` |
-| `cmd.append("#SetFilters", "Pages/BlueprintBook/SetFilterButton.ui")` | `Pages/BlueprintBook/SetFilterButton.ui` |
-| `cmd.append("#MaterialGroups", "Pages/BlueprintBook/MaterialGroupButton.ui")` | `Pages/BlueprintBook/MaterialGroupButton.ui` |
-| `cmd.append("#CostGrid", "Pages/BlueprintBook/CostCell.ui")` | `Pages/BlueprintBook/CostCell.ui` |
+| `cmd.append("Pages/StencilBook/StencilBookPage.ui")` | `Pages/StencilBook/StencilBookPage.ui` |
+| `cmd.append("#SetFilters", "Pages/StencilBook/SetFilterButton.ui")` | `Pages/StencilBook/SetFilterButton.ui` |
+| `cmd.append("#MaterialGroups", "Pages/StencilBook/MaterialGroupButton.ui")` | `Pages/StencilBook/MaterialGroupButton.ui` |
+| `cmd.append("#CostGrid", "Pages/StencilBook/CostCell.ui")` | `Pages/StencilBook/CostCell.ui` |
 
 ### All `cmd.set()` Calls with Path-Like Values in Java
 
@@ -223,28 +223,28 @@ cmd.set("#SomeElement.Background", "../../Common/RecipesIcon.png");
 
 The path `../../Common/RecipesIcon.png` is resolved **relative to the `.ui` file where `#SomeElement` was originally defined**, NOT relative to `Common/UI/Custom/`.
 
-If `#SomeElement` is defined in `Pages/BlueprintBook/BlueprintBookPage.ui`, then the resolution is:
+If `#SomeElement` is defined in `Pages/StencilBook/StencilBookPage.ui`, then the resolution is:
 ```
-Pages/BlueprintBook/ + ../../Common/RecipesIcon.png → Common/RecipesIcon.png ✓
+Pages/StencilBook/ + ../../Common/RecipesIcon.png → Common/RecipesIcon.png ✓
 ```
 
 If you instead used a `Custom/`-root-relative path:
 ```java
-cmd.set("#SomeElement.Background", "Common/RecipesIcon.png");  // WRONG for element in Pages/BlueprintBook/
+cmd.set("#SomeElement.Background", "Common/RecipesIcon.png");  // WRONG for element in Pages/StencilBook/
 ```
-This would resolve to `Pages/BlueprintBook/Common/RecipesIcon.png` — which doesn't exist.
+This would resolve to `Pages/StencilBook/Common/RecipesIcon.png` — which doesn't exist.
 
 ---
 
 ## 6. Key Questions — Answered
 
-### Q: When `Pages/BlueprintBook/Foo.ui` references `"../../Common/RecipesIcon.png"`, what is the resolved path?
+### Q: When `Pages/StencilBook/Foo.ui` references `"../../Common/RecipesIcon.png"`, what is the resolved path?
 
 **A:** `Common/RecipesIcon.png` (under `Common/UI/Custom/`).
 
 Step by step:
-1. File is at `Pages/BlueprintBook/Foo.ui`
-2. Directory is `Pages/BlueprintBook/`
+1. File is at `Pages/StencilBook/Foo.ui`
+2. Directory is `Pages/StencilBook/`
 3. `../../` goes up two levels → back to `Custom/` root
 4. `Common/RecipesIcon.png` resolves to `Custom/Common/RecipesIcon.png`
 

@@ -18,8 +18,8 @@ As a **player**, I want a **Stencil Crafting block I can place in the world** so
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] `Bench_Blueprint.json` item asset exists, cloned from `Bench_Builders.json`
-- [ ] Stencil Crafting has `Bench.Id: "Blueprint"` (distinct from `"Builders"`)
+- [ ] `Bench_Stencil.json` item asset exists, cloned from `Bench_Builders.json`
+- [ ] Stencil Crafting has `Bench.Id: "Stencil"` (distinct from `"Builders"`)
 - [ ] Stencil Crafting has `Bench.Type: "StructuralCrafting"`
 - [ ] Stencil Crafting has `BlockEntity.Components.BenchBlock: {}`
 - [ ] Stencil Crafting has combined categories from both Builders and Furniture benches
@@ -29,7 +29,7 @@ As a **player**, I want a **Stencil Crafting block I can place in the world** so
 
 ### Scenarios
 **Bench is placeable**
-- **Given** the player has a `Bench_Blueprint` item
+- **Given** the player has a `Bench_Stencil` item
 - **When** they place it in the world
 - **Then** a bench block appears with proper model and hitbox
 

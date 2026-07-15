@@ -84,12 +84,12 @@ For a full-cube block, this is a 1×1×1 bounding box. The fallback is also 1×1
 
 6. **Block interactions (break/use/place) are skipped** — the interaction chain resolves the held item's interactions against the targeted entity. Since the highlight entity has no interaction handlers, the interaction does nothing. The block behind it is never reached.
 
-### Why Pick (BlueprintBookPickStencilInteraction) still works
+### Why Pick (StencilBookPickStencilInteraction) still works
 
 Pick uses **server-side** `TargetUtil.getTargetBlock()`, which is a **blocks-only** raycast:
 
 ```java
-// BlueprintBookPickStencilInteraction.java
+// StencilBookPickStencilInteraction.java
 Vector3i target = TargetUtil.getTargetBlock(ref, 8.0, store);
 ```
 

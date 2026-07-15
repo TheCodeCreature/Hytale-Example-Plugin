@@ -22,7 +22,7 @@ Add a top-level `tabIcons` field to `bench-tab-groups.json`:
     "fieldcraft": "Items-Ingredients.png"
   },
   "benchOverrides": { ... },
-  "skipPrefixes": ["Blueprint_", "Salvage"],
+  "skipPrefixes": ["Stencil_", "Salvage"],
   "excludedTabs": [...]
 }
 ```
@@ -111,7 +111,7 @@ public String resolveTabIcon(@Nonnull String groupKey) {
 }
 ```
 
-### 3.2 `BlueprintSelectionPage.java`
+### 3.2 `StencilSelectionPage.java`
 
 **`buildBenchTabs()`** — add one `cmd.set` call per bench tab for the icon:
 
@@ -138,7 +138,7 @@ No change to the "All" tab (index 0) — it retains its .ui-file default.
 |------|--------|
 | `bench-tab-groups.json` | Add `tabIcons` map |
 | `BenchTabGrouper.java` | Add `tabIcons` field, parse in `loadConfig()`, add `resolveTabIcon()` |
-| `BlueprintSelectionPage.java` | Call `resolveTabIcon()` in `buildBenchTabs()` loop |
+| `StencilSelectionPage.java` | Call `resolveTabIcon()` in `buildBenchTabs()` loop |
 
 ## 5. Task Decomposition
 
@@ -164,8 +164,8 @@ No change to the "All" tab (index 0) — it retains its .ui-file default.
 
 ### Wave 3 (depends on Wave 2)
 
-#### Unit: BlueprintSelectionPage integration
-- **Files**: `BlueprintSelectionPage.java`
+#### Unit: StencilSelectionPage integration
+- **Files**: `StencilSelectionPage.java`
 - **Contract**: Call `resolveTabIcon()` in `buildBenchTabs()` and set icon on each tab
 - **Dependencies**: Wave 2
 - **Done when**: Tabs display correct icons at runtime; "All" tab unchanged

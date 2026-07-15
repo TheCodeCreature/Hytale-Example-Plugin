@@ -4,11 +4,11 @@ category: "Plugin API / Custom UI"
 updated: 2026-05-07
 sources:
   - "docs/Reference Assets/Assets/Common/UI/Custom/Common.ui (full reference)"
-  - "src/main/resources/Common/UI/Custom/Pages/BlueprintBook/*.ui"
+  - "src/main/resources/Common/UI/Custom/Pages/StencilBook/*.ui"
   - "src/main/resources/Common/UI/Custom/Pages/StencilRadial/*.ui"
   - "src/main/resources/Common/UI/Custom/Styles/*.ui"
   - "docs/Reference Assets/Assets/Common/UI/Custom/Pages/UIGallery/*.ui"
-  - "src/main/java/.../BlueprintSelectionPage.java"
+  - "src/main/java/.../StencilSelectionPage.java"
   - "src/main/java/.../StencilRadialMenuPage.java"
 ---
 
@@ -297,7 +297,7 @@ This is **NOT parent-to-child parameter passing** — it's the consumer adding c
 The primary composition mechanism. A token is referenced inline and the entire subtree is stamped at that position in the tree:
 
 ```
-// In BlueprintBookPage.ui
+// In StencilBookPage.ui
 $C.@Container {
     #Title {
         Group {
@@ -320,15 +320,15 @@ $C.@Container {
 The server stamps standalone `.ui` files into container elements at runtime:
 
 ```java
-// In BlueprintSelectionPage.java build()
-cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui");
+// In StencilSelectionPage.java build()
+cmd.append("Pages/StencilBook/StencilBookPage.ui");
 
 for (int i = 0; i < totalSetCount; i++) {
-    cmd.append("#SetFilters", "Pages/BlueprintBook/SetFilterButton.ui");
+    cmd.append("#SetFilters", "Pages/StencilBook/SetFilterButton.ui");
 }
 
 for (int i = 0; i < MAX_COST_CELLS; i++) {
-    cmd.append("#CostGrid", "Pages/BlueprintBook/CostCell.ui");
+    cmd.append("#CostGrid", "Pages/StencilBook/CostCell.ui");
 }
 ```
 
@@ -392,7 +392,7 @@ You cannot write a token that takes a variable number of children as a parameter
 The dominant pattern in the codebase. A page `.ui` defines the static structure with empty containers, and Java fills them:
 
 ```
-BlueprintBookPage.ui     — static layout with empty #SetFilters, #RecipeGridArea, #CostGrid
+StencilBookPage.ui     — static layout with empty #SetFilters, #RecipeGridArea, #CostGrid
   ├── SetFilterButton.ui  — appended N times into #SetFilters
   ├── GroupFilterButton.ui — appended N times into #MaterialGroups  
   ├── SetGroupContainer.ui — appended N times into #RecipeGridArea
@@ -403,7 +403,7 @@ BlueprintBookPage.ui     — static layout with empty #SetFilters, #RecipeGridAr
 **File structure:**
 | File | Role | Root Element |
 |------|------|-------------|
-| `BlueprintBookPage.ui` | Page layout (loaded once) | `Group` with full layout tree |
+| `StencilBookPage.ui` | Page layout (loaded once) | `Group` with full layout tree |
 | `CostCell.ui` | Reusable component (stamped N times) | Single `Group` with children |
 | `RecipeIconCell.ui` | Reusable component (stamped N times) | Single `Group` with children |
 | `SetFilterButton.ui` | Reusable component (stamped N times) | Single `Group` with children |
@@ -411,11 +411,11 @@ BlueprintBookPage.ui     — static layout with empty #SetFilters, #RecipeGridAr
 **Java orchestration:**
 ```java
 // 1. Load the page layout
-cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui");
+cmd.append("Pages/StencilBook/StencilBookPage.ui");
 
 // 2. Stamp sub-components into containers
 for (int i = 0; i < count; i++) {
-    cmd.append("#ContainerId", "Pages/BlueprintBook/SubComponent.ui");
+    cmd.append("#ContainerId", "Pages/StencilBook/SubComponent.ui");
 }
 
 // 3. Set properties on stamped instances

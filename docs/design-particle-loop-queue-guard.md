@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-`BlueprintBookParticleLoop` highlights blocks that the player is looking at when holding the Blueprint Book. It uses a scheduled executor to poll every 100ms and queues work onto the world thread via `world.execute()`. The current implementation has no backpressure — when the world thread is busy, lambdas accumulate in the world's unbounded `LinkedBlockingDeque`, causing progressive server slowdown. Additionally, a race condition between the loop lambda and `onPlayerDisconnect()` leaks highlight entities.
+`StencilBookParticleLoop` highlights blocks that the player is looking at when holding the Stencil Book. It uses a scheduled executor to poll every 100ms and queues work onto the world thread via `world.execute()`. The current implementation has no backpressure — when the world thread is busy, lambdas accumulate in the world's unbounded `LinkedBlockingDeque`, causing progressive server slowdown. Additionally, a race condition between the loop lambda and `onPlayerDisconnect()` leaks highlight entities.
 
 This design applies the `AtomicBoolean pending` coalescing pattern (proven in `AffordabilityCoalescer`) to guarantee at most one `world.execute()` lambda is queued at any time, and fixes the shutdown/disconnect lifecycle to prevent entity leaks.
 
@@ -15,7 +15,7 @@ This design applies the `AtomicBoolean pending` coalescing pattern (proven in `A
 
 ## 3. Component Diagram
 
-No new types are introduced. Changes are confined to `BlueprintBookParticleLoop`.
+No new types are introduced. Changes are confined to `StencilBookParticleLoop`.
 
 ```mermaid
 stateDiagram-v2
@@ -139,7 +139,7 @@ updateTask = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> {
         world.execute(this::executeTick);
     } catch (Exception e) {
         pending.set(false);  // Reset on failure so next tick can retry
-        DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING, "...");
+        DebugLogger.log(STENCIL_BOOK, Level.WARNING, "...");
     }
 }, UPDATE_INTERVAL_MILLIS, UPDATE_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
 ```
@@ -249,7 +249,7 @@ Where `EFFECT_DURATION_MILLIS = 500`. This ensures the visual effect persists ac
 ## 7. Lifecycle: Start → Tick → Shutdown → Disconnect
 
 ### Happy Path
-1. Player equips Blueprint Book → `start(playerRef, world)` creates instance, puts in `INSTANCES`, calls `startUpdateLoop()`
+1. Player equips Stencil Book → `start(playerRef, world)` creates instance, puts in `INSTANCES`, calls `startUpdateLoop()`
 2. Every 100ms, scheduled executor fires. If `pending` is false, CAS succeeds, queues `executeTick()` on world thread.
 3. `executeTick()` clears `pending`, validates player, raycasts, spawns/removes highlight entity.
 4. Player unequips book / closes UI → `remove(uuid)` pulls from `INSTANCES`, calls `shutdown()`.
@@ -273,7 +273,7 @@ Where `EFFECT_DURATION_MILLIS = 500`. This ensures the visual effect persists ac
 
 | File | Change |
 |---|---|
-| `BlueprintBookParticleLoop.java` | All changes described above — add `pending` field, add `EFFECT_DURATION_MILLIS`, extract `executeTick()`, fix `shutdown()`, remove `INSTANCES.remove()` from loop lambda |
+| `StencilBookParticleLoop.java` | All changes described above — add `pending` field, add `EFFECT_DURATION_MILLIS`, extract `executeTick()`, fix `shutdown()`, remove `INSTANCES.remove()` from loop lambda |
 
 No other files need modification. The `start()`, `remove()`, and `onPlayerDisconnect()` call sites remain unchanged.
 
@@ -297,7 +297,7 @@ No other files need modification. The `start()`, `remove()`, and `onPlayerDiscon
 ### Wave 1 (no dependencies — can run in parallel)
 
 #### Unit: Add `pending` field and `EFFECT_DURATION_MILLIS` constant
-- **File**: `BlueprintBookParticleLoop.java`
+- **File**: `StencilBookParticleLoop.java`
 - **Changes**: Add `private final AtomicBoolean pending = new AtomicBoolean(false)` field. Add `private static final long EFFECT_DURATION_MILLIS = 500` constant. Add `import java.util.concurrent.atomic.AtomicBoolean`.
 - **Contract**: New field declarations only, no behavioral changes yet.
 - **Dependencies**: none
@@ -306,21 +306,21 @@ No other files need modification. The `start()`, `remove()`, and `onPlayerDiscon
 ### Wave 2 (depends on Wave 1)
 
 #### Unit: Extract `executeTick()` and fix loop lambda
-- **File**: `BlueprintBookParticleLoop.java`
+- **File**: `StencilBookParticleLoop.java`
 - **Methods**: `executeTick()` (new), `startUpdateLoop()` (modified)
 - **Contract**: `startUpdateLoop()` uses `pending.compareAndSet` guard and delegates to `executeTick()`. `executeTick()` clears `pending` first, then runs existing tick logic. Remove all `INSTANCES.remove()` calls from inside tick logic — only set `active = false`.
 - **Dependencies**: Wave 1 (`pending` field must exist)
 - **Done when**: Scheduled executor fires, at most one `world.execute()` is queued at any time. Loop lambda never modifies `INSTANCES`.
 
 #### Unit: Fix `shutdown()` lifecycle ordering
-- **File**: `BlueprintBookParticleLoop.java`
+- **File**: `StencilBookParticleLoop.java`
 - **Methods**: `shutdown()` (modified)
 - **Contract**: Sets `active = false` before cancelling task. Always queues entity cleanup on world thread regardless of current `activeEntity` state.
 - **Dependencies**: Wave 1 (`active` field semantics)
 - **Done when**: `shutdown()` is safe to call from any thread. Entity cleanup always runs after any pending `executeTick()`.
 
 #### Unit: Update effect duration
-- **File**: `BlueprintBookParticleLoop.java`
+- **File**: `StencilBookParticleLoop.java`
 - **Methods**: `spawnHighlightEntity()` (one-line change)
 - **Contract**: Replace `UPDATE_INTERVAL_MILLIS+1` with `EFFECT_DURATION_MILLIS` in `addEffect()` call.
 - **Dependencies**: Wave 1 (`EFFECT_DURATION_MILLIS` constant must exist)

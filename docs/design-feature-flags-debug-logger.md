@@ -54,8 +54,8 @@ classDiagram
         &lt;&lt;enumeration&gt;&gt;
         PLUGIN
         STENCIL
-        BLUEPRINT_BOOK
-        BLUEPRINT_BOOK
+        STENCIL_BOOK
+        STENCIL_BOOK
         SCALING
         REGISTRY
         CRAFTING
@@ -142,8 +142,8 @@ graph TB
 |-------|-------------|
 | `PLUGIN` | `logging.plugin` |
 | `STENCIL` | `logging.stencil` |
-| `BLUEPRINT_BOOK` | `logging.BLUEPRINT_BOOK` |
-| `BLUEPRINT_BOOK` | `logging.blueprint_book` |
+| `STENCIL_BOOK` | `logging.STENCIL_BOOK` |
+| `STENCIL_BOOK` | `logging.stencil_book` |
 | `SCALING` | `logging.scaling` |
 | `REGISTRY` | `logging.registry` |
 | `CRAFTING` | `logging.crafting` |
@@ -177,8 +177,8 @@ File: `{dataDirectory}/feature_flags.json`
   "logging.global": true,
   "logging.plugin": true,
   "logging.stencil": true,
-  "logging.BLUEPRINT_BOOK": true,
-  "logging.blueprint_book": true,
+  "logging.STENCIL_BOOK": true,
+  "logging.stencil_book": true,
   "logging.scaling": true,
   "logging.registry": true,
   "logging.crafting": true,
@@ -212,7 +212,7 @@ src/main/java/com/CodeCreature/
 Add two lines to `setup()`:
 
 ```java
-// After BlueprintBookPrefsStore.initialize(this.getDataDirectory()):
+// After StencilBookPrefsStore.initialize(this.getDataDirectory()):
 FeatureFlags.initialize(this.getDataDirectory());
 
 // With the other registerCommand calls:

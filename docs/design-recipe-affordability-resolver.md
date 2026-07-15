@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-RecipeAffordabilityResolver is a stateless utility that consolidates the duplicated 3-step ingredient resolution chain (`PlaceBlockCostUtil.getPerUnitCost()` → `ResourceTypeResolver.resolveInputItemId()` → `NaturalResourceRegistry.resolveToGatherableForm()`) and per-ingredient affordability checking into a single source of truth. It has **no UI dependencies** — no `UICommandBuilder`, `Value`, or `AffordabilityMode` — so it can be used from both UI pages (BlueprintSelectionPage, StencilRadialMenuPage) and non-UI systems (StencilVisualManager).
+RecipeAffordabilityResolver is a stateless utility that consolidates the duplicated 3-step ingredient resolution chain (`PlaceBlockCostUtil.getPerUnitCost()` → `ResourceTypeResolver.resolveInputItemId()` → `NaturalResourceRegistry.resolveToGatherableForm()`) and per-ingredient affordability checking into a single source of truth. It has **no UI dependencies** — no `UICommandBuilder`, `Value`, or `AffordabilityMode` — so it can be used from both UI pages (StencilSelectionPage, StencilRadialMenuPage) and non-UI systems (StencilVisualManager).
 
 ## 2. Design Priorities
 
@@ -46,7 +46,7 @@ classDiagram
         +sufficient: boolean
     }
 
-    class BlueprintSelectionPage {
+    class StencilSelectionPage {
         -updateDetailPanel(cmd: UICommandBuilder) void
         -isAffordable(entry: InputRecipe, container: CombinedItemContainer) boolean
         -countItemInInventory(container: CombinedItemContainer, itemId: String) int
@@ -65,7 +65,7 @@ classDiagram
     RecipeAffordabilityResolver --> NaturalResourceRegistry : delegates resolveToGatherableForm
     RecipeAffordabilityResolver --> ResolvedIngredient : produces
 
-    BlueprintSelectionPage ..> RecipeAffordabilityResolver : uses
+    StencilSelectionPage ..> RecipeAffordabilityResolver : uses
     StencilVisualManager ..> RecipeAffordabilityResolver : uses
     StencilRadialMenuPage ..> RecipeAffordabilityResolver : uses
 ```
@@ -131,7 +131,7 @@ src/main/java/com/UnobstructedThirdPerson/placeblock/
 ├── RecipeAffordabilityResolver.java           (NEW — skeleton)
 ├── ResolvedIngredient.java                    (NEW — record)
 └── ui/
-    └── BlueprintSelectionPage.java            (existing — migration target)
+    └── StencilSelectionPage.java            (existing — migration target)
 
 src/main/java/com/UnobstructedThirdPerson/stencil/
 ├── StencilVisualManager.java                  (existing — migration target)
@@ -190,14 +190,14 @@ Group {
 
 ### 7B. StencilRadialMenuPage.java — Value.ref Constants
 
-Add two `Value.ref()` constants for cost quantity style swapping. These reference `BlueprintBookStyles.ui` which already defines the needed styles:
+Add two `Value.ref()` constants for cost quantity style swapping. These reference `StencilBookStyles.ui` which already defines the needed styles:
 
 ```java
-// Per-ingredient cost affordability (reuses BlueprintBook styles)
+// Per-ingredient cost affordability (reuses StencilBook styles)
 private static final Value<String> COST_QTY_NORMAL =
-        Value.ref("Pages/BlueprintBook/BlueprintBookStyles.ui", "CostQuantityStyle");
+        Value.ref("Pages/StencilBook/StencilBookStyles.ui", "CostQuantityStyle");
 private static final Value<String> COST_QTY_INSUFFICIENT =
-        Value.ref("Pages/BlueprintBook/BlueprintBookStyles.ui", "CostQuantityInsufficientStyle");
+        Value.ref("Pages/StencilBook/StencilBookStyles.ui", "CostQuantityInsufficientStyle");
 ```
 
 ### 7C. StencilRadialMenuPage.java — showCostArc Signature
@@ -206,7 +206,7 @@ private static final Value<String> COST_QTY_INSUFFICIENT =
 
 It needs to obtain a `CombinedItemContainer` to pass to `RecipeAffordabilityResolver`. The `handleDataEvent` method has access to `Store<EntityStore> store` and `Ref<EntityStore> ref`. Two options:
 
-**Option A (recommended):** Store `ref` and `store` as fields (same pattern as `BlueprintSelectionPage.playerRef_ref` / `playerStore`), then access the container inside `showCostArc`:
+**Option A (recommended):** Store `ref` and `store` as fields (same pattern as `StencilSelectionPage.playerRef_ref` / `playerStore`), then access the container inside `showCostArc`:
 ```java
 Player player = playerStore.getComponent(playerRef_ref, Player.getComponentType());
 CombinedItemContainer container = player.getInventory().getCombinedBackpackStorageHotbar();
@@ -214,7 +214,7 @@ CombinedItemContainer container = player.getInventory().getCombinedBackpackStora
 
 **Option B:** Pass `store` and `ref` down into `showCostArc` as parameters.
 
-**Recommendation:** Option A — store as fields. The `build()` method already receives `Ref<EntityStore> ref` and `Store<EntityStore> store`, so capture them there (same pattern as BlueprintSelectionPage lines 95-96). This avoids threading extra params through `handleDataEvent` → `showCostArc`.
+**Recommendation:** Option A — store as fields. The `build()` method already receives `Ref<EntityStore> ref` and `Store<EntityStore> store`, so capture them there (same pattern as StencilSelectionPage lines 95-96). This avoids threading extra params through `handleDataEvent` → `showCostArc`.
 
 ### 7D. StencilRadialMenuPage.java — Field Additions
 
@@ -232,9 +232,9 @@ this.playerStore = store;
 
 ## 8. Caller Migration Plan
 
-### Consumer 1: BlueprintSelectionPage.updateDetailPanel()
+### Consumer 1: StencilSelectionPage.updateDetailPanel()
 
-**Before** ([BlueprintSelectionPage.java#L790-L830](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L790-L830)):
+**Before** ([StencilSelectionPage.java#L790-L830](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/StencilSelectionPage.java#L790-L830)):
 ```java
 CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId);
 if (recipe != null) {
@@ -283,7 +283,7 @@ if (recipe != null) {
 }
 ```
 
-**What gets deleted from BlueprintSelectionPage**:
+**What gets deleted from StencilSelectionPage**:
 - `import com.UnobstructedThirdPerson.resourcecollection.ResourceTypeResolver;`
 - `import com.UnobstructedThirdPerson.resourcecollection.NaturalResourceRegistry;`
 - `private int countItemInInventory(...)` method (L1021-L1024)
@@ -374,7 +374,7 @@ cmd.set("#CostSlots[" + j + "].Visible", true);
 
 ## 9. Open Questions
 
-1. **BlockGroup interchangeability in resolver?** — `BlueprintSelectionPage.isAffordable()` checks BlockGroup member interchangeability as a fallback. `StencilVisualManager` does not. The resolver's `isAffordable()` currently does NOT include BlockGroup logic (matching StencilVisualManager's simpler check). Should a second overload be provided, or should BlockGroup checking remain in `BlueprintSelectionPage.isAffordable()` only? **Current answer:** Keep it out of the resolver; `isAffordable()` on the resolver does the simple `canRemoveMaterials` check, and `BlueprintSelectionPage` keeps its own extended `isAffordable()` for the filter pipeline.
+1. **BlockGroup interchangeability in resolver?** — `StencilSelectionPage.isAffordable()` checks BlockGroup member interchangeability as a fallback. `StencilVisualManager` does not. The resolver's `isAffordable()` currently does NOT include BlockGroup logic (matching StencilVisualManager's simpler check). Should a second overload be provided, or should BlockGroup checking remain in `StencilSelectionPage.isAffordable()` only? **Current answer:** Keep it out of the resolver; `isAffordable()` on the resolver does the simple `canRemoveMaterials` check, and `StencilSelectionPage` keeps its own extended `isAffordable()` for the filter pipeline.
 
 2. **`hideCostArc()` reset** — When the user unhovers, should the dim/style state be explicitly reset per slot, or is hiding the slot sufficient? **Current answer:** Hiding is sufficient — styles only matter while visible. But if Hytale caches style state across visibility toggles, explicit reset may be needed. Verify during implementation.
 
@@ -414,8 +414,8 @@ cmd.set("#CostSlots[" + j + "].Visible", true);
 
 ### Wave 3 (depends on Wave 2 — caller migrations, can run in parallel)
 
-#### Unit: BlueprintSelectionPage migration
-- **Files**: `BlueprintSelectionPage.java`
+#### Unit: StencilSelectionPage migration
+- **Files**: `StencilSelectionPage.java`
 - **Methods**: `updateDetailPanel()` refactored to use `resolveIngredientCosts()`
 - **Contract**: Replace inline resolution chain with resolver call; keep `isAffordable()` for BlockGroup logic
 - **Dependencies**: RecipeAffordabilityResolver (Wave 2)
@@ -439,7 +439,7 @@ cmd.set("#CostSlots[" + j + "].Visible", true);
 
 #### Unit: Integration verification
 - **Files**: All modified files
-- **Contract**: Full build passes, all three subsystems render affordability identically to before (BlueprintBook, hotbar glow) plus new radial menu affordability feedback
+- **Contract**: Full build passes, all three subsystems render affordability identically to before (StencilBook, hotbar glow) plus new radial menu affordability feedback
 - **Dependencies**: All Wave 3 units
 - **Done when**: `gradle build` succeeds, manual verification of all three affordability paths
 

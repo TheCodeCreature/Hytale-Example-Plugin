@@ -21,9 +21,9 @@ Understanding which thread each method runs on is critical to this fix:
 | `StencilSyncSystem.unregister()` | **Netty I/O** | Called from disconnect handler; operates on `ConcurrentHashMap` |
 | `StencilSyncSystem.register()` | **World thread** | Called from `onPlayerReady` which runs on world thread |
 | `StencilVisualManager.removePlayer()` | **Netty I/O** | ConcurrentHashMap remove — thread-safe |
-| `BlueprintBookParticleLoop.remove()` | **Netty I/O** | ConcurrentHashMap remove + `shutdown()` |
-| `BlueprintBookParticleLoop.shutdown()` | **Netty I/O** | Currently calls `world.execute()` — **this is the problem** |
-| `BlueprintBookParticleLoop.executeTick()` | **World thread** | Runs inside `world.execute()` from the scheduled task |
+| `StencilBookParticleLoop.remove()` | **Netty I/O** | ConcurrentHashMap remove + `shutdown()` |
+| `StencilBookParticleLoop.shutdown()` | **Netty I/O** | Currently calls `world.execute()` — **this is the problem** |
+| `StencilBookParticleLoop.executeTick()` | **World thread** | Runs inside `world.execute()` from the scheduled task |
 
 ## 4. Race Condition Analysis: Current (Broken) Flow
 
@@ -40,7 +40,7 @@ sequenceDiagram
     Netty->>Netty: Plugin.onPlayerDisconnect()
     Netty->>Netty: StencilSyncSystem.unregister()
     Netty->>Netty: StencilVisualManager.removePlayer()
-    Netty->>WorldQ: BlueprintBookParticleLoop.shutdown() → world.execute(cleanup)
+    Netty->>WorldQ: StencilBookParticleLoop.shutdown() → world.execute(cleanup)
     Note over WorldQ: Engine also queues entity removal here
 
     Note over Client,World: Player reconnects immediately
@@ -74,7 +74,7 @@ sequenceDiagram
     Netty->>Netty: Plugin.onPlayerDisconnect()
     Netty->>Netty: try StencilSyncSystem.unregister()
     Netty->>Netty: try StencilVisualManager.removePlayer()
-    Netty->>Netty: try BlueprintBookParticleLoop.remove()
+    Netty->>Netty: try StencilBookParticleLoop.remove()
     Note over Netty: shutdown() only sets active=false,<br/>cancels task, nulls fields.<br/>No world.execute() call.
 
     Note over Client,World: Player reconnects immediately
@@ -94,7 +94,7 @@ graph TB
         A[PlayerDisconnectEvent] --> B[Plugin.onPlayerDisconnect]
         B --> C["try: StencilSyncSystem.unregister(uuid)"]
         B --> D["try: StencilVisualManager.removePlayer(uuid)"]
-        B --> E["try: BlueprintBookParticleLoop.remove(uuid)"]
+        B --> E["try: StencilBookParticleLoop.remove(uuid)"]
     end
 
     subgraph "StencilSyncSystem.unregister"
@@ -107,7 +107,7 @@ graph TB
         D --> D1[Remove from ConcurrentHashMap]
     end
 
-    subgraph "BlueprintBookParticleLoop.remove"
+    subgraph "StencilBookParticleLoop.remove"
         E --> E1[Remove from INSTANCES map]
         E1 --> E2["shutdown(): active=false"]
         E2 --> E3[Cancel scheduled task]
@@ -132,7 +132,7 @@ graph TB
 
 ### Problem
 
-No try-catch. If `StencilSyncSystem.unregister()` throws (e.g., a handle's `unregister()` throws), `StencilVisualManager.removePlayer()` and `BlueprintBookParticleLoop.remove()` never execute. This leaves stale state that blocks re-registration on reconnect.
+No try-catch. If `StencilSyncSystem.unregister()` throws (e.g., a handle's `unregister()` throws), `StencilVisualManager.removePlayer()` and `StencilBookParticleLoop.remove()` never execute. This leaves stale state that blocks re-registration on reconnect.
 
 ### Current Code
 
@@ -141,7 +141,7 @@ private static void onPlayerDisconnect(PlayerDisconnectEvent event) {
     PlayerRef playerRef = event.getPlayerRef();
     StencilSyncSystem.unregister(playerRef.getUuid());
     StencilVisualManager.removePlayer(playerRef.getUuid());
-    BlueprintBookParticleLoop.remove(playerRef.getUuid());
+    StencilBookParticleLoop.remove(playerRef.getUuid());
 }
 ```
 
@@ -167,10 +167,10 @@ private static void onPlayerDisconnect(PlayerDisconnectEvent event) {
     }
 
     try {
-        BlueprintBookParticleLoop.remove(uuid);
+        StencilBookParticleLoop.remove(uuid);
     } catch (Exception e) {
         DebugLogger.log(DebugLogger.Subsystem.PLUGIN, java.util.logging.Level.SEVERE,
-                "[Plugin] Error in BlueprintBookParticleLoop.remove for " + uuid + ": " + e.getMessage());
+                "[Plugin] Error in StencilBookParticleLoop.remove for " + uuid + ": " + e.getMessage());
     }
 }
 ```
@@ -251,9 +251,9 @@ import com.CodeCreature.util.DebugLogger;
 
 ---
 
-## 9. Fix 3: Remove world.execute() from BlueprintBookParticleLoop.shutdown()
+## 9. Fix 3: Remove world.execute() from StencilBookParticleLoop.shutdown()
 
-**File:** `src/main/java/com/CodeCreature/ui/blueprintbook/BlueprintBookParticleLoop.java`  
+**File:** `src/main/java/com/CodeCreature/ui/stencilbook/StencilBookParticleLoop.java`  
 **Method:** `shutdown`  
 **Thread:** Netty I/O (called from `remove()` via `onPlayerDisconnect`)
 
@@ -287,8 +287,8 @@ private void shutdown() {
             activeEntity = null;
         });
     } catch (Exception e) {
-        DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING,
-                "[BlueprintBookParticle] Error queueing entity cleanup: " + e.getMessage());
+        DebugLogger.log(STENCIL_BOOK, Level.WARNING,
+                "[StencilBookParticle] Error queueing entity cleanup: " + e.getMessage());
     }
 }
 ```
@@ -335,7 +335,7 @@ If no tick is in-flight:
 | `Plugin.java` | Wrap each cleanup call in try-catch | `onPlayerDisconnect` method |
 | `StencilSyncSystem.java` | Add `import java.util.logging.Level;` and `import com.CodeCreature.util.DebugLogger;` | Top of file |
 | `StencilSyncSystem.java` | Replace early return with `unregister()` + warning log | `register` method |
-| `BlueprintBookParticleLoop.java` | Remove `world.execute()` block, null out fields directly | `shutdown` method |
+| `StencilBookParticleLoop.java` | Remove `world.execute()` block, null out fields directly | `shutdown` method |
 
 No files need to be created or deleted.
 
@@ -379,8 +379,8 @@ No files need to be created or deleted.
 - **Dependencies:** none
 - **Done when:** `register()` calls `unregister()` when a stale entry exists, with a WARNING log
 
-#### Unit: Fix 3 — BlueprintBookParticleLoop.shutdown world.execute removal
-- **File:** `src/main/java/com/CodeCreature/ui/blueprintbook/BlueprintBookParticleLoop.java`
+#### Unit: Fix 3 — StencilBookParticleLoop.shutdown world.execute removal
+- **File:** `src/main/java/com/CodeCreature/ui/stencilbook/StencilBookParticleLoop.java`
 - **Changes:** Remove `world.execute()` block, null out fields directly
 - **Contract:** `shutdown()` does not queue any work onto the world thread
 - **Dependencies:** none

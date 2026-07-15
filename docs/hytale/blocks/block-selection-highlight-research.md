@@ -9,7 +9,7 @@ sources: ["InteractionConfiguration.java (decompiled)", "PreviewBlockManager.jav
 
 ## Question
 
-Can we show a visual "selector" outline or highlight on the block a player is aiming at while holding the Blueprint Book?
+Can we show a visual "selector" outline or highlight on the block a player is aiming at while holding the Stencil Book?
 
 ## Summary
 
@@ -64,9 +64,9 @@ In your item JSON, add an `InteractionConfig` block:
 
 ### Verdict
 
-**The Blueprint Book already has interactions** (`BlueprintBook_PickStencil` as Primary, `StencilCrafting_OpenUI` as Secondary). The `DisplayOutlines` flag is inherited from `InteractionConfiguration` and defaults to `true`. **The block outline should already be showing when the player aims at a block while holding the Blueprint Book** — as long as one of its interactions is active on the client side.
+**The Stencil Book already has interactions** (`StencilBook_PickStencil` as Primary, `StencilCrafting_OpenUI` as Secondary). The `DisplayOutlines` flag is inherited from `InteractionConfiguration` and defaults to `true`. **The block outline should already be showing when the player aims at a block while holding the Stencil Book** — as long as one of its interactions is active on the client side.
 
-If the outline is NOT showing, it's because `SimpleInstantInteraction` (which `BlueprintBookPickStencilInteraction` extends) fires once and completes immediately — the client may not be running a persistent interaction to maintain the outline display.
+If the outline is NOT showing, it's because `SimpleInstantInteraction` (which `StencilBookPickStencilInteraction` extends) fires once and completes immediately — the client may not be running a persistent interaction to maintain the outline display.
 
 **Key insight:** `DisplayOutlines` is tied to the **interaction lifecycle**, not the held item. It only renders while the client is in an active interaction loop (e.g., `PlaceBlock` shows outlines because it continuously checks for target blocks). A `SimpleInstantInteraction` does NOT maintain a persistent interaction state.
 
@@ -211,7 +211,7 @@ The placement preview is entirely client-side. The server has no API to:
 - Change preview appearance (color, scale, wireframe)
 - Show preview for non-placeable items
 
-The Blueprint Book's interaction type is `SimpleInstantInteraction`, not `PlaceBlockInteraction`. Switching to `PlaceBlockInteraction` would show a ghost preview but also trigger placement logic.
+The Stencil Book's interaction type is `SimpleInstantInteraction`, not `PlaceBlockInteraction`. Switching to `PlaceBlockInteraction` would show a ghost preview but also trigger placement logic.
 
 ### Verdict
 
@@ -225,7 +225,7 @@ The most practical approach combines **two mechanisms**:
 
 ### Phase 1: Minimum Viable — Use `DisplayOutlines` (Zero Code)
 
-Add `InteractionConfig` to the Blueprint Book JSON to ensure the native block outline shows:
+Add `InteractionConfig` to the Stencil Book JSON to ensure the native block outline shows:
 
 ```json
 {
@@ -245,7 +245,7 @@ If the native outline is insufficient, implement a per-player tick loop that:
 1. Raycasts from the player's look direction via `TargetUtil.getTargetBlock()`
 2. Compares the new target to the last-sent target
 3. If changed, sends an `EditorBlocksChange` with a single `BlockChange` at the new position using a semi-transparent colored block type
-4. Clears the ghost when the player unequips the Blueprint Book or disconnects
+4. Clears the ghost when the player unequips the Stencil Book or disconnects
 
 ```
 ┌─────────────┐     raycast     ┌──────────────┐

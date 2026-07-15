@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-`RecipeFilterPipeline` is a standalone, sequential filter pipeline that replaces the interleaved filtering logic currently split across `BlueprintSelectionPage.applyFilter()` and `buildRecipeList()`. Each stage has a single responsibility: take a list, produce a list. Affordability is computed **once** in a dedicated tagging stage, and both the sidebar set list (`currentSets`) and per-recipe dimming (`affordable`) derive from the same intermediate result.
+`RecipeFilterPipeline` is a standalone, sequential filter pipeline that replaces the interleaved filtering logic currently split across `StencilSelectionPage.applyFilter()` and `buildRecipeList()`. Each stage has a single responsibility: take a list, produce a list. Affordability is computed **once** in a dedicated tagging stage, and both the sidebar set list (`currentSets`) and per-recipe dimming (`affordable`) derive from the same intermediate result.
 
 The `CraftableFilter` enum (NONE / PARTIAL / FULL) is removed. The pipeline always computes affordability — unaffordable recipes are dimmed, never hidden.
 
@@ -58,7 +58,7 @@ classDiagram
         +isAffordable(InputRecipe recipe) boolean
     }
 
-    class BlueprintSelectionPage {
+    class StencilSelectionPage {
         -RecipeFilterPipeline pipeline
         -List~InputRecipe~ allRecipes
         -isAffordable(recipe, container) boolean
@@ -69,8 +69,8 @@ classDiagram
     RecipeFilterPipeline --> TaggedRecipe : produces
     RecipeFilterPipeline --> PipelineResult : returns
     RecipeFilterPipeline --> AffordabilityChecker : uses
-    BlueprintSelectionPage --> RecipeFilterPipeline : delegates to
-    BlueprintSelectionPage ..|> AffordabilityChecker : provides impl
+    StencilSelectionPage --> RecipeFilterPipeline : delegates to
+    StencilSelectionPage ..|> AffordabilityChecker : provides impl
 ```
 
 ## 4. Responsibility Map
@@ -102,13 +102,13 @@ graph TB
 ### Where key outputs are computed
 
 - **`currentSets`** — Stage 4 (`extractSets`), derived from the Stage 3 output (post-affordability tagging, pre-set filtering). This means the sidebar always shows all sets present in the tab+search results.
-- **`affordable` boolean** — Stage 3 (`tagAffordability`), computed once per recipe. The checker implementation in `BlueprintSelectionPage` calls `isAffordable()` which handles both raw material checks and BlockGroup interchangeability.
+- **`affordable` boolean** — Stage 3 (`tagAffordability`), computed once per recipe. The checker implementation in `StencilSelectionPage` calls `isAffordable()` which handles both raw material checks and BlockGroup interchangeability.
 
 ## 5. Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant UI as BlueprintSelectionPage
+    participant UI as StencilSelectionPage
     participant P as RecipeFilterPipeline
     participant AC as AffordabilityChecker
 
@@ -133,14 +133,14 @@ sequenceDiagram
 ```
 src/main/java/com/UnobstructedThirdPerson/placeblock/ui/
 ├── RecipeFilterPipeline.java          # Pipeline class with nested records + interface
-└── BlueprintSelectionPage.java        # Modified: delegates to pipeline, owns AffordabilityChecker impl
+└── StencilSelectionPage.java        # Modified: delegates to pipeline, owns AffordabilityChecker impl
 ```
 
 All new types (`InputRecipe`, `TaggedRecipe`, `PipelineResult`, `AffordabilityChecker`) are nested inside `RecipeFilterPipeline` to keep the public API surface small.
 
 ## 7. Integration Changes Required
 
-### `BlueprintSelectionPage.java`
+### `StencilSelectionPage.java`
 
 | Change | Description |
 |--------|-------------|
@@ -156,7 +156,7 @@ All new types (`InputRecipe`, `TaggedRecipe`, `PipelineResult`, `AffordabilityCh
 | **Remove** `filteredRecipes` field | No longer needed — pipeline produces the final list |
 | **Add** `RecipeFilterPipeline pipeline` field | Instantiate once, reuse across filter calls |
 
-### `BlueprintBookPage.ui` (UI template)
+### `StencilBookPage.ui` (UI template)
 
 | Change | Description |
 |--------|-------------|

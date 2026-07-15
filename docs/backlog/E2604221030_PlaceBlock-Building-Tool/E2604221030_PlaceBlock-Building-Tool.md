@@ -72,7 +72,7 @@ timeline
         Validate arming pipeline end-to-end : backlog
     section Phase 2b — Custom UI
         InteractiveCustomUIPage spike : backlog
-        BlueprintSelectionPage : backlog
+        StencilSelectionPage : backlog
         Remove PlaceBlockBenchInterceptor : backlog
     section Phase 3 — Placement
         Block Preview : backlog

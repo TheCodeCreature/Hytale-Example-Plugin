@@ -192,21 +192,21 @@ NPCs can set their interaction hint via the NPC state machine, using `BuilderAct
 
 ---
 
-## BlueprintBook Analysis
+## StencilBook Analysis
 
 Current config:
 ```json
 {
   "Interactions": {
     "Use": "StencilCrafting_OpenUI",
-    "Secondary": "BlueprintBook_PickStencil"
+    "Secondary": "StencilBook_PickStencil"
   }
 }
 ```
 
 This produces:
 - **E** (Use) → label derived from `StencilCrafting_OpenUI`
-- **Right Click** (Secondary) → label derived from `BlueprintBook_PickStencil`
+- **Right Click** (Secondary) → label derived from `StencilBook_PickStencil`
 
 No `Primary` or `Ability1` mapping → no Left Click or Q tips.
 
@@ -218,7 +218,7 @@ To add more HUD tips, add more `InteractionType` keys with corresponding `RootIn
 {
   "Interactions": {
     "Primary": "SomeRootInteraction",
-    "Secondary": "BlueprintBook_PickStencil",
+    "Secondary": "StencilBook_PickStencil",
     "Ability1": "SomeAbilityInteraction",
     "Use": "StencilCrafting_OpenUI"
   }

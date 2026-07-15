@@ -74,7 +74,7 @@ public class PlacementCostScaler extends EntityEventSystem<EntityStore, PlaceBlo
         ItemStack itemInHand = event.getItemInHand();
         if (itemInHand == null) return;
 
-        // Blueprint stencils handle their own resource consumption — skip extra cost
+        // Stencil stencils handle their own resource consumption — skip extra cost
         if (StencilMetadata.isStencil(itemInHand)) return;
 
         String blockTypeId = itemInHand.getBlockKey();

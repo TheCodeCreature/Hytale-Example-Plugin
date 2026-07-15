@@ -11,7 +11,7 @@ created: 2026-04-27
 # Unified Recipe Filter Registry
 
 ## Description
-Extract the common recipe scanning, filtering, and resolution logic from `BlueprintSelectionPage.loadRecipes()` and `BenchRecipeRegistry.init()` into a shared `RecipeFilterRegistry` that both systems query. This eliminates duplicated iteration, inconsistent bench matching, divergent ResourceType resolution, and multiple definitions of the allowed bench ID list.
+Extract the common recipe scanning, filtering, and resolution logic from `StencilSelectionPage.loadRecipes()` and `BenchRecipeRegistry.init()` into a shared `RecipeFilterRegistry` that both systems query. This eliminates duplicated iteration, inconsistent bench matching, divergent ResourceType resolution, and multiple definitions of the allowed bench ID list.
 
 ## Acceptance Criteria
 
@@ -20,7 +20,7 @@ Extract the common recipe scanning, filtering, and resolution logic from `Bluepr
 - [ ] Bench IDs are defined in exactly one `public static` field
 - [ ] BenchRequirement matching scans all entries (not just the first)
 - [ ] ResourceType→ItemId resolution delegates to `ResourceTypeResolver` everywhere
-- [ ] `BlueprintSelectionPage` queries the shared registry instead of scanning recipes itself
+- [ ] `StencilSelectionPage` queries the shared registry instead of scanning recipes itself
 - [ ] `BenchRecipeRegistry` queries the shared registry instead of scanning recipes itself
 - [ ] `DropScaler` initializes the registry once; both consumers read from it
 - [ ] No behavioral change to either the UI or the drop scaling pipeline
@@ -30,7 +30,7 @@ Extract the common recipe scanning, filtering, and resolution logic from `Bluepr
 **Recipe appears in both systems**
 - **Given** a recipe "Wood_Hardwood_Fence" with `BenchRequirement: [{Id: "Builders"}]` and `ResourceTypeId` input
 - **When** the shared registry loads
-- **Then** both `BlueprintSelectionPage` and `BenchRecipeRegistry` see the recipe with consistent bench matching and resolved ingredient item IDs
+- **Then** both `StencilSelectionPage` and `BenchRecipeRegistry` see the recipe with consistent bench matching and resolved ingredient item IDs
 
 **Bench ID list changed**
 - **Given** a developer adds `"Blacksmith"` to the shared bench ID list
@@ -46,11 +46,11 @@ Extract the common recipe scanning, filtering, and resolution logic from `Bluepr
 | ID | Title | Status |
 |----|-------|--------|
 | S2604271710 | Extract Shared Recipe Predicate Pipeline | backlog |
-| S2604271720 | Migrate BlueprintSelectionPage to Shared Registry | backlog |
+| S2604271720 | Migrate StencilSelectionPage to Shared Registry | backlog |
 | S2604271730 | Migrate BenchRecipeRegistry to Shared Registry | backlog |
 | S2604271740 | Unify Bench ID Definitions | backlog |
 
 ## Notes
 - Risk: BenchRecipeRegistry has downstream consumers (DropScaler, BenchBlockClassifier, NaturalResourceRegistry) that depend on its current API shape. Migration must preserve those contracts.
-- Risk: BlueprintSelectionPage has UI-specific concerns (set grouping, affordability) that must remain layered on top of the shared registry.
+- Risk: StencilSelectionPage has UI-specific concerns (set grouping, affordability) that must remain layered on top of the shared registry.
 - The shared registry should be a data provider, not an opinion about what to do with the data.

@@ -161,14 +161,14 @@ ItemStack heldItem = (activeSlot >= 0) ? hotbar.getItemStack(activeSlot) : null;
 
 ```java
 // By item ID (numeric)
-if (heldItem != null && heldItem.getItemId() == BLUEPRINT_BOOK_ITEM_ID) { ... }
+if (heldItem != null && heldItem.getItemId() == STENCIL_BOOK_ITEM_ID) { ... }
 
 // By item metadata (for stencil detection)
 if (heldItem != null && StencilMetadata.isStencil(heldItem)) { ... }
 
 // By item asset string ID — resolve via Item asset map
 Item item = Item.getAssetMap().getAsset(heldItem.getItemId());
-if (item != null && "Blueprint_Book".equals(item.getId())) { ... }
+if (item != null && "Stencil_Book".equals(item.getId())) { ... }
 ```
 
 ### Getting the Player Entity in the Tick Loop
@@ -258,18 +258,18 @@ private boolean wasHoldingBook = false;   // whether player was holding book las
 
 ---
 
-## 7. Code Skeleton: Blueprint Book Aim Particle System
+## 7. Code Skeleton: Stencil Book Aim Particle System
 
 ```java
-public class BlueprintBookAimParticleSystem {
+public class StencilBookAimParticleSystem {
 
-    private static final Logger LOGGER = Logger.getLogger("BlueprintBookAimParticles");
+    private static final Logger LOGGER = Logger.getLogger("StencilBookAimParticles");
     private static final long TICK_INTERVAL_MILLIS = 100; // 10 ticks/sec
-    private static final String PARTICLE_EFFECT = "BlueprintBook_Aim_Highlight";
+    private static final String PARTICLE_EFFECT = "StencilBook_Aim_Highlight";
     // Fallback: "Example_Simple" if custom particle not yet loaded
     private static final double AIM_RANGE = 8.0;
 
-    private static final Map<UUID, BlueprintBookAimParticleSystem> INSTANCES = new ConcurrentHashMap<>();
+    private static final Map<UUID, StencilBookAimParticleSystem> INSTANCES = new ConcurrentHashMap<>();
 
     private final PlayerRef playerRef;
     private final World world;
@@ -278,7 +278,7 @@ public class BlueprintBookAimParticleSystem {
     // Per-tick state
     private Vector3i lastTargetBlock = null;
 
-    public BlueprintBookAimParticleSystem(PlayerRef playerRef, World world) {
+    public StencilBookAimParticleSystem(PlayerRef playerRef, World world) {
         this.playerRef = playerRef;
         this.world = world;
     }
@@ -287,17 +287,17 @@ public class BlueprintBookAimParticleSystem {
 
     public static void start(PlayerRef playerRef, World world) {
         UUID playerId = playerRef.getUuid();
-        BlueprintBookAimParticleSystem existing = INSTANCES.get(playerId);
+        StencilBookAimParticleSystem existing = INSTANCES.get(playerId);
         if (existing != null) {
             existing.shutdown();
         }
-        BlueprintBookAimParticleSystem instance = new BlueprintBookAimParticleSystem(playerRef, world);
+        StencilBookAimParticleSystem instance = new StencilBookAimParticleSystem(playerRef, world);
         instance.startUpdateLoop();
         INSTANCES.put(playerId, instance);
     }
 
     public static void remove(UUID playerId) {
-        BlueprintBookAimParticleSystem instance = INSTANCES.remove(playerId);
+        StencilBookAimParticleSystem instance = INSTANCES.remove(playerId);
         if (instance != null) {
             instance.shutdown();
         }
@@ -332,7 +332,7 @@ public class BlueprintBookAimParticleSystem {
         if (player == null) return;
 
         // 1. Check held item
-        if (!isHoldingBlueprintBook(player)) {
+        if (!isHoldingStencilBook(player)) {
             lastTargetBlock = null; // clear state when not holding
             return;
         }
@@ -353,7 +353,7 @@ public class BlueprintBookAimParticleSystem {
         lastTargetBlock = target;
     }
 
-    private boolean isHoldingBlueprintBook(Player player) {
+    private boolean isHoldingStencilBook(Player player) {
         byte activeSlot = player.getInventory().getActiveHotbarSlot();
         if (activeSlot < 0) return false;
 
@@ -361,11 +361,11 @@ public class BlueprintBookAimParticleSystem {
         if (held == null) return false;
 
         // Option A: Check by item ID
-        // return held.getItemId() == BLUEPRINT_BOOK_ITEM_ID;
+        // return held.getItemId() == STENCIL_BOOK_ITEM_ID;
 
         // Option B: Check by asset string ID
         Item item = Item.getAssetMap().getAsset(held.getItemId());
-        return item != null && "Blueprint_Book".equals(item.getId());
+        return item != null && "Stencil_Book".equals(item.getId());
     }
 
     // --- Integration Points ---
@@ -381,7 +381,7 @@ public class BlueprintBookAimParticleSystem {
 Create a custom `.particlespawner` for the aim highlight:
 
 ```json
-// BlueprintBook_Aim_Highlight.particlespawner
+// StencilBook_Aim_Highlight.particlespawner
 {
   "ParticleRotationInfluence": "Billboard",
   "MaxConcurrentParticles": 4,
@@ -408,10 +408,10 @@ Create a custom `.particlespawner` for the aim highlight:
 ```
 
 ```json
-// BlueprintBook_Aim_Highlight.particlesystem
+// StencilBook_Aim_Highlight.particlesystem
 {
   "Spawners": [
-    { "SpawnerId": "BlueprintBook_Aim_Highlight", "FixedRotation": true }
+    { "SpawnerId": "StencilBook_Aim_Highlight", "FixedRotation": true }
   ],
   "CullDistance": 30
 }

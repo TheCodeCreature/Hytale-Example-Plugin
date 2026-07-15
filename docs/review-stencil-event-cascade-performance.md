@@ -1,7 +1,7 @@
 # Performance Architecture Review — Stencil Event Cascade & Inventory Change Listeners
 
 **Date:** 2025-05-22  
-**Scope:** StencilSyncSystem → StencilVisualManager → AutoCraftPlanner event cascade, BlueprintBookParticleLoop  
+**Scope:** StencilSyncSystem → StencilVisualManager → AutoCraftPlanner event cascade, StencilBookParticleLoop  
 **Trigger:** Server-freezing lag during stencil block placement (server thread blocked)
 
 ---
@@ -119,7 +119,7 @@ graph TB
 | F4 | Redundancy | 🟡 High | [AutoCraftPlanner.java](src/main/java/com/CodeCreature/crafting/AutoCraftPlanner.java#L108-L140) | **Redundant inventory counts in AutoCraftPlanner.plan().** The fast path (step 2) counts every ingredient via `countItemStacks`, then if it fails, the slow path (step 3) counts them ALL AGAIN. Step 4 then counts them A THIRD TIME for verification. Three full scans when two would suffice. |
 | F5 | Redundancy | 🟡 High | [RecipeAffordabilityResolver.java](src/main/java/com/CodeCreature/crafting/RecipeAffordabilityResolver.java#L160-L165) | **`isAffordableWithAutoCraft` calls `AutoCraftPlanner.plan()` which internally calls `resolveIngredientCosts()`.** But `plan()` also redundantly calls `PlaceBlockCostUtil.getPerUnitCost()` (array clone) and `resolveIngredientCosts()` — the resolve is performed twice: once for `directView` and once for the fast-path check. The `directView` result is never used when called from `isAffordableWithAutoCraft`. |
 | F6 | Anti-pattern | 🟡 High | [StencilVisualManager.java](src/main/java/com/CodeCreature/stencil/StencilVisualManager.java#L213-L220) | **No early exit for zero stencils.** `scanAndSend()` always iterates the full hotbar and builds `currentStencils`/`changedItems` maps even if the player has no stencils in the hotbar. For non-stencil players who still have registered listeners, this is wasted work on every inventory change. |
-| F7 | Scalability | 🟠 Medium | [BlueprintBookParticleLoop.java](src/main/java/com/CodeCreature/ui/blueprintbook/BlueprintBookParticleLoop.java#L93-L100) | **Unconditional 100ms timer per player.** The scheduled task runs every 100ms for every player who has ever held a blueprint book, doing `world.execute()` + ECS lookups + raycast even when the player is not holding the book. The `holdingBook` check exits early but the scheduler, `world.execute()` dispatch, and ECS ref lookup still happen. This is 10 world-thread dispatches/second per player. |
+| F7 | Scalability | 🟠 Medium | [StencilBookParticleLoop.java](src/main/java/com/CodeCreature/ui/stencilbook/StencilBookParticleLoop.java#L93-L100) | **Unconditional 100ms timer per player.** The scheduled task runs every 100ms for every player who has ever held a stencil book, doing `world.execute()` + ECS lookups + raycast even when the player is not holding the book. The `holdingBook` check exits early but the scheduler, `world.execute()` dispatch, and ECS ref lookup still happen. This is 10 world-thread dispatches/second per player. |
 | F8 | Over-engineering | 🟠 Medium | [AutoCraftPlanner.java](src/main/java/com/CodeCreature/crafting/AutoCraftPlanner.java#L108-L112) | **`resolveIngredientCosts()` called eagerly for display data.** `plan()` computes `directView` and `rawView` on every call, but when called from `isAffordableWithAutoCraft()`, neither is used — only `affordable()` is checked. The display data computation includes `PlaceBlockCostUtil.getPerUnitCost()` (array clone), `resolveIngredientCosts()` (full resolution + N inventory counts), and `resolveRecipeToRaw()`. |
 | F9 | Anti-pattern | 🔵 Low | [StencilSyncSystem.java](src/main/java/com/CodeCreature/stencil/StencilSyncSystem.java#L33) | **`ConcurrentHashMap` for single-threaded access.** `registeredPlayers` uses `ConcurrentHashMap` but `register`/`unregister` are called only from the server thread. The CHM adds unnecessary CAS overhead on every `containsKey`/`put`/`remove`. Minor, but symptomatic. |
 | F10 | Anti-pattern | 🔵 Low | [AutoCraftPlanner.java](src/main/java/com/CodeCreature/crafting/AutoCraftPlanner.java#L130-L138) | **Lambda allocation per `countItemStacks` call.** Each `countItemStacks(stack -> lookupId.equals(...) && !StencilMetadata.isStencil(stack))` allocates a new lambda capturing `lookupId`. With 128+ calls per placement, this generates significant short-lived garbage on the server thread. |
@@ -168,7 +168,7 @@ graph LR
         direction TB
         Q1["🟥 HIGH IMPACT / LOW EFFORT<br/>━━━━━━━━━━━━━━━━━<br/>F1: Re-entrant guard in restoreStencils<br/>F2: Debounce refreshAffordability<br/>F3: Coalesce scanAndSend per tick"]
         Q2["🟨 HIGH IMPACT / MEDIUM EFFORT<br/>━━━━━━━━━━━━━━━━━<br/>F5: Cache snapshot for countItemStacks<br/>F6: Short-circuit scanAndSend on no stencils"]
-        Q3["🟦 MEDIUM IMPACT / LOW EFFORT<br/>━━━━━━━━━━━━━━━━━<br/>F7: BlueprintBookParticleLoop active-item guard<br/>F8: Batch inventory count"]
+        Q3["🟦 MEDIUM IMPACT / LOW EFFORT<br/>━━━━━━━━━━━━━━━━━<br/>F7: StencilBookParticleLoop active-item guard<br/>F8: Batch inventory count"]
         Q4["⬜ LOW IMPACT / HIGHER EFFORT<br/>━━━━━━━━━━━━━━━━━<br/>F4: Computed affordability cache<br/>F9: Async affordability on worker thread"]
     end
 
@@ -223,7 +223,7 @@ graph LR
 | Q1 | Does `SyncEventBusRegistry.dispatch()` guarantee in-order delivery, or can events interleave on the same thread? | Affects whether re-entrancy guard needs to be a counter vs. boolean | Engine team / decompiled source |
 | Q2 | Does `CombinedItemContainer.sendUpdate()` fire sub-container events while still holding the write lock? If yes, `countItemStacks()` (which acquires a read lock) inside the event handler may deadlock or rely on re-entrant locking. | Could explain intermittent freezes vs. consistent freezes | Engine team — check lock implementation (`readAction`/`writeAction`) |
 | Q3 | Does the engine's native block placement (`removeItemStackFromSlot` on the stencil stack) fire a hotbar change event BEFORE or AFTER `StencilPlacementSystem.handle()` returns? | Determines whether the engine adds a 6th `refreshAffordability` call | Test empirically with logging |
-| Q4 | Is `world.execute()` synchronous when called from the world thread? If so, the BlueprintBookParticleLoop's `scheduleAtFixedRate` → `world.execute()` may queue work that competes with event handlers. | Affects whether particle loop contributes to placement lag | Engine team |
+| Q4 | Is `world.execute()` synchronous when called from the world thread? If so, the StencilBookParticleLoop's `scheduleAtFixedRate` → `world.execute()` may queue work that competes with event handlers. | Affects whether particle loop contributes to placement lag | Engine team |
 | Q5 | Can `registerChangeEvent` accept a priority so the stencil restore handler runs LAST, after the engine's own internal handlers? | Would allow more predictable event ordering | API check — `EventPriority.LAST` exists in engine |
 
 ---

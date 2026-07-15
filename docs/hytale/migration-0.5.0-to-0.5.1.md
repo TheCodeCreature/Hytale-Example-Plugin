@@ -85,9 +85,9 @@ This produces `^0.5.1` when the detected version is `0.5.1`. **A clean rebuild (
 | Method | Files Using It | Severity |
 |--------|---------------|----------|
 | `Inventory.getActiveHotbarItem()` | StencilInputListener (×2) | **Deprecated for removal** |
-| `Inventory.getActiveHotbarSlot()` | StencilInputListener, BlueprintBookParticleLoop | **Deprecated for removal** |
-| `Inventory.getHotbar()` | StencilInputListener, BlueprintBookParticleLoop | **Deprecated for removal** |
-| `Inventory.getCombinedBackpackStorageHotbar()` | BlueprintBookParticleLoop, StencilPlacementSystem | **Deprecated for removal** |
+| `Inventory.getActiveHotbarSlot()` | StencilInputListener, StencilBookParticleLoop | **Deprecated for removal** |
+| `Inventory.getHotbar()` | StencilInputListener, StencilBookParticleLoop | **Deprecated for removal** |
+| `Inventory.getCombinedBackpackStorageHotbar()` | StencilBookParticleLoop, StencilPlacementSystem | **Deprecated for removal** |
 | `Inventory` (class itself) | StencilPlacementSystem | **Deprecated for removal** |
 | `ItemStack.getMetadata()` | StencilMetadataTest | Deprecated |
 
@@ -98,7 +98,7 @@ These APIs work in 0.5.1 but will **break in a future minor release** (likely 0.
 **Evidence**: The 0.5.0 log shows this error (does NOT appear in 0.5.1 only because the plugin didn't load):
 ```
 [SEVERE] Failed to register command: placeblock -
-  Invalid permission node: camera.[codecreature] blueprint system.command.placeblock
+  Invalid permission node: camera.[codecreature] stencil system.command.placeblock
 ```
 
 The plugin's group is `Plugin` and name is `[CodeCreature] Plugin`, producing permission nodes with brackets. The `PermissionsModule.registerPermission()` rejects these. Once the manifest is fixed, this error will re-appear in 0.5.1.
@@ -113,7 +113,7 @@ The plugin's group is `Plugin` and name is `[CodeCreature] Plugin`, producing pe
 |-----|----------------|---------------|
 | `TargetUtil.getTargetBlock()` return | `com.hypixel.hytale.math.vector.Vector3i` | `org.joml.Vector3i` |
 | `TargetUtil` internal | `com.hypixel.hytale.math.vector.Vector3d` | `org.joml.Vector3d` |
-| `BlueprintBookParticleLoop` | Uses `Rotation3f` | `com.hypixel.hytale.math.vector.Rotation3f` |
+| `StencilBookParticleLoop` | Uses `Rotation3f` | `com.hypixel.hytale.math.vector.Rotation3f` |
 | `BoundingBoxRayCast` | Uses `Transform` | `com.hypixel.hytale.math.vector.Transform` |
 
 The decompiled `com.hypixel.hytale.math.vector.Vector3i` is a standalone class (NOT extending `org.joml.Vector3i`). Since the plugin compiles and runs with `org.joml.Vector3i`, one of these must be true:
@@ -129,7 +129,7 @@ The plugin currently compiles without vector errors, so the JOML types are still
 - These are currently warnings, but if the server adds runtime null checks in a future release, they would become runtime crashes
 
 Key locations:
-- `BlueprintBookParticleLoop`: 18 null safety warnings (entity refs, effect lookups, component types)
+- `StencilBookParticleLoop`: 18 null safety warnings (entity refs, effect lookups, component types)
 - `StencilPlacementSystem`: container nullability
 - `RecipeFilterRegistry`: collection type safety
 
@@ -141,7 +141,7 @@ Key locations:
 - `SimpleInstantInteraction` structure unchanged (same `CODEC`, same `firstRun()` abstract method)
 - `BuilderCodec` API pattern unchanged
 - `Interaction.CODEC` registry pattern unchanged
-- The plugin's `BlueprintBookOpenUIInteraction` and `BlueprintBookPickStencilInteraction` codecs should work as-is
+- The plugin's `StencilBookOpenUIInteraction` and `StencilBookPickStencilInteraction` codecs should work as-is
 
 ### 3.2 Core Plugin Module List — STABLE
 - Both 0.5.0 and 0.5.1 load the same 37 core plugins in the same order
@@ -171,7 +171,7 @@ Key locations:
 
 ### Medium-Term
 
-5. **Address null safety warnings**: Add null guards at the 18+ call sites flagged by the compiler, especially in `BlueprintBookParticleLoop` and `StencilPlacementSystem`
+5. **Address null safety warnings**: Add null guards at the 18+ call sites flagged by the compiler, especially in `StencilBookParticleLoop` and `StencilPlacementSystem`
 
 6. **Monitor vector type drift**: If a future server version moves from `org.joml` to `com.hypixel.hytale.math.vector` types, the 4 files identified in the design doc will need import/type updates
 

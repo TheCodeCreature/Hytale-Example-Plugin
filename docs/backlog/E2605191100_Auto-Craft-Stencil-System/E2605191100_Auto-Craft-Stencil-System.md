@@ -16,7 +16,7 @@ When a player uses the stencil PlaceBlock tool to place a crafted block, the sys
 - [ ] Player can place brick stairs via stencil using cobblestone when they have no bricks
 - [ ] Existing intermediates are preferred — auto-craft only resolves the deficit
 - [ ] Break-return behavior is unchanged (Contract #4 — intermediates, not raw materials)
-- [ ] Radial menu and blueprint bench show raw material cost breakdown
+- [ ] Radial menu and stencil bench show raw material cost breakdown
 - [ ] All existing tests pass; new tests cover auto-craft paths
 - [ ] Performance: affordability check completes in <1ms (pre-computed cache)
 

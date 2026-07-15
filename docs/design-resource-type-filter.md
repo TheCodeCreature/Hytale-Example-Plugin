@@ -10,11 +10,11 @@ The Resource Type Input Filter replaces the deprecated placeholder list section 
 
 | File | Change |
 |------|--------|
-| `BlueprintSelectionPage.java` | Replace `affordabilityEnabled: boolean` with `AffordabilityMode` enum; add `activeResourceTypes` set; add `buildResourceTypeBindings()`, `updateResourceTypes()`, `updateAffordabilityToggle()`; modify `applyFilter()`, `handleDataEvent()`, `savePrefs()`, `build()` |
-| `BlueprintBookPrefs.java` | Replace `affordabilityEnabled: boolean` with `affordabilityMode: String`; add `activeResourceTypes: List<String>`; add `resourceTypesExpanded: boolean`; update CODEC |
+| `StencilSelectionPage.java` | Replace `affordabilityEnabled: boolean` with `AffordabilityMode` enum; add `activeResourceTypes` set; add `buildResourceTypeBindings()`, `updateResourceTypes()`, `updateAffordabilityToggle()`; modify `applyFilter()`, `handleDataEvent()`, `savePrefs()`, `build()` |
+| `StencilBookPrefs.java` | Replace `affordabilityEnabled: boolean` with `affordabilityMode: String`; add `activeResourceTypes: List<String>`; add `resourceTypesExpanded: boolean`; update CODEC |
 | `RecipeFilterPipeline.java` | Add `ResourceTypeChecker` interface; add `tagResourceTypeMatch()` stage; modify `execute()` signature to accept resource type state; update `PipelineResult` if needed |
-| `BlueprintBookPage.ui` | Replace `#InputSlotLabel`, `#NoPlaceholdersLabel`, `#PlaceholderList` section (lines 253-291) with `#ResourceTypeGrid` section |
-| `BlueprintBookStyles.ui` | Add `@ResourceTypeGridLabelStyle` if needed (or reuse `@SectionLabelStyle`) |
+| `StencilBookPage.ui` | Replace `#InputSlotLabel`, `#NoPlaceholdersLabel`, `#PlaceholderList` section (lines 253-291) with `#ResourceTypeGrid` section |
+| `StencilBookStyles.ui` | Add `@ResourceTypeGridLabelStyle` if needed (or reuse `@SectionLabelStyle`) |
 
 ### Files Created
 
@@ -33,7 +33,7 @@ The Resource Type Input Filter replaces the deprecated placeholder list section 
 
 ## 3. UI Layout Changes
 
-Replace the placeholder section in `BlueprintBookPage.ui` (lines 253-291) with a resource type icon grid.
+Replace the placeholder section in `StencilBookPage.ui` (lines 253-291) with a resource type icon grid.
 
 **Remove:**
 ```
@@ -225,7 +225,7 @@ The button text updates to show the current mode's label.
 
 ### 6.3 Prefs Migration
 
-`BlueprintBookPrefs.affordabilityEnabled` (boolean) is replaced by `BlueprintBookPrefs.affordabilityMode` (String). Migration:
+`StencilBookPrefs.affordabilityEnabled` (boolean) is replaced by `StencilBookPrefs.affordabilityMode` (String). Migration:
 - `true` → `"INVENTORY_DRIVEN"`
 - `false` → `"ALL"`
 
@@ -233,20 +233,20 @@ The CODEC uses `Codec.STRING` with the enum name. On load, `AffordabilityMode.va
 
 ### 6.4 Resource Type Selections Storage
 
-`BlueprintBookPrefs.activeResourceTypes: List<String>` — persisted as a string array. On load, restored into `Set<String> activeResourceTypes` on `BlueprintSelectionPage`.
+`StencilBookPrefs.activeResourceTypes: List<String>` — persisted as a string array. On load, restored into `Set<String> activeResourceTypes` on `StencilSelectionPage`.
 
-`BlueprintBookPrefs.resourceTypesExpanded: boolean` — persists collapse state of the resource types section header.
+`StencilBookPrefs.resourceTypesExpanded: boolean` — persists collapse state of the resource types section header.
 
 ## 7. Build Phase
 
-Changes to `BlueprintSelectionPage.build()`:
+Changes to `StencilSelectionPage.build()`:
 
 ```
 // After appending MaterialGroups buttons...
 
 // Resource type icon buttons (one per resource type)
 for (int i = 0; i < MAX_RESOURCE_TYPE_BUTTONS; i++) {
-    cmd.append("#ResourceTypeGrid", "Pages/BlueprintBook/GroupFilterButton.ui");
+    cmd.append("#ResourceTypeGrid", "Pages/StencilBook/GroupFilterButton.ui");
 }
 
 // Bind resource type events
@@ -417,7 +417,7 @@ private void applyFilter() {
 
 ### 10.3 recipeMatchesResourceTypes()
 
-A new method on `BlueprintSelectionPage` that checks whether any of a recipe's input `MaterialQuantity` entries have a `ResourceTypeId` matching any selected resource type.
+A new method on `StencilSelectionPage` that checks whether any of a recipe's input `MaterialQuantity` entries have a `ResourceTypeId` matching any selected resource type.
 
 ```java
 private boolean recipeMatchesResourceTypes(
@@ -440,10 +440,10 @@ private boolean recipeMatchesResourceTypes(
 ```mermaid
 graph TB
     subgraph "Build Phase (one-time)"
-        A[BlueprintSelectionPage.build] -->|append| B["#ResourceTypeGrid ← GroupFilterButton.ui × 78"]
+        A[StencilSelectionPage.build] -->|append| B["#ResourceTypeGrid ← GroupFilterButton.ui × 78"]
         A -->|bind| C[buildResourceTypeBindings → evt per button]
-        A -->|read| D[BlueprintBookPrefs.affordabilityMode]
-        A -->|read| E[BlueprintBookPrefs.activeResourceTypes]
+        A -->|read| D[StencilBookPrefs.affordabilityMode]
+        A -->|read| E[StencilBookPrefs.activeResourceTypes]
     end
 
     subgraph "Event Phase"
@@ -484,11 +484,11 @@ graph TB
 |---|---|
 | Resource type enumeration + ordering | `ResourceTypeRegistry` |
 | Tri-state affordability mode enum | `AffordabilityMode` |
-| UI append/bind/update for resource type grid | `BlueprintSelectionPage` |
-| Recipe ↔ resource type matching logic | `BlueprintSelectionPage.recipeMatchesResourceTypes()` |
+| UI append/bind/update for resource type grid | `StencilSelectionPage` |
+| Recipe ↔ resource type matching logic | `StencilSelectionPage.recipeMatchesResourceTypes()` |
 | Pipeline stage for resource type tagging | `RecipeFilterPipeline` |
-| Persistence of mode + selections | `BlueprintBookPrefs` + `BlueprintBookPrefsStore` |
-| UI layout (grid container) | `BlueprintBookPage.ui` |
+| Persistence of mode + selections | `StencilBookPrefs` + `StencilBookPrefsStore` |
+| UI layout (grid container) | `StencilBookPage.ui` |
 | Icon button template | `GroupFilterButton.ui` (reused) |
 
 ## 12. Skeleton Code
@@ -502,7 +502,7 @@ See skeleton files created alongside this document:
 
 Method signatures to add to existing files are documented in this section with Javadoc contracts.
 
-### 12.1 BlueprintSelectionPage — New Methods
+### 12.1 StencilSelectionPage — New Methods
 
 ```java
 /**
@@ -647,13 +647,13 @@ public PipelineResult execute(
 - **Dependencies**: none
 - **Done when**: `getCount()` returns 78. `getAll()` returns entries in alphabetical order. `getIconPath("Hardwood")` returns `"Hardwood.png"`.
 
-#### Unit: BlueprintBookPage.ui — Layout Change
-- **Files**: `BlueprintBookPage.ui`
+#### Unit: StencilBookPage.ui — Layout Change
+- **Files**: `StencilBookPage.ui`
 - **Contract**: Replace `#InputSlotLabel` / `#NoPlaceholdersLabel` / `#PlaceholderList` section with `#ResourceTypesHeader` / `#ClearResourceTypesBtn` / `#ResourceTypeGrid` section.
 - **Dependencies**: none
 - **Done when**: UI file parses. `#ResourceTypeGrid` container exists with `LayoutMode: LeftCenterWrap`. Old placeholder IDs are removed.
 
-#### Unit: BlueprintBookPrefs.java — Schema Update
+#### Unit: StencilBookPrefs.java — Schema Update
 - **Methods**: Updated CODEC with `affordabilityMode`, `activeResourceTypes`, `resourceTypesExpanded`
 - **Contract**: Replace `affordabilityEnabled: boolean` with `affordabilityMode: String`. Add `activeResourceTypes: List<String>`. Add `resourceTypesExpanded: boolean`. CODEC must handle missing fields with defaults.
 - **Dependencies**: none
@@ -667,21 +667,21 @@ public PipelineResult execute(
 - **Dependencies**: Wave 1 (`AffordabilityMode` concept, but no compile dependency — pipeline only uses checker interfaces)
 - **Done when**: `execute()` compiles with new signature. When `resourceTypeChecker` is non-null, recipes are tagged via `tagResourceTypeMatch()`. When both checkers are null, all recipes are tagged as affordable.
 
-#### Unit: BlueprintSelectionPage.java — Field + Prefs Migration
+#### Unit: StencilSelectionPage.java — Field + Prefs Migration
 - **Methods**: Replace `affordabilityEnabled` field, update `build()` prefs loading, update `savePrefs()`
 - **Contract**: Replace `boolean affordabilityEnabled` with `AffordabilityMode affordabilityMode`. Add `Set<String> activeResourceTypes`. Add `boolean resourceTypesExpanded`. Update `build()` to read new prefs fields. Update `savePrefs()` to write new prefs fields.
-- **Dependencies**: `AffordabilityMode.java`, `BlueprintBookPrefs.java` (Wave 1)
+- **Dependencies**: `AffordabilityMode.java`, `StencilBookPrefs.java` (Wave 1)
 - **Done when**: Field declared. `build()` loads `affordabilityMode` from prefs with fallback. `savePrefs()` writes mode string and resource type list.
 
 ### Wave 3 (depends on Wave 2)
 
-#### Unit: BlueprintSelectionPage.java — Build/Bind/Update Methods
+#### Unit: StencilSelectionPage.java — Build/Bind/Update Methods
 - **Methods**: `buildResourceTypeBindings()`, `updateResourceTypes()`, `updateAffordabilityToggle()`, `recipeMatchesResourceTypes()`
 - **Contract**: Append resource type buttons in `build()`. Bind events. Update icons/overlays. Check recipe inputs against selected resource types.
 - **Dependencies**: `ResourceTypeRegistry` (Wave 1), `RecipeFilterPipeline` new signature (Wave 2), field migration (Wave 2)
 - **Done when**: `build()` appends 80 GroupFilterButton.ui into #ResourceTypeGrid. Events bound. `updateResourceTypes()` sets icon/overlay for each button. `recipeMatchesResourceTypes()` returns correct match.
 
-#### Unit: BlueprintSelectionPage.java — applyFilter() + handleDataEvent()
+#### Unit: StencilSelectionPage.java — applyFilter() + handleDataEvent()
 - **Methods**: Modified `applyFilter()`, modified `handleDataEvent()` for `ToggleAffordable`, `ResourceType:All`, `ResourceType:idx:N`, `ToggleResourceTypes`
 - **Contract**: `applyFilter()` constructs the correct checker based on `affordabilityMode`. `handleDataEvent()` routes new actions, cycles mode on toggle, toggles individual resource types.
 - **Dependencies**: All Wave 2 units
@@ -690,7 +690,7 @@ public PipelineResult execute(
 ### Wave 4 (integration — depends on Wave 3)
 
 #### Unit: Integration Wiring
-- **Files**: `BlueprintSelectionPage.java` (`build()` call order), `BlueprintBookPage.ui` (verified)
+- **Files**: `StencilSelectionPage.java` (`build()` call order), `StencilBookPage.ui` (verified)
 - **Contract**: Wire all new components into the existing build/update lifecycle. Ensure `updateResourceTypes()` is called in the correct update sequence alongside `updateMaterialGroups()`, `updateSetFilters()`, `updateRecipeGrid()`.
 - **Dependencies**: All Wave 3 units
 - **Done when**: Full build passes. Opening bench shows resource type grid with icons. Cycling affordability mode updates button text. Selecting resource types in Resource Driven mode filters recipes. Prefs persist across bench open/close.

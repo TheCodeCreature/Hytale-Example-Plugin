@@ -31,7 +31,7 @@ import com.CodeCreature.util.DebugLogger;
 import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
- * Manages per-player visual overrides for blueprint stencil items in the hotbar.
+ * Manages per-player visual overrides for stencil stencil items in the hotbar.
  *
  * <p>Provides two visual features via {@code UpdateItems} packets:
  * <ul>
@@ -147,7 +147,7 @@ public final class StencilVisualManager {
     private static void sendStencilTranslations(@Nonnull PlayerRef playerRef) {
         Map<String, String> translations = new HashMap<>();
         translations.put(STENCIL_DESCRIPTION_KEY,
-                "A blueprint stencil for a specific block.\n"
+                "A stencil stencil for a specific block.\n"
                 + "[F] Use \u2014 Place the block using materials from your inventory.\n"
                 + "[Middle Click] Select \u2014 Quick-select this stencil in your hotbar.\n"
                 + "[G] Drop \u2014 Discard the stencil (it will be destroyed).");

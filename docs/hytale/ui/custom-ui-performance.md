@@ -12,7 +12,7 @@ sources:
   - "decompiled: CustomUICommand.java"
   - "decompiled: CustomPageEventType.java"
   - "decompiled: World.java (task queue, consumeTaskQueue)"
-  - "plugin: BlueprintSelectionPage.java, GridLayoutController.java, DetailPanelController.java"
+  - "plugin: StencilSelectionPage.java, GridLayoutController.java, DetailPanelController.java"
 ---
 
 # CustomUI Performance — Packet Sizes, Threading, Lifecycle, and Event Handling
@@ -45,7 +45,7 @@ Each `CustomUICommand` has 4 fields:
 - `type` — 1 byte (enum ordinal)
 - `selector` — VarString (e.g. `#RecipeGridArea[3] #GroupCells[5] #Btn.Style` ≈ 40-60 bytes)
 - `data` — VarString, null for Append/Clear/Remove; BSON JSON for Set (e.g. `{"0": "some_value"}` ≈ 20-60 bytes)
-- `text` — VarString, used for documentPath in Append (e.g. `Pages/BlueprintBook/SetGroupContainer.ui` ≈ 50 bytes); null for Set
+- `text` — VarString, used for documentPath in Append (e.g. `Pages/StencilBook/SetGroupContainer.ui` ≈ 50 bytes); null for Set
 
 **Estimated size per `cmd.set()` call:** ~80-120 bytes uncompressed (14 bytes fixed header + selector + BSON value wrapper).
 
@@ -88,28 +88,28 @@ The server does **not** read the `.ui` file. It stores only the string path. The
 From the architecture docs:
 > ".ui files are downloaded to the client when the player connects (via asset pack)"
 
-The client receives the `Append` command with a path like `"Pages/BlueprintBook/SetGroupContainer.ui"`. The client must:
+The client receives the `Append` command with a path like `"Pages/StencilBook/SetGroupContainer.ui"`. The client must:
 1. Look up the template from its asset cache (already loaded at connection time — no disk I/O)
 2. Parse and instantiate the template DOM nodes
 3. Attach them to the parent container at the specified selector
 
 **⚠️ SPECULATIVE:** Template files are almost certainly cached after first parse on the client side (standard practice for asset-heavy game engines). Repeated `append()` of the same template path reuses the parsed template definition. Each `append()` creates a new DOM instance from the cached definition.
 
-### Build-Time Append Pattern in BlueprintSelectionPage
+### Build-Time Append Pattern in StencilSelectionPage
 
 The plugin's `build()` method appends 500+ elements:
 ```java
 // Set filter buttons — one per set (~20-40)
 for (int i = 0; i < totalSetCount; i++) {
-    cmd.append("#SetFilters", "Pages/BlueprintBook/SetFilterButton.ui");
+    cmd.append("#SetFilters", "Pages/StencilBook/SetFilterButton.ui");
 }
 // Material group buttons (30)
 for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
-    cmd.append("#MaterialGroups", "Pages/BlueprintBook/GroupFilterButton.ui");
+    cmd.append("#MaterialGroups", "Pages/StencilBook/GroupFilterButton.ui");
 }
 // Per-set group containers with variable cell counts (sets × cells)
 for (int g = 0; g < totalSetCount; g++) {
-    cmd.append("#RecipeGridArea", "Pages/BlueprintBook/SetGroupContainer.ui");
+    cmd.append("#RecipeGridArea", "Pages/StencilBook/SetGroupContainer.ui");
     for (int c = 0; c < cellsPerSet[g]; c++) {
         cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
                    "Common/Components/ClickableIconCell.ui");
@@ -209,7 +209,7 @@ case Acknowledge:
 
 ### Recommendation
 
-Call `sendUpdate()` exactly **once** per `handleDataEvent()`. Accumulate all `cmd.set()` calls into a single `UICommandBuilder`, then send once. The current BlueprintSelectionPage follows this pattern correctly.
+Call `sendUpdate()` exactly **once** per `handleDataEvent()`. Accumulate all `cmd.set()` calls into a single `UICommandBuilder`, then send once. The current StencilSelectionPage follows this pattern correctly.
 
 ---
 
@@ -265,7 +265,7 @@ protected void rebuild() {
 
 ### Partial Update Pattern
 
-The correct pattern (already used by BlueprintSelectionPage):
+The correct pattern (already used by StencilSelectionPage):
 1. `build()`: Append all templates, bind all events, set initial values — **one-time setup**
 2. `handleDataEvent()`: Use `cmd.set()` to mutate existing element properties — **incremental updates only**
 3. Never call `rebuild()` or re-append templates during event handling
@@ -274,7 +274,7 @@ The correct pattern (already used by BlueprintSelectionPage):
 
 **No.** `openCustomPage()` always calls `build()`, which sends the full command set to the client. If you cache a page instance and pass it to `openCustomPage()` again, `build()` runs again, re-appending all templates (duplicating DOM elements on the client). The `clear: true` flag in the initial `openCustomPage` packet prevents this from being visually broken, but the build cost is still paid.
 
-**Workaround:** You can cache **data** outside the page (e.g., `BlueprintBookPrefsStore`) and restore it in `build()`. This is what the plugin already does.
+**Workaround:** You can cache **data** outside the page (e.g., `StencilBookPrefsStore`) and restore it in `build()`. This is what the plugin already does.
 
 ---
 

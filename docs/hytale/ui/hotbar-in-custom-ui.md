@@ -194,10 +194,10 @@ This is more verbose but allows per-slot custom styling (e.g., highlighting the 
 
 ## 6. Existing Usage in This Codebase
 
-The `BlueprintSelectionPage.java` already reads the hotbar to display placeholder items:
+The `StencilSelectionPage.java` already reads the hotbar to display placeholder items:
 
 ```java
-// BlueprintSelectionPage.java line ~549
+// StencilSelectionPage.java line ~549
 ItemContainer hotbar = player.getInventory().getHotbar();
 for (int i = 0; i < PlaceBlockMetadata.HOTBAR_SIZE; i++) {
     ItemStack stack = hotbar.getItemStack((short) i);

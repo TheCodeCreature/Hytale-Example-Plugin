@@ -246,7 +246,7 @@ public final class ResourceTypeRegistry {
     /**
      * One-time preference migration map from old {@code "Any_*"} registry IDs
      * to the new {@code "*_Group"} meta-filter IDs. Used by
-     * {@code BlueprintSelectionPage.loadPrefs()} to migrate stale saved values.
+     * {@code StencilSelectionPage.loadPrefs()} to migrate stale saved values.
      *
      * @return unmodifiable map of old ID → new ID
      */

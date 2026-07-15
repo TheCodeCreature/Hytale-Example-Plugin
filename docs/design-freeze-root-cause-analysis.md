@@ -1,14 +1,14 @@
 # Root Cause Analysis: Permanent Server Freeze After Block Breaks
 
 **Date:** 2025-05-29  
-**Scope:** BlueprintBookParticleLoop, AffordabilityCoalescer, StencilSyncSystem, World.consumeTaskQueue()  
+**Scope:** StencilBookParticleLoop, AffordabilityCoalescer, StencilSyncSystem, World.consumeTaskQueue()  
 **Symptom:** Server permanently freezes (console goes silent) after a player breaks 10–20 blocks that drop items.
 
 ---
 
 ## 1. Diagnosis: Primary Root Cause
 
-**The server freeze is a livelock in `World.consumeTaskQueue()`**, caused by `BlueprintBookParticleLoop`'s `SCHEDULED_EXECUTOR` feeding new tasks into the world's task queue faster than the queue can drain them during a heavy-load tick.
+**The server freeze is a livelock in `World.consumeTaskQueue()`**, caused by `StencilBookParticleLoop`'s `SCHEDULED_EXECUTOR` feeding new tasks into the world's task queue faster than the queue can drain them during a heavy-load tick.
 
 The `consumeTaskQueue()` loop is `while (poll() != null) { run(); }` — **no iteration limit, no timeout**. The `LinkedBlockingDeque.poll()` returns newly-added elements immediately. If any task running inside the loop triggers enough wall-clock delay that the 100ms `SCHEDULED_EXECUTOR` timer fires again, a new `executeTick` task is added to the queue before the drain completes. The drain picks it up, runs it (~10ms for entity ops), `pending.set(false)` re-arms the timer, and the cycle repeats **indefinitely**.
 
@@ -150,7 +150,7 @@ With N=20 items: 10 + 20 + 10 + 40 + 15 = **~95ms** — right at the threshold. 
 
 3. **`executeRefresh()` does O(S × I × C) work** — with 8 stencils, 2 ingredients each, and 50 inventory slots, that's 800 slot reads per call.
 
-4. **The SCHEDULED_EXECUTOR runs unconditionally** — even when the player is not holding the blueprint book. The `holdingBook` check is inside `executeTick()` (which runs on the world thread after being dispatched). The scheduler, `world.execute()` dispatch, and ECS ref lookup all happen regardless.
+4. **The SCHEDULED_EXECUTOR runs unconditionally** — even when the player is not holding the stencil book. The `holdingBook` check is inside `executeTick()` (which runs on the world thread after being dispatched). The scheduler, `world.execute()` dispatch, and ECS ref lookup all happen regardless.
 
 ---
 
@@ -190,7 +190,7 @@ The fix must address **both** the livelock mechanism and the amplifiers that tri
 
 ### Priority 1: Eliminate the Livelock Source — Replace Entity Spawn with Packets
 
-**Change:** Replace the `store.addEntity()` / `store.removeEntity()` approach in `BlueprintBookParticleLoop` with `ParticleUtil.spawnParticleEffect()` / `SpawnParticleSystem` packets.
+**Change:** Replace the `store.addEntity()` / `store.removeEntity()` approach in `StencilBookParticleLoop` with `ParticleUtil.spawnParticleEffect()` / `SpawnParticleSystem` packets.
 
 **Why:** This eliminates the 10–15ms entity operation cost from `executeTick()`, reducing it to ~1ms (raycast + packet send). Even if the SCHEDULED_EXECUTOR fires during a drain, the task completes so fast that `consumeTaskQueue()` drains it before the next timer fire.
 
@@ -205,17 +205,17 @@ The fix must address **both** the livelock mechanism and the amplifiers that tri
 
 ### Priority 2: Stop the Timer When Not Needed
 
-**Change:** Cancel the `SCHEDULED_EXECUTOR` task when the player unequips the blueprint book. Restart it when re-equipped.
+**Change:** Cancel the `SCHEDULED_EXECUTOR` task when the player unequips the stencil book. Restart it when re-equipped.
 
 **Why:** Currently, the timer fires unconditionally for every player who has ever held the book. The `holdingBook` check inside `executeTick()` exits early but still costs a `world.execute()` dispatch + ECS ref lookup per fire.
 
 **Design:**
-- On hotbar change event, check if the active slot holds a blueprint book
+- On hotbar change event, check if the active slot holds a stencil book
 - If book equipped and no timer running → start timer
 - If book unequipped and timer running → cancel timer, send one final cleanup packet
 - Remove the `holdingBook` check from `executeTick()` — it's now guaranteed by the lifecycle
 
-**Impact:** Zero background load when no player is holding a blueprint book.
+**Impact:** Zero background load when no player is holding a stencil book.
 
 ### Priority 3: Suppress Change Events During restoreStencils
 
@@ -237,7 +237,7 @@ The fix must address **both** the livelock mechanism and the amplifiers that tri
 **Why:** Since `consumeTaskQueue()` is engine code (can't modify), the plugin should avoid creating conditions that trigger unbounded drains. But as defense in depth, the `executeTick` task should self-limit: if it detects it's been running for too long, it should skip the entity/packet work and just reset `pending`.
 
 **Design:**
-- Add a `lastExecuteTimeNanos` field to `BlueprintBookParticleLoop`
+- Add a `lastExecuteTimeNanos` field to `StencilBookParticleLoop`
 - At the start of `executeTick()`, check if less than 50ms has elapsed since the last execution
 - If so, skip the work (just reset pending) — the visual highlight is still showing from the previous execution
 - This prevents the SCHEDULED_EXECUTOR from feeding work faster than reasonable
@@ -263,7 +263,7 @@ The fix must address **both** the livelock mechanism and the amplifiers that tri
 
 ## 6. Priority-Ordered Change List
 
-1. **Replace BlockEntity spawn/remove with `SpawnParticleSystem` packets** in `BlueprintBookParticleLoop.executeTick()` — eliminates the livelock root cause
+1. **Replace BlockEntity spawn/remove with `SpawnParticleSystem` packets** in `StencilBookParticleLoop.executeTick()` — eliminates the livelock root cause
 2. **Lifecycle-manage the SCHEDULED_EXECUTOR timer** — cancel on book unequip, start on equip — eliminates unnecessary background task generation
 3. **Use `setItemStackForSlot(slot, stack, false)`** in `StencilSyncSystem.restoreStencils()` — suppresses re-entrant change events, remove `isRestoring` guard
 4. **Add self-rate-limiting** in `executeTick()` — skip work if called within 50ms of last execution

@@ -23,7 +23,7 @@ As a **developer**, I want PlaceBlockMetadata to use `withState()` for arming an
 - [ ] `PlaceBlockMetadata.isArmed(stack)` returns true for any Green or Red state variant
 - [ ] `PlaceBlockMetadata.isGreenVariant(stack)` returns true for Armed_Green_0 through Armed_Green_8
 - [ ] `PlaceBlockMetadata.getSlotIndex(stack)` extracts the hotbar slot from the Green state name
-- [ ] All callers updated: AssignSubCommand, ClearSubCommand, BlueprintSelectionPage
+- [ ] All callers updated: AssignSubCommand, ClearSubCommand, StencilSelectionPage
 - [ ] Old variant methods removed: `getVariantItemId()`, `toVariant()`, `toBaseGreen()`
 - [ ] Old constants removed: `GREEN_VARIANT_PREFIX`, `PLACEHOLDER_BLUE`, `PLACEHOLDER_GREEN`, `PLACEHOLDER_RED`
 

@@ -41,11 +41,11 @@ graph TB
 
 | # | Category | Severity | Location | Detail |
 |---|----------|----------|----------|--------|
-| 1a | Logic Error | 🔴 Blocked | [BlueprintSelectionPage.java](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L894-L912) | `recipeMatchesResourceTypes()` only checks `input.getResourceTypeId()`. Recipes whose inputs use `ItemId` (e.g., `Deco_Bone_Skulls_Wall` uses `ItemId: "Ingredient_Bone_Fragment"`) are silently skipped because `getResourceTypeId()` returns null for those inputs. The function never resolves the ItemId to its item definition to check `Item.getResourceTypes()`. |
+| 1a | Logic Error | 🔴 Blocked | [StencilSelectionPage.java](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/StencilSelectionPage.java#L894-L912) | `recipeMatchesResourceTypes()` only checks `input.getResourceTypeId()`. Recipes whose inputs use `ItemId` (e.g., `Deco_Bone_Skulls_Wall` uses `ItemId: "Ingredient_Bone_Fragment"`) are silently skipped because `getResourceTypeId()` returns null for those inputs. The function never resolves the ItemId to its item definition to check `Item.getResourceTypes()`. |
 | 1b | Contract Violation | 🔴 Blocked | [ResourceTypeRegistry.java](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/ResourceTypeRegistry.java#L51) | The registry entry `"Any_Bone"` was derived from the **icon filename** (`Any_Bone.png`), not from the actual engine ResourceTypeId. The engine's resource type definition is [`Bone.json`](docs/Reference%20Assets/Assets/Server/Item/ResourceTypes/Bone.json) — the ResourceTypeId is `"Bone"`, and `Any_Bone.png` is merely its icon. Selecting "Any_Bone" in the UI adds `"Any_Bone"` to `activeResourceTypes`, but no recipe input or item declaration uses that string. Both `"Bone"` (index 9) and `"Any_Bone"` (index 0) exist as separate registry entries, making the generic entry permanently non-functional. |
-| 2 | Architecture | 🟡 Should Fix | [BlueprintSelectionPage.java](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L772-L842) | `updateDetailPanel()` unconditionally performs inventory-based affordability checks (`countItemInInventory()`, red border, red cost quantities) regardless of `affordabilityMode`. In `RESOURCE_DRIVEN` mode, the recipe grid dims items based on resource type matching (via the pipeline's `tagResourceTypeMatch`), but the detail panel shows inventory-based red/green — creating a visual contradiction where a recipe appears highlighted in the grid but "unaffordable" in the detail panel. |
-| 3a | Redundancy | 🟡 Should Fix | [BlueprintSelectionPage.java](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L894-L912) | `recipeMatchesResourceTypes()` reimplements a partial, incorrect version of resource-type resolution that `ResourceTypeResolver` already handles correctly. The resolver handles both `ItemId` and `ResourceTypeId` inputs, applies set-root preference, and filters decorative items — none of which `recipeMatchesResourceTypes()` does. |
-| 3b | Redundancy | 🟠 QA | [BlueprintSelectionPage.java](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L772-L810) vs [BlueprintSelectionPage.java](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L1062-L1080) | `updateDetailPanel()` resolves recipe inputs using `ResourceTypeResolver.resolveInputItemId()` + `NaturalResourceRegistry.resolveToGatherableForm()` for display, then checks affordability via `countItemInInventory()`. Meanwhile, `isAffordable()` uses `canRemoveMaterials()` for the same purpose but with different semantics (it also checks BlockGroup interchangeability). Two different affordability checks coexist with different logic. |
+| 2 | Architecture | 🟡 Should Fix | [StencilSelectionPage.java](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/StencilSelectionPage.java#L772-L842) | `updateDetailPanel()` unconditionally performs inventory-based affordability checks (`countItemInInventory()`, red border, red cost quantities) regardless of `affordabilityMode`. In `RESOURCE_DRIVEN` mode, the recipe grid dims items based on resource type matching (via the pipeline's `tagResourceTypeMatch`), but the detail panel shows inventory-based red/green — creating a visual contradiction where a recipe appears highlighted in the grid but "unaffordable" in the detail panel. |
+| 3a | Redundancy | 🟡 Should Fix | [StencilSelectionPage.java](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/StencilSelectionPage.java#L894-L912) | `recipeMatchesResourceTypes()` reimplements a partial, incorrect version of resource-type resolution that `ResourceTypeResolver` already handles correctly. The resolver handles both `ItemId` and `ResourceTypeId` inputs, applies set-root preference, and filters decorative items — none of which `recipeMatchesResourceTypes()` does. |
+| 3b | Redundancy | 🟠 QA | [StencilSelectionPage.java](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/StencilSelectionPage.java#L772-L810) vs [StencilSelectionPage.java](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/StencilSelectionPage.java#L1062-L1080) | `updateDetailPanel()` resolves recipe inputs using `ResourceTypeResolver.resolveInputItemId()` + `NaturalResourceRegistry.resolveToGatherableForm()` for display, then checks affordability via `countItemInInventory()`. Meanwhile, `isAffordable()` uses `canRemoveMaterials()` for the same purpose but with different semantics (it also checks BlockGroup interchangeability). Two different affordability checks coexist with different logic. |
 | 3c | Scalability | 🔵 Review | [ResourceTypeRegistry.java](src/main/java/com/UnobstructedThirdPerson/placeblock/ui/ResourceTypeRegistry.java#L48-L130) | The registry is a hardcoded `List.of(...)` with 79 entries derived from icon filenames rather than from the engine's `ResourceTypes/*.json` asset definitions. Adding/removing resource types requires a code change. The `"Any_*"` entries (Any_Bone, Any_Book, Any_Meat, Any_Mushroom, Any_Recipe, Any_Rock, Any_Rubble, Any_Trunk) appear to be **icon names** that the engine shares across multiple ResourceType definitions, not actual ResourceTypeId values. |
 
 ---
@@ -143,7 +143,7 @@ The user sees conflicting signals: the recipe looks "selected" in the grid but "
 ```mermaid
 graph TB
     subgraph "Current: Duplicated Resolution Logic"
-        A1["recipeMatchesResourceTypes()<br/>BlueprintSelectionPage:894"]
+        A1["recipeMatchesResourceTypes()<br/>StencilSelectionPage:894"]
         A2["Only checks input.getResourceTypeId()"]
 
         B1["ResourceTypeResolver.resolveInputItemId()<br/>ResourceTypeResolver:66"]
@@ -152,7 +152,7 @@ graph TB
         C1["ResourceTypeResolver.itemsWithResourceType()<br/>ResourceTypeResolver:124"]
         C2["Scans Item.getResourceTypes() array"]
 
-        D1["updateDetailPanel()<br/>BlueprintSelectionPage:772"]
+        D1["updateDetailPanel()<br/>StencilSelectionPage:772"]
         D2["Uses resolveInputItemId() for display"]
         D3["Uses countItemInInventory() for styling"]
 
@@ -203,7 +203,7 @@ graph TB
         M2["itemsWithResourceType()"]
         M3["recipeMatchesResourceTypes()<br/>(NEW: moved here)"]
 
-        BSP["BlueprintSelectionPage"]
+        BSP["StencilSelectionPage"]
         RFP["RecipeFilterPipeline"]
         DP["updateDetailPanel()"]
     end
@@ -231,7 +231,7 @@ graph TB
 - **For each recipe input**, check BOTH paths:
   1. If `input.getResourceTypeId()` is non-null → check if `selectedTypes.contains(resTypeId)`
   2. If `input.getItemId()` is non-null → resolve to `Item`, check if any entry in `Item.getResourceTypes()` has an ID in `selectedTypes`
-- **Delete** the local `recipeMatchesResourceTypes()` from `BlueprintSelectionPage`; replace the lambda at line 220 with a call to the new `ResourceTypeResolver` method
+- **Delete** the local `recipeMatchesResourceTypes()` from `StencilSelectionPage`; replace the lambda at line 220 with a call to the new `ResourceTypeResolver` method
 
 ### Bug 1 Fix — `ResourceTypeRegistry` ID correction
 

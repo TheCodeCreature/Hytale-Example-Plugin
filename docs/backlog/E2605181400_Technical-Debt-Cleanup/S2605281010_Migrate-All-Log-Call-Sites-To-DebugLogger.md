@@ -22,16 +22,16 @@ As a **developer**, I want **all existing log calls to route through DebugLogger
 - [ ] Per-class `private static final Logger LOGGER` declarations removed from migrated files
 - [ ] Per-class `private static final HytaleLogger LOGGER` declarations removed from migrated files
 - [ ] Two unused logger declarations removed (`StencilRadialMenuPage`, `AffordabilityCoalescer`)
-- [ ] Private `log()` helper methods in 7 classes removed (RecipeTierClassifier, NaturalResourceRegistry, DropScaler, RecipeFilterRegistry, BenchRecipeRegistry, BenchRecipeRegistries, RecipeTreeResolver, BlueprintBookRecipeMutator)
+- [ ] Private `log()` helper methods in 7 classes removed (RecipeTierClassifier, NaturalResourceRegistry, DropScaler, RecipeFilterRegistry, BenchRecipeRegistry, BenchRecipeRegistries, RecipeTreeResolver, StencilBookRecipeMutator)
 - [ ] Log message content (tags, format strings) preserved exactly
 - [ ] Build compiles with zero errors after migration
 
 ### Scenarios
 
 **Migrated JUL call**
-- **Given** `BlueprintBookParticleLoop` previously called `LOGGER.info("[BlueprintBookParticle] Created loop...")`
+- **Given** `StencilBookParticleLoop` previously called `LOGGER.info("[StencilBookParticle] Created loop...")`
 - **When** after migration
-- **Then** the call reads `DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[BlueprintBookParticle] Created loop...")`
+- **Then** the call reads `DebugLogger.log(STENCIL_BOOK, Level.INFO, "[StencilBookParticle] Created loop...")`
 
 **Migrated HytaleLogger call**
 - **Given** `StencilInputListener` previously called `LOGGER.atInfo().log("[Stencil] Use interaction...", playerRef.getUuid())`
@@ -40,4 +40,4 @@ As a **developer**, I want **all existing log calls to route through DebugLogger
 
 ## Notes
 - 18 files to touch — see audit report for complete inventory
-- Subsystem mapping: Plugin→PLUGIN, StencilInputListener/StencilVisualManager/StencilPlacementSystem→STENCIL, BlueprintBookParticleLoop/BlueprintBookPickStencilInteraction→BLUEPRINT_BOOK, BlueprintSelectionPage/DetailPanelController/BlueprintBookPrefsStore→BLUEPRINT_BOOK, RecipeTierClassifier/NaturalResourceRegistry/DropScaler/AbstractBenchProcessor/BreakBlockDiagnostic→SCALING, RecipeFilterRegistry/BenchRecipeRegistry/BenchRecipeRegistries→REGISTRY, RecipeTreeResolver/BlueprintBookRecipeMutator→CRAFTING, IngredientTreeGridController/IngredientTreeBuilder→INGREDIENT_TREE
+- Subsystem mapping: Plugin→PLUGIN, StencilInputListener/StencilVisualManager/StencilPlacementSystem→STENCIL, StencilBookParticleLoop/StencilBookPickStencilInteraction→STENCIL_BOOK, StencilSelectionPage/DetailPanelController/StencilBookPrefsStore→STENCIL_BOOK, RecipeTierClassifier/NaturalResourceRegistry/DropScaler/AbstractBenchProcessor/BreakBlockDiagnostic→SCALING, RecipeFilterRegistry/BenchRecipeRegistry/BenchRecipeRegistries→REGISTRY, RecipeTreeResolver/StencilBookRecipeMutator→CRAFTING, IngredientTreeGridController/IngredientTreeBuilder→INGREDIENT_TREE

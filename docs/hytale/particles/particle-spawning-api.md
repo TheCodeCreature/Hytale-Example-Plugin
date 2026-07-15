@@ -78,7 +78,7 @@ protected void firstRun(@Nonnull InteractionType type,
     CommandBuffer<EntityStore> commandBuffer = context.getCommandBuffer();
     Store<EntityStore> store = commandBuffer.getStore();
 
-    // Raycast to get target block (same as BlueprintBookPickStencilInteraction)
+    // Raycast to get target block (same as StencilBookPickStencilInteraction)
     Vector3i target = TargetUtil.getTargetBlock(ref, 8.0, store);
     if (target == null) return;
 
@@ -219,7 +219,7 @@ The particle system is loaded from the asset registry. If the plugin can registe
 
 ## Recommended Approach
 
-For spawning particles at the aimed block from `BlueprintBookPickStencilInteraction.firstRun()`:
+For spawning particles at the aimed block from `StencilBookPickStencilInteraction.firstRun()`:
 
 1. **Use `ParticleUtil.spawnParticleEffect(String, Vector3d, ComponentAccessor)`** — the simplest overload
 2. **Reuse the `TargetUtil.getTargetBlock()` call** you already have for the block position

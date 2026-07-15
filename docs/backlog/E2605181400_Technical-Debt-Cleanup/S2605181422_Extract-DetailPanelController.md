@@ -21,7 +21,7 @@ As a **developer**, I want **detail panel rendering in a focused controller** so
 - [ ] `updateDetailPanel()` logic moved to controller's `updateUI()` method
 - [ ] Controller takes: selected recipe entry, affordability mode, player inventory container
 - [ ] Controller produces: UICommandBuilder commands for output icon, name, cost grid
-- [ ] `BlueprintSelectionPage` delegates detail panel rendering to controller
+- [ ] `StencilSelectionPage` delegates detail panel rendering to controller
 - [ ] Detail panel renders identically to current behavior
 
 ### Scenarios

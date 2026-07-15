@@ -49,7 +49,7 @@ com/
     │   ├── PlaceBlockCostUtil.java        ── per-unit placement cost: input / outputQty
     │   ├── RecipeAffordabilityResolver.java ── full resolution chain: cost → resolve → check
     │   ├── ResolvedIngredient.java        ── immutable record: resolved ingredient status
-    │   ├── BlueprintBookRecipeMutator.java ── creates shadow Blueprint_ recipes at load
+    │   ├── StencilBookRecipeMutator.java ── creates shadow Stencil_ recipes at load
     │   ├── ResourceScanner.java           ── (stub) scan inventory + nearby chests
     │   └── ResourceSnapshot.java          ── immutable record: item counts + sources
     │
@@ -62,10 +62,10 @@ com/
     │
     ├── ui/                               ── LAYER 4: All user-facing UI
     │   ├── bench/                         ── Stencil Crafting UI
-    │   │   ├── BlueprintSelectionPage.java    ── main bench UI: grid, filters, detail, tree
-    │   │   ├── BlueprintBookOpenUIInteraction.java ── interaction: opens bench page
-    │   │   ├── BlueprintBookPrefs.java       ── serializable bench UI preferences
-    │   │   ├── BlueprintBookPrefsStore.java  ── file-based per-player prefs persistence
+    │   │   ├── StencilSelectionPage.java    ── main bench UI: grid, filters, detail, tree
+    │   │   ├── StencilBookOpenUIInteraction.java ── interaction: opens bench page
+    │   │   ├── StencilBookPrefs.java       ── serializable bench UI preferences
+    │   │   ├── StencilBookPrefsStore.java  ── file-based per-player prefs persistence
     │   │   ├── AffordabilityMode.java         ── enum: ALL, INVENTORY, RESOURCE
     │   │   ├── RecipeFilterPipeline.java      ── sequential filter pipeline for display
     │   │   └── ResourceTypeRegistry.java      ── static registry: 78 resource type filters
@@ -87,9 +87,9 @@ com/
     │   │   ├── StencilRadialInputListener.java ── detects middle-click → opens menu
     │   │   └── RadialSegmentItem.java         ── data record for radial segments
     │   │
-    │   └── blueprintbook/                ── Blueprint book visual feedback
-    │       ├── BlueprintBookParticleLoop.java      ── particle effects on targeted block
-    │       └── BlueprintBookPickStencilInteraction.java ── raycast → create stencil
+    │   └── stencilbook/                ── Stencil book visual feedback
+    │       ├── StencilBookParticleLoop.java      ── particle effects on targeted block
+    │       └── StencilBookPickStencilInteraction.java ── raycast → create stencil
     │
     ├── command/                          ── Commands (unchanged structure)
     │   ├── ParticleCommand.java
@@ -120,7 +120,7 @@ com/
 │          │   │  bench/          │   │  (ECS systems)   │
 │          │   │  ingredienttree/ │   │                  │
 │          │   │  radial/         │   │                  │
-│          │   │  blueprintbook/  │   │                  │
+│          │   │  stencilbook/  │   │                  │
 └────┬─────┘   └───────┬─────────┘   └───────┬──────────┘
      │                 │  LAYER 4+3           │ LAYER 3
      │                 │                      │
@@ -129,7 +129,7 @@ com/
      │        │           crafting/                   │
      │        │  RecipeAffordabilityResolver          │  LAYER 2
      │        │  PlaceBlockCostUtil                   │
-     │        │  BlueprintBookRecipeMutator          │
+     │        │  StencilBookRecipeMutator          │
      │        └──────────────────┬───────────────────┘
      │                           │
      │                           ▼
@@ -175,7 +175,7 @@ com/
 | `ui/bench/` | **S** — Single Responsibility | One concern: Stencil Crafting UI rendering and interaction. |
 | `ui/ingredienttree/` | **S** — Single Responsibility | One concern: the ingredient filter tree data structure and its UI controller. |
 | `ui/radial/` | **S** — Single Responsibility | One concern: stencil radial menu input + rendering. |
-| `ui/blueprintbook/` | **S** — Single Responsibility | One concern: blueprint book visual feedback and stencil-creation interaction. |
+| `ui/stencilbook/` | **S** — Single Responsibility | One concern: stencil book visual feedback and stencil-creation interaction. |
 | `command/` | **S** — Single Responsibility | One concern: chat/console command registration. |
 
 ---
@@ -214,7 +214,7 @@ com/
 | 19 | `placeblock/PlaceBlockCostUtil.java` | `crafting/PlaceBlockCostUtil.java` |
 | 20 | `placeblock/RecipeAffordabilityResolver.java` | `crafting/RecipeAffordabilityResolver.java` |
 | 21 | `placeblock/ResolvedIngredient.java` | `crafting/ResolvedIngredient.java` |
-| 22 | `placeblock/BlueprintBookRecipeMutator.java` | `crafting/BlueprintBookRecipeMutator.java` |
+| 22 | `placeblock/StencilBookRecipeMutator.java` | `crafting/StencilBookRecipeMutator.java` |
 | 23 | `placeblock/ResourceScanner.java` | `crafting/ResourceScanner.java` |
 | 24 | `placeblock/ResourceSnapshot.java` | `crafting/ResourceSnapshot.java` |
 
@@ -230,10 +230,10 @@ com/
 ### Layer 4: `ui/`
 | # | Old Path | New Path |
 |---|---|---|
-| 30 | `placeblock/ui/BlueprintSelectionPage.java` | `ui/bench/BlueprintSelectionPage.java` |
-| 31 | `placeblock/ui/BlueprintBookOpenUIInteraction.java` | `ui/bench/BlueprintBookOpenUIInteraction.java` |
-| 32 | `placeblock/ui/BlueprintBookPrefs.java` | `ui/bench/BlueprintBookPrefs.java` |
-| 33 | `placeblock/ui/BlueprintBookPrefsStore.java` | `ui/bench/BlueprintBookPrefsStore.java` |
+| 30 | `placeblock/ui/StencilSelectionPage.java` | `ui/bench/StencilSelectionPage.java` |
+| 31 | `placeblock/ui/StencilBookOpenUIInteraction.java` | `ui/bench/StencilBookOpenUIInteraction.java` |
+| 32 | `placeblock/ui/StencilBookPrefs.java` | `ui/bench/StencilBookPrefs.java` |
+| 33 | `placeblock/ui/StencilBookPrefsStore.java` | `ui/bench/StencilBookPrefsStore.java` |
 | 34 | `placeblock/ui/AffordabilityMode.java` | `ui/bench/AffordabilityMode.java` |
 | 35 | `placeblock/ui/RecipeFilterPipeline.java` | `ui/bench/RecipeFilterPipeline.java` |
 | 36 | `placeblock/ui/ResourceTypeRegistry.java` | `ui/bench/ResourceTypeRegistry.java` |
@@ -250,8 +250,8 @@ com/
 | 47 | `stencil/StencilRadialMenuPage.java` | `ui/radial/StencilRadialMenuPage.java` |
 | 48 | `stencil/StencilRadialInputListener.java` | `ui/radial/StencilRadialInputListener.java` |
 | 49 | `stencil/RadialSegmentItem.java` | `ui/radial/RadialSegmentItem.java` |
-| 50 | `stencil/BlueprintBookParticleLoop.java` | `ui/blueprintbook/BlueprintBookParticleLoop.java` |
-| 51 | `stencil/BlueprintBookPickStencilInteraction.java` | `ui/blueprintbook/BlueprintBookPickStencilInteraction.java` |
+| 50 | `stencil/StencilBookParticleLoop.java` | `ui/stencilbook/StencilBookParticleLoop.java` |
+| 51 | `stencil/StencilBookPickStencilInteraction.java` | `ui/stencilbook/StencilBookPickStencilInteraction.java` |
 
 ### Unchanged
 | # | Old Path | New Path |
@@ -293,7 +293,7 @@ Only files where the current name is genuinely confusing in context:
 - `BenchRecipeRegistries` in `registry/` — still specific enough, distinguishes from `RecipeFilterRegistry`
 - `RecipeFilterRegistry` in `registry/` — the "Filter" qualifier differentiates it from `BenchRecipeRegistry`, so it should NOT be shortened
 - `PlaceBlockCostUtil` in `crafting/` — the "PlaceBlock" prefix still adds clarity since this is per-block-placement cost, not generic recipe cost
-- `BlueprintBookRecipeMutator` in `crafting/` — "BlueprintBook" prefix is essential; it's specifically for Blueprint_ shadow recipes
+- `StencilBookRecipeMutator` in `crafting/` — "StencilBook" prefix is essential; it's specifically for Stencil_ shadow recipes
 
 No file needs renaming. The package context already provides the disambiguation that was missing before.
 
@@ -313,11 +313,11 @@ Each package's **allowed imports** (from `com.CodeCreature.*`):
 | `ui/bench/` | `scaling/`, `registry/`, `crafting/`, `stencil/` | `command/` |
 | `ui/ingredienttree/` | `scaling/`, `registry/`, `ui/bench/` | `crafting/`, `stencil/`, `command/` |
 | `ui/radial/` | `scaling/`, `registry/`, `crafting/` | `stencil/`*, `command/` |
-| `ui/blueprintbook/` | `scaling/`, `registry/`, `crafting/`, `util/` | `stencil/`*, `command/` |
-| `command/` | `stencil/`, `ui/blueprintbook/` | `scaling/`, `registry/`, `crafting/`, `ui/bench/` |
+| `ui/stencilbook/` | `scaling/`, `registry/`, `crafting/`, `util/` | `stencil/`*, `command/` |
+| `command/` | `stencil/`, `ui/stencilbook/` | `scaling/`, `registry/`, `crafting/`, `ui/bench/` |
 | `Plugin.java` | ALL | — (it's the composition root) |
 
-> \* **UI subpackages and `stencil/`:** The radial and blueprintbook files currently import from `resourcecollection` and `placeblock`, which map cleanly to `registry/` and `crafting/`. They do NOT import `stencil/` package types — the stencil UI components were IN `stencil/` before, but they only consume data from lower layers. After the move, they should not need `stencil/` imports.
+> \* **UI subpackages and `stencil/`:** The radial and stencilbook files currently import from `resourcecollection` and `placeblock`, which map cleanly to `registry/` and `crafting/`. They do NOT import `stencil/` package types — the stencil UI components were IN `stencil/` before, but they only consume data from lower layers. After the move, they should not need `stencil/` imports.
 
 ### Existing Dependency Violation to Fix During Migration
 
@@ -329,7 +329,7 @@ Each package's **allowed imports** (from `com.CodeCreature.*`):
 - **Option B (cleaner):** Add a static method `isStencilItem(ItemStack)` directly in `PlacementCostScaler` that checks the BSON tag without importing `StencilMetadata`. This is a 3-line inline check.
 - **Option C (if StencilMetadata is used by many layers):** Move `StencilMetadata` into `util/` or a new `item/` package at Layer 0, since it's fundamentally an item-metadata reader that multiple layers depend on.
 
-**Recommendation: Option C.** `StencilMetadata` is imported by `PlacementCostScaler` (scaling), `BlueprintSelectionPage` (UI), and `StencilSubCommand` (command). It's a cross-cutting item utility. Move it to `util/StencilMetadata.java` and let all layers access it from there.
+**Recommendation: Option C.** `StencilMetadata` is imported by `PlacementCostScaler` (scaling), `StencilSelectionPage` (UI), and `StencilSubCommand` (command). It's a cross-cutting item utility. Move it to `util/StencilMetadata.java` and let all layers access it from there.
 
 Updated migration for this fix:
 
@@ -350,7 +350,7 @@ Updated migration for this fix:
 | `ui/bench/` | 7 | Stencil Crafting UI: page, interaction, prefs, filters |
 | `ui/ingredienttree/` | 10 | Ingredient tree: data structure, builder, controller, nodes, enums |
 | `ui/radial/` | 3 | Radial menu: page, input listener, segment data |
-| `ui/blueprintbook/` | 2 | Blueprint book: particle effects, pick interaction |
+| `ui/stencilbook/` | 2 | Stencil book: particle effects, pick interaction |
 | `command/` | 3 | Commands (unchanged) |
 | `util/` | 2 | Cross-cutting utilities (BoundingBoxRayCast + StencilMetadata) |
 | **Total** | **55** | |
@@ -381,7 +381,7 @@ Starting from "I want to understand how resource costs work":
    → StencilVisualManager.java tells you how affordability affects visuals
 
 5. Open ui/
-   → bench/BlueprintSelectionPage.java shows how it all displays to the player
+   → bench/StencilSelectionPage.java shows how it all displays to the player
 ```
 
 That's the trace the user asked for: **resources scale at the bottom, crafting management in the middle, and it's easy to follow down through the files.**

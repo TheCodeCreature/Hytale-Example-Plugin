@@ -29,5 +29,5 @@ As a **player**, I want **unaffordable ingredients in the radial menu to be visu
 - **Then** #CostDim is hidden and the icon displays normally
 
 ## Notes
-- Use #000000(0.5) overlay matching the BlueprintBook CellDim pattern
+- Use #000000(0.5) overlay matching the StencilBook CellDim pattern
 - The dim Group should cover only the icon area, not the label

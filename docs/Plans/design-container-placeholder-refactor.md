@@ -77,7 +77,7 @@ classDiagram
         +handle(PlaceBlockEvent): void
     }
 
-    class BlueprintSelectionPage {
+    class StencilSelectionPage {
         <<UI Page>>
         +handleDataEvent(EventPayload): void
     }
@@ -94,7 +94,7 @@ classDiagram
 
     PlaceholderSyncSystem --> BlockPreviewReskinManager : delegates reskin
     PlaceBlockPlacementSystem --> PlaceBlockMetadata : reads armed state
-    BlueprintSelectionPage --> PlaceBlockMetadata : arms/reads placeholder
+    StencilSelectionPage --> PlaceBlockMetadata : arms/reads placeholder
     AssignSubCommand --> PlaceBlockMetadata : arms placeholder
     ClearSubCommand --> PlaceBlockMetadata : disarms placeholder
     BlockPreviewReskinManager --> PlaceBlockMetadata : reads state IDs
@@ -107,7 +107,7 @@ classDiagram
 ```mermaid
 graph TB
     subgraph Arming
-        UI[BlueprintSelectionPage / AssignSubCommand]
+        UI[StencilSelectionPage / AssignSubCommand]
         UI -->|"arm(stack, recipeId, blockTypeId, slot)"| META[PlaceBlockMetadata]
         META -->|"withState Armed_Green_N + metadata"| STACK[New ItemStack]
         STACK -->|"setItemStackForSlot"| HOTBAR[Hotbar Container]
@@ -618,7 +618,7 @@ Wait — the base state still has a `BlockType`. Will the engine fire `PlaceBloc
 | Remove `hotbar`, `activeSlot` local variables | Only `container` needed — no slot-level protection required |
 | `isPlaceBlock()` / `isArmed()` calls unchanged | Just reference the new constants transparently (PlaceBlockMetadata API is the same) |
 
-### 8.5 `BlueprintSelectionPage.java` — UPDATE ARM CALL
+### 8.5 `StencilSelectionPage.java` — UPDATE ARM CALL
 
 **Current:** Calls `PlaceBlockMetadata.setArmedRecipeId()`, iterates all placeholders in combined inventory.  
 **New:**
@@ -688,9 +688,9 @@ src/main/java/com/UnobstructedThirdPerson/placeblock/
 ├── PlaceBlockBenchInterceptor.java     ← MINOR (if re-enabled)
 ├── PlaceBlockConfig.java               ← MINOR
 ├── PlaceBlockConfigLoader.java         ← NO CHANGE
-├── BlueprintBookRecipeMutator.java    ← NO CHANGE
+├── StencilBookRecipeMutator.java    ← NO CHANGE
 └── ui/
-    └── BlueprintSelectionPage.java     ← MINOR (arm() rename)
+    └── StencilSelectionPage.java     ← MINOR (arm() rename)
 
 src/main/java/com/UnobstructedThirdPerson/command/placeblock/subcommands/
 ├── AssignSubCommand.java               ← MINOR (arm() rename)
@@ -742,7 +742,7 @@ src/main/java/com/UnobstructedThirdPerson/command/placeblock/subcommands/
 ### Phase 2: Arming + State Transitions
 
 5. Update `AssignSubCommand` and `ClearSubCommand` to use new `arm()` / `disarm()` API
-6. Update `BlueprintSelectionPage` to use `arm()` with hotbar slot parameter
+6. Update `StencilSelectionPage` to use `arm()` with hotbar slot parameter
 7. **Test:** `/placeblock assign Cobble_Wall` — verify item switches to `Armed_Green_N` state (green quality, N = hotbar slot)
 8. **Test:** `/placeblock clear` — verify item returns to base (blue quality)
 9. **Test:** Arm placeholders in slots 0 and 3 with different recipes — verify different state IDs (`Armed_Green_0`, `Armed_Green_3`)

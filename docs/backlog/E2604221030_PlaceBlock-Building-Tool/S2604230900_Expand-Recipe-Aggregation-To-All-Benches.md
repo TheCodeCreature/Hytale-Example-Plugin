@@ -17,10 +17,10 @@ As a **player**, I want **the Stencil Crafting to show placeable recipes from AL
 ## Acceptance Criteria
 
 ### Checklist
-- [ ] `BlueprintBookRecipeMutator` scans ALL recipes with any `BenchRequirement`, not just "Builders" and "Furniture_Bench"
+- [ ] `StencilBookRecipeMutator` scans ALL recipes with any `BenchRequirement`, not just "Builders" and "Furniture_Bench"
 - [ ] Only recipes whose primary output has a `blockId` (placeable blocks) are aggregated
 - [ ] Non-block output recipes (Rope, Fibre, tools) are excluded from aggregation
-- [ ] The Stencil Crafting's category list in `Bench_Blueprint.json` covers any new categories introduced by other benches
+- [ ] The Stencil Crafting's category list in `Bench_Stencil.json` covers any new categories introduced by other benches
 - [ ] Recipes from Stonecutter, Loom, or any future bench with placeable outputs appear at the Stencil Crafting
 - [ ] Original bench requirements are preserved — recipes still appear at their source benches
 
@@ -36,14 +36,14 @@ As a **player**, I want **the Stencil Crafting to show placeable recipes from AL
 - **Then** "Rope" does NOT appear in the recipe grid
 
 **Source bench unchanged**
-- **Given** a Stonecutter recipe was aggregated to Blueprint
+- **Given** a Stonecutter recipe was aggregated to Stencil
 - **When** the player opens the Stonecutter
 - **Then** the recipe still appears there as before
 
 ## Technical Notes
-- Change `SOURCE_BENCH_IDS` filter in `BlueprintBookRecipeMutator` to accept ANY bench ID
+- Change `SOURCE_BENCH_IDS` filter in `StencilBookRecipeMutator` to accept ANY bench ID
 - Add a `hasPlaceableOutput(recipe)` check: resolve `primaryOutput.getItemId()` → `Item.getBlockId()` must be non-null
-- Audit `Bench_Blueprint.json` categories to ensure coverage of categories from other benches
+- Audit `Bench_Stencil.json` categories to ensure coverage of categories from other benches
 - Contract #16: "Any recipe whose output is a placeable block or furniture item is available at the Stencil Crafting"
 
 ## Dependencies

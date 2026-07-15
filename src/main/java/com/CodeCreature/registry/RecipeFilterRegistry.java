@@ -48,7 +48,7 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
  *
  * <p>Consumers layer their own concerns on top of the shared entries:
  * <ul>
- *   <li>{@code BlueprintSelectionPage}: tab/set/search filtering, affordability</li>
+ *   <li>{@code StencilSelectionPage}: tab/set/search filtering, affordability</li>
  *   <li>{@code BenchRecipeRegistry}: base-block classification, natural
  *       resource detection</li>
  * </ul>
@@ -64,7 +64,7 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 public final class RecipeFilterRegistry {
 
     /** Default skip prefixes used by both consumers. */
-    public static final Set<String> DEFAULT_SKIP_PREFIXES = Set.of("Blueprint_", "Salvage");
+    public static final Set<String> DEFAULT_SKIP_PREFIXES = Set.of("Stencil_", "Salvage");
 
     // ─── Registry state (immutable after init) ──────────────────
 
@@ -97,7 +97,7 @@ public final class RecipeFilterRegistry {
      *
      * <p>Skip prefixes control which recipe ID prefixes are excluded.
      * Use {@link #DEFAULT_SKIP_PREFIXES} for the standard set
-     * ({@code "Blueprint_"}, {@code "Salvage"}).
+     * ({@code "Stencil_"}, {@code "Salvage"}).
      *
      * @param skipPrefixes set of recipe ID prefixes to exclude; recipes
      *                     whose ID starts with any of these are skipped
@@ -278,7 +278,7 @@ public final class RecipeFilterRegistry {
      * the subset of IDs that are in the allowed set. Returns an empty set
      * if none match.
      *
-     * <p>This fixes the bug in BlueprintSelectionPage which only checked
+     * <p>This fixes the bug in StencilSelectionPage which only checked
      * the first BenchRequirement entry.
      *
      * @param recipe          the crafting recipe

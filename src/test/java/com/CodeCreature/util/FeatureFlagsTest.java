@@ -230,7 +230,7 @@ class FeatureFlagsTest {
             assertTrue(all.containsKey("logging.global"), "Must register logging.global");
             assertTrue(all.containsKey("logging.plugin"), "Must register logging.plugin");
             assertTrue(all.containsKey("logging.stencil"), "Must register logging.stencil");
-            assertTrue(all.containsKey("logging.blueprint_book"), "Must register logging.blueprint_book");
+            assertTrue(all.containsKey("logging.stencil_book"), "Must register logging.stencil_book");
             assertTrue(all.containsKey("logging.scaling"), "Must register logging.scaling");
             assertTrue(all.containsKey("logging.registry"), "Must register logging.registry");
             assertTrue(all.containsKey("logging.crafting"), "Must register logging.crafting");

@@ -354,7 +354,7 @@ world.execute(() -> {
 
 ---
 
-## Recommendation for Blueprint Book Particle Loop
+## Recommendation for Stencil Book Particle Loop
 
 For showing a `Drop_Uncommon` particle at a block position while the player is looking at it:
 

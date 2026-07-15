@@ -38,7 +38,7 @@ $BG = "../../Styles/Backgrounds.ui";
 
 ## 5. Replacement Plan
 
-### 5.1 BlueprintBookPage.ui
+### 5.1 StencilBookPage.ui
 
 **Add import:**
 ```ui
@@ -218,7 +218,7 @@ Import line: `$BG = "../../Styles/Backgrounds.ui";`
 
 ### Wave 2 (depends on Wave 1 — can run in parallel with each other)
 
-#### Unit: BlueprintBookPage.ui
+#### Unit: StencilBookPage.ui
 - **Action**: Add `$BG` import, replace 6 inline values
 - **Done when**: Zero hardcoded colors/paths remain (excluding test files)
 

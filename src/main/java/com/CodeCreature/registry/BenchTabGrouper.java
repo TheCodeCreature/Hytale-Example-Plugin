@@ -621,7 +621,7 @@ public final class BenchTabGrouper {
      * Returns the ordered list of group keys for tab construction.
      *
      * <p>Sorted case-insensitive alphabetically. Does NOT include the "All"
-     * tab — that is added by {@code BlueprintSelectionPage.buildBenchTabs()}.
+     * tab — that is added by {@code StencilSelectionPage.buildBenchTabs()}.
      *
      * @return unmodifiable ordered list of group keys
      */

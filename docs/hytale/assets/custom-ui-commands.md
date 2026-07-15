@@ -228,7 +228,7 @@ Then in Java:
 ```java
 for (int i = 0; i < showing; i++) {
     String selector = "#RecipeGrid[" + i + "]";
-    cmd.append("#RecipeGrid", "Pages/BlueprintBook/RecipeIconCell.ui");
+    cmd.append("#RecipeGrid", "Pages/StencilBook/RecipeIconCell.ui");
     cmd.set(selector + " #CellIcon.ItemId", entry.outputItemId);
     cmd.set(selector + ".Background", "#2a4a6a");
 }

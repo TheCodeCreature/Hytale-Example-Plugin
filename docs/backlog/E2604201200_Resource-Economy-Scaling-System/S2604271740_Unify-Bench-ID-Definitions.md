@@ -18,7 +18,7 @@ As a **developer**, I want **bench IDs defined in exactly one place** so that **
 
 ### Checklist
 - [ ] One `public static` field holds the canonical list of allowed bench IDs
-- [ ] `BlueprintSelectionPage.ALLOWED_BENCHES` is removed — references the shared field
+- [ ] `StencilSelectionPage.ALLOWED_BENCHES` is removed — references the shared field
 - [ ] `DropScaler.apply()` passes the shared list to initialization
 - [ ] `BenchCategory` enum constants reference the shared list (or are derived from it)
 - [ ] Adding a new bench ID to the shared list makes it available in both UI and drop scaling
@@ -26,7 +26,7 @@ As a **developer**, I want **bench IDs defined in exactly one place** so that **
 ### Scenarios
 **Adding a bench**
 - **Given** a developer adds `"Blacksmith"` to the shared bench ID list
-- **When** both BlueprintSelectionPage and DropScaler initialize
+- **When** both StencilSelectionPage and DropScaler initialize
 - **Then** Blacksmith recipes appear in the UI and get drop scaling applied
 
 ## Notes

@@ -12,7 +12,7 @@ created: 2026-05-18
 # Infinite-Duration Effect + 500ms Loop
 
 ## User Story
-As a **player holding the Blueprint Book**, I want **the block highlight to appear instantly and persist without flickering** so that **I can see clearly which block I'm aiming at and whether I can afford it**.
+As a **player holding the Stencil Book**, I want **the block highlight to appear instantly and persist without flickering** so that **I can see clearly which block I'm aiming at and whether I can afford it**.
 
 ## Acceptance Criteria
 
@@ -36,6 +36,6 @@ As a **player holding the Blueprint Book**, I want **the block highlight to appe
 - **Then** old entity is removed, new entity spawned with red effect
 
 ## Notes
-- File: `src/main/java/com/CodeCreature/ui/blueprintbook/BlueprintBookParticleLoop.java`
+- File: `src/main/java/com/CodeCreature/ui/stencilbook/StencilBookParticleLoop.java`
 - ~15 lines changed in a single file
 - Risk: `addInfiniteEffect()` signature — fallback to `addEffect(ref, effect, 10000, OverlapBehavior.OVERWRITE, store)`

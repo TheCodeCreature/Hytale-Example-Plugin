@@ -13,15 +13,15 @@ created: 2026-05-18
 Address remaining code quality findings from the comprehensive code review — improving server performance, resource hygiene, code organization, and maintainability without changing any player-visible behavior.
 
 ## Success Criteria
-- [ ] Blueprint Book highlight no longer flickers and reduces entity churn by 80%+
+- [ ] Stencil Book highlight no longer flickers and reduces entity churn by 80%+
 - [ ] Inventory change listeners are properly deregistered on player disconnect
 - [ ] Plugin entry point follows project package conventions
-- [ ] BlueprintSelectionPage is decomposed into focused controllers (< 800 lines)
+- [ ] StencilSelectionPage is decomposed into focused controllers (< 800 lines)
 
 ## Features
 | ID | Title | Status |
 |----|-------|--------|
-| F2605181405 | Blueprint Book Highlight Performance | backlog |
+| F2605181405 | Stencil Book Highlight Performance | backlog |
 | F2605181410 | Inventory Listener Lifecycle Fix | backlog |
 | F2605181415 | Plugin Package Alignment | backlog |
 | F2605181420 | Stencil Crafting Page Decomposition | backlog |

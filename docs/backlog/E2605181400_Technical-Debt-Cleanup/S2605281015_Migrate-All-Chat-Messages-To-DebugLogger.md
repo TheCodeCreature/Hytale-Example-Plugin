@@ -37,8 +37,8 @@ As a **developer**, I want **debug/diagnostic chat messages to route through Deb
 |---|---|---|
 | 1-2 | StencilPlacementSystem.java | `§a[Stencil] Placed {block}` (placement confirmation) |
 | 3 | StencilPlacementSystem.java | `§c[Stencil] {error}` via sendError() (placement denial) |
-| 4 | BlueprintSelectionPage.java | `§c[BlueprintBook] No recipe selected.` (action denial) |
-| 5 | BlueprintSelectionPage.java | `§a[BlueprintBook] Given stencil: {name}` (action confirmation) |
+| 4 | StencilSelectionPage.java | `§c[StencilBook] No recipe selected.` (action denial) |
+| 5 | StencilSelectionPage.java | `§a[StencilBook] Given stencil: {name}` (action confirmation) |
 
 ### Scenarios
 
@@ -59,4 +59,4 @@ As a **developer**, I want **debug/diagnostic chat messages to route through Deb
 
 ## Notes
 - Files to touch for debug migration: Plugin.java (1 site), StencilSubCommand.java (5 sites), ParticleCommand.java (2 sites)
-- Files NOT touched (player feedback stays as-is): StencilPlacementSystem.java, BlueprintSelectionPage.java
+- Files NOT touched (player feedback stays as-is): StencilPlacementSystem.java, StencilSelectionPage.java

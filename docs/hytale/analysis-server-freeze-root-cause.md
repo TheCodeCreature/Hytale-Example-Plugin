@@ -21,7 +21,7 @@ sources:
 
 The inventory containers use `ReentrantReadWriteLock`. The write lock is NOT re-entrant across read→write upgrade. If the world thread holds a read lock (e.g., `countItemStacks()` during `executeRefresh()`) and then re-enters a code path that tries to acquire a write lock on the same container (e.g., through an event callback), the thread deadlocks permanently. However, the code paths as written appear to avoid this. A more probable scenario is detailed in Finding #6 below.
 
-**The entity churn from `BlueprintBookParticleLoop` is NOT the primary freeze cause, but it is a severe amplifier.** The particle loop creates conditions (high task queue throughput, rapid entity tracker cycling, GC pressure) that increase the probability of hitting the actual deadlock condition.
+**The entity churn from `StencilBookParticleLoop` is NOT the primary freeze cause, but it is a severe amplifier.** The particle loop creates conditions (high task queue throughput, rapid entity tracker cycling, GC pressure) that increase the probability of hitting the actual deadlock condition.
 
 ---
 
@@ -286,7 +286,7 @@ while ((runnable = this.taskQueue.poll()) != null) {
 
 Consider this sequence during the FIRST `consumeTaskQueue()` (before `entityStore.tick()`):
 
-1. **Task A** runs: `BlueprintBookParticleLoop.executeTick()` → calls `store.addEntity()` + `store.removeEntity()` synchronously → completes → sets `pending = false`
+1. **Task A** runs: `StencilBookParticleLoop.executeTick()` → calls `store.addEntity()` + `store.removeEntity()` synchronously → completes → sets `pending = false`
 
 2. **Task B** runs (was already in queue from a previous tick's `markDirty()`): `AffordabilityCoalescer.executeRefresh()` → calls `countItemStacks()` on `CombinedItemContainer` → **acquires read locks on all sub-containers** (hotbar, backpack, storage)
 
@@ -355,7 +355,7 @@ for (short slot = 0; slot < capacity; slot++) {
 ```
 `isAffordableWithAutoCraft` → `AutoCraftPlanner.plan()` → multiple `container.countItemStacks()` calls. Each uses `readAction()` — acquire, iterate, release. All sequential. **No nested write.**
 
-**`BlueprintBookParticleLoop.executeTick()`** with `ENABLE_AFFORDABILITY_CHECK = false`: Only calls `hotbar.getItemStack(activeSlot)` — a single read lock acquire/release. No write operations on containers. Safe.
+**`StencilBookParticleLoop.executeTick()`** with `ENABLE_AFFORDABILITY_CHECK = false`: Only calls `hotbar.getItemStack(activeSlot)` — a single read lock acquire/release. No write operations on containers. Safe.
 
 **Conclusion: The read→write deadlock theory is NOT the root cause with the CURRENT code.**
 
@@ -374,7 +374,7 @@ The freeze happens after 10-20 blocks are broken and items drop. Here's why:
 
 The more items picked up, the more events fire, the more `executeRefresh` tasks queue, the higher the probability of hitting the deadlock timing window.
 
-**Meanwhile, `BlueprintBookParticleLoop` is firing every 100ms**, adding `executeTick` tasks to the same queue. This increases overall task queue pressure and GC load, widening the timing window.
+**Meanwhile, `StencilBookParticleLoop` is firing every 100ms**, adding `executeTick` tasks to the same queue. This increases overall task queue pressure and GC load, widening the timing window.
 
 ---
 
@@ -538,14 +538,14 @@ Before the entity-to-particle migration, add a diagnostic log in `spawnHighlight
 
 ```java
 // At the start of spawnHighlightEntity():
-DebugLogger.log(BLUEPRINT_BOOK, Level.INFO, "[DEBUG] Asset read lock held: " + 
+DebugLogger.log(STENCIL_BOOK, Level.INFO, "[DEBUG] Asset read lock held: " + 
     AssetRegistry.ASSET_LOCK.readLock().tryLock()); // If true, we're under double read (fine). 
                                                      // If the freeze happens, this tells us we're under read lock.
 ```
 
 ## Next Steps
 
-1. **Implement SpawnParticleSystem migration** — replace all entity operations in `BlueprintBookParticleLoop` with direct packet sends
+1. **Implement SpawnParticleSystem migration** — replace all entity operations in `StencilBookParticleLoop` with direct packet sends
 2. **Add try-catch in all inventory change event handlers** — defensive against exception propagation
 3. **If freeze persists after migration** — add thread-dump watchdog to identify the exact deadlock location
 4. **Consider reducing `executeRefresh` to only run during the second `consumeTaskQueue()`** — use a flag to skip it during the first drain

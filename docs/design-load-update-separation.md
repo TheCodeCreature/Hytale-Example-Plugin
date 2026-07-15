@@ -1,12 +1,12 @@
-# Design: Load-Update Separation for BlueprintBook UI
+# Design: Load-Update Separation for StencilBook UI
 
 > **Date:** 2026-04-29  
 > **Status:** Ready for implementation  
-> **Affects:** `BlueprintSelectionPage.java`, `BlueprintBookPage.ui`, `CostCell.ui` (deprecated), `PlaceholderRow.ui` (deprecated)
+> **Affects:** `StencilSelectionPage.java`, `StencilBookPage.ui`, `CostCell.ui` (deprecated), `PlaceholderRow.ui` (deprecated)
 
 ## 1. Overview
 
-Eliminate per-interaction `.ui` template re-parsing by pre-allocating all dynamic nodes in `BlueprintBookPage.ui` with `Visible: false` and converting all `handleDataEvent()` paths from `cmd.clear()` + `cmd.append()`/`cmd.appendInline()` to `cmd.set()` property updates only. This fixes the stuttering and eventual disconnect caused by the client re-parsing `.ui` files on every filter change, recipe hover, and placeholder action.
+Eliminate per-interaction `.ui` template re-parsing by pre-allocating all dynamic nodes in `StencilBookPage.ui` with `Visible: false` and converting all `handleDataEvent()` paths from `cmd.clear()` + `cmd.append()`/`cmd.appendInline()` to `cmd.set()` property updates only. This fixes the stuttering and eventual disconnect caused by the client re-parsing `.ui` files on every filter change, recipe hover, and placeholder action.
 
 ## 2. Design Priorities
 
@@ -19,7 +19,7 @@ Eliminate per-interaction `.ui` template re-parsing by pre-allocating all dynami
 
 ```mermaid
 classDiagram
-    class BlueprintSelectionPage {
+    class StencilSelectionPage {
         -int MAX_SET_FILTERS = 20
         -int MAX_COST_CELLS = 8
         -int MAX_PLACEHOLDER_ROWS = 9
@@ -36,7 +36,7 @@ classDiagram
         -updatePlaceholderList(cmd, store, ref) void
     }
 
-    class BlueprintBookPageUI {
+    class StencilBookPageUI {
         &lt;&lt;.ui template&gt;&gt;
         #FilterAll..#Filter19 : TextButton[20]
         #Cost0..#Cost7 : Group[8]
@@ -44,8 +44,8 @@ classDiagram
         #NoPlaceholdersLabel : Label
     }
 
-    BlueprintSelectionPage ..> BlueprintBookPageUI : loads once via cmd.append
-    BlueprintSelectionPage ..> BlueprintBookPageUI : updates via cmd.set only
+    StencilSelectionPage ..> StencilBookPageUI : loads once via cmd.append
+    StencilSelectionPage ..> StencilBookPageUI : updates via cmd.set only
 ```
 
 ## 4. Responsibility Map
@@ -77,11 +77,11 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant Client
-    participant Server as BlueprintSelectionPage
-    participant Template as BlueprintBookPage.ui
+    participant Server as StencilSelectionPage
+    participant Template as StencilBookPage.ui
 
     Note over Server,Template: build() — Load Once
-    Server->>Client: cmd.append("BlueprintBookPage.ui")
+    Server->>Client: cmd.append("StencilBookPage.ui")
     Note over Template: Pre-allocated hidden nodes parsed once
     Server->>Client: evt.addEventBinding() x N
     Note over Server: All events bound to pre-allocated nodes
@@ -95,7 +95,7 @@ sequenceDiagram
     Note over Client: No template re-parsing, only property patches
 ```
 
-## 6. Deliverable 1 — BlueprintBookPage.ui Modifications
+## 6. Deliverable 1 — StencilBookPage.ui Modifications
 
 ### 6.1 New Styles to Add (after existing styles block, before Page Root)
 
@@ -574,7 +574,7 @@ These styles are migrated from `PlaceholderRow.ui` and `CostCell.ui` since those
             }
 ```
 
-## 7. Deliverable 2 — BlueprintSelectionPage.java Skeleton
+## 7. Deliverable 2 — StencilSelectionPage.java Skeleton
 
 ### 7.1 Constants
 
@@ -599,7 +599,7 @@ public void build(@NonNull Ref<EntityStore> ref,
     loadRecipes();
 
     // Load template ONCE — all dynamic nodes pre-allocated with Visible: false
-    cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui");
+    cmd.append("Pages/StencilBook/StencilBookPage.ui");
 
     // ── Bind ALL events (one-time) ──
 
@@ -936,21 +936,21 @@ public void handleDataEvent(@NonNull Ref<EntityStore> ref,
 No new files. All changes are in existing files:
 
 ```
-src/main/resources/Common/UI/Custom/Pages/BlueprintBook/
-├── BlueprintBookPage.ui      ← MODIFIED (pre-allocated nodes + migrated styles)
+src/main/resources/Common/UI/Custom/Pages/StencilBook/
+├── StencilBookPage.ui      ← MODIFIED (pre-allocated nodes + migrated styles)
 ├── CostCell.ui                ← DEPRECATED (no longer loaded at runtime)
 └── PlaceholderRow.ui          ← DEPRECATED (no longer loaded at runtime)
 
 src/main/java/com/UnobstructedThirdPerson/placeblock/ui/
-└── BlueprintSelectionPage.java ← MODIFIED (split build/update methods)
+└── StencilSelectionPage.java ← MODIFIED (split build/update methods)
 ```
 
 ## 10. Integration Changes Required
 
 | File | Change |
 |---|---|
-| `BlueprintBookPage.ui` | Add `@RowLabelStyle`, `@CancelLabelStyle`, `@CostQtyStyle` styles. Replace `#SetFilters`, `#CostGrid`, `#PlaceholderList` sections with pre-allocated nodes. |
-| `BlueprintSelectionPage.java` | Add 3 constants. Replace `buildSetFilters()` with `buildSetFilterBindings()` + `updateSetFilters()`. Replace `updateDetailPanel()` with update-only version (no `cmd.clear`/`cmd.append`). Replace `buildPlaceholderList()` with `buildPlaceholderBindings()` + `updatePlaceholderList()`. Extract `buildBenchTabs(evt)` + `updateBenchTabs(cmd)` from `bindBenchTabs()`. Extract `buildRecipeGridBindings(evt)` + `updateRecipeGrid(cmd)` from `buildRecipeList()`. Update `handleDataEvent()` to remove `UIEventBuilder` and call update-only methods. Update `SetFilter:` handler to parse `"idx:N"` format. |
+| `StencilBookPage.ui` | Add `@RowLabelStyle`, `@CancelLabelStyle`, `@CostQtyStyle` styles. Replace `#SetFilters`, `#CostGrid`, `#PlaceholderList` sections with pre-allocated nodes. |
+| `StencilSelectionPage.java` | Add 3 constants. Replace `buildSetFilters()` with `buildSetFilterBindings()` + `updateSetFilters()`. Replace `updateDetailPanel()` with update-only version (no `cmd.clear`/`cmd.append`). Replace `buildPlaceholderList()` with `buildPlaceholderBindings()` + `updatePlaceholderList()`. Extract `buildBenchTabs(evt)` + `updateBenchTabs(cmd)` from `bindBenchTabs()`. Extract `buildRecipeGridBindings(evt)` + `updateRecipeGrid(cmd)` from `buildRecipeList()`. Update `handleDataEvent()` to remove `UIEventBuilder` and call update-only methods. Update `SetFilter:` handler to parse `"idx:N"` format. |
 | `CostCell.ui` | No code change. No longer loaded at runtime — can be deleted or kept as reference. |
 | `PlaceholderRow.ui` | No code change. No longer loaded at runtime — can be deleted or kept as reference. |
 

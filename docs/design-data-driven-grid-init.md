@@ -15,7 +15,7 @@ The Stencil Crafting UI currently pre-allocates a fixed pool of UI elements usin
 
 ```mermaid
 classDiagram
-    class BlueprintSelectionPage {
+    class StencilSelectionPage {
         -RecipeFilterPipeline pipeline
         -List~RecipeEntry~ allRecipes
         -List~TaggedRecipe~ displayedRecipes
@@ -47,10 +47,10 @@ classDiagram
         +List~MaterialGroup~ currentGroups
     }
 
-    BlueprintSelectionPage --> MaxLayoutInfo : computes at build time
-    BlueprintSelectionPage --> RecipeFilterPipeline : delegates filtering
+    StencilSelectionPage --> MaxLayoutInfo : computes at build time
+    StencilSelectionPage --> RecipeFilterPipeline : delegates filtering
     RecipeFilterPipeline --> PipelineResult : returns
-    BlueprintSelectionPage --> PipelineResult : stores results
+    StencilSelectionPage --> PipelineResult : stores results
 ```
 
 ## 4. Responsibility Map
@@ -86,7 +86,7 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant P as Player
-    participant BSP as BlueprintSelectionPage
+    participant BSP as StencilSelectionPage
     participant RFP as RecipeFilterPipeline
     participant CMD as UICommandBuilder
     participant EVT as UIEventBuilder
@@ -125,10 +125,10 @@ No new files. All changes are within the existing file:
 
 ```
 src/main/java/com/UnobstructedThirdPerson/placeblock/ui/
-    └── BlueprintSelectionPage.java   (modified — constants replaced with data-driven fields)
+    └── StencilSelectionPage.java   (modified — constants replaced with data-driven fields)
 ```
 
-A new inner record `MaxLayoutInfo` is added inside `BlueprintSelectionPage`.
+A new inner record `MaxLayoutInfo` is added inside `StencilSelectionPage`.
 
 ## 7. Field Replacement: Old Constants → New Data-Driven Fields
 
@@ -268,7 +268,7 @@ public void build(@NonNull Ref<EntityStore> ref,
     this.playerStore = store;
 
     // Load persisted preferences (unchanged)
-    BlueprintBookPrefs prefs = BlueprintBookPrefsStore.load(this.playerRef.getUuid());
+    StencilBookPrefs prefs = StencilBookPrefsStore.load(this.playerRef.getUuid());
     // ... existing preference loading ...
 
     loadRecipes();
@@ -288,37 +288,37 @@ public void build(@NonNull Ref<EntityStore> ref,
     this.cellSlotToRecipeIndex = new int[totalCellCount];
 
     // Load main template
-    cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui");
+    cmd.append("Pages/StencilBook/StencilBookPage.ui");
 
     // ── Append reusable components — DATA-DRIVEN counts ──
 
     // Set filter sidebar buttons — one per set
     for (int i = 0; i < totalSetCount; i++) {
-        cmd.append("#SetFilters", "Pages/BlueprintBook/SetFilterButton.ui");
+        cmd.append("#SetFilters", "Pages/StencilBook/SetFilterButton.ui");
     }
 
     // Material group icon buttons — keep MAX_GROUP_BUTTONS (capped by pipeline)
     for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
-        cmd.append("#MaterialGroups", "Pages/BlueprintBook/GroupFilterButton.ui");
+        cmd.append("#MaterialGroups", "Pages/StencilBook/GroupFilterButton.ui");
     }
 
     // Per-set group containers with VARIABLE cell counts
     for (int g = 0; g < totalSetCount; g++) {
-        cmd.append("#RecipeGridArea", "Pages/BlueprintBook/SetGroupContainer.ui");
+        cmd.append("#RecipeGridArea", "Pages/StencilBook/SetGroupContainer.ui");
         for (int c = 0; c < cellsPerSet[g]; c++) {
             cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
-                       "Pages/BlueprintBook/RecipeIconCell.ui");
+                       "Pages/StencilBook/RecipeIconCell.ui");
         }
     }
 
     // Cost cells (unchanged)
     for (int i = 0; i < MAX_COST_CELLS; i++) {
-        cmd.append("#CostGrid", "Pages/BlueprintBook/CostCell.ui");
+        cmd.append("#CostGrid", "Pages/StencilBook/CostCell.ui");
     }
 
     // ── Bind ALL events (one-time) — unchanged except loop bounds ──
 
-    // ... existing SearchInput, toggle, header, GiveBlueprint bindings (unchanged) ...
+    // ... existing SearchInput, toggle, header, GiveStencil bindings (unchanged) ...
 
     buildBenchTabs(evt);
     buildSetFilterBindings(evt);        // uses totalSetCount
@@ -535,7 +535,7 @@ This means group slot 0 might show "Wood" in one filter state and "Metal" in ano
 
 | File | Change |
 |---|---|
-| `BlueprintSelectionPage.java` | Remove `MAX_SET_FILTERS`, `MAX_SET_GROUPS`, `CELLS_PER_GROUP`, `MAX_RECIPE_CELLS` constants. Add `totalSetCount`, `cellsPerSet`, `groupCellOffset`, `totalCellCount`, `maxLayoutSetNames` fields. Add `MaxLayoutInfo` record. Add `computeMaxLayout()` method. Refactor `build()`, `buildSetFilterBindings()`, `buildRecipeGridBindings()`, `updateSetFilters()`, `updateRecipeGrid()`, `hideRemainingCells()`, `onDismiss()`, `handleDataEvent()` as described above. |
+| `StencilSelectionPage.java` | Remove `MAX_SET_FILTERS`, `MAX_SET_GROUPS`, `CELLS_PER_GROUP`, `MAX_RECIPE_CELLS` constants. Add `totalSetCount`, `cellsPerSet`, `groupCellOffset`, `totalCellCount`, `maxLayoutSetNames` fields. Add `MaxLayoutInfo` record. Add `computeMaxLayout()` method. Refactor `build()`, `buildSetFilterBindings()`, `buildRecipeGridBindings()`, `updateSetFilters()`, `updateRecipeGrid()`, `hideRemainingCells()`, `onDismiss()`, `handleDataEvent()` as described above. |
 
 No other files require changes. `RecipeFilterPipeline`, UI templates, and `RecipeFilterRegistry` are unchanged.
 
@@ -596,7 +596,7 @@ No other files require changes. `RecipeFilterPipeline`, UI templates, and `Recip
 ### Wave 4 (integration — depends on Wave 3)
 
 #### Unit: Remove dead constants + final verification
-- **Files**: `BlueprintSelectionPage.java`
+- **Files**: `StencilSelectionPage.java`
 - **Contract**: Delete `MAX_SET_FILTERS`, `MAX_SET_GROUPS`, `CELLS_PER_GROUP`, `MAX_RECIPE_CELLS` constants. Verify no remaining references. Full build passes.
 - **Dependencies**: All Wave 3 units
 - **Done when**: Full build passes with zero references to removed constants

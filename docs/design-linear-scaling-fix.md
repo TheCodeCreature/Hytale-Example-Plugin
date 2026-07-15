@@ -54,7 +54,7 @@ Any fix to Phase 1 must maintain invariants consumed by these systems:
 | `StencilVisualManager` | Calls `RecipeAffordabilityResolver` | Visual glow reflects true cost |
 | `StencilPlacementSystem` | Calls `PlaceBlockCostUtil` | Resource consumption must match |
 | `PlacementCostScaler` | `RESOURCE_MULTIPLIER - 1` | Only applies to natural blocks — recipe blocks unaffected |
-| `BlueprintSelectionPage` | Calls `RecipeAffordabilityResolver` | Bench UI shows correct costs |
+| `StencilSelectionPage` | Calls `RecipeAffordabilityResolver` | Bench UI shows correct costs |
 | Phase 5 (`scaleStackSizes`) | All items with stack > 1 | Stacks must accommodate scaled quantities |
 
 ---

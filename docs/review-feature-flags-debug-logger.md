@@ -31,7 +31,7 @@ graph TB
 
     subgraph "Migrated Consumers"
         BBD["BreakBlockDiagnostic<br/>FeatureFlags.get() guard"]
-        BBPL["BlueprintBookParticleLoop<br/>DebugLogger.log()"]
+        BBPL["StencilBookParticleLoop<br/>DebugLogger.log()"]
         SVM["StencilVisualManager<br/>DebugLogger.log()"]
         SSC["StencilSubCommand<br/>DebugLogger.chat()"]
         PLUS["+ 14 more files"]
@@ -107,7 +107,7 @@ sequenceDiagram
 | Thread Safety | ✅ `ConcurrentHashMap<String, AtomicBoolean>` — reads are lock-free, toggle uses CAS loop |
 | API Design | ✅ Fail-open (`get()` returns `true` for unknown keys), `register()` for defaults, `getAll()` returns unmodifiable snapshot |
 | Error Handling | ✅ `save()` catches exceptions, logs warning, never throws. `initialize()` handles missing file gracefully |
-| Persistence | ✅ BsonUtil for JSON I/O — consistent with existing codebase pattern (BlueprintBookPrefsStore) |
+| Persistence | ✅ BsonUtil for JSON I/O — consistent with existing codebase pattern (StencilBookPrefsStore) |
 
 ### DebugLogger.java — ✅ Clean
 
@@ -143,7 +143,7 @@ sequenceDiagram
 
 | File | Status | Import Style | Call Sites |
 |------|--------|-------------|------------|
-| [BlueprintBookParticleLoop.java](../src/main/java/com/CodeCreature/ui/blueprintbook/BlueprintBookParticleLoop.java) | ✅ Correct | `static import Subsystem.*` | 7 call sites: `log(BLUEPRINT_BOOK, ...)` at INFO, FINE, WARNING levels. Lazy supplier used for FINE-level messages. |
+| [StencilBookParticleLoop.java](../src/main/java/com/CodeCreature/ui/stencilbook/StencilBookParticleLoop.java) | ✅ Correct | `static import Subsystem.*` | 7 call sites: `log(STENCIL_BOOK, ...)` at INFO, FINE, WARNING levels. Lazy supplier used for FINE-level messages. |
 | [StencilVisualManager.java](../src/main/java/com/CodeCreature/stencil/StencilVisualManager.java) | ✅ Correct | `static import Subsystem.*` | 12 call sites: `log(STENCIL, ...)` at INFO, FINE, WARNING levels. Consistent pattern throughout. |
 | [StencilSubCommand.java](../src/main/java/com/CodeCreature/command/placeblock/subcommands/StencilSubCommand.java) | ✅ Correct | `import DebugLogger` (qualified) | 4 call sites: `DebugLogger.chat(playerRef, DebugLogger.Subsystem.STENCIL, ...)` — uses qualified form instead of static import, which is fine for a file with few calls. |
 

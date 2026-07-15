@@ -1,4 +1,4 @@
-# Hytale Blueprint Plugin — Architecture Reference
+# Hytale Stencil Plugin — Architecture Reference
 
 **Last updated:** 2026-05-18  
 **Scope:** Full codebase (`com.CodeCreature.*`)
@@ -7,14 +7,14 @@
 
 ## 1. Overview
 
-This is a Hytale server plugin (~40 classes) implementing a **12× resource economy** with a **Blueprint Stencil building tool**, **Stencil Crafting crafting UI**, **Blueprint Book block-picker**, and **Stencil Radial Menu**. The architecture is cleanly separated by concern (scaling, crafting, stencil lifecycle, UI), registries are initialized in a defined sequence, and documentation is thorough.
+This is a Hytale server plugin (~40 classes) implementing a **12× resource economy** with a **Stencil Stencil building tool**, **Stencil Crafting crafting UI**, **Stencil Book block-picker**, and **Stencil Radial Menu**. The architecture is cleanly separated by concern (scaling, crafting, stencil lifecycle, UI), registries are initialized in a defined sequence, and documentation is thorough.
 
 | System | Purpose |
 |--------|---------|
 | **Resource Scaling** | Multiplies all natural block drops by 12× and scales crafting costs to match, creating a more granular resource economy |
 | **Stencil Crafting** | Custom crafting UI that shows all placeable-block recipes, filterable by material type, set, affordability, and ingredient tree |
-| **Blueprint Stencil** | Items tagged with BSON metadata that let players place specific blocks by consuming recipe ingredients instead of the block item itself |
-| **Blueprint Book** | Held item that raycasts at blocks and picks up their recipe as a stencil; shows particle highlights on valid targets |
+| **Stencil Stencil** | Items tagged with BSON metadata that let players place specific blocks by consuming recipe ingredients instead of the block item itself |
+| **Stencil Book** | Held item that raycasts at blocks and picks up their recipe as a stencil; shows particle highlights on valid targets |
 | **Stencil Radial Menu** | Middle-click radial for quick stencil switching between items in the same "set" |
 
 ---
@@ -28,7 +28,7 @@ com/
     ├── command/                         # Chat commands (/placeblock, /bookParticle)
     │   └── placeblock/subcommands/     # Stencil test command
     ├── crafting/                        # Recipe resolution and affordability
-    │   ├── BlueprintBookRecipeMutator  # Creates shadow "Blueprint_*" recipes at load time
+    │   ├── StencilBookRecipeMutator  # Creates shadow "Stencil_*" recipes at load time
     │   ├── PlaceBlockCostUtil           # Per-unit cost calculation (inputQty / outputQty)
     │   ├── RecipeAffordabilityResolver  # Full resolution chain: cost → resolve → check
     │   ├── ResolvedIngredient           # Immutable result record
@@ -61,16 +61,16 @@ com/
     │   └── StencilVisualManager         # Packet-based affordability glow on stencils
     ├── ui/                               # UI pages and controllers
     │   ├── bench/                        # Stencil Crafting crafting UI
-    │   │   ├── BlueprintBookOpenUIInteraction
-    │   │   ├── BlueprintSelectionPage   # Main bench page (grid, filters, ingredient tree)
+    │   │   ├── StencilBookOpenUIInteraction
+    │   │   ├── StencilSelectionPage   # Main bench page (grid, filters, ingredient tree)
     │   │   ├── RecipeFilterPipeline     # Pure-function pipeline (tab→search→tag→sort)
     │   │   ├── ResourceTypeRegistry     # Static resource type filter data
-    │   │   ├── BlueprintBookPrefs      # Serializable per-player preferences
-    │   │   ├── BlueprintBookPrefsStore # File I/O for prefs
+    │   │   ├── StencilBookPrefs      # Serializable per-player preferences
+    │   │   ├── StencilBookPrefsStore # File I/O for prefs
     │   │   └── AffordabilityMode        # Enum: ALL, INVENTORY_DRIVEN, RESOURCE_DRIVEN
-    │   ├── blueprintbook/               # Blueprint Book interactions
-    │   │   ├── BlueprintBookParticleLoop# Scheduled entity highlight on aimed blocks
-    │   │   └── BlueprintBookPickStencilInteraction
+    │   ├── stencilbook/               # Stencil Book interactions
+    │   │   ├── StencilBookParticleLoop# Scheduled entity highlight on aimed blocks
+    │   │   └── StencilBookPickStencilInteraction
     │   ├── ingredienttree/              # Ingredient filter tree (groups → types → items)
     │   │   ├── IngredientTree / Builder / GridController
     │   │   ├── IngredientGroup / ResourceType / ExactItem
@@ -97,7 +97,7 @@ Plugin.setup()
   ├── Register LoadAssetEvent handler
   ├── Register ECS systems (PlacementCostScaler, StencilPlacementSystem, etc.)
   ├── Initialize prefs store
-  └── Register codec interactions (BlueprintBook, BlueprintBook)
+  └── Register codec interactions (StencilBook, StencilBook)
 
 LoadAssetEvent triggers:
   ├── DropScaler.apply()
@@ -110,8 +110,8 @@ LoadAssetEvent triggers:
   │   ├── Phase 3b: Natural block processing
   │   ├── Phase 4: Register synthetic ItemDropLists
   │   └── Phase 5: Scale stack sizes
-  └── BlueprintBookRecipeMutator.mutate()
-      └── Creates shadow "Blueprint_*" recipes for every placeable output
+  └── StencilBookRecipeMutator.mutate()
+      └── Creates shadow "Stencil_*" recipes for every placeable output
 ```
 
 ---
@@ -142,7 +142,7 @@ graph TB
         P3B[Phase 3b: Natural Blocks]:::orange
         P4[Phase 4: Synthetic Drop Lists]:::green
         P5[Phase 5: Stack Sizes]:::green
-        BBRM[BlueprintBookRecipeMutator]:::green
+        BBRM[StencilBookRecipeMutator]:::green
     end
 
     subgraph "Reflection Layer"
@@ -177,22 +177,22 @@ graph TB
 
 The Hytale server API exposes asset types as read-only objects — there is no public setter API for modifying drop quantities, recipe inputs, or stack sizes. The plugin **must** use reflection. All reflective field access is centralized in `AssetFieldAccessor` (singleton), which resolves all fields once at startup and fails fast with a clear `RuntimeException` if any are missing. Rule: **ALL reflection goes through `AssetFieldAccessor`**.
 
-### BlueprintBookParticleLoop
+### StencilBookParticleLoop
 
-Runs at 500ms intervals per player holding a Blueprint Book. Performs hitbox raycast, resolves recipe, checks affordability, and spawns/despawns a highlight `BlockEntity`. Uses a `lastAffordable` diff check — entity only respawns when target block OR affordability state changes. Effect duration is 10000ms (pseudo-infinite) eliminating per-tick flicker.
+Runs at 500ms intervals per player holding a Stencil Book. Performs hitbox raycast, resolves recipe, checks affordability, and spawns/despawns a highlight `BlockEntity`. Uses a `lastAffordable` diff check — entity only respawns when target block OR affordability state changes. Effect duration is 10000ms (pseudo-infinite) eliminating per-tick flicker.
 
 ### Per-Player State Management
 
 Several classes use static `ConcurrentHashMap` fields for per-player state:
 - `StencilSyncSystem.registeredPlayers` — stores `EventRegistration[]` handles, properly deregistered on disconnect
 - `StencilVisualManager.playerStates`
-- `BlueprintBookParticleLoop.INSTANCES` — self-cleans via scheduled task when `active = false`
+- `StencilBookParticleLoop.INSTANCES` — self-cleans via scheduled task when `active = false`
 
 ### Parallel Category Processing
 
 `DropScaler` uses a virtual-thread-per-task executor to run `BuildersProcessor`, `FurnitureProcessor`, and `OverlapProcessor` in parallel during asset loading. The three processor subclasses exist primarily to return different `BenchCategory` enum values but share all logic via `AbstractBenchProcessor`.
 
-### BlueprintSelectionPage Structure
+### StencilSelectionPage Structure
 
 The main bench UI page delegates to:
 - `GridLayoutController` — grid rendering, indirection map, cell bindings
@@ -212,7 +212,7 @@ Stencils intercept `PlaceBlockEvent`, consume recipe ingredients from inventory,
 graph TB
     subgraph "Asset Loading - one-time"
         DS[DropScaler.apply]:::green
-        BBRM[BlueprintBookRecipeMutator.mutate]:::green
+        BBRM[StencilBookRecipeMutator.mutate]:::green
     end
 
     subgraph "Runtime Event Handlers"
@@ -224,11 +224,11 @@ graph TB
     subgraph "Per-Player Lifecycle"
         SSS[StencilSyncSystem]:::green
         SVM[StencilVisualManager]:::green
-        BBPL[BlueprintBookParticleLoop]:::green
+        BBPL[StencilBookParticleLoop]:::green
     end
 
     subgraph "UI Layer"
-        BSP[BlueprintSelectionPage]:::green
+        BSP[StencilSelectionPage]:::green
         RFP[RecipeFilterPipeline]:::green
         ITC[IngredientTreeGridController]:::green
         SRMP[StencilRadialMenuPage]:::green
@@ -288,5 +288,5 @@ These are not bugs — they are potential improvements for when the codebase gro
 - **`ResourceScanner` / `ResourceSnapshot`** — unimplemented stubs for chest-scanning resource aggregation. Not referenced anywhere. Delete or implement when the feature is needed.
 - **`ResourceTypeRegistry` hardcoded list** — 40+ resource types with sort orders baked into static initializers. Consider data-driven config if types expand significantly.
 - **`BenchCategory` enum** — adding a new bench type requires enum modification + processor class. Consider a registry approach if bench count grows beyond 3.
-- **Per-player state consolidation** — three separate `ConcurrentHashMap` instances across `StencilSyncSystem`, `StencilVisualManager`, `BlueprintBookParticleLoop`. A unified `PlayerSessionManager` would simplify lifecycle guarantees.
+- **Per-player state consolidation** — three separate `ConcurrentHashMap` instances across `StencilSyncSystem`, `StencilVisualManager`, `StencilBookParticleLoop`. A unified `PlayerSessionManager` would simplify lifecycle guarantees.
 - **Unit tests** — `RecipeFilterPipeline`, `PlaceBlockCostUtil`, `RecipeAffordabilityResolver`, and `ResourceTypeResolver` are all stateless/pure and highly testable but currently untested.

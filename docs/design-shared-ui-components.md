@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-A shared component library that extracts common UI patterns (icon cells, filter toggles, cost displays, segment buttons) from page-specific `.ui` files into a centralized `Common/Components/` folder. Token components define reusable element trees with parameterized defaults; standalone files compose tokens for `cmd.append()`-based dynamic instantiation. This eliminates structural duplication across BlueprintBook and StencilRadial pages while standardizing element IDs for all Java selectors.
+A shared component library that extracts common UI patterns (icon cells, filter toggles, cost displays, segment buttons) from page-specific `.ui` files into a centralized `Common/Components/` folder. Token components define reusable element trees with parameterized defaults; standalone files compose tokens for `cmd.append()`-based dynamic instantiation. This eliminates structural duplication across StencilBook and StencilRadial pages while standardizing element IDs for all Java selectors.
 
 ## 2. Design Priorities
 
@@ -104,13 +104,13 @@ graph TB
         SB["SegmentButton.ui<br/>Button #SegBtn + ItemIcon #SegIcon + Label #SegLabelText"]
     end
 
-    subgraph "Page-Specific Filter Buttons — Pages/BlueprintBook/"
+    subgraph "Page-Specific Filter Buttons — Pages/StencilBook/"
         GFB["GroupFilterButton.ui<br/>composes @FilterToggleButton"]
         EIFB["ExactItemFilterButton.ui<br/>follows @FilterToggleButton convention"]
     end
 
     subgraph "Java Consumers"
-        BSP["BlueprintSelectionPage.java"]
+        BSP["StencilSelectionPage.java"]
         SRM["StencilRadialMenuPage.java"]
         ITG["IngredientTreeGridController.java"]
     end
@@ -170,13 +170,13 @@ Common/UI/Custom/
 │   ├── GroupIcons/              ← existing assets
 │   └── Components/             ← NEW
 │       ├── Components.ui       ← token definitions (@ItemIconCell, @FilterToggleButton)
-│       ├── CostCell.ui         ← standalone (replaces Pages/BlueprintBook/CostCell.ui)
-│       ├── ClickableIconCell.ui← standalone (replaces Pages/BlueprintBook/RecipeIconCell.ui)
+│       ├── CostCell.ui         ← standalone (replaces Pages/StencilBook/CostCell.ui)
+│       ├── ClickableIconCell.ui← standalone (replaces Pages/StencilBook/RecipeIconCell.ui)
 │       ├── CostSlot.ui         ← standalone (replaces Pages/StencilRadial/StencilRadialCostSlot.ui)
 │       └── SegmentButton.ui    ← standalone (replaces Pages/StencilRadial/StencilRadialSegment.ui)
 └── Pages/
-    ├── BlueprintBook/
-    │   ├── BlueprintBookPage.ui       ← unchanged
+    ├── StencilBook/
+    │   ├── StencilBookPage.ui       ← unchanged
     │   ├── GroupFilterButton.ui        ← REWRITTEN to compose @FilterToggleButton
     │   ├── ExactItemFilterButton.ui    ← REWRITTEN to follow @FilterToggleButton convention
     │   ├── SetFilterButton.ui          ← unchanged (NOT migrated)
@@ -311,7 +311,7 @@ $B = "../../Styles/Buttons.ui";
 
 ### CostCell.ui
 
-**Replaces:** `Pages/BlueprintBook/CostCell.ui`
+**Replaces:** `Pages/StencilBook/CostCell.ui`
 **Composition:** `@ItemIconCell` + quantity Label
 **Root Visible:** `false` (Java shows/hides per slot)
 
@@ -349,7 +349,7 @@ Group {
 
 ### ClickableIconCell.ui
 
-**Replaces:** `Pages/BlueprintBook/RecipeIconCell.ui`
+**Replaces:** `Pages/StencilBook/RecipeIconCell.ui`
 **Composition:** `@ItemIconCell` + click TextButton (siblings in Full layout)
 **Root Visible:** implicit (parent grid controls visibility)
 
@@ -499,13 +499,13 @@ Group #SegRoot {
 
 ## 10. Rewritten Page-Specific Filter Buttons
 
-These files stay at `Pages/BlueprintBook/` but are rewritten to compose the `@FilterToggleButton` token or follow its convention. Their `cmd.append()` paths are unchanged.
+These files stay at `Pages/StencilBook/` but are rewritten to compose the `@FilterToggleButton` token or follow its convention. Their `cmd.append()` paths are unchanged.
 
 ### GroupFilterButton.ui (rewritten)
 
 ```
 // Group-icon filter toggle — composes @FilterToggleButton token directly
-// cmd.append() path unchanged: Pages/BlueprintBook/GroupFilterButton.ui
+// cmd.append() path unchanged: Pages/StencilBook/GroupFilterButton.ui
 
 $CP = "../../Common/Components/Components.ui";
 
@@ -518,7 +518,7 @@ The entire file becomes a single token instantiation. All element IDs (`#FilterI
 
 ```
 // Item-icon filter toggle — follows @FilterToggleButton convention with ItemIcon
-// cmd.append() path unchanged: Pages/BlueprintBook/ExactItemFilterButton.ui
+// cmd.append() path unchanged: Pages/StencilBook/ExactItemFilterButton.ui
 // Cannot compose @FilterToggleButton directly because icon element is ItemIcon, not Group
 
 $BG = "../../Styles/Backgrounds.ui";
@@ -596,23 +596,23 @@ Group {
 
 | Java File | Old Path | New Path |
 |---|---|---|
-| `BlueprintSelectionPage.java` | `Pages/BlueprintBook/RecipeIconCell.ui` | `Common/Components/ClickableIconCell.ui` |
-| `BlueprintSelectionPage.java` | `Pages/BlueprintBook/CostCell.ui` | `Common/Components/CostCell.ui` |
+| `StencilSelectionPage.java` | `Pages/StencilBook/RecipeIconCell.ui` | `Common/Components/ClickableIconCell.ui` |
+| `StencilSelectionPage.java` | `Pages/StencilBook/CostCell.ui` | `Common/Components/CostCell.ui` |
 | `StencilRadialMenuPage.java` | `Pages/StencilRadial/StencilRadialCostSlot.ui` | `Common/Components/CostSlot.ui` |
 | `StencilRadialMenuPage.java` | `Pages/StencilRadial/StencilRadialSegment.ui` | `Common/Components/SegmentButton.ui` |
 
 **Unchanged paths** (files rewritten in-place, not moved):
 | Java File | Path (unchanged) |
 |---|---|
-| `BlueprintSelectionPage.java` | `Pages/BlueprintBook/GroupFilterButton.ui` |
-| `IngredientTreeGridController.java` | `Pages/BlueprintBook/GroupFilterButton.ui` |
-| `IngredientTreeGridController.java` | `Pages/BlueprintBook/ExactItemFilterButton.ui` |
+| `StencilSelectionPage.java` | `Pages/StencilBook/GroupFilterButton.ui` |
+| `IngredientTreeGridController.java` | `Pages/StencilBook/GroupFilterButton.ui` |
+| `IngredientTreeGridController.java` | `Pages/StencilBook/ExactItemFilterButton.ui` |
 
 ---
 
 ## 13. Java Selector Migration Table
 
-### BlueprintSelectionPage.java
+### StencilSelectionPage.java
 
 | Context | Old Selector | New Selector |
 |---|---|---|
@@ -655,7 +655,7 @@ Group {
 
 ## 14. Import Convention
 
-### From Pages/*/* files (e.g., `Pages/BlueprintBook/GroupFilterButton.ui`)
+### From Pages/*/* files (e.g., `Pages/StencilBook/GroupFilterButton.ui`)
 
 ```
 $CP = "../../Common/Components/Components.ui";
@@ -690,15 +690,15 @@ Value.ref("Styles/Buttons.ui", "TransparentButtonStyle")
 
 | File | Change | Detail |
 |---|---|---|
-| `BlueprintSelectionPage.java` | Update `cmd.append()` paths | 2 paths change (CostCell, RecipeIconCell) |
-| `BlueprintSelectionPage.java` | Update `cmd.set()` selectors | ~12 selector string changes (see §13) |
-| `BlueprintSelectionPage.java` | Update `evt.addEventBinding()` selectors | `#GroupBtn` → `#Btn` in `buildMaterialGroupBindings()` |
+| `StencilSelectionPage.java` | Update `cmd.append()` paths | 2 paths change (CostCell, RecipeIconCell) |
+| `StencilSelectionPage.java` | Update `cmd.set()` selectors | ~12 selector string changes (see §13) |
+| `StencilSelectionPage.java` | Update `evt.addEventBinding()` selectors | `#GroupBtn` → `#Btn` in `buildMaterialGroupBindings()` |
 | `StencilRadialMenuPage.java` | Update `cmd.append()` paths | 2 paths change (CostSlot, Segment) |
 | `StencilRadialMenuPage.java` | Update `cmd.set()` selectors | ~8 selector string changes (see §13) |
 | `IngredientTreeGridController.java` | Update `cmd.set()` selectors | ~4 selector string changes (see §13) |
 | `IngredientTreeGridController.java` | Update `evt.addEventBinding()` selectors | `#GroupBtn`/`#ItemBtn` → `#Btn` |
-| `Pages/BlueprintBook/GroupFilterButton.ui` | Rewrite to compose token | File body replaced with `$CP.@FilterToggleButton {}` |
-| `Pages/BlueprintBook/ExactItemFilterButton.ui` | Rewrite with canonical IDs | `#ItemIconEl` → `#FilterItemIcon`, `#ItemBtn` → `#Btn` |
+| `Pages/StencilBook/GroupFilterButton.ui` | Rewrite to compose token | File body replaced with `$CP.@FilterToggleButton {}` |
+| `Pages/StencilBook/ExactItemFilterButton.ui` | Rewrite with canonical IDs | `#ItemIconEl` → `#FilterItemIcon`, `#ItemBtn` → `#Btn` |
 
 ---
 
@@ -777,10 +777,10 @@ Value.ref("Styles/Buttons.ui", "TransparentButtonStyle")
 - **Dependencies**: none (only references Styles/*.ui)
 - **Done when**: File parses; IDs `#SegRoot`, `#SegBtn`, `#SegIcon`, `#SegLabelText` are present
 
-### Wave 3: Migrate BlueprintBook to shared components
+### Wave 3: Migrate StencilBook to shared components
 
-#### Unit: BlueprintSelectionPage.java migration
-- **Files**: `BlueprintSelectionPage.java`, `Pages/BlueprintBook/GroupFilterButton.ui`
+#### Unit: StencilSelectionPage.java migration
+- **Files**: `StencilSelectionPage.java`, `Pages/StencilBook/GroupFilterButton.ui`
 - **Changes**:
   - `cmd.append` paths: `RecipeIconCell.ui` → `Common/Components/ClickableIconCell.ui`, `CostCell.ui` → `Common/Components/CostCell.ui`
   - `cmd.set` selectors: all CostCell and RecipeIconCell IDs per §13
@@ -788,10 +788,10 @@ Value.ref("Styles/Buttons.ui", "TransparentButtonStyle")
   - Rewrite `GroupFilterButton.ui` to compose `@FilterToggleButton`
   - `cmd.set` selectors: `#GroupIcon` → `#FilterIcon`
 - **Dependencies**: Wave 2 (CostCell.ui, ClickableIconCell.ui must exist)
-- **Done when**: BlueprintBook page renders correctly; all selectors target correct elements; no references to old IDs remain in this file
+- **Done when**: StencilBook page renders correctly; all selectors target correct elements; no references to old IDs remain in this file
 
 #### Unit: IngredientTreeGridController.java migration
-- **Files**: `IngredientTreeGridController.java`, `Pages/BlueprintBook/ExactItemFilterButton.ui`
+- **Files**: `IngredientTreeGridController.java`, `Pages/StencilBook/ExactItemFilterButton.ui`
 - **Changes**:
   - `cmd.set` selectors: `#GroupIcon` → `#FilterIcon`, `#ItemIconEl` → `#FilterItemIcon`, `#GroupBtn`/`#ItemBtn` → `#Btn`
   - `evt.addEventBinding` selectors: `#GroupBtn`/`#ItemBtn` → `#Btn`
@@ -813,10 +813,10 @@ Value.ref("Styles/Buttons.ui", "TransparentButtonStyle")
 
 #### Unit: Cleanup
 - **Files to delete**:
-  - `Pages/BlueprintBook/CostCell.ui`
-  - `Pages/BlueprintBook/CostIconCell.ui`
-  - `Pages/BlueprintBook/RecipeIconCell.ui`
-  - `Pages/BlueprintBook/MaterialGroupButton.ui`
+  - `Pages/StencilBook/CostCell.ui`
+  - `Pages/StencilBook/CostIconCell.ui`
+  - `Pages/StencilBook/RecipeIconCell.ui`
+  - `Pages/StencilBook/MaterialGroupButton.ui`
   - `Pages/StencilRadial/StencilRadialCostSlot.ui`
   - `Pages/StencilRadial/StencilRadialSegment.ui`
 - **Dependencies**: Waves 3 + 4 (all consumers updated)

@@ -56,8 +56,8 @@ Use `I18nModule.get().getMessage(language, key)`:
 import com.hypixel.hytale.server.core.modules.i18n.I18nModule;
 
 // Resolve a key server-side
-String text = I18nModule.get().getMessage("en-US", "server.items.BlueprintBook.name");
-// Returns: "Blueprint Journal"
+String text = I18nModule.get().getMessage("en-US", "server.items.StencilBook.name");
+// Returns: "Stencil Journal"
 // Returns null if key not found
 ```
 
@@ -87,10 +87,10 @@ import com.hypixel.hytale.server.core.Message;
 Message raw = Message.raw("Hello world");
 
 // Translation key (client resolves)
-Message translated = Message.translation("server.items.BlueprintBook.name");
+Message translated = Message.translation("server.items.StencilBook.name");
 
 // Translation with named parameters
-Message parameterized = Message.translation("blueprint.chat.givenStencil")
+Message parameterized = Message.translation("stencil.chat.givenStencil")
     .param("item", "Oak Planks")
     .param("count", 5);
 ```
@@ -145,7 +145,7 @@ Item tooltip text (name/description) uses a **different path** — the raw strin
 
 ```properties
 # Named parameter (correct)
-blueprint.chat.givenStencil = Given stencil: {item}
+stencil.chat.givenStencil = Given stencil: {item}
 
 # Plural form (ICU MessageFormat)
 items.count = You have {count, plural, one {# item} other {# items}}
@@ -164,7 +164,7 @@ From `MessageUtil.formatText()`: parameters use named keys in `{braces}`, suppor
 
 ```java
 // Server-side: send a parameterized message
-Message msg = Message.translation("blueprint.chat.givenStencil")
+Message msg = Message.translation("stencil.chat.givenStencil")
     .param("item", "Oak Planks");
 context.sendMessage(msg);
 ```
@@ -173,8 +173,8 @@ context.sendMessage(msg);
 
 ```properties
 # ❌ Positional parameters are NOT supported
-blueprint.chat.givenStencil = Given stencil: {0}
-blueprint.chat.givenStencil = Given stencil: %s
+stencil.chat.givenStencil = Given stencil: {0}
+stencil.chat.givenStencil = Given stencil: %s
 ```
 
 ---
@@ -212,11 +212,11 @@ File: Server/Languages/en-US/ui/crafting.lang
 
 So for your file at `Server/Languages/en-US/server.lang` with entry:
 ```
-items.BlueprintBook.name = Blueprint Journal
+items.StencilBook.name = Stencil Journal
 ```
 
-The resolved key becomes: **`server.items.BlueprintBook.name`**
-(prefix `server` + `.` + key `items.BlueprintBook.name`)
+The resolved key becomes: **`server.items.StencilBook.name`**
+(prefix `server` + `.` + key `items.StencilBook.name`)
 
 ### Loading sequence from logs
 
@@ -239,7 +239,7 @@ If the lang file isn't loading (e.g., `IncludesAssetPack` is false), you can sen
 // From StencilVisualManager.sendStencilTranslations()
 Map<String, String> translations = new HashMap<>();
 translations.put("server.items.stencil.description",
-    "A blueprint stencil for a specific block.");
+    "A stencil stencil for a specific block.");
 UpdateTranslations packet = new UpdateTranslations(UpdateType.AddOrUpdate, translations);
 playerRef.getPacketHandler().writeNoCache(packet);
 ```
@@ -265,7 +265,7 @@ The primary i18n usage in the plugin:
    ```java
    private static void sendStencilTranslations(@Nonnull PlayerRef playerRef) {
        Map<String, String> translations = new HashMap<>();
-       translations.put(STENCIL_DESCRIPTION_KEY, "A blueprint stencil for...");
+       translations.put(STENCIL_DESCRIPTION_KEY, "A stencil stencil for...");
        UpdateTranslations packet = new UpdateTranslations(UpdateType.AddOrUpdate, translations);
        playerRef.getPacketHandler().writeNoCache(packet);
    }
@@ -290,14 +290,14 @@ The primary i18n usage in the plugin:
 
 The lang file at `src/main/resources/Server/Languages/en-US/server.lang` contains:
 ```properties
-items.BlueprintBook.name = Blueprint Journal
-items.BlueprintBook.description = A journal of blueprints and stencils for crafting.\n[F] Use — Open the blueprint menu.\n[Middle Click] Select — Obtain a stencil from the selected blueprint.
-items.stencil.description = A blueprint stencil for a specific block.\n[F] Use — Place the block using materials from your inventory.\n[Middle Click] Select — Quick-select this stencil in your hotbar.\n[G] Drop — Discard the stencil (it will be destroyed).
+items.StencilBook.name = Stencil Journal
+items.StencilBook.description = A journal of stencils and stencils for crafting.\n[F] Use — Open the stencil menu.\n[Middle Click] Select — Obtain a stencil from the selected stencil.
+items.stencil.description = A stencil stencil for a specific block.\n[F] Use — Place the block using materials from your inventory.\n[Middle Click] Select — Quick-select this stencil in your hotbar.\n[G] Drop — Discard the stencil (it will be destroyed).
 ```
 
 After prefix resolution, these become:
-- `server.items.BlueprintBook.name`
-- `server.items.BlueprintBook.description`
+- `server.items.StencilBook.name`
+- `server.items.StencilBook.description`
 - `server.items.stencil.description`
 
 ### Dual-path pattern

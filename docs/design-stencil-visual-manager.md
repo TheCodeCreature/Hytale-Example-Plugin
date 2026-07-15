@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-StencilVisualManager provides per-player visual identity and real-time affordability indicators for blueprint stencil items in the hotbar. It overrides item display names (to `[Stencil] {Block Name}`) and swaps `ItemQuality` indices via `UpdateItems` packets to show distinctive slot glows — blue/green when affordable, red when not. The core design principle is **stateful delta tracking**: only send packets when affordability state actually changes.
+StencilVisualManager provides per-player visual identity and real-time affordability indicators for stencil stencil items in the hotbar. It overrides item display names (to `[Stencil] {Block Name}`) and swaps `ItemQuality` indices via `UpdateItems` packets to show distinctive slot glows — blue/green when affordable, red when not. The core design principle is **stateful delta tracking**: only send packets when affordability state actually changes.
 
 ## 2. Design Priorities
 
@@ -56,7 +56,7 @@ graph TB
     subgraph Trigger Sources
         A[StencilSyncSystem.restoreStencils] -->|hotbar change| B[StencilVisualManager.refreshAffordability]
         C[Plugin.onPlayerReady] -->|connect| D[StencilVisualManager.applyVisuals]
-        E[BlueprintSelectionPage.giveSelectedBlueprint] -->|stencil given| F[StencilVisualManager.refreshAffordability]
+        E[StencilSelectionPage.giveSelectedStencil] -->|stencil given| F[StencilVisualManager.refreshAffordability]
         G[Plugin.onPlayerDisconnect] -->|disconnect| H[StencilVisualManager.removePlayer]
     end
 
@@ -84,13 +84,13 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant BSP as BlueprintSelectionPage
+    participant BSP as StencilSelectionPage
     participant Inv as Player Inventory
     participant SSS as StencilSyncSystem
     participant SVM as StencilVisualManager
     participant Client as Client
 
-    Note over BSP: Player selects blueprint
+    Note over BSP: Player selects stencil
     BSP->>Inv: addItemStack(stencil)
     Inv->>SSS: changeEvent fires
     SSS->>SSS: restoreStencils (qty 1→2)
@@ -147,13 +147,13 @@ hotbar.registerChangeEvent(event -> {
 });
 ```
 
-### 7.2 BlueprintSelectionPage.java — Trigger visual refresh after giving stencil
+### 7.2 StencilSelectionPage.java — Trigger visual refresh after giving stencil
 
 **What:** After `addItemStack(item)`, call `StencilVisualManager.refreshAffordability()`.
 
-**Why:** The hotbar change listener will fire, but `BlueprintSelectionPage` has direct access to `playerRef` and `Player` which makes this a clearer integration point. However, since the change listener in `StencilSyncSystem` already fires on `addItemStack`, this call is **redundant** and should be omitted — the piggybacked call in 7.1 covers this case.
+**Why:** The hotbar change listener will fire, but `StencilSelectionPage` has direct access to `playerRef` and `Player` which makes this a clearer integration point. However, since the change listener in `StencilSyncSystem` already fires on `addItemStack`, this call is **redundant** and should be omitted — the piggybacked call in 7.1 covers this case.
 
-**Verdict:** No change needed in `BlueprintSelectionPage.java`. The listener-based path covers it.
+**Verdict:** No change needed in `StencilSelectionPage.java`. The listener-based path covers it.
 
 ### 7.3 UnobstructedThirdPersonPlugin.java — Register and cleanup
 
@@ -181,7 +181,7 @@ StencilVisualManager.removePlayer(playerRef.getUuid());
 
 1. **Quality asset textures:** The `Stencil_Affordable` and `Stencil_Unaffordable` quality assets reference slot/tooltip textures that don't exist yet. They reuse the `Default` textures as placeholders. Custom textures (blue glow, red glow) need to be created by an artist or the texture paths updated once available.
 
-2. **BlockGroup affordability:** `StencilPlacementSystem` does not check `BlockGroup` membership for affordability — only raw recipe materials. Should `StencilVisualManager` match this simpler check (recipe materials only), or match the richer `BlueprintSelectionPage.isAffordable()` which includes BlockGroup cycling? The skeleton uses the simpler recipe-only check to match placement behavior.
+2. **BlockGroup affordability:** `StencilPlacementSystem` does not check `BlockGroup` membership for affordability — only raw recipe materials. Should `StencilVisualManager` match this simpler check (recipe materials only), or match the richer `StencilSelectionPage.isAffordable()` which includes BlockGroup cycling? The skeleton uses the simpler recipe-only check to match placement behavior.
 
 3. **Multiple stencils of the same item type with different recipes:** If two stencils of the same item ID exist in the hotbar but with different recipe IDs, quality is per item TYPE (not per stack). The last-scanned recipe wins. This is a known limitation per design constraint #2.
 

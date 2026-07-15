@@ -109,7 +109,7 @@ effectCtrl.clearEffects(entityRef, store);
 
 ```json
 {
-  "Id": "Blueprint_Particle_Loop",
+  "Id": "Stencil_Particle_Loop",
   "Infinite": true,
   "OverlapBehavior": "Ignore",
   "RemovalBehavior": "Complete",

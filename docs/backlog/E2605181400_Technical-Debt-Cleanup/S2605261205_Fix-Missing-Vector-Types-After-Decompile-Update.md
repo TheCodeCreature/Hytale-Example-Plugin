@@ -19,11 +19,11 @@ As a **server developer**, I want **vector type references updated to the curren
 ### Checklist
 - [ ] All compile errors caused by unresolved `Vector3d`, `Vector3f`, and `Vector3i` symbols are resolved.
 - [ ] A full `:compileJava` run succeeds on the updated API.
-- [ ] Blueprint book targeting highlight and stencil target selection still point to the same block under the crosshair.
+- [ ] Stencil book targeting highlight and stencil target selection still point to the same block under the crosshair.
 
 ### Scenarios
-**Blueprint targeting still works after compile fix**
-- **Given** a player points at a valid target block with a blueprint-related item
+**Stencil targeting still works after compile fix**
+- **Given** a player points at a valid target block with a stencil-related item
 - **When** targeting logic runs
 - **Then** the same target block coordinates are resolved and used for highlight/selection as before the API update
 

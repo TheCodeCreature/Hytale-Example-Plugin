@@ -12,7 +12,7 @@ sources: [
   "decompiled BlockTypeTextures.java",
   "Wood_Oak_Trunk.json",
   "Wood_Hardwood_Fence.json",
-  "Bench_Blueprint.json",
+  "Bench_Stencil.json",
   "Block_Placeholder_Green.json"
 ]
 ---
@@ -226,8 +226,8 @@ Java `File` I/O works — plugins run in a standard JVM. You can write to any wr
 
 ### Do existing systems write JSON files?
 
-**No.** Neither `BlueprintBookRecipeMutator` nor `DropScaler` write JSON files. They mutate assets **in memory** during `LoadAssetEvent`:
-- `BlueprintBookRecipeMutator` creates shadow `CraftingRecipe` objects and registers them via `CraftingRecipe.getAssetStore().loadAssets()`
+**No.** Neither `StencilBookRecipeMutator` nor `DropScaler` write JSON files. They mutate assets **in memory** during `LoadAssetEvent`:
+- `StencilBookRecipeMutator` creates shadow `CraftingRecipe` objects and registers them via `CraftingRecipe.getAssetStore().loadAssets()`
 - `DropScaler` mutates `BlockGathering` objects by cloning and modifying them in memory
 
 The idea would be to generate the JSON as a **build-time or offline tool**, not at runtime.
@@ -238,7 +238,7 @@ The idea would be to generate the JSON as a **build-time or offline tool**, not 
 
 ### Enumeration logic
 
-From [BlueprintBookRecipeMutator.java](../../src/main/java/com/UnobstructedThirdPerson/placeblock/BlueprintBookRecipeMutator.java#L59-L65):
+From [StencilBookRecipeMutator.java](../../src/main/java/com/UnobstructedThirdPerson/placeblock/StencilBookRecipeMutator.java#L59-L65):
 
 ```java
 for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()) {
@@ -252,7 +252,7 @@ for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()
 
 `hasPlaceableOutput` checks: `recipe.getPrimaryOutput().getItemId()` → `Item.getAssetMap().getAsset(itemId).getBlockId() != null`.
 
-From [BlueprintSelectionPage.java](../../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L63-L75), the similar enumeration:
+From [StencilSelectionPage.java](../../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/StencilSelectionPage.java#L63-L75), the similar enumeration:
 ```java
 for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()) {
     if (recipe == null) continue;
@@ -263,7 +263,7 @@ for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()
 
 ### Estimated count
 
-The log output `"Registered N shadow Blueprint recipes"` gives the exact count at runtime. Based on typical Hytale content:
+The log output `"Registered N shadow Stencil recipes"` gives the exact count at runtime. Based on typical Hytale content:
 - **Builders bench**: ~100-200 block recipes (walls, stairs, fences, pillars, etc.)
 - **Furniture bench**: ~50-100 furniture recipes (benches, chairs, etc.)
 - **Other benches**: ~20-50 miscellaneous

@@ -1,7 +1,7 @@
 # Design: S2605261205 Compile Restoration for Vector Type Drift
 
 ## 1. Overview
-This design restores compilation after the decompile API update moved or renamed vector types used in blueprint and stencil interaction paths. The patch is intentionally mechanical and behavior-preserving: adjust vector imports/types, apply only minimal nullability guards required for compile stability, and fix one logging type-safety risk. The core principle is to isolate API-compatibility edits to the four scoped files without changing gameplay flow.
+This design restores compilation after the decompile API update moved or renamed vector types used in stencil and stencil interaction paths. The patch is intentionally mechanical and behavior-preserving: adjust vector imports/types, apply only minimal nullability guards required for compile stability, and fix one logging type-safety risk. The core principle is to isolate API-compatibility edits to the four scoped files without changing gameplay flow.
 
 ## 2. Design Priorities
 - 1) Minimality: smallest mechanical delta in only the scoped files
@@ -13,7 +13,7 @@ This design restores compilation after the decompile API update moved or renamed
 ## 3. Component Diagram
 ```mermaid
 classDiagram
-    class BlueprintBookParticleLoop {
+    class StencilBookParticleLoop {
       -startUpdateLoop()
       -spawnHighlightEntity(Store~EntityStore~, Vector3i, String, boolean)
       -removeHighlightEntity(Store~EntityStore~)
@@ -21,7 +21,7 @@ classDiagram
       -guardNullableInventoryAndEffectLookups() *
     }
 
-    class BlueprintBookPickStencilInteraction {
+    class StencilBookPickStencilInteraction {
       +firstRun(InteractionType, InteractionContext, CooldownHandler)
       -hasStencilForRecipe(ItemContainer, String)
       -resolveTargetVectorCompat() *
@@ -41,8 +41,8 @@ classDiagram
       -resolveRayVectorCompat() *
     }
 
-    BlueprintBookParticleLoop --> BoundingBoxRayCast : uses
-    BlueprintBookPickStencilInteraction --> BoundingBoxRayCast : optional target compat path
+    StencilBookParticleLoop --> BoundingBoxRayCast : uses
+    StencilBookPickStencilInteraction --> BoundingBoxRayCast : optional target compat path
     StencilInputListener --> BoundingBoxRayCast : optional target compat path
 ```
 
@@ -53,8 +53,8 @@ graph TB
     A --> C[Minimal nullability stabilization]
     A --> D[Log safety correction]
 
-    B --> B1[BlueprintBookParticleLoop]
-    B --> B2[BlueprintBookPickStencilInteraction]
+    B --> B1[StencilBookParticleLoop]
+    B --> B2[StencilBookPickStencilInteraction]
     B --> B3[StencilInputListener]
     B --> B4[BoundingBoxRayCast]
 
@@ -78,8 +78,8 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant Engine as Engine Tick/Packet
-    participant Particle as BlueprintBookParticleLoop
-    participant Pick as BlueprintBookPickStencilInteraction
+    participant Particle as StencilBookParticleLoop
+    participant Pick as StencilBookPickStencilInteraction
     participant Listener as StencilInputListener
     participant Ray as BoundingBoxRayCast
     participant World as World API
@@ -104,9 +104,9 @@ sequenceDiagram
 ```text
 src/main/java/com/CodeCreature/
 ├── ui/
-│   ├── blueprintbook/
-│   │   ├── BlueprintBookParticleLoop.java
-│   │   └── BlueprintBookPickStencilInteraction.java
+│   ├── stencilbook/
+│   │   ├── StencilBookParticleLoop.java
+│   │   └── StencilBookPickStencilInteraction.java
 │   └── radial/
 │       └── StencilInputListener.java
 └── util/
@@ -117,11 +117,11 @@ docs/
 ```
 
 ## 7. Integration Changes Required
-- File: src/main/java/com/CodeCreature/ui/blueprintbook/BlueprintBookParticleLoop.java
+- File: src/main/java/com/CodeCreature/ui/stencilbook/StencilBookParticleLoop.java
 - Modification: Replace old vector imports/types with updated API equivalents where used by transform/target handling; add minimal null guards at nullable hotbar/effect/ref call sites needed for strict compile checks.
 - Migration cleanup after implementation: remove temporary compatibility TODO markers and any temporary fallback comments.
 
-- File: src/main/java/com/CodeCreature/ui/blueprintbook/BlueprintBookPickStencilInteraction.java
+- File: src/main/java/com/CodeCreature/ui/stencilbook/StencilBookPickStencilInteraction.java
 - Modification: Apply mechanical target vector type/import correction (if required by new API) without changing interaction flow.
 - Migration cleanup after implementation: remove temporary compatibility TODO markers.
 
@@ -160,7 +160,7 @@ docs/
 - Dependencies: none
 - Done when: file compiles with updated vector types and returns same target semantics.
 
-#### Unit: BlueprintBookPickStencilInteraction.java
+#### Unit: StencilBookPickStencilInteraction.java
 - Methods: firstRun(...)
 - Contract: Keep pick-to-stencil flow unchanged while applying only mechanical vector-type alignment if needed.
 - Dependencies: none
@@ -174,7 +174,7 @@ docs/
 
 ### Wave 2 (depends on Wave 1)
 
-#### Unit: BlueprintBookParticleLoop.java
+#### Unit: StencilBookParticleLoop.java
 - Methods: startUpdateLoop(), spawnHighlightEntity(...), removeHighlightEntity(...), shutdown()
 - Contract: Preserve highlight entity lifecycle while adopting updated vector contracts and minimal null-safety guards required for compile stability.
 - Dependencies: BoundingBoxRayCast.java
@@ -186,4 +186,4 @@ docs/
 - Files: all four scoped source files plus this design doc for traceability
 - Contract: Ensure all compile-restoration edits are mechanical and scoped, with no behavior drift.
 - Dependencies: all Wave 1 and Wave 2 units
-- Done when: project compile passes and focused regression checks for blueprint pick/use/highlight paths are green.
+- Done when: project compile passes and focused regression checks for stencil pick/use/highlight paths are green.

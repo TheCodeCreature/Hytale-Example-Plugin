@@ -23,8 +23,8 @@ As a **developer**, I want **compile restoration scaffolding removed** so that *
 - [ ] Build compiles and tests pass after removal
 
 ### Affected Files
-1. `BlueprintBookParticleLoop.java` — skeleton method + constant
-2. `BlueprintBookPickStencilInteraction.java` — skeleton method + constant
+1. `StencilBookParticleLoop.java` — skeleton method + constant
+2. `StencilBookPickStencilInteraction.java` — skeleton method + constant
 3. `StencilInputListener.java` — skeleton method + constant
 4. `BoundingBoxRayCast.java` — skeleton method + constant (verify)
 

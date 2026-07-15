@@ -30,5 +30,5 @@ As a **player**, I want **all crafting bench tabs to appear and work correctly**
 - **Then** only Workbench recipes are shown in the grid
 
 ## Notes
-- `BlueprintSelectionPage.loadRecipes()` already builds tabs dynamically from `RecipeFilterRegistry` — this story is primarily verification.
+- `StencilSelectionPage.loadRecipes()` already builds tabs dynamically from `RecipeFilterRegistry` — this story is primarily verification.
 - If the Hytale tab component has a max tab count, that's a constraint to document.

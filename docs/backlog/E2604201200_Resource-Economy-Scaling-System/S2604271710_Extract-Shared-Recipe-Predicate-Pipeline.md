@@ -21,7 +21,7 @@ As a **developer**, I want **a single place that defines which recipes are valid
 - [ ] It accepts a list of allowed bench IDs and produces a filtered collection of recipe entries
 - [ ] Each entry includes: recipeId, outputItemId, blockTypeId, benchId(s), itemSet, resolved ingredient item IDs
 - [ ] Recipe scanning applies these predicates in order: non-null, skip-prefix exclusions, valid output with blockId, valid inputs (itemId or resourceTypeId), bench match (all BenchRequirement entries)
-- [ ] Skip-prefix exclusions are configurable (e.g., "Blueprint_", "Salvage")
+- [ ] Skip-prefix exclusions are configurable (e.g., "Stencil_", "Salvage")
 - [ ] ResourceType resolution delegates to `ResourceTypeResolver.resolveInputItemId()`
 - [ ] BenchRequirement matching scans all entries, not just the first
 

@@ -24,7 +24,7 @@ Updated `bench-tab-groups.json`:
   "benchOverrides": {
     "Furniture_Bench": { "preferNatural": true }
   },
-  "skipPrefixes": ["Blueprint_", "Salvage"],
+  "skipPrefixes": ["Stencil_", "Salvage"],
   "excludedTabs": []
 }
 ```
@@ -32,8 +32,8 @@ Updated `bench-tab-groups.json`:
 | Field | Type | Default if missing | Effect |
 |-------|------|--------------------|--------|
 | `benchOverrides` | `Map<String, {preferNatural: bool}>` | `{"Furniture_Bench": {"preferNatural": true}}` | Per-bench flags applied during `BenchRegistry.init()`. Unknown bench IDs are logged and ignored. |
-| `skipPrefixes` | `String[]` | `["Blueprint_", "Salvage"]` | Recipe ID prefixes excluded from `RecipeFilterRegistry`. Replaces `DEFAULT_SKIP_PREFIXES` as init input. |
-| `excludedTabs` | `String[]` | `[]` | Tab group keys hidden from `getOrderedTabIds()`. Bench remains in economy (recipes still indexed), only hidden from Blueprint Book UI. |
+| `skipPrefixes` | `String[]` | `["Stencil_", "Salvage"]` | Recipe ID prefixes excluded from `RecipeFilterRegistry`. Replaces `DEFAULT_SKIP_PREFIXES` as init input. |
+| `excludedTabs` | `String[]` | `[]` | Tab group keys hidden from `getOrderedTabIds()`. Bench remains in economy (recipes still indexed), only hidden from Stencil Book UI. |
 
 ## 4. Component Diagram
 
@@ -115,7 +115,7 @@ graph TB
     F -->|prioritizes| I[BenchRecipeRegistries.getRecipeForBlock]
 
     D -->|filters recipes| J[RecipeFilterRegistry entries]
-    E -->|filters tabs| K[BlueprintSelectionPage.loadRecipes]
+    E -->|filters tabs| K[StencilSelectionPage.loadRecipes]
 ```
 
 ## 6. Init Sequence
@@ -168,7 +168,7 @@ record BenchOverride(@Nonnull String benchId, boolean preferNatural) {}
 
 **`loadConfig()`** — parse three new JSON fields with defaults:
 - `benchOverrides`: default `Map.of("Furniture_Bench", new BenchOverride("Furniture_Bench", true))`
-- `skipPrefixes`: default `List.of("Blueprint_", "Salvage")`
+- `skipPrefixes`: default `List.of("Stencil_", "Salvage")`
 - `excludedTabs`: default `Set.of()`
 
 **`create()`** — accept `TabGroupConfig` instead of just `Path` (or load internally as now). Store `excludedTabs` as instance field.
@@ -240,9 +240,9 @@ RecipeFilterRegistry.init(new LinkedHashSet<>(BenchRegistry.getSkipPrefixes()));
 | Misconfiguration | Impact | Mitigation |
 |-----------------|--------|------------|
 | `benchOverrides` references unknown bench ID | No effect — applied only to discovered benches. Log warning. | Warn at init: "benchOverride for '%s' does not match any discovered bench" |
-| `skipPrefixes` is empty `[]` | All recipes including Blueprint_ and Salvage appear in UI. Cluttered but functional. | Log info at init showing active prefix count. |
+| `skipPrefixes` is empty `[]` | All recipes including Stencil_ and Salvage appear in UI. Cluttered but functional. | Log info at init showing active prefix count. |
 | `skipPrefixes` too broad (e.g. `[""]`) | All recipes filtered — empty UI. | Validate: skip any prefix that is empty string. Log warning. |
-| `excludedTabs` hides all tabs | Empty Blueprint Book. Player sees "All" tab with zero entries if all groups excluded. | Log warning if `excludedTabs.size() >= orderedTabIds.size()`. |
+| `excludedTabs` hides all tabs | Empty Stencil Book. Player sees "All" tab with zero entries if all groups excluded. | Log warning if `excludedTabs.size() >= orderedTabIds.size()`. |
 | `excludedTabs` references nonexistent tab key | Silently ignored (set difference). | Log info listing unmatched exclusions. |
 | `benchOverrides` sets `preferNatural: true` for many benches | Over-aggressive natural item preference in ResourceType resolution. Cosmetic/balance issue only. | No guard needed — admin intent. |
 | JSON parse failure | Existing behavior: fall back to hardcoded defaults. No regression. | Already handled by `loadConfig()` catch blocks. |
@@ -260,7 +260,7 @@ src/main/java/com/CodeCreature/registry/
 src/main/java/com/CodeCreature/scaling/
 ├── DropScaler.java               (modified — R3 wiring)
 ├── NaturalResourceRegistry.java  (modified — R1 delete duplicate)
-run/mods/Crafting_BlueprintSystem/
+run/mods/Crafting_StencilSystem/
 ├── bench-tab-groups.json         (add benchOverrides, skipPrefixes, excludedTabs)
 ```
 
@@ -281,7 +281,7 @@ run/mods/Crafting_BlueprintSystem/
 
 ## 11. Open Questions
 
-1. **Should `excludedTabs` also suppress recipes from the "All" tab?** Current design: no — "All" shows everything. Excluding from "All" would require `BlueprintSelectionPage` changes. Recommend: keep "All" unfiltered for v1.
+1. **Should `excludedTabs` also suppress recipes from the "All" tab?** Current design: no — "All" shows everything. Excluding from "All" would require `StencilSelectionPage` changes. Recommend: keep "All" unfiltered for v1.
 2. **Should `benchOverrides` support flags beyond `preferNatural`?** The record is extensible, but only `preferNatural` is wired today. Defer additional flags until a concrete need arises.
 
 ## Handoff Checklist

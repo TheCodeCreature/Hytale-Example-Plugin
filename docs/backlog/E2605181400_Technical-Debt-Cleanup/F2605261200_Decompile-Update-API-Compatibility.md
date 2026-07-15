@@ -17,7 +17,7 @@ Restore server startup after decompile-based API updates by adapting plugin code
 
 ### Checklist
 - [ ] The plugin compiles against the updated decompiled server API with no symbol resolution errors.
-- [ ] Player-facing behavior for blueprint targeting, stencil selection, and placement preview remains unchanged.
+- [ ] Player-facing behavior for stencil targeting, stencil selection, and placement preview remains unchanged.
 
 ### Scenarios
 **Server update regression recovery**

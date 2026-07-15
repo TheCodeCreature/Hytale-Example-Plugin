@@ -7,7 +7,7 @@ sources:
   - "docs/hytale/ui/ui-data-binding.md — UICommandBuilder.set(), Activating events"
   - "docs/hytale/ui/custom-ui-overview.md — .ui DSL structure"
   - "docs/hytale/community/vex-ui-library-research.md — Vex core node type list"
-  - "src/main/java/.../BlueprintSelectionPage.java — Visible toggling in practice"
+  - "src/main/java/.../StencilSelectionPage.java — Visible toggling in practice"
 ---
 
 # Collapsible / Expandable Section Pattern
@@ -109,7 +109,7 @@ evt.addEventBinding(
 
 ### In Our Codebase
 
-`BlueprintSelectionPage.java` already uses `Visible` toggling extensively:
+`StencilSelectionPage.java` already uses `Visible` toggling extensively:
 
 ```java
 // Toggling set filter visibility
@@ -149,7 +149,7 @@ All stack-based `LayoutMode` values (`Top`, `TopScrolling`, `Left`, `LeftScrolli
 2. Subsequent siblings shift to fill the vacated space
 3. The parent may shrink if it uses `FlexWeight` sizing rather than fixed `Anchor` dimensions
 
-**Verified in practice:** Our `BlueprintSelectionPage.java` toggles `Visible` on recipe grid children inside a `LeftCenterWrap` container, and the remaining visible items reflow correctly into a tighter grid.
+**Verified in practice:** Our `StencilSelectionPage.java` toggles `Visible` on recipe grid children inside a `LeftCenterWrap` container, and the remaining visible items reflow correctly into a tighter grid.
 
 ### Caveat: ScrollView / TopScrolling
 
@@ -157,7 +157,7 @@ When using `TopScrolling`, the scrollable content area adjusts its total scrolla
 
 ---
 
-## Recommended Implementation for BlueprintBookPage
+## Recommended Implementation for StencilBookPage
 
 ### Option A: Simple Toggle (Independent Sections)
 

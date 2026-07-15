@@ -185,7 +185,7 @@ public final class FeatureFlags {
         register("logging.global", false);
         register("logging.plugin", false);
         register("logging.stencil", false);
-        register("logging.blueprint_book", false);
+        register("logging.stencil_book", false);
         register("logging.scaling", false);
         register("logging.registry", false);
         register("logging.crafting", false);

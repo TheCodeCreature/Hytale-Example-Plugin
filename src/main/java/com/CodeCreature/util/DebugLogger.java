@@ -49,10 +49,10 @@ public final class DebugLogger {
     public enum Subsystem {
         /** Core plugin lifecycle (setup, events, teardown). */
         PLUGIN,
-        /** Blueprint stencil placement, sync, and visuals. */
+        /** Stencil stencil placement, sync, and visuals. */
         STENCIL,
-        /** Blueprint book UI, recipes, affordability, particle loop and pick-stencil. */
-        BLUEPRINT_BOOK,
+        /** Stencil book UI, recipes, affordability, particle loop and pick-stencil. */
+        STENCIL_BOOK,
         /** Drop scaling and placement cost scaling. */
         SCALING,
         /** Recipe and resource type registries. */
@@ -66,7 +66,7 @@ public final class DebugLogger {
          * Returns the {@link FeatureFlags} key for this subsystem.
          *
          * @return key in the form {@code "logging.<lowercase_name>"}
-         *         (e.g. {@code "logging.BLUEPRINT_BOOK"})
+         *         (e.g. {@code "logging.STENCIL_BOOK"})
          */
         public String flagKey() {
             return "logging." + this.name().toLowerCase();

@@ -37,8 +37,8 @@ Verify and adjust the Stencil Crafting UI to properly handle dynamically discove
 | ID | Title | Status |
 |----|-------|--------|
 | S2605291070 | Verify UI Tab Rendering with N Benches | backlog |
-| S2605291075 | Validate BlueprintBookPrefs for Dynamic Tabs | backlog |
+| S2605291075 | Validate StencilBookPrefs for Dynamic Tabs | backlog |
 
 ## Notes
-- `BlueprintSelectionPage.loadRecipes()` already collects bench IDs dynamically from entries. The main risk is whether the Hytale `#BenchTabs` UI component handles many tabs gracefully.
+- `StencilSelectionPage.loadRecipes()` already collects bench IDs dynamically from entries. The main risk is whether the Hytale `#BenchTabs` UI component handles many tabs gracefully.
 - If the tab bar overflows, a scrollable tab bar or dropdown may be needed (future enhancement).

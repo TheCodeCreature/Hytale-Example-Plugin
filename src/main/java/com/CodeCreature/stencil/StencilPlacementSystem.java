@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 /**
- * Intercepts {@link PlaceBlockEvent} for blueprint stencil items and redirects
+ * Intercepts {@link PlaceBlockEvent} for stencil stencil items and redirects
  * resource consumption from the item stack to recipe materials.
  *
  * <p><b>Strategy — "Bump and Let Through":</b> Instead of cancelling the event

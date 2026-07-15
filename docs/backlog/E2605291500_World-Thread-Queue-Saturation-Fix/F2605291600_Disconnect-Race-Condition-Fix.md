@@ -19,7 +19,7 @@ Fix disconnect cleanup race conditions that cause indefinite loading screen hang
 - [ ] Player can disconnect and rejoin a LAN server without hanging on the loading screen
 - [ ] Each disconnect cleanup call is isolated — one failure doesn't prevent others from running
 - [ ] StencilSyncSystem re-registration works correctly on rejoin even if previous cleanup was incomplete
-- [ ] BlueprintBookParticleLoop shutdown does not queue unnecessary world thread work during disconnect
+- [ ] StencilBookParticleLoop shutdown does not queue unnecessary world thread work during disconnect
 - [ ] No entity leaks or stale scheduled tasks after disconnect
 
 ### Scenarios

@@ -178,7 +178,7 @@ flowchart LR
 
 17. **Auto-craft does NOT change break behavior.** Breaking a block placed via auto-craft returns the recipe's direct intermediates (per Contract #4), not the raw materials that were consumed. If a player auto-crafted brick stairs using cobblestone, breaking returns bricks. The player gains intermediates they can reuse for future placements — either directly (fast path) or via auto-craft again. This is the designed value proposition: the player trades raw materials and gets intermediates back, a net convenience gain with no material transmutation.
 
-18. **The radial menu and blueprint bench replace unaffordable intermediates with raw materials.** When auto-craft is needed, the UI replaces intermediate ingredient slots with the raw materials that will actually be consumed. The display reflects the real consumption plan, not the nominal recipe. If the player has some intermediates (partial fast-path), those intermediates remain visible and only the deficit is shown as raw materials. When the player has all intermediates (full fast-path), the UI shows the original recipe unchanged.
+18. **The radial menu and stencil bench replace unaffordable intermediates with raw materials.** When auto-craft is needed, the UI replaces intermediate ingredient slots with the raw materials that will actually be consumed. The display reflects the real consumption plan, not the nominal recipe. If the player has some intermediates (partial fast-path), those intermediates remain visible and only the deficit is shown as raw materials. When the player has all intermediates (full fast-path), the UI shows the original recipe unchanged.
 
 ## Anti-Patterns to Reject
 

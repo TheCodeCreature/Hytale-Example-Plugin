@@ -171,13 +171,13 @@ Setting both to `false` creates a lightweight packet that only updates metadata 
 
 ## Implications for Plugin Development
 
-### Blueprint Book (Custom Tool Item)
+### Stencil Book (Custom Tool Item)
 
-The BlueprintBook.json uses a raw string for Description:
+The StencilBook.json uses a raw string for Description:
 ```json
 "TranslationProperties": {
-    "Name": "Blueprint Journal",
-    "Description": "A journal containing various blueprints for crafting."
+    "Name": "Stencil Journal",
+    "Description": "A journal containing various stencils for crafting."
 }
 ```
 

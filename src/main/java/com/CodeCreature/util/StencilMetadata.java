@@ -9,10 +9,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * BSON metadata utility for Blueprint Stencil items.
+ * BSON metadata utility for Stencil Stencil items.
  *
  * <p>A stencil is any {@link ItemStack} whose BSON metadata contains
- * a {@code "BlueprintStencil"} tag set to {@code "true"} and a
+ * a {@code "StencilStencil"} tag set to {@code "true"} and a
  * {@code "RecipeId"} field identifying the crafting recipe to consume
  * resources from when the stencil is placed.
  *
@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 public final class StencilMetadata {
 
     /** BSON key whose presence marks an ItemStack as a stencil. */
-    private static final String STENCIL_TAG_KEY = "BlueprintStencil";
+    private static final String STENCIL_TAG_KEY = "StencilStencil";
 
     /** BSON key storing the recipe ID to consume resources from. */
     private static final String RECIPE_ID_KEY = "RecipeId";
@@ -35,7 +35,7 @@ public final class StencilMetadata {
     private StencilMetadata() {}
 
     /**
-     * Checks whether the given ItemStack is a blueprint stencil.
+     * Checks whether the given ItemStack is a stencil stencil.
      *
      * <p>An ItemStack is a stencil if and only if its BSON metadata
      * contains a {@value #STENCIL_TAG_KEY} key with value {@code "true"}.

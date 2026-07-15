@@ -1,8 +1,8 @@
-# Design: BlueprintBookParticleLoop Freeze Fix
+# Design: StencilBookParticleLoop Freeze Fix
 
 ## 1. Overview
 
-`BlueprintBookParticleLoop` highlights blocks the player looks at while holding a Blueprint Book. The current implementation spawns a full `BlockEntity` with 9 ECS components every 100ms, costing ~10–15ms per cycle. Under load (mass item pickup, affordability refresh, physics cascade), total tick time exceeds 100ms, causing the `SCHEDULED_EXECUTOR` to fire during `consumeTaskQueue()` drain, which immediately picks up the new `executeTick` task → `pending.set(false)` re-arms → livelock. Additionally, entity operations inside `consumeTaskQueue()` access the asset registry while `World.tick()` holds `AssetRegistry.ASSET_LOCK.readLock()`, risking read→write deadlock.
+`StencilBookParticleLoop` highlights blocks the player looks at while holding a Stencil Book. The current implementation spawns a full `BlockEntity` with 9 ECS components every 100ms, costing ~10–15ms per cycle. Under load (mass item pickup, affordability refresh, physics cascade), total tick time exceeds 100ms, causing the `SCHEDULED_EXECUTOR` to fire during `consumeTaskQueue()` drain, which immediately picks up the new `executeTick` task → `pending.set(false)` re-arms → livelock. Additionally, entity operations inside `consumeTaskQueue()` access the asset registry while `World.tick()` holds `AssetRegistry.ASSET_LOCK.readLock()`, risking read→write deadlock.
 
 This design eliminates entity churn entirely by switching to fire-and-forget `SpawnParticleSystem` packets, lifecycle-manages the timer to only run when the player holds the book, keeps the existing re-entrancy guard for `restoreStencils`, and adds a self-rate-limiter as defense-in-depth against livelock.
 
@@ -18,7 +18,7 @@ This design eliminates entity churn entirely by switching to fire-and-forget `Sp
 
 ```mermaid
 classDiagram
-    class BlueprintBookParticleLoop {
+    class StencilBookParticleLoop {
         -PlayerRef playerRef
         -World world
         -ScheduledFuture~?~ updateTask
@@ -55,8 +55,8 @@ classDiagram
         -executeRefresh() void
     }
 
-    BlueprintBookParticleLoop ..> SpawnParticleSystem : sends packet
-    BlueprintBookParticleLoop ..> PlayerRef : getPacketHandler
+    StencilBookParticleLoop ..> SpawnParticleSystem : sends packet
+    StencilBookParticleLoop ..> PlayerRef : getPacketHandler
     StencilSyncSystem --> AffordabilityCoalescer : creates
     StencilSyncSystem ..> ItemContainer : restoreStencils
 ```
@@ -73,7 +73,7 @@ graph TB
         B -->|yes| D[world.execute executeTick]
         D --> E{active + player valid?}
         E -->|no| F[clear state, set active=false]
-        E -->|yes| G{holding BlueprintBook?}
+        E -->|yes| G{holding StencilBook?}
         G -->|no| H[clear lastTargetBlock]
         G -->|yes| I[raycast → target block]
         I --> J{target has recipe?}
@@ -99,7 +99,7 @@ graph TB
 ```mermaid
 graph TB
     subgraph P2["P2: Lifecycle — Equip/Unequip Detection"]
-        HC[Hotbar ChangeEvent] --> HE{active slot holds BlueprintBook?}
+        HC[Hotbar ChangeEvent] --> HE{active slot holds StencilBook?}
         HE -->|yes, timer not running| ST[startUpdateLoop]
         HE -->|yes, timer running| NOP[no-op]
         HE -->|no, timer running| SP[stopUpdateLoop + clear state]
@@ -121,7 +121,7 @@ graph TB
 sequenceDiagram
     participant SE as SCHEDULED_EXECUTOR
     participant WQ as World TaskQueue
-    participant PL as BlueprintBookParticleLoop
+    participant PL as StencilBookParticleLoop
     participant PR as PlayerRef.PacketHandler
 
     loop every 100ms
@@ -151,8 +151,8 @@ No new files. Changes are confined to existing files:
 
 ```
 src/main/java/com/CodeCreature/
-├── ui/blueprintbook/
-│   └── BlueprintBookParticleLoop.java   ← P1, P2, P4
+├── ui/stencilbook/
+│   └── StencilBookParticleLoop.java   ← P1, P2, P4
 ├── stencil/
 │   ├── StencilSyncSystem.java           ← P3 (no change — see §7)
 │   └── AffordabilityCoalescer.java      ← P3 (no change — see §7)
@@ -160,7 +160,7 @@ src/main/java/com/CodeCreature/
 
 ## 7. Integration Changes Required
 
-### P1: BlueprintBookParticleLoop.java — Replace Entity System with Packets
+### P1: StencilBookParticleLoop.java — Replace Entity System with Packets
 
 **Remove imports:**
 - `com.hypixel.hytale.component.AddReason`
@@ -210,11 +210,11 @@ src/main/java/com/CodeCreature/
 - Remove `activeEntity = null` (field no longer exists)
 - Everything else stays the same — no `world.execute()` needed since particles auto-expire
 
-### P2: BlueprintBookParticleLoop.java — Lifecycle-Managed Timer
+### P2: StencilBookParticleLoop.java — Lifecycle-Managed Timer
 
 **Modify `start()`:**
 - Do NOT call `startUpdateLoop()` in `start()`
-- Instead, the timer is started lazily when the hotbar change event detects BlueprintBook in active slot
+- Instead, the timer is started lazily when the hotbar change event detects StencilBook in active slot
 
 **Add method `stopUpdateLoop()`:**
 - Cancels `updateTask` if non-null
@@ -227,8 +227,8 @@ The hotbar `registerChangeEvent` fires on ANY item change in the hotbar, not jus
 
 1. In `start()`, register a hotbar change listener via `hotbar.registerChangeEvent()`
 2. In the listener: read `player.getInventory().getActiveHotbarSlot()` → get `hotbar.getItemStack(activeSlot)`
-3. If item is BlueprintBook AND `updateTask == null` → call `startUpdateLoop()`
-4. If item is NOT BlueprintBook AND `updateTask != null` → call `stopUpdateLoop()`
+3. If item is StencilBook AND `updateTask == null` → call `startUpdateLoop()`
+4. If item is NOT StencilBook AND `updateTask != null` → call `stopUpdateLoop()`
 
 **Important:** The change event fires on item content changes too (e.g., stencil restoration). The listener must only compare the active slot's item ID — it must NOT read other slots or do expensive work.
 
@@ -259,7 +259,7 @@ The hotbar `registerChangeEvent` fires on ANY item change in the hotbar, not jus
 
 **Action: NO CODE CHANGE for P3.** The existing `isRestoring` guard is the correct and only mechanism. Document this finding and close P3 as "already addressed."
 
-### P4: BlueprintBookParticleLoop.java — Self-Rate-Limiter
+### P4: StencilBookParticleLoop.java — Self-Rate-Limiter
 
 **Add field:**
 - `private long lastExecuteNanos` — initialized to `0`
@@ -300,14 +300,14 @@ The `finally { pending.set(false); }` handles cleanup on skip.
 
 ### Wave 1 (no dependencies — can run in parallel)
 
-#### Unit: P1 — BlueprintBookParticleLoop.executeTick() + sendHighlightPacket()
+#### Unit: P1 — StencilBookParticleLoop.executeTick() + sendHighlightPacket()
 
 - **Methods**: `executeTick()` (rewrite), `sendHighlightPacket()` (new), remove `spawnHighlightEntity()`, remove `removeHighlightEntity()`
 - **Contract**: `executeTick()` performs player/item/raycast checks and sends a `SpawnParticleSystem` packet instead of spawning/removing entities. `sendHighlightPacket()` constructs and sends the packet to the player.
 - **Dependencies**: none
 - **Done when**: `executeTick()` contains zero `store.addEntity()` / `store.removeEntity()` calls; all entity-related imports and fields are removed; `sendHighlightPacket()` sends a `SpawnParticleSystem` packet via `playerRef.getPacketHandler().writeNoCache()`; compiles clean
 
-#### Unit: P4 — BlueprintBookParticleLoop rate limiter
+#### Unit: P4 — StencilBookParticleLoop rate limiter
 
 - **Methods**: `executeTick()` (add rate-limit check at top)
 - **Contract**: If `System.nanoTime() - lastExecuteNanos < 50ms`, skip work and return (pending.set(false) via finally). Prevents livelock under load.
@@ -323,10 +323,10 @@ The `finally { pending.set(false); }` handles cleanup on skip.
 
 ### Wave 2 (depends on Wave 1 P1)
 
-#### Unit: P2 — BlueprintBookParticleLoop lifecycle management
+#### Unit: P2 — StencilBookParticleLoop lifecycle management
 
 - **Methods**: `start()` (modify — don't start timer), `stopUpdateLoop()` (new), `shutdown()` (modify — unregister listener), hotbar change listener (new inline lambda)
-- **Contract**: Timer only runs when player holds BlueprintBook in active slot. Hotbar change listener detects equip/unequip and starts/stops the timer accordingly. `shutdown()` cleans up the listener registration.
+- **Contract**: Timer only runs when player holds StencilBook in active slot. Hotbar change listener detects equip/unequip and starts/stops the timer accordingly. `shutdown()` cleans up the listener registration.
 - **Dependencies**: P1 must be complete first — the equip/unequip listener calls `startUpdateLoop()`/`stopUpdateLoop()` which control the packet-based tick loop
 - **Done when**: Timer does not start in `start()`; hotbar listener registered; `stopUpdateLoop()` cancels timer and clears state; `shutdown()` unregisters listener; `EventRegistration` handle stored and cleaned up; compiles clean
 
@@ -334,7 +334,7 @@ The `finally { pending.set(false); }` handles cleanup on skip.
 
 #### Unit: Integration validation
 
-- **Files**: `BlueprintBookParticleLoop.java`, `Plugin.java`
+- **Files**: `StencilBookParticleLoop.java`, `Plugin.java`
 - **Contract**: Verify full lifecycle: `Plugin.onPlayerConnect()` → `start()` → hotbar change → timer starts → player looks at block → packet sent → unequip → timer stops → `Plugin.onPlayerDisconnect()` → `remove()` → clean shutdown
 - **Dependencies**: all Wave 1 + Wave 2 units
 - **Done when**: Full build passes; manual test confirms: (1) no highlight when not holding book, (2) highlight appears when holding book and looking at recipe block, (3) no server freeze after breaking 20+ blocks, (4) clean disconnect/reconnect
@@ -352,10 +352,10 @@ The `finally { pending.set(false); }` handles cleanup on skip.
 
 ## 12. Skeleton Code
 
-Below is the skeleton for the modified `BlueprintBookParticleLoop.java`. This is the target state after all 4 fixes are applied. Method bodies contain only `// TODO:` markers.
+Below is the skeleton for the modified `StencilBookParticleLoop.java`. This is the target state after all 4 fixes are applied. Method bodies contain only `// TODO:` markers.
 
 ```java
-package com.CodeCreature.ui.blueprintbook;
+package com.CodeCreature.ui.stencilbook;
 
 import com.CodeCreature.crafting.RecipeAffordabilityResolver;
 import com.CodeCreature.registry.BenchRecipeRegistries;
@@ -390,10 +390,10 @@ import java.util.logging.Level;
 
 import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
-public class BlueprintBookParticleLoop {
+public class StencilBookParticleLoop {
 
     private static final long UPDATE_INTERVAL_MILLIS = 100;
-    private static final String BLUEPRINT_BOOK_ITEM_ID = "BlueprintBook";
+    private static final String STENCIL_BOOK_ITEM_ID = "StencilBook";
     private static final String EFFECT_ID_DEFAULT = "Drop_Rare";
     private static final String EFFECT_ID_GREEN = "Drop_Uncommon";
     private static final String EFFECT_ID_RED = "BlockPlaceFail";
@@ -402,7 +402,7 @@ public class BlueprintBookParticleLoop {
     /** P4: Minimum interval between executeTick() runs. Prevents livelock. */
     private static final long MIN_INTERVAL_NANOS = 50_000_000L; // 50ms
 
-    private static final Map<UUID, BlueprintBookParticleLoop> INSTANCES = new ConcurrentHashMap<>();
+    private static final Map<UUID, StencilBookParticleLoop> INSTANCES = new ConcurrentHashMap<>();
 
     private final PlayerRef playerRef;
     private final World world;
@@ -418,7 +418,7 @@ public class BlueprintBookParticleLoop {
     /** P2: Hotbar change listener registration — unregistered on shutdown. */
     private EventRegistration<?, ?> hotbarListenerHandle;
 
-    public BlueprintBookParticleLoop(@Nonnull PlayerRef playerRef, @Nonnull World world) {
+    public StencilBookParticleLoop(@Nonnull PlayerRef playerRef, @Nonnull World world) {
         this.playerRef = playerRef;
         this.world = world;
     }
@@ -426,7 +426,7 @@ public class BlueprintBookParticleLoop {
     /**
      * Creates and registers a particle loop for the given player.
      * Does NOT start the timer — the hotbar change listener (P2) starts
-     * the timer when BlueprintBook is detected in the active slot.
+     * the timer when StencilBook is detected in the active slot.
      *
      * @param playerRef the player's network reference
      * @param world     the player's current world
@@ -435,7 +435,7 @@ public class BlueprintBookParticleLoop {
         // TODO: Same INSTANCES lifecycle as current code (replace stale, put new)
         // TODO: Instead of calling startUpdateLoop(), register a hotbar change
         //       listener via world.execute() that checks the active slot item.
-        //       If BlueprintBook → startUpdateLoop(). If not → stopUpdateLoop().
+        //       If StencilBook → startUpdateLoop(). If not → stopUpdateLoop().
         //       Store the EventRegistration handle in hotbarListenerHandle.
         // TODO: To register the listener, need Player + Inventory access.
         //       Queue a world.execute() that resolves playerRef → Player → hotbar,
@@ -452,7 +452,7 @@ public class BlueprintBookParticleLoop {
     }
 
     /**
-     * Starts the scheduled executor timer. Called when BlueprintBook
+     * Starts the scheduled executor timer. Called when StencilBook
      * is detected in the active hotbar slot (P2).
      * Idempotent — no-op if timer is already running.
      */
@@ -462,7 +462,7 @@ public class BlueprintBookParticleLoop {
     }
 
     /**
-     * Stops the scheduled executor timer. Called when BlueprintBook
+     * Stops the scheduled executor timer. Called when StencilBook
      * is unequipped from the active slot (P2).
      * Clears visual state (lastTargetBlock, lastAffordable).
      */
@@ -490,7 +490,7 @@ public class BlueprintBookParticleLoop {
             // TODO P1: Resolve playerRef → Ref<EntityStore> → Player (same as current)
             //          If invalid → clear state, set active=false, return
 
-            // TODO P1: Check active hotbar slot for BlueprintBook (same as current)
+            // TODO P1: Check active hotbar slot for StencilBook (same as current)
             //          If not holding → clear lastTargetBlock, return
 
             // TODO P1: Raycast via BoundingBoxRayCast.getTargetBlock() (same as current)

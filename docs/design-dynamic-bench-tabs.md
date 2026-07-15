@@ -14,7 +14,7 @@ The Stencil Crafting UI currently hardcodes 3 `TabButton` children inside `#Benc
 
 ```mermaid
 classDiagram
-    class BlueprintBookPage_ui {
+    class StencilBookPage_ui {
         <<UI Template>>
         TabNavigation #BenchTabs
         -TabButton children removed
@@ -26,7 +26,7 @@ classDiagram
         +TooltipText: string
         +Id: string
     }
-    class BlueprintSelectionPage {
+    class StencilSelectionPage {
         -List~String~ benchIds
         -String activeTab
         +build(ref, cmd, evt, store)
@@ -35,13 +35,13 @@ classDiagram
         -validateActiveTab()
         -tabDisplayName(tabId) String
     }
-    class BlueprintBookPrefs {
+    class StencilBookPrefs {
         +String activeTab
     }
 
-    BlueprintSelectionPage --> BlueprintBookPage_ui : appends template
-    BlueprintSelectionPage --> BenchTabButton_ui : appends N instances
-    BlueprintSelectionPage --> BlueprintBookPrefs : load/save activeTab
+    StencilSelectionPage --> StencilBookPage_ui : appends template
+    StencilSelectionPage --> BenchTabButton_ui : appends N instances
+    StencilSelectionPage --> StencilBookPrefs : load/save activeTab
 ```
 
 ## 4. Responsibility Map
@@ -51,7 +51,7 @@ graph TB
     A[loadRecipes] -->|populates| B[benchIds]
     B --> C[validateActiveTab]
     C -->|ensures activeTab in benchIds or All| D[build]
-    D -->|appends BlueprintBookPage.ui| E[Empty TabNavigation shell]
+    D -->|appends StencilBookPage.ui| E[Empty TabNavigation shell]
     D -->|appends BenchTabButton.ui x N| F[Dynamic TabButtons in #BenchTabs]
     D -->|calls| G[buildBenchTabs]
     G -->|sets Id + TooltipText per tab| F
@@ -66,7 +66,7 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant BSP as BlueprintSelectionPage
+    participant BSP as StencilSelectionPage
     participant CMD as UICommandBuilder
     participant EVT as UIEventBuilder
     participant UI as Client UI
@@ -74,7 +74,7 @@ sequenceDiagram
     Note over BSP: build() called
     BSP->>BSP: loadRecipes() populates benchIds
     BSP->>BSP: validateActiveTab()
-    BSP->>CMD: append("BlueprintBookPage.ui")
+    BSP->>CMD: append("StencilBookPage.ui")
     loop for each tab (All + benchIds)
         BSP->>CMD: append("#BenchTabs", "BenchTabButton.ui")
     end
@@ -91,15 +91,15 @@ sequenceDiagram
 
 | File | Action | Summary |
 |------|--------|---------|
-| `src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BenchTabButton.ui` | **CREATE** | Reusable tab button template |
-| `src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui` | **MODIFY** | Remove 3 hardcoded `TabButton` children from `#BenchTabs` |
-| `src/main/java/com/CodeCreature/ui/bench/BlueprintSelectionPage.java` | **MODIFY** | Append tabs dynamically, validate `activeTab`, update `buildBenchTabs` |
+| `src/main/resources/Common/UI/Custom/Pages/StencilBook/BenchTabButton.ui` | **CREATE** | Reusable tab button template |
+| `src/main/resources/Common/UI/Custom/Pages/StencilBook/StencilBookPage.ui` | **MODIFY** | Remove 3 hardcoded `TabButton` children from `#BenchTabs` |
+| `src/main/java/com/CodeCreature/ui/bench/StencilSelectionPage.java` | **MODIFY** | Append tabs dynamically, validate `activeTab`, update `buildBenchTabs` |
 
-No other files need changes. `BlueprintBookPrefs.java` already stores `activeTab` as a `String` — no schema change needed.
+No other files need changes. `StencilBookPrefs.java` already stores `activeTab` as a `String` — no schema change needed.
 
 ## 7. BenchTabButton.ui Template — Exact Content
 
-Create `src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BenchTabButton.ui`:
+Create `src/main/resources/Common/UI/Custom/Pages/StencilBook/BenchTabButton.ui`:
 
 ```
 // BenchTabButton — single bench tab button
@@ -118,7 +118,7 @@ TabButton {
 - `Icon` uses the same default icon as the hardcoded tabs. If per-bench icons are added later, the server can set `#BenchTabs[i].Icon` dynamically.
 - `Id` and `TooltipText` start empty and are set by the server via `cmd.set()`.
 
-## 8. BlueprintBookPage.ui Changes — Exact Diff
+## 8. StencilBookPage.ui Changes — Exact Diff
 
 Remove the three hardcoded `TabButton` children, leaving the `TabNavigation` shell empty:
 
@@ -158,7 +158,7 @@ Remove the three hardcoded `TabButton` children, leaving the `TabNavigation` she
     }
 ```
 
-## 9. BlueprintSelectionPage.java Changes
+## 9. StencilSelectionPage.java Changes
 
 ### 9.1 Add `validateActiveTab()` method
 
@@ -173,8 +173,8 @@ Add a new private method that checks whether the persisted `activeTab` still exi
 private void validateActiveTab() {
     if (ALL_TAB.equals(activeTab)) return;
     if (!benchIds.contains(activeTab)) {
-        DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING,
-                "[BlueprintBook] Saved activeTab '" + activeTab +
+        DebugLogger.log(STENCIL_BOOK, Level.WARNING,
+                "[StencilBook] Saved activeTab '" + activeTab +
                 "' not in current benchIds " + benchIds + "; resetting to All");
         activeTab = ALL_TAB;
     }
@@ -196,17 +196,17 @@ This ensures stale prefs are corrected before any UI is built.
 
 ### 9.3 Append dynamic tab buttons in `build()`
 
-In `build()`, after `cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui")` (line ~289) and before the set filter append loop, add the tab button append loop:
+In `build()`, after `cmd.append("Pages/StencilBook/StencilBookPage.ui")` (line ~289) and before the set filter append loop, add the tab button append loop:
 
 ```java
         // Load main template
-        cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui");
+        cmd.append("Pages/StencilBook/StencilBookPage.ui");
 
         // ── Append bench tab buttons dynamically ──
         // "All" tab + one tab per discovered bench ID
         int tabCount = 1 + benchIds.size();
         for (int i = 0; i < tabCount; i++) {
-            cmd.append("#BenchTabs", "Pages/BlueprintBook/BenchTabButton.ui");
+            cmd.append("#BenchTabs", "Pages/StencilBook/BenchTabButton.ui");
         }
 ```
 
@@ -293,28 +293,28 @@ If future bench IDs need custom display names (e.g., `FB` → `Furniture Bench`)
 ## 11. Package Structure
 
 ```
-src/main/resources/Common/UI/Custom/Pages/BlueprintBook/
-├── BlueprintBookPage.ui          ← MODIFY (remove hardcoded TabButtons)
+src/main/resources/Common/UI/Custom/Pages/StencilBook/
+├── StencilBookPage.ui          ← MODIFY (remove hardcoded TabButtons)
 ├── BenchTabButton.ui              ← CREATE (new reusable template)
 ├── SetFilterButton.ui             (unchanged — reference pattern)
 ├── GroupFilterButton.ui           (unchanged)
 └── SetGroupContainer.ui           (unchanged)
 
 src/main/java/com/CodeCreature/ui/bench/
-├── BlueprintSelectionPage.java    ← MODIFY (dynamic tab append + validation)
-├── BlueprintBookPrefs.java       (unchanged)
-└── BlueprintBookPrefsStore.java  (unchanged)
+├── StencilSelectionPage.java    ← MODIFY (dynamic tab append + validation)
+├── StencilBookPrefs.java       (unchanged)
+└── StencilBookPrefsStore.java  (unchanged)
 ```
 
 ## 12. Integration Changes Required
 
 | Existing File | Change |
 |---------------|--------|
-| `BlueprintBookPage.ui` | Remove 3 `TabButton` blocks from inside `TabNavigation #BenchTabs` |
-| `BlueprintSelectionPage.java` | Add `validateActiveTab()` method |
-| `BlueprintSelectionPage.java` | Add tab append loop in `build()` after main template append |
-| `BlueprintSelectionPage.java` | Change `buildBenchTabs(evt)` signature to `buildBenchTabs(cmd, evt)` |
-| `BlueprintSelectionPage.java` | Update call site from `buildBenchTabs(evt)` to `buildBenchTabs(cmd, evt)` |
+| `StencilBookPage.ui` | Remove 3 `TabButton` blocks from inside `TabNavigation #BenchTabs` |
+| `StencilSelectionPage.java` | Add `validateActiveTab()` method |
+| `StencilSelectionPage.java` | Add tab append loop in `build()` after main template append |
+| `StencilSelectionPage.java` | Change `buildBenchTabs(evt)` signature to `buildBenchTabs(cmd, evt)` |
+| `StencilSelectionPage.java` | Update call site from `buildBenchTabs(evt)` to `buildBenchTabs(cmd, evt)` |
 
 Nothing needs to be deleted after migration — this is a clean extension of the existing pattern.
 
@@ -339,23 +339,23 @@ Nothing needs to be deleted after migration — this is a clean extension of the
 ### Wave 1 (no dependencies — can run in parallel)
 
 #### Unit: BenchTabButton.ui
-- **Files**: `src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BenchTabButton.ui`
+- **Files**: `src/main/resources/Common/UI/Custom/Pages/StencilBook/BenchTabButton.ui`
 - **Contract**: Create the reusable `TabButton` template with empty `Id` and `TooltipText` properties, using `RecipesIcon.png` as the default icon
 - **Dependencies**: none
 - **Done when**: File exists with valid `.ui` syntax matching the template in Section 7
 
-#### Unit: BlueprintBookPage.ui cleanup
-- **Files**: `src/main/resources/Common/UI/Custom/Pages/BlueprintBook/BlueprintBookPage.ui`
+#### Unit: StencilBookPage.ui cleanup
+- **Files**: `src/main/resources/Common/UI/Custom/Pages/StencilBook/StencilBookPage.ui`
 - **Contract**: Remove the 3 hardcoded `TabButton` children from `TabNavigation #BenchTabs`, leaving the container empty
 - **Dependencies**: none
 - **Done when**: `#BenchTabs` contains no `TabButton` children; only `Style`, `SelectedTab`, and `Anchor` properties remain
 
 ### Wave 2 (depends on Wave 1)
 
-#### Unit: BlueprintSelectionPage.java — dynamic tab logic
+#### Unit: StencilSelectionPage.java — dynamic tab logic
 - **Methods**: `validateActiveTab()` (new), modify `build()`, modify `buildBenchTabs()`
 - **Contract**: Append `BenchTabButton.ui` into `#BenchTabs` for each bench ID (plus "All"), set `Id`/`TooltipText` on each, validate persisted `activeTab` against live `benchIds`
-- **Dependencies**: Wave 1 (BenchTabButton.ui must exist, BlueprintBookPage.ui must have empty `#BenchTabs`)
+- **Dependencies**: Wave 1 (BenchTabButton.ui must exist, StencilBookPage.ui must have empty `#BenchTabs`)
 - **Done when**: Tabs render dynamically from `benchIds`; stale `activeTab` values fall back to "All"; `SelectedTabChanged` event still fires correctly
 
 ### Wave 3 (integration — depends on Wave 2)

@@ -7,7 +7,7 @@ import java.util.*;
  * Sequential, composable filter pipeline for Stencil Crafting recipes.
  *
  * <p>Replaces the interleaved filtering logic previously split across
- * {@code BlueprintSelectionPage.applyFilter()} and {@code buildRecipeList()}.
+ * {@code StencilSelectionPage.applyFilter()} and {@code buildRecipeList()}.
  * Each stage has a single responsibility: take a list, produce a list.
  * Affordability is computed <b>once</b> in a dedicated tagging stage.
  *

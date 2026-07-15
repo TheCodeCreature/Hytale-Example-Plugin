@@ -16,7 +16,7 @@ Eliminate progressive server slowdown caused by unbounded world thread task queu
 - [ ] Server tick time remains stable over extended play sessions (1+ hours)
 - [ ] Block break and stencil pick responsiveness is consistent
 - [ ] No entity leaks on player disconnect
-- [ ] BlueprintBookParticleLoop does not queue work faster than it can be processed
+- [ ] StencilBookParticleLoop does not queue work faster than it can be processed
 
 ## Features
 | ID | Title | Status |
@@ -27,6 +27,6 @@ Eliminate progressive server slowdown caused by unbounded world thread task queu
 | F2605291515 | Disconnect Entity Leak Fix | backlog |
 
 ## Context
-Investigation revealed that `World.execute()` adds to an unbounded `LinkedBlockingDeque` with zero backpressure. The `consumeTaskQueue()` method drains the full queue each tick. When `BlueprintBookParticleLoop.scheduleAtFixedRate(100ms)` continuously queues lambdas via `world.execute()`, and those lambdas include expensive operations (raycasts, entity spawn/remove), the world thread can fall behind — creating a positive feedback loop where each tick processes more queued tasks, takes longer, and allows even more tasks to accumulate.
+Investigation revealed that `World.execute()` adds to an unbounded `LinkedBlockingDeque` with zero backpressure. The `consumeTaskQueue()` method drains the full queue each tick. When `StencilBookParticleLoop.scheduleAtFixedRate(100ms)` continuously queues lambdas via `world.execute()`, and those lambdas include expensive operations (raycasts, entity spawn/remove), the world thread can fall behind — creating a positive feedback loop where each tick processes more queued tasks, takes longer, and allows even more tasks to accumulate.
 
 This compounds with AffordabilityCoalescer's deferred refreshes (also via `world.execute()`), resulting in progressive world thread starvation that manifests as increasing unresponsiveness to player actions.

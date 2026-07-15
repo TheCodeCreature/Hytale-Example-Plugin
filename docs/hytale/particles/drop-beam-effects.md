@@ -74,13 +74,13 @@ ParticleUtil.spawnParticleEffect("Drop_Common", blockCenterPos, store);
 | `ItemEntityConfig.particleSystemId` | Attached to entity, loops while entity exists | Infinite |
 | Entity Effect (`Drop_Uncommon.json`) | Applied via EntityEffect system, loops | Infinite (config says `"Infinite": true`) |
 
-### For Blueprint Book Use Case
+### For Stencil Book Use Case
 
-Since `BlueprintBookParticleLoop` already runs a 100ms polling loop and re-fires particles each tick, using `ParticleUtil.spawnParticleEffect("Drop_Uncommon", pos, store)` would create a **continuously refreshing beam effect** — effectively mimicking the persistent beam on dropped items.
+Since `StencilBookParticleLoop` already runs a 100ms polling loop and re-fires particles each tick, using `ParticleUtil.spawnParticleEffect("Drop_Uncommon", pos, store)` would create a **continuously refreshing beam effect** — effectively mimicking the persistent beam on dropped items.
 
 **Recommended approach:**
 ```java
-// In BlueprintBookParticleLoop, replace current particle effect:
+// In StencilBookParticleLoop, replace current particle effect:
 String effect = "Drop_Uncommon";  // or "Drop_Common" for white
 Vector3d particlePos = new Vector3d(target.x + 0.5, target.y + 0.1, target.z + 0.5);
 ParticleUtil.spawnParticleEffect(effect, particlePos, store);

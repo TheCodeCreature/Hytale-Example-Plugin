@@ -14,7 +14,7 @@ The refactor successfully achieves its primary goals: single source of truth for
 
 | # | Category | Severity | Location | Detail |
 |---|----------|----------|----------|--------|
-| 1 | Consistency | 🟡 Should Fix | [DropScaler.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/DropScaler.java#L64) | `DropScaler.apply()` passes `Set.of("Blueprint_", "Salvage")` inline instead of using `RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES`. Tests all use the constant. If the prefixes ever change, the two sites could diverge. |
+| 1 | Consistency | 🟡 Should Fix | [DropScaler.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/DropScaler.java#L64) | `DropScaler.apply()` passes `Set.of("Stencil_", "Salvage")` inline instead of using `RecipeFilterRegistry.DEFAULT_SKIP_PREFIXES`. Tests all use the constant. If the prefixes ever change, the two sites could diverge. |
 
 ---
 
@@ -43,7 +43,7 @@ The refactor successfully achieves its primary goals: single source of truth for
 
 | # | Category | Severity | Location | Detail |
 |---|----------|----------|----------|--------|
-| 6 | Dead code | 🔵 Review | [FilteredRecipeEntry.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/FilteredRecipeEntry.java#L56-L58) | `primaryBenchId()` method is never called. `BlueprintSelectionPage.loadRecipes()` does its own `benchIds().stream().min(String.CASE_INSENSITIVE_ORDER)` instead. Either the consumer should use `primaryBenchId()`, or the method should be removed. |
+| 6 | Dead code | 🔵 Review | [FilteredRecipeEntry.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/FilteredRecipeEntry.java#L56-L58) | `primaryBenchId()` method is never called. `StencilSelectionPage.loadRecipes()` does its own `benchIds().stream().min(String.CASE_INSENSITIVE_ORDER)` instead. Either the consumer should use `primaryBenchId()`, or the method should be removed. |
 | 7 | Dead code | 🔵 Review | [RecipeFilterRegistry.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/RecipeFilterRegistry.java#L263-L265) | `isInitialized()` is defined but never called by any consumer or test. Standard registry pattern — acceptable to keep as a debugging aid, but note it's unused. |
 
 ---

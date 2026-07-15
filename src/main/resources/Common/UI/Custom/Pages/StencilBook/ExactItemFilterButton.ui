@@ -1,0 +1,30 @@
+// Item-icon filter toggle — follows @FilterToggleButton convention with ItemIcon
+// cmd.append() path unchanged: Pages/StencilBook/ExactItemFilterButton.ui
+// Cannot compose @FilterToggleButton directly because icon element is ItemIcon, not Group
+
+$BG = "../../Styles/Backgrounds.ui";
+$B = "../../Styles/Buttons.ui";
+
+Group {
+    Anchor: (Width: 36, Height: 36);
+    Padding: (Left: 2, Right: 2, Top: 2, Bottom: 2);
+    Visible: false;
+
+    Group {
+        Anchor: (Full: 0);
+        Background: $BG.@ItemSlotFrame;
+        ItemIcon #FilterItemIcon {
+            Anchor: (Full: 4);
+        }
+        Group #ActiveOverlay {
+            Anchor: (Full: 0);
+            Background: $BG.@FilterActiveHighlight;
+            Visible: false;
+        }
+        TextButton #Btn {
+            Text: "";
+            Anchor: (Full: 0);
+            Style: $B.@TransparentButtonStyle;
+        }
+    }
+}

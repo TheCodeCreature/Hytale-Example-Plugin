@@ -20,7 +20,7 @@ As a **player**, I want **the Stencil Crafting to intercept crafting when my pla
 
 ### Checklist
 - [ ] `PlaceBlockBenchInterceptor` listens for `CraftRecipeEvent.Pre`
-- [ ] Interceptor only fires when the bench is a Stencil Crafting (`Bench.Id: "Blueprint"`)
+- [ ] Interceptor only fires when the bench is a Stencil Crafting (`Bench.Id: "Stencil"`)
 - [ ] Interceptor only fires when a `Block_Placeholder` is in the input slot
 - [ ] Interceptor cancels the crafting event — no resources consumed, no output produced
 - [ ] Interceptor arms the placeholder via `PlaceBlockMetadata.setArmedRecipeId()`

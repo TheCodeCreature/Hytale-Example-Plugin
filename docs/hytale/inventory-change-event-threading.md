@@ -263,7 +263,7 @@ HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> {
 ```
 
 This is the proven pattern used in:
-- [BlueprintBookParticleLoop.java](../../src/main/java/com/CodeCreature/ui/blueprintbook/BlueprintBookParticleLoop.java) line 94
+- [StencilBookParticleLoop.java](../../src/main/java/com/CodeCreature/ui/stencilbook/StencilBookParticleLoop.java) line 94
 - [CameraTransparencyVolumeV2](./particles/particle-tick-loop-research.md) line 110
 
 ### What happens if the runnable takes too long?

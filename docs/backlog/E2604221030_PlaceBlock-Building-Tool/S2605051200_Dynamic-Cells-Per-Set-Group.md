@@ -35,8 +35,8 @@ As a **player**, I want **each set group in the Stencil Crafting grid to show al
 - **Then** all 3 items display (no empty slots padded beyond the 3)
 
 ## Notes
-- Current code: `CELLS_PER_GROUP = 9` at `BlueprintSelectionPage.java:50`
-- Overflow is silently skipped at `BlueprintSelectionPage.java:588`: `if (cellInGroup >= CELLS_PER_GROUP) continue;`
+- Current code: `CELLS_PER_GROUP = 9` at `StencilSelectionPage.java:50`
+- Overflow is silently skipped at `StencilSelectionPage.java:588`: `if (cellInGroup >= CELLS_PER_GROUP) continue;`
 - The `MAX_RECIPE_CELLS` constant (`MAX_SET_GROUPS * CELLS_PER_GROUP = 180`) will also need adjustment
-- The UI template `BlueprintBookPage.ui` defines the grid structure — the Engineer must check whether `#GroupCells` elements are dynamically appendable or statically capped
+- The UI template `StencilBookPage.ui` defines the grid structure — the Engineer must check whether `#GroupCells` elements are dynamically appendable or statically capped
 - Risk: If the UI framework requires a fixed number of cell elements, the approach may need to pre-allocate a larger pool and hide unused slots

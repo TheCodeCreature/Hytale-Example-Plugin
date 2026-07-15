@@ -4,13 +4,13 @@ package com;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.CodeCreature.command.ParticleCommand;
 import com.CodeCreature.command.placeblock.PlaceBlockCommand;
-import com.CodeCreature.placeblock.BlueprintBookRecipeMutator;
-import com.CodeCreature.placeblock.ui.BlueprintBookOpenUIInteraction;
-import com.CodeCreature.placeblock.ui.BlueprintBookPrefsStore;
+import com.CodeCreature.placeblock.StencilBookRecipeMutator;
+import com.CodeCreature.placeblock.ui.StencilBookOpenUIInteraction;
+import com.CodeCreature.placeblock.ui.StencilBookPrefsStore;
 import com.CodeCreature.resourcecollection.BreakBlockDiagnostic;
 import com.CodeCreature.resourcecollection.DropScaler;
 import com.CodeCreature.resourcecollection.PlacementCostScaler;
-import com.CodeCreature.stencil.BlueprintBookParticleLoop;
+import com.CodeCreature.stencil.StencilBookParticleLoop;
 import com.CodeCreature.stencil.StencilDropDestroySystem;
 import com.CodeCreature.stencil.StencilPlacementSystem;
 import com.CodeCreature.stencil.StencilRadialInputListener;
@@ -58,7 +58,7 @@ public class Plugin extends JavaPlugin {
         // Consume extra items when placing natural blocks (12x cost to match 12x drops)
         this.getEntityStoreRegistry().registerSystem(new PlacementCostScaler());
 
-        // Blueprint stencil placement â€” intercepts PlaceBlockEvent for BSON-tagged block items
+        // Stencil stencil placement â€” intercepts PlaceBlockEvent for BSON-tagged block items
         this.getEntityStoreRegistry().registerSystem(new StencilPlacementSystem());
 
         // Stencil drop destroy â€” cancel world item spawn when dropping stencils (G key / drag-out)
@@ -67,17 +67,17 @@ public class Plugin extends JavaPlugin {
         // Diagnostic: log block drop config on break (toggle via /Debug BreakLog)
         this.getEntityStoreRegistry().registerSystem(new BreakBlockDiagnostic());
 
-        BlueprintBookPrefsStore.initialize(this.getDataDirectory());
+        StencilBookPrefsStore.initialize(this.getDataDirectory());
 
-        // Register Blueprint Bench interaction type (opens custom UI page)
+        // Register Stencil Bench interaction type (opens custom UI page)
         this.getCodecRegistry(Interaction.CODEC)
-                .register("StencilCrafting_OpenUI", BlueprintBookOpenUIInteraction.class, BlueprintBookOpenUIInteraction.CODEC);
+                .register("StencilCrafting_OpenUI", StencilBookOpenUIInteraction.class, StencilBookOpenUIInteraction.CODEC);
 
-        // Register Blueprint Book pick-stencil interaction type
+        // Register Stencil Book pick-stencil interaction type
         this.getCodecRegistry(Interaction.CODEC)
-                .register("BlueprintBook_PickStencil",
-                        com.CodeCreature.stencil.BlueprintBookPickStencilInteraction.class,
-                        com.CodeCreature.stencil.BlueprintBookPickStencilInteraction.CODEC);
+                .register("StencilBook_PickStencil",
+                        com.CodeCreature.stencil.StencilBookPickStencilInteraction.class,
+                        com.CodeCreature.stencil.StencilBookPickStencilInteraction.CODEC);
     }
 
     private static void onPlayerReady(PlayerReadyEvent event) {
@@ -102,26 +102,26 @@ public class Plugin extends JavaPlugin {
             StencilVisualManager.applyVisuals(playerRef, player);
         }
 
-        BlueprintBookParticleLoop.start(playerRef, world);
+        StencilBookParticleLoop.start(playerRef, world);
     }
 
     private static void onPlayerDisconnect(PlayerDisconnectEvent event) {
         PlayerRef playerRef = event.getPlayerRef();
         StencilSyncSystem.unregister(playerRef.getUuid());
         StencilVisualManager.removePlayer(playerRef.getUuid());
-        BlueprintBookParticleLoop.remove(playerRef.getUuid());
+        StencilBookParticleLoop.remove(playerRef.getUuid());
     }
 
     private static void onAssetsLoaded(LoadAssetEvent event) {
         DropScaler.apply();
-        BlueprintBookRecipeMutator.mutate();
+        StencilBookRecipeMutator.mutate();
     }
 }
 
 === FILE: src\main\java\com\CodeCreature\command\ParticleCommand.java ===
 package com.CodeCreature.command;
 
-import com.CodeCreature.stencil.BlueprintBookPickStencilInteraction;
+import com.CodeCreature.stencil.StencilBookPickStencilInteraction;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.Message;
@@ -137,7 +137,7 @@ import org.jspecify.annotations.NonNull;
 public class ParticleCommand extends AbstractPlayerCommand {
 
     public ParticleCommand() {
-        super("bookParticle", "Get or set the Blueprint Book particle effect");
+        super("bookParticle", "Get or set the Stencil Book particle effect");
         this.addUsageVariant(new SetParticleVariant());
     }
 
@@ -148,7 +148,7 @@ public class ParticleCommand extends AbstractPlayerCommand {
                            @NonNull Ref<EntityStore> ref,
                            @NonNull PlayerRef playerRef,
                            @NonNull World world) {
-        String current = BlueprintBookPickStencilInteraction.getParticleEffect();
+        String current = StencilBookPickStencilInteraction.getParticleEffect();
         playerRef.sendMessage(Message.raw("Current particle effect: " + current));
     }
 
@@ -157,7 +157,7 @@ public class ParticleCommand extends AbstractPlayerCommand {
         private final RequiredArg<String> nameArg;
 
         SetParticleVariant() {
-            super("Set the Blueprint Book particle effect");
+            super("Set the Stencil Book particle effect");
             this.nameArg = withRequiredArg("name", "Particle system name (e.g. Dust_Sparkles_Fine)", ArgTypes.STRING);
         }
 
@@ -168,7 +168,7 @@ public class ParticleCommand extends AbstractPlayerCommand {
                                @NonNull PlayerRef playerRef,
                                @NonNull World world) {
             String name = nameArg.get(context);
-            BlueprintBookPickStencilInteraction.setParticleEffect(name);
+            StencilBookPickStencilInteraction.setParticleEffect(name);
             playerRef.sendMessage(Message.raw("Particle effect set to: " + name));
         }
     }
@@ -215,7 +215,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
 /**
- * Test command for creating blueprint stencil items during POC testing.
+ * Test command for creating stencil stencil items during POC testing.
  *
  * <p>Usage: {@code /placeblock stencil <itemId>}</p>
  *
@@ -231,7 +231,7 @@ public class StencilSubCommand extends AbstractPlayerCommand {
     private final RequiredArg<String> itemIdArg;
 
     public StencilSubCommand() {
-        super("stencil", "Create a blueprint stencil for testing");
+        super("stencil", "Create a stencil stencil for testing");
         this.itemIdArg = withRequiredArg("itemId", "Item ID (e.g., Wood_Hardwood_Fence)", ArgTypes.STRING);
     }
 
@@ -290,7 +290,7 @@ public class StencilSubCommand extends AbstractPlayerCommand {
     private static CraftingRecipe findRecipeByOutput(String input) {
         for (CraftingRecipe recipe : CraftingRecipe.getAssetMap().getAssetMap().values()) {
             if (recipe == null) continue;
-            if (recipe.getId().startsWith("Blueprint_")) continue;
+            if (recipe.getId().startsWith("Stencil_")) continue;
 
             MaterialQuantity primaryOutput = recipe.getPrimaryOutput();
             if (primaryOutput == null) continue;
@@ -306,7 +306,7 @@ public class StencilSubCommand extends AbstractPlayerCommand {
     }
 }
 
-=== FILE: src\main\java\com\CodeCreature\placeblock\BlueprintBookRecipeMutator.java ===
+=== FILE: src\main\java\com\CodeCreature\placeblock\StencilBookRecipeMutator.java ===
 package com.CodeCreature.placeblock;
 
 import com.hypixel.hytale.protocol.BenchRequirement;
@@ -323,24 +323,24 @@ import java.util.Map;
 
 /**
  * Creates shadow recipes with {@code PlaceBlock} ResourceTypeId input and
- * {@code Blueprint} {@link BenchRequirement} for every placeable-output recipe.
+ * {@code Stencil} {@link BenchRequirement} for every placeable-output recipe.
  * Original recipes are NOT modified.
  *
  * <p>Must run during {@code LoadAssetEvent}, after {@code DropScaler.apply()}.
  */
-public final class BlueprintBookRecipeMutator {
+public final class StencilBookRecipeMutator {
 
-    private static final String BLUEPRINT_ID = "Blueprint";
+    private static final String STENCIL_ID = "Stencil";
     private static final Map<String, String> SHADOW_TO_ORIGINAL = new HashMap<>();
 
-    private BlueprintBookRecipeMutator() {}
+    private StencilBookRecipeMutator() {}
 
     public static String getOriginalRecipeId(String shadowRecipeId) {
         return SHADOW_TO_ORIGINAL.get(shadowRecipeId);
     }
 
     private static void log(String msg) {
-        System.out.println("[BlueprintBookMutator] " + msg);
+        System.out.println("[StencilBookMutator] " + msg);
     }
 
     public static void mutate() {
@@ -386,7 +386,7 @@ public final class BlueprintBookRecipeMutator {
                 CraftingRecipe shadow = new CraftingRecipe(recipe);
 
                 String originalId = recipe.getId();
-                String shadowId = "Blueprint_" + originalId;
+                String shadowId = "Stencil_" + originalId;
 
                 // Override id
                 idField.set(shadow, shadowId);
@@ -396,9 +396,9 @@ public final class BlueprintBookRecipeMutator {
                         new MaterialQuantity(null, "PlaceBlock", null, 1, null)
                 });
 
-                // Override benchRequirement to Blueprint only
+                // Override benchRequirement to Stencil only
                 benchReqField.set(shadow, new BenchRequirement[]{
-                        new BenchRequirement(BenchType.StructuralCrafting, BLUEPRINT_ID, sourceReq.categories, 0)
+                        new BenchRequirement(BenchType.StructuralCrafting, STENCIL_ID, sourceReq.categories, 0)
                 });
 
                 // Clear knowledge requirements â€” StructuralCrafting doesn't support them,
@@ -416,7 +416,7 @@ public final class BlueprintBookRecipeMutator {
         if (!shadowRecipes.isEmpty()) {
             try {
                 CraftingRecipe.getAssetStore().loadAssets("Hytale:Hytale", shadowRecipes);
-                log("Registered " + shadowRecipes.size() + " shadow Blueprint recipes.");
+                log("Registered " + shadowRecipes.size() + " shadow Stencil recipes.");
 
                 // Diagnostic: verify shadow recipes are in the asset map
                 int found = 0, missing = 0;
@@ -451,11 +451,11 @@ public final class BlueprintBookRecipeMutator {
         }
     }
 
-    static boolean hasBlueprintRequirement(CraftingRecipe recipe) {
+    static boolean hasStencilRequirement(CraftingRecipe recipe) {
         BenchRequirement[] reqs = recipe.getBenchRequirement();
         if (reqs == null) return false;
         for (BenchRequirement req : reqs) {
-            if (req != null && BLUEPRINT_ID.equals(req.id)) return true;
+            if (req != null && STENCIL_ID.equals(req.id)) return true;
         }
         return false;
     }
@@ -564,13 +564,13 @@ import java.util.Map;
  * </ol>
  *
  * <p>Duplicate resolved item IDs are merged (quantities summed), matching
- * the behavior previously inlined in {@code BlueprintSelectionPage}.
+ * the behavior previously inlined in {@code StencilSelectionPage}.
  *
  * <h3>No UI dependencies</h3>
  * This class depends only on recipe, inventory, and resource-resolution
  * classes. It has no dependency on {@code UICommandBuilder}, {@code Value},
  * {@code AffordabilityMode}, or any UI page class. This allows it to be
- * used from both UI contexts (BlueprintSelectionPage, StencilRadialMenuPage)
+ * used from both UI contexts (StencilSelectionPage, StencilRadialMenuPage)
  * and non-UI contexts (StencilVisualManager).
  *
  * <h3>Threading</h3>
@@ -894,7 +894,7 @@ public record ResourceSnapshot(
 package com.CodeCreature.placeblock.ui;
 
 /**
- * Three-state affordability mode for the Blueprint Bench filter system.
+ * Three-state affordability mode for the Stencil Bench filter system.
  *
  * <p>Controls how recipes are filtered and dimmed in the recipe grid:
  * <ul>
@@ -973,7 +973,7 @@ public enum AffordabilityMode {
     }
 }
 
-=== FILE: src\main\java\com\CodeCreature\placeblock\ui\BlueprintBookOpenUIInteraction.java ===
+=== FILE: src\main\java\com\CodeCreature\placeblock\ui\StencilBookOpenUIInteraction.java ===
 package com.CodeCreature.placeblock.ui;
 
 import com.hypixel.hytale.codec.builder.BuilderCodec;
@@ -991,11 +991,11 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import javax.annotation.Nonnull;
 
-public class BlueprintBookOpenUIInteraction extends SimpleInstantInteraction {
+public class StencilBookOpenUIInteraction extends SimpleInstantInteraction {
 
-    public static final BuilderCodec<BlueprintBookOpenUIInteraction> CODEC =
-            BuilderCodec.builder(BlueprintBookOpenUIInteraction.class,
-                    BlueprintBookOpenUIInteraction::new, SimpleInstantInteraction.CODEC)
+    public static final BuilderCodec<StencilBookOpenUIInteraction> CODEC =
+            BuilderCodec.builder(StencilBookOpenUIInteraction.class,
+                    StencilBookOpenUIInteraction::new, SimpleInstantInteraction.CODEC)
                     .build();
 
     @Override
@@ -1013,13 +1013,13 @@ public class BlueprintBookOpenUIInteraction extends SimpleInstantInteraction {
         PageManager pageManager = playerComponent.getPageManager();
         if (pageManager.getCustomPage() != null) return;
 
-        BlueprintSelectionPage page = new BlueprintSelectionPage(playerRef);
+        StencilSelectionPage page = new StencilSelectionPage(playerRef);
         Store<EntityStore> store = commandBuffer.getStore();
         pageManager.openCustomPage(ref, store, page);
     }
 }
 
-=== FILE: src\main\java\com\CodeCreature\placeblock\ui\BlueprintBookPrefs.java ===
+=== FILE: src\main\java\com\CodeCreature\placeblock\ui\StencilBookPrefs.java ===
 package com.CodeCreature.placeblock.ui;
 
 import com.hypixel.hytale.codec.Codec;
@@ -1029,8 +1029,8 @@ import com.hypixel.hytale.codec.codecs.array.ArrayCodec;
 
 import java.util.*;
 
-public class BlueprintBookPrefs {
-    public static final BuilderCodec<BlueprintBookPrefs> CODEC = BuilderCodec.builder(BlueprintBookPrefs.class, BlueprintBookPrefs::new)
+public class StencilBookPrefs {
+    public static final BuilderCodec<StencilBookPrefs> CODEC = BuilderCodec.builder(StencilBookPrefs.class, StencilBookPrefs::new)
             .append(new KeyedCodec<>("ActiveTab", Codec.STRING, true), (p, v) -> p.activeTab = v, p -> p.activeTab).add()
             .append(new KeyedCodec<>("ActiveSetFilters", new ArrayCodec<>(Codec.STRING, String[]::new), true),
                     (p, v) -> p.activeSetFilters = Arrays.asList(v), p -> p.activeSetFilters.toArray(new String[0])).add()
@@ -1065,7 +1065,7 @@ public class BlueprintBookPrefs {
     List<String> selectedIngredientNodes = new ArrayList<>();
 }
 
-=== FILE: src\main\java\com\CodeCreature\placeblock\ui\BlueprintBookPrefsStore.java ===
+=== FILE: src\main\java\com\CodeCreature\placeblock\ui\StencilBookPrefsStore.java ===
 package com.CodeCreature.placeblock.ui;
 
 import com.hypixel.hytale.codec.ExtraInfo;
@@ -1078,9 +1078,9 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-public class BlueprintBookPrefsStore {
+public class StencilBookPrefsStore {
 
-    private static final Logger LOGGER = Logger.getLogger("BlueprintBookPrefsStore");
+    private static final Logger LOGGER = Logger.getLogger("StencilBookPrefsStore");
     private static Path prefsDir;
 
     public static void initialize(Path dataDirectory) {
@@ -1088,39 +1088,39 @@ public class BlueprintBookPrefsStore {
         try {
             Files.createDirectories(prefsDir);
         } catch (IOException e) {
-            LOGGER.warning("[BlueprintPrefs] Failed to create prefs directory: " + e.getMessage());
+            LOGGER.warning("[StencilPrefs] Failed to create prefs directory: " + e.getMessage());
         }
     }
 
-    public static BlueprintBookPrefs load(UUID playerUuid) {
-        if (prefsDir == null) return new BlueprintBookPrefs();
+    public static StencilBookPrefs load(UUID playerUuid) {
+        if (prefsDir == null) return new StencilBookPrefs();
 
         Path file = prefsDir.resolve(playerUuid + ".json");
         BsonDocument doc = BsonUtil.readDocumentNow(file);
-        if (doc == null) return new BlueprintBookPrefs();
+        if (doc == null) return new StencilBookPrefs();
 
         try {
-            return BlueprintBookPrefs.CODEC.decode(doc, new ExtraInfo());
+            return StencilBookPrefs.CODEC.decode(doc, new ExtraInfo());
         } catch (Exception e) {
-            LOGGER.warning("[BlueprintPrefs] Failed to decode prefs for " + playerUuid + ": " + e.getMessage());
-            return new BlueprintBookPrefs();
+            LOGGER.warning("[StencilPrefs] Failed to decode prefs for " + playerUuid + ": " + e.getMessage());
+            return new StencilBookPrefs();
         }
     }
 
-    public static void save(UUID playerUuid, BlueprintBookPrefs prefs) {
+    public static void save(UUID playerUuid, StencilBookPrefs prefs) {
         if (prefsDir == null) return;
 
         Path file = prefsDir.resolve(playerUuid + ".json");
         try {
-            BsonDocument doc = BlueprintBookPrefs.CODEC.encode(prefs, new ExtraInfo());
+            BsonDocument doc = StencilBookPrefs.CODEC.encode(prefs, new ExtraInfo());
             BsonUtil.writeDocument(file, doc);
         } catch (Exception e) {
-            LOGGER.warning("[BlueprintPrefs] Failed to save prefs for " + playerUuid + ": " + e.getMessage());
+            LOGGER.warning("[StencilPrefs] Failed to save prefs for " + playerUuid + ": " + e.getMessage());
         }
     }
 }
 
-=== FILE: src\main\java\com\CodeCreature\placeblock\ui\BlueprintSelectionPage.java ===
+=== FILE: src\main\java\com\CodeCreature\placeblock\ui\StencilSelectionPage.java ===
 package com.CodeCreature.placeblock.ui;
 
 import com.CodeCreature.placeblock.PlaceBlockCostUtil;
@@ -1162,9 +1162,9 @@ import java.util.*;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemCategory;
 
-public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSelectionPage.EventPayload> {
+public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelectionPage.EventPayload> {
 
-    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("BlueprintSelectionPage");
+    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger("StencilSelectionPage");
 
     private static final int MAX_GROUP_BUTTONS = 30;
     private static final int MAX_COST_CELLS = 8;
@@ -1231,7 +1231,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     private Ref<EntityStore> playerRef_ref;
     private Store<EntityStore> playerStore;
 
-    public BlueprintSelectionPage(@NonNull PlayerRef playerRef) {
+    public StencilSelectionPage(@NonNull PlayerRef playerRef) {
         super(playerRef, CustomPageLifetime.CanDismissOrCloseThroughInteraction, EventPayload.CODEC);
     }
 
@@ -1298,17 +1298,17 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
 
         benchIds.clear();
         benchIds.addAll(benchSet);
-        LOGGER.info("[BlueprintBook] Loaded bench IDs: " + benchIds);
+        LOGGER.info("[StencilBook] Loaded bench IDs: " + benchIds);
 
         // Debug: log category coverage
         long withCats = allRecipes.stream().filter(r -> r.categoryIds() != null && !r.categoryIds().isEmpty()).count();
-        LOGGER.info("[BlueprintBook] Recipes with categories: " + withCats + "/" + allRecipes.size());
+        LOGGER.info("[StencilBook] Recipes with categories: " + withCats + "/" + allRecipes.size());
         // Debug: log distinct category IDs from recipes
         Set<String> recipeCatIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (RecipeEntry r : allRecipes) {
             if (r.categoryIds() != null) recipeCatIds.addAll(r.categoryIds());
         }
-        LOGGER.info("[BlueprintBook] Distinct recipe category IDs: " + recipeCatIds);
+        LOGGER.info("[StencilBook] Distinct recipe category IDs: " + recipeCatIds);
 
         this.categoryInfoMap = buildCategoryInfoMap();
 
@@ -1388,7 +1388,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         this.playerStore = store;
 
         // Load persisted preferences
-        BlueprintBookPrefs prefs = BlueprintBookPrefsStore.load(this.playerRef.getUuid());
+        StencilBookPrefs prefs = StencilBookPrefsStore.load(this.playerRef.getUuid());
         this.activeTab = prefs.activeTab != null ? prefs.activeTab : ALL_TAB;
         this.activeSetFilters.clear();
         this.activeSetFilters.addAll(prefs.activeSetFilters);
@@ -1426,23 +1426,23 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         this.cellSlotToRecipeIndex = new int[totalCellCount];
 
         // Load main template
-        cmd.append("Pages/BlueprintBook/BlueprintBookPage.ui");
+        cmd.append("Pages/StencilBook/StencilBookPage.ui");
 
         // â”€â”€ Append reusable components into empty containers (one-time init) â”€â”€
 
         // Set filter buttons â€” one per set
         for (int i = 0; i < totalSetCount; i++) {
-            cmd.append("#SetFilters", "Pages/BlueprintBook/SetFilterButton.ui");
+            cmd.append("#SetFilters", "Pages/StencilBook/SetFilterButton.ui");
         }
 
         // Material group icon buttons (keep MAX_GROUP_BUTTONS)
         for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
-            cmd.append("#MaterialGroups", "Pages/BlueprintBook/GroupFilterButton.ui");
+            cmd.append("#MaterialGroups", "Pages/StencilBook/GroupFilterButton.ui");
         }
 
         // Per-set group containers with VARIABLE cell counts
         for (int g = 0; g < totalSetCount; g++) {
-            cmd.append("#RecipeGridArea", "Pages/BlueprintBook/SetGroupContainer.ui");
+            cmd.append("#RecipeGridArea", "Pages/StencilBook/SetGroupContainer.ui");
             for (int c = 0; c < cellsPerSet[g]; c++) {
                 cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
                            "Common/Components/ClickableIconCell.ui");
@@ -1480,10 +1480,10 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 EventData.of("Action", "ToggleSets")
         );
 
-        // Give Blueprint button
+        // Give Stencil button
         evt.addEventBinding(
                 CustomUIEventBindingType.Activating, "#GetPlaceholderBtn",
-                EventData.of("Action", "GiveBlueprint")
+                EventData.of("Action", "GiveStencil")
         );
 
         buildBenchTabs(evt);
@@ -1495,7 +1495,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         if (ingredientController != null) {
             ingredientController.buildUI(cmd, evt);
             // Restore saved selections
-            BlueprintBookPrefs savedPrefs = BlueprintBookPrefsStore.load(this.playerRef.getUuid());
+            StencilBookPrefs savedPrefs = StencilBookPrefsStore.load(this.playerRef.getUuid());
             if (savedPrefs.selectedIngredientNodes != null && !savedPrefs.selectedIngredientNodes.isEmpty()) {
                 ingredientController.restoreSelection(savedPrefs.selectedIngredientNodes);
             }
@@ -1535,7 +1535,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
     }
 
     private void savePrefs() {
-        BlueprintBookPrefs prefs = new BlueprintBookPrefs();
+        StencilBookPrefs prefs = new StencilBookPrefs();
         prefs.activeTab = this.activeTab;
         prefs.activeSetFilters = new ArrayList<>(this.activeSetFilters);
         prefs.activeMaterialGroups = new ArrayList<>(this.activeMaterialGroups);
@@ -1546,7 +1546,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         prefs.selectAllCategories = this.selectAllCategories;
         prefs.selectedIngredientNodes = ingredientController != null
                 ? new ArrayList<>(ingredientController.getSelectedNodeIds()) : new ArrayList<>();
-        BlueprintBookPrefsStore.save(this.playerRef.getUuid(), prefs);
+        StencilBookPrefsStore.save(this.playerRef.getUuid(), prefs);
     }
 
     @Override
@@ -1748,8 +1748,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             }
             sendUpdate(cmd, null, false);
 
-        } else if ("GiveBlueprint".equals(data.action)) {
-            giveSelectedBlueprint(store, ref, cmd);
+        } else if ("GiveStencil".equals(data.action)) {
+            giveSelectedStencil(store, ref, cmd);
             sendUpdate(cmd, null, false);
         }
     }
@@ -1943,7 +1943,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                         }
                     }
                 } catch (Exception e) {
-                    LOGGER.warning("[BlueprintUI] Error populating cost grid: " + e.getMessage());
+                    LOGGER.warning("[StencilUI] Error populating cost grid: " + e.getMessage());
                 }
 
                 // Hide remaining cost cells and reset their state
@@ -2061,7 +2061,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         // Build the map with dot-notation keys to match recipe category IDs.
         Map<String, RecipeFilterPipeline.CategoryInfo> map = new LinkedHashMap<>();
         for (ItemCategory topLevel : allCats.values()) {
-            LOGGER.info("[BlueprintBook] Top-level category: id=" + topLevel.getId()
+            LOGGER.info("[StencilBook] Top-level category: id=" + topLevel.getId()
                     + " name=" + topLevel.getName() + " icon=" + topLevel.getIcon()
                     + " order=" + topLevel.getOrder());
             // Top-level entries (e.g. "Blocks", "Items", "Furniture")
@@ -2073,7 +2073,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
             if (children != null) {
                 for (ItemCategory child : children) {
                     String dotKey = topLevel.getId() + "." + child.getId();
-                    LOGGER.info("[BlueprintBook]   Child category: dotKey=" + dotKey
+                    LOGGER.info("[StencilBook]   Child category: dotKey=" + dotKey
                             + " name=" + child.getName() + " icon=" + child.getIcon()
                             + " order=" + child.getOrder());
                     map.put(dotKey, new RecipeFilterPipeline.CategoryInfo(
@@ -2081,7 +2081,7 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
                 }
             }
         }
-        LOGGER.info("[BlueprintBook] Built categoryInfoMap with " + map.size() + " categories: " + map.keySet());
+        LOGGER.info("[StencilBook] Built categoryInfoMap with " + map.size() + " categories: " + map.keySet());
         return map;
     }
 
@@ -2092,11 +2092,11 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         return Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1);
     }
 
-    private void giveSelectedBlueprint(Store<EntityStore> store, Ref<EntityStore> ref,
+    private void giveSelectedStencil(Store<EntityStore> store, Ref<EntityStore> ref,
                                   UICommandBuilder cmd) {
         if (selectedRecipeId == null) {
             this.playerRef.sendMessage(
-                    Message.raw("\u00a7c[BlueprintBook] No recipe selected."));
+                    Message.raw("\u00a7c[StencilBook] No recipe selected."));
             return;
         }
 
@@ -2110,8 +2110,8 @@ public class BlueprintSelectionPage extends InteractiveCustomUIPage<BlueprintSel
         player.getInventory().getCombinedHotbarFirst().addItemStack(item);
 
         this.playerRef.sendMessage(
-                Message.raw("\u00a7a[BlueprintBook] Given stencil: " + entry.outputItemId().replace('_', ' ')));
-        LOGGER.info("[BlueprintUI] Gave player stencil for " + entry.outputItemId() + " (recipe: " + entry.recipeId() + ")");
+                Message.raw("\u00a7a[StencilBook] Given stencil: " + entry.outputItemId().replace('_', ' ')));
+        LOGGER.info("[StencilUI] Gave player stencil for " + entry.outputItemId() + " (recipe: " + entry.recipeId() + ")");
     }
 
     @Nullable
@@ -2187,10 +2187,10 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 /**
- * Sequential, composable filter pipeline for Blueprint Bench recipes.
+ * Sequential, composable filter pipeline for Stencil Bench recipes.
  *
  * <p>Replaces the interleaved filtering logic previously split across
- * {@code BlueprintSelectionPage.applyFilter()} and {@code buildRecipeList()}.
+ * {@code StencilSelectionPage.applyFilter()} and {@code buildRecipeList()}.
  * Each stage has a single responsibility: take a list, produce a list.
  * Affordability is computed <b>once</b> in a dedicated tagging stage.
  *
@@ -2709,7 +2709,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Static registry of all known resource types available in the Blueprint Bench
+ * Static registry of all known resource types available in the Stencil Bench
  * resource type filter grid.
  *
  * <p>Each entry maps a {@code resourceTypeId} to an icon filename located at
@@ -2948,7 +2948,7 @@ public final class ResourceTypeRegistry {
     /**
      * One-time preference migration map from old {@code "Any_*"} registry IDs
      * to the new {@code "*_Group"} meta-filter IDs. Used by
-     * {@code BlueprintSelectionPage.loadPrefs()} to migrate stale saved values.
+     * {@code StencilSelectionPage.loadPrefs()} to migrate stale saved values.
      *
      * @return unmodifiable map of old ID â†’ new ID
      */
@@ -3726,7 +3726,7 @@ public class IngredientTreeGridController {
 
         for (IngredientGroup group : tree.getGroups()) {
             // Append group header
-            cmd.append("#IngredientTreeContainer", "Pages/BlueprintBook/IngredientGroupHeader.ui");
+            cmd.append("#IngredientTreeContainer", "Pages/StencilBook/IngredientGroupHeader.ui");
             elements.add(new ElementInfo(group.getId(), NodeType.META_GROUP, ElementKind.HEADER, containerIdx, -1));
 
             String headerSel = "#IngredientTreeContainer[" + containerIdx + "]";
@@ -3739,7 +3739,7 @@ public class IngredientTreeGridController {
             containerIdx++;
 
             // Append wrap grid container for this group's leaf buttons
-            cmd.append("#IngredientTreeContainer", "Pages/BlueprintBook/IngredientButtonGrid.ui");
+            cmd.append("#IngredientTreeContainer", "Pages/StencilBook/IngredientButtonGrid.ui");
             int gridContainerIdx = containerIdx;
             elements.add(new ElementInfo(group.getId(), NodeType.META_GROUP, ElementKind.GRID_CONTAINER, containerIdx, -1));
             containerIdx++;
@@ -3750,8 +3750,8 @@ public class IngredientTreeGridController {
             for (IngredientResourceType rt : group.getChildren()) {
                 boolean isDirectItem = rt.getIconPath() == null;
                 String template = isDirectItem
-                        ? "Pages/BlueprintBook/ExactItemFilterButton.ui"
-                        : "Pages/BlueprintBook/GroupFilterButton.ui";
+                        ? "Pages/StencilBook/ExactItemFilterButton.ui"
+                        : "Pages/StencilBook/GroupFilterButton.ui";
                 ElementKind kind = isDirectItem ? ElementKind.ITEM_BUTTON : ElementKind.LEAF_BUTTON;
 
                 cmd.append(gridSel, template);
@@ -5618,7 +5618,7 @@ public class PlacementCostScaler extends EntityEventSystem<EntityStore, PlaceBlo
         ItemStack itemInHand = event.getItemInHand();
         if (itemInHand == null) return;
 
-        // Blueprint stencils handle their own resource consumption â€” skip extra cost
+        // Stencil stencils handle their own resource consumption â€” skip extra cost
         if (StencilMetadata.isStencil(itemInHand)) return;
 
         String blockTypeId = itemInHand.getBlockKey();
@@ -5704,7 +5704,7 @@ import java.util.Set;
  *
  * <p>Consumers layer their own concerns on top of the shared entries:
  * <ul>
- *   <li>{@code BlueprintSelectionPage}: tab/set/search filtering, affordability</li>
+ *   <li>{@code StencilSelectionPage}: tab/set/search filtering, affordability</li>
  *   <li>{@code BenchRecipeRegistry}: base-block classification, natural
  *       resource detection</li>
  * </ul>
@@ -5720,7 +5720,7 @@ import java.util.Set;
 public final class RecipeFilterRegistry {
 
     /** Default skip prefixes used by both consumers. */
-    public static final Set<String> DEFAULT_SKIP_PREFIXES = Set.of("Blueprint_", "Salvage");
+    public static final Set<String> DEFAULT_SKIP_PREFIXES = Set.of("Stencil_", "Salvage");
 
     // â”€â”€â”€ Reflection for Item.set â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private static final Field ITEM_SET_FIELD;
@@ -5766,7 +5766,7 @@ public final class RecipeFilterRegistry {
      *
      * <p>Skip prefixes control which recipe ID prefixes are excluded.
      * Use {@link #DEFAULT_SKIP_PREFIXES} for the standard set
-     * ({@code "Blueprint_"}, {@code "Salvage"}).
+     * ({@code "Stencil_"}, {@code "Salvage"}).
      *
      * @param skipPrefixes set of recipe ID prefixes to exclude; recipes
      *                     whose ID starts with any of these are skipped
@@ -5947,7 +5947,7 @@ public final class RecipeFilterRegistry {
      * the subset of IDs that are in the allowed set. Returns an empty set
      * if none match.
      *
-     * <p>This fixes the bug in BlueprintSelectionPage which only checked
+     * <p>This fixes the bug in StencilSelectionPage which only checked
      * the first BenchRequirement entry.
      *
      * @param recipe          the crafting recipe
@@ -6291,7 +6291,7 @@ public final class ResourceTypeResolver {
 
 }
 
-=== FILE: src\main\java\com\CodeCreature\stencil\BlueprintBookParticleLoop.java ===
+=== FILE: src\main\java\com\CodeCreature\stencil\StencilBookParticleLoop.java ===
 package com.CodeCreature.stencil;
 
 import com.CodeCreature.placeblock.RecipeAffordabilityResolver;
@@ -6334,15 +6334,15 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-public class BlueprintBookParticleLoop {
+public class StencilBookParticleLoop {
 
-    private static final Logger LOGGER = Logger.getLogger("BlueprintBookParticleLoop");
+    private static final Logger LOGGER = Logger.getLogger("StencilBookParticleLoop");
     private static final long UPDATE_INTERVAL_MILLIS = 100;
-    private static final String BLUEPRINT_BOOK_ITEM_ID = "BlueprintBook";
+    private static final String STENCIL_BOOK_ITEM_ID = "StencilBook";
     private static final String EFFECT_ID_GREEN = "Drop_Uncommon";
     private static final String EFFECT_ID_RED = "BlockPlaceFail";
 
-    private static final Map<UUID, BlueprintBookParticleLoop> INSTANCES = new ConcurrentHashMap<>();
+    private static final Map<UUID, StencilBookParticleLoop> INSTANCES = new ConcurrentHashMap<>();
 
     private final PlayerRef playerRef;
     private final World world;
@@ -6351,30 +6351,30 @@ public class BlueprintBookParticleLoop {
     private Ref<EntityStore> activeEntity;
     private volatile boolean active = true;
 
-    public BlueprintBookParticleLoop(@Nonnull PlayerRef playerRef, @Nonnull World world) {
+    public StencilBookParticleLoop(@Nonnull PlayerRef playerRef, @Nonnull World world) {
         this.playerRef = playerRef;
         this.world = world;
     }
 
     public static void start(@Nonnull PlayerRef playerRef, @Nonnull World world) {
         UUID playerId = playerRef.getUuid();
-        BlueprintBookParticleLoop existing = INSTANCES.get(playerId);
+        StencilBookParticleLoop existing = INSTANCES.get(playerId);
         if (existing != null) {
             existing.shutdown();
             INSTANCES.remove(playerId);
-            LOGGER.info("[BlueprintBookParticle] Replaced stale loop for player: " + playerRef.getUsername());
+            LOGGER.info("[StencilBookParticle] Replaced stale loop for player: " + playerRef.getUsername());
         }
-        BlueprintBookParticleLoop instance = new BlueprintBookParticleLoop(playerRef, world);
+        StencilBookParticleLoop instance = new StencilBookParticleLoop(playerRef, world);
         instance.startUpdateLoop();
         INSTANCES.put(playerId, instance);
-        LOGGER.info("[BlueprintBookParticle] Created loop for player: " + playerRef.getUsername());
+        LOGGER.info("[StencilBookParticle] Created loop for player: " + playerRef.getUsername());
     }
 
     public static void remove(@Nonnull UUID playerId) {
-        BlueprintBookParticleLoop instance = INSTANCES.remove(playerId);
+        StencilBookParticleLoop instance = INSTANCES.remove(playerId);
         if (instance != null) {
             instance.shutdown();
-            LOGGER.info("[BlueprintBookParticle] Removed loop for player: " + playerId);
+            LOGGER.info("[StencilBookParticle] Removed loop for player: " + playerId);
         }
     }
 
@@ -6400,7 +6400,7 @@ public class BlueprintBookParticleLoop {
 
                     byte activeSlot = player.getInventory().getActiveHotbarSlot();
                     ItemStack held = player.getInventory().getHotbar().getItemStack(activeSlot);
-                    if (held == null || !held.getItemId().equals(BLUEPRINT_BOOK_ITEM_ID)) {
+                    if (held == null || !held.getItemId().equals(STENCIL_BOOK_ITEM_ID)) {
                         removeHighlightEntity(store);
                         return;
                     }
@@ -6441,13 +6441,13 @@ public class BlueprintBookParticleLoop {
                     lastTargetBlock = target;
                 });
             } catch (Exception e) {
-                LOGGER.warning("[BlueprintBookParticle] Error in update loop: " + e.getMessage());
+                LOGGER.warning("[StencilBookParticle] Error in update loop: " + e.getMessage());
             }
         }, UPDATE_INTERVAL_MILLIS, UPDATE_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
     }
 
     private Ref<EntityStore> spawnHighlightEntity(Store<EntityStore> store, Vector3i target, String blockTypeKey, boolean affordable) {
-        LOGGER.fine(() -> "[BlueprintBookParticle] Spawning highlight entity at " + target + " for block " + blockTypeKey + " affordable=" + affordable);
+        LOGGER.fine(() -> "[StencilBookParticle] Spawning highlight entity at " + target + " for block " + blockTypeKey + " affordable=" + affordable);
         Holder<EntityStore> holder = EntityStore.REGISTRY.newHolder();
 
         // Position and rotation â€” match the placed block's orientation
@@ -6483,7 +6483,7 @@ public class BlueprintBookParticleLoop {
         holder.ensureComponent(EntityStore.REGISTRY.getNonSerializedComponentType());
 
         Ref<EntityStore> entityRef = store.addEntity(holder, AddReason.SPAWN);
-        LOGGER.fine(() -> "[BlueprintBookParticle] Entity spawned with networkId=" + networkId);
+        LOGGER.fine(() -> "[StencilBookParticle] Entity spawned with networkId=" + networkId);
 
         // Apply the highlight effect â€” green if affordable, red if not
         String effectId = affordable ? EFFECT_ID_GREEN : EFFECT_ID_RED;
@@ -6517,13 +6517,13 @@ public class BlueprintBookParticleLoop {
                     activeEntity = null;
                 });
             } catch (Exception e) {
-                LOGGER.warning("[BlueprintBookParticle] Error removing entity on shutdown: " + e.getMessage());
+                LOGGER.warning("[StencilBookParticle] Error removing entity on shutdown: " + e.getMessage());
             }
         }
     }
 }
 
-=== FILE: src\main\java\com\CodeCreature\stencil\BlueprintBookPickStencilInteraction.java ===
+=== FILE: src\main\java\com\CodeCreature\stencil\StencilBookPickStencilInteraction.java ===
 package com.CodeCreature.stencil;
 
 import com.CodeCreature.resourcecollection.BenchRecipeRegistries;
@@ -6553,7 +6553,7 @@ import javax.annotation.Nonnull;
  * Interaction that raycasts to the aimed block, resolves its crafting recipe,
  * and adds the corresponding stencil to the player's inventory (hotbar first).
  */
-public class BlueprintBookPickStencilInteraction extends SimpleInstantInteraction {
+public class StencilBookPickStencilInteraction extends SimpleInstantInteraction {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
@@ -6562,9 +6562,9 @@ public class BlueprintBookPickStencilInteraction extends SimpleInstantInteractio
     public static String getParticleEffect() { return particleEffect; }
     public static void setParticleEffect(String name) { particleEffect = name; }
 
-    public static final BuilderCodec<BlueprintBookPickStencilInteraction> CODEC =
-            BuilderCodec.builder(BlueprintBookPickStencilInteraction.class,
-                    BlueprintBookPickStencilInteraction::new, SimpleInstantInteraction.CODEC)
+    public static final BuilderCodec<StencilBookPickStencilInteraction> CODEC =
+            BuilderCodec.builder(StencilBookPickStencilInteraction.class,
+                    StencilBookPickStencilInteraction::new, SimpleInstantInteraction.CODEC)
                     .build();
 
     @Override
@@ -6598,7 +6598,7 @@ public class BlueprintBookPickStencilInteraction extends SimpleInstantInteractio
         ItemStack stencil = StencilMetadata.createStencil(entry.outputItemId(), entry.recipeId());
         player.getInventory().getCombinedHotbarFirst().addItemStack(stencil);
 
-        LOGGER.atInfo().log("[BlueprintBook] Gave stencil for %s to player %s", entry.recipeId(), playerRef.getUuid());
+        LOGGER.atInfo().log("[StencilBook] Gave stencil for %s to player %s", entry.recipeId(), playerRef.getUuid());
     }
 }
 
@@ -6704,10 +6704,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * BSON metadata utility for Blueprint Stencil items.
+ * BSON metadata utility for Stencil Stencil items.
  *
  * <p>A stencil is any {@link ItemStack} whose BSON metadata contains
- * a {@code "BlueprintStencil"} tag set to {@code "true"} and a
+ * a {@code "StencilStencil"} tag set to {@code "true"} and a
  * {@code "RecipeId"} field identifying the crafting recipe to consume
  * resources from when the stencil is placed.
  *
@@ -6720,7 +6720,7 @@ import javax.annotation.Nullable;
 public final class StencilMetadata {
 
     /** BSON key whose presence marks an ItemStack as a stencil. */
-    private static final String STENCIL_TAG_KEY = "BlueprintStencil";
+    private static final String STENCIL_TAG_KEY = "StencilStencil";
 
     /** BSON key storing the recipe ID to consume resources from. */
     private static final String RECIPE_ID_KEY = "RecipeId";
@@ -6728,7 +6728,7 @@ public final class StencilMetadata {
     private StencilMetadata() {}
 
     /**
-     * Checks whether the given ItemStack is a blueprint stencil.
+     * Checks whether the given ItemStack is a stencil stencil.
      *
      * <p>An ItemStack is a stencil if and only if its BSON metadata
      * contains a {@value #STENCIL_TAG_KEY} key with value {@code "true"}.
@@ -6832,7 +6832,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Intercepts {@link PlaceBlockEvent} for blueprint stencil items and redirects
+ * Intercepts {@link PlaceBlockEvent} for stencil stencil items and redirects
  * resource consumption from the item stack to recipe materials.
  *
  * <p><b>Strategy â€” "Bump and Let Through":</b> Instead of cancelling the event
@@ -7634,7 +7634,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
- * Manages per-player visual overrides for blueprint stencil items in the hotbar.
+ * Manages per-player visual overrides for stencil stencil items in the hotbar.
  *
  * <p>Provides two visual features via {@code UpdateItems} packets:
  * <ul>
@@ -11389,7 +11389,7 @@ class StencilMetadataTest {
         @Test
         void stackWithStencilTagTrueReturnsTrue() {
             BsonDocument metadata = new BsonDocument();
-            metadata.put("BlueprintStencil", new BsonString("true"));
+            metadata.put("StencilStencil", new BsonString("true"));
             ItemStack stack = new ItemStack(TEST_ITEM_ID, 1, metadata);
 
             assertTrue(StencilMetadata.isStencil(stack));
@@ -11398,7 +11398,7 @@ class StencilMetadataTest {
         @Test
         void stackWithStencilTagFalseReturnsFalse() {
             BsonDocument metadata = new BsonDocument();
-            metadata.put("BlueprintStencil", new BsonString("false"));
+            metadata.put("StencilStencil", new BsonString("false"));
             ItemStack stack = new ItemStack(TEST_ITEM_ID, 1, metadata);
 
             assertFalse(StencilMetadata.isStencil(stack));
@@ -11407,7 +11407,7 @@ class StencilMetadataTest {
         @Test
         void stackWithStencilTagNonStringTypeReturnsFalse() {
             BsonDocument metadata = new BsonDocument();
-            metadata.put("BlueprintStencil", new BsonBoolean(true));
+            metadata.put("StencilStencil", new BsonBoolean(true));
             ItemStack stack = new ItemStack(TEST_ITEM_ID, 1, metadata);
 
             assertFalse(StencilMetadata.isStencil(stack));
@@ -11431,7 +11431,7 @@ class StencilMetadataTest {
         @Test
         void stackWithMetadataButNoRecipeIdReturnsNull() {
             BsonDocument metadata = new BsonDocument();
-            metadata.put("BlueprintStencil", new BsonString("true"));
+            metadata.put("StencilStencil", new BsonString("true"));
             ItemStack stack = new ItemStack(TEST_ITEM_ID, 1, metadata);
 
             assertNull(StencilMetadata.getRecipeId(stack));
@@ -11477,8 +11477,8 @@ class StencilMetadataTest {
             BsonDocument metadata = stencil.getMetadata();
 
             assertNotNull(metadata, "Stencil metadata should not be null");
-            assertTrue(metadata.containsKey("BlueprintStencil"), "Metadata must contain BlueprintStencil key");
-            assertEquals("true", metadata.getString("BlueprintStencil").getValue());
+            assertTrue(metadata.containsKey("StencilStencil"), "Metadata must contain StencilStencil key");
+            assertEquals("true", metadata.getString("StencilStencil").getValue());
         }
 
         @Test

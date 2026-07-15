@@ -1,6 +1,6 @@
 # Stencil Crafting Plugin
 
-A Hytale Java plugin centered on Stencil Crafting workflows, with the Blueprint Book as the in-game stencil tool.
+A Hytale Java plugin centered on Stencil Crafting workflows, with the Stencil Book as the in-game stencil tool.
 
 ### Configuring the Project
 If you for example installed the game in a non-standard location, you will need to tell the project about that.

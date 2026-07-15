@@ -1,0 +1,57 @@
+{
+	"SubCategory": "CraftingTools",
+	"Icon": "Icons/ItemsGenerated/Weapon_Spellbook_Grimoire_Brown.png",
+	"Categories": [
+		"Tool.StencilBook"
+	],
+	"TranslationProperties": {
+		"Name": "server.items.StencilBook.name",
+		"Description": "server.items.StencilBook.description"
+	},
+	"ItemLevel": 0,
+	"MaxStack": 1,
+	"Quality": "Tool",
+	"Set": "StencilBook",
+	"Model": "Items/Weapons/Spellbook/Grimoire.blockymodel",
+	"Texture": "Items/Weapons/Spellbook/Grimoire_Brown_Texture.png",
+	"PlayerAnimationsId": "Spellbook",
+	"Recipe": {
+		"Input": [
+			{
+				"ItemId": "Ingredient_Fabric_Scrap_Linen",
+				"Quantity": 6,
+				"Metadata": {}
+			},
+			{
+				"ItemId": "Ingredient_Leather_Light",
+				"Quantity": 2,
+				"Metadata": {}
+			},
+			{
+				"ItemId": "Ingredient_Life_Essence",
+				"Quantity": 10,
+				"Metadata": {}
+			}
+		],
+		"PrimaryOutput": {
+			"Metadata": {}
+		},
+		"BenchRequirement": [
+			{
+				"Type": "Crafting",
+				"Id": "Workbench",
+				"Categories": [
+					"Workbench_Tools"
+				]
+			}
+		],
+		"TimeSeconds": 4
+	},
+	"Interactions": {
+		"Pick": "StencilBook_PickStencil",
+		"Use": "StencilCrafting_OpenUI"
+	},
+	"InteractionConfig": {
+		"DisplayOutlines": true
+	}
+}

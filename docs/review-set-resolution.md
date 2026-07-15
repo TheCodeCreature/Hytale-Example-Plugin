@@ -21,7 +21,7 @@ graph TB
     end
     
     subgraph "Consumers"
-        D["BlueprintSelectionPage.RecipeEntry.set()"]
+        D["StencilSelectionPage.RecipeEntry.set()"]
         E["RecipeFilterPipeline.InputRecipe.set()"]
         F["RecipeFilterPipeline.TaggedRecipe.effectiveSet()"]
     end
@@ -50,7 +50,7 @@ graph TB
 |---|----------|----------|----------|--------|
 | 1 | Redundancy | 🔵 Review | [RecipeFilterRegistry.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/RecipeFilterRegistry.java#L66-L75) | `extractItemSet()` uses reflection on `Item.set` — this is the same pattern as `ResourceTypeResolver.getSetId()` (line 181). Two reflection handles for the same field. Not a bug, but a potential consolidation point. |
 | 2 | Scalability | 🟡 Should Fix | [RecipeFilterRegistry.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/RecipeFilterRegistry.java#L187-L197) | No `bySet` index exists. To get "all recipes in set X" a consumer must do `getAllEntries().stream().filter(e -> set.equals(e.set()))` — O(n) on every call. The `byBenchId` pattern already shows the correct approach. |
-| 3 | Redundancy | 🔵 Review | [BlueprintSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L1050-L1053) | `RecipeEntry` is a private record that duplicates fields already on `FilteredRecipeEntry` (recipeId, outputItemId, blockTypeId, set, categoryIds). The pipeline converts between them. Not blocking for radial menu reuse. |
+| 3 | Redundancy | 🔵 Review | [StencilSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/StencilSelectionPage.java#L1050-L1053) | `RecipeEntry` is a private record that duplicates fields already on `FilteredRecipeEntry` (recipeId, outputItemId, blockTypeId, set, categoryIds). The pipeline converts between them. Not blocking for radial menu reuse. |
 | 4 | Anti-pattern | 🔵 Review | [RecipeFilterPipeline.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/RecipeFilterPipeline.java#L29-L30) | `UNCATEGORIZED_SET` constant lives in `RecipeFilterPipeline` (UI-adjacent). If the radial menu needs the same null-normalization, it would import a UI pipeline class. Consider moving to `RecipeFilterRegistry` or a shared constants class. |
 
 ## 4. Data Flow Analysis
@@ -148,7 +148,7 @@ graph TB
 2. Populate it during `init()` alongside `byBenchId`
 3. Expose `public static List<FilteredRecipeEntry> getEntriesForSet(String set)`
 
-**Estimated change:** ~15 lines in `RecipeFilterRegistry.java`. Zero changes to `RecipeFilterPipeline`, `BlueprintSelectionPage`, or any other file.
+**Estimated change:** ~15 lines in `RecipeFilterRegistry.java`. Zero changes to `RecipeFilterPipeline`, `StencilSelectionPage`, or any other file.
 
 **Radial menu integration** then becomes:
 

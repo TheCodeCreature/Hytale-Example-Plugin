@@ -1,0 +1,7 @@
+// Group-icon filter toggle — composes @FilterToggleButton token directly
+// cmd.append() path unchanged: Pages/StencilBook/GroupFilterButton.ui
+// Java selectors: #FilterIcon, #ActiveOverlay, #Btn
+
+$CP = "../../Common/Components/Components.ui";
+
+$CP.@FilterToggleButton {}

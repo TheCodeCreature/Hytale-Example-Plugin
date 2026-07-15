@@ -11,13 +11,13 @@ created: 2026-05-19
 # UI Raw Cost Display
 
 ## Description
-Display raw material cost breakdowns alongside direct recipe costs in the stencil radial menu and blueprint bench selection page. Players can see what auto-craft would consume before placing.
+Display raw material cost breakdowns alongside direct recipe costs in the stencil radial menu and stencil bench selection page. Players can see what auto-craft would consume before placing.
 
 ## Acceptance Criteria
 
 ### Checklist
 - [ ] Radial menu shows raw material cost for armed stencil recipe
-- [ ] Blueprint bench selection page shows raw material cost per recipe
+- [ ] Stencil bench selection page shows raw material cost per recipe
 - [ ] Raw cost only shown for recipes with crafted intermediate inputs
 - [ ] Raw cost not shown for recipes with only raw inputs (no noise)
 
@@ -36,7 +36,7 @@ Display raw material cost breakdowns alongside direct recipe costs in the stenci
 | ID | Title | Status |
 |----|-------|--------|
 | S2605191121 | Add Raw Cost to StencilRadialMenuPage | backlog |
-| S2605191122 | Add Raw Cost to BlueprintSelectionPage | backlog |
+| S2605191122 | Add Raw Cost to StencilSelectionPage | backlog |
 
 ## Notes
 Design reference: [design-auto-craft-stencil.md](../../design-auto-craft-stencil.md) §8.4, §8.5

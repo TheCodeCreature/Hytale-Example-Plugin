@@ -33,8 +33,8 @@ graph TB
 
     subgraph "Callers"
         ABP["AbstractBenchProcessor.process()"]
-        BSP_COST["BlueprintSelectionPage\ncost display"]
-        BSP_FILTER["BlueprintSelectionPage\nresource filter"]
+        BSP_COST["StencilSelectionPage\ncost display"]
+        BSP_FILTER["StencilSelectionPage\nresource filter"]
         BBD["BreakBlockDiagnostic"]
         RS["ResourceSnapshot.canAfford()"]
     end
@@ -88,7 +88,7 @@ graph TB
 | 2 | Anti-pattern | 🟡 **Should Fix** | [BreakBlockDiagnostic.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/BreakBlockDiagnostic.java#L96) | Passes `null` for `BenchCategory` to `resolveInputItemId()`. If the MaterialQuantity has a ResourceTypeId (no direct ItemId), `resolveByResourceType()` calls `category.preferNatural()` which throws NPE. |
 | 3 | Anti-pattern | 🟡 **Should Fix** | [ResourceTypeResolver.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/ResourceTypeResolver.java#L43-L50) | Uses `java.lang.reflect.Field` to read the private `Item.set` field. Fragile — breaks silently if the engine renames/removes the field. The `ExceptionInInitializerError` in the static block will crash the entire class loading. |
 | 4 | Scalability | 🟠 **QA** | [ResourceTypeResolver.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/ResourceTypeResolver.java#L112-L130) | `resolveByResourceType()` does a **full scan of the entire item asset map** on every call (twice in the worst case — pass 1 fails, pass 2 runs). With ~5000+ items in the asset map, each `AbstractBenchProcessor.process()` invocation calls this for every input of every recipe. No caching of results. |
-| 5 | Redundancy | 🟠 **QA** | [BlueprintSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L821) + [AbstractBenchProcessor.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/AbstractBenchProcessor.java#L65-L67) | Identical 3-line pattern duplicated in two places: `resolveInputItemId(mq, category)` → null check → `resolveToGatherableForm(itemId)`. These two call sites do the same composition of resolver + gatherable-form normalization. |
+| 5 | Redundancy | 🟠 **QA** | [StencilSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/StencilSelectionPage.java#L821) + [AbstractBenchProcessor.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/AbstractBenchProcessor.java#L65-L67) | Identical 3-line pattern duplicated in two places: `resolveInputItemId(mq, category)` → null check → `resolveToGatherableForm(itemId)`. These two call sites do the same composition of resolver + gatherable-form normalization. |
 | 6 | Over-engineering | 🔵 **Review** | [ResourceSnapshot.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ResourceSnapshot.java#L62-L66) | `canAfford()` has a TODO referencing ResourceTypeResolver but is not implemented (returns `false`). Dead code path — if nothing calls it yet, consider removing or implementing. |
 | 7 | Redundancy | 🔵 **Review** | [ResourceTypeRegistry.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/ResourceTypeRegistry.java#L229) vs [ResourceTypeResolver.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/ResourceTypeResolver.java#L110) | Two separate "resolve" concepts on the same domain: `ResourceTypeRegistry.resolveFilterIds()` expands UI filter → set of ResourceTypeIds; `ResourceTypeResolver.resolveByResourceType()` resolves ResourceTypeId → concrete item. Names could be confused. They compose correctly in series but should be understood as distinct operations. |
 
@@ -188,14 +188,14 @@ For `resolveByResourceType("Wood_Hardwood", BUILDERS_ONLY)`:
 | # | Caller | File | Line | Category Passed | Post-Processing | Purpose |
 |---|--------|------|------|-----------------|-----------------|---------|
 | 1 | `AbstractBenchProcessor.process()` | [AbstractBenchProcessor.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/AbstractBenchProcessor.java#L65) | 65 | `category()` (from subclass) | `resolveToGatherableForm()` | **Drop scaling**: determines what items to put in synthetic drop lists when breaking recipe blocks |
-| 2 | `BlueprintSelectionPage` (cost grid) | [BlueprintSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L821) | 821 | From `RecipeFilterRegistry.getEntry()` | `resolveToGatherableForm()` | **UI cost display**: resolves inputs to show ingredient icons and quantities |
+| 2 | `StencilSelectionPage` (cost grid) | [StencilSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/StencilSelectionPage.java#L821) | 821 | From `RecipeFilterRegistry.getEntry()` | `resolveToGatherableForm()` | **UI cost display**: resolves inputs to show ingredient icons and quantities |
 | 3 | `BreakBlockDiagnostic` | [BreakBlockDiagnostic.java](../src/main/java/com/UnobstructedThirdPerson/resourcecollection/BreakBlockDiagnostic.java#L96) | 96 | **`null`** ⚠️ | None | **Debug logging**: shows resolved items when a block is broken |
 
 ### 6.2 `recipeMatchesAnyResourceType` — 1 production caller
 
 | # | Caller | File | Line | Purpose |
 |---|--------|------|------|---------|
-| 1 | `BlueprintSelectionPage` (resource filter) | [BlueprintSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/BlueprintSelectionPage.java#L225) | 225 | Filters recipe grid by selected resource types in RESOURCE_DRIVEN mode |
+| 1 | `StencilSelectionPage` (resource filter) | [StencilSelectionPage.java](../src/main/java/com/UnobstructedThirdPerson/placeblock/ui/StencilSelectionPage.java#L225) | 225 | Filters recipe grid by selected resource types in RESOURCE_DRIVEN mode |
 
 ### 6.3 `resolveByResourceType` — 0 direct production callers
 
@@ -252,7 +252,7 @@ The grid's `ResourceTypeEntry` entries are a UI-curated subset. They don't repre
 | Component | Impact | Reason |
 |-----------|--------|--------|
 | `AbstractBenchProcessor` | **High** — drop items change | All synthetic drop lists recalculated; wrong resolution = wrong drops |
-| `BlueprintSelectionPage` (cost grid) | **Medium** — cost icons change | UI shows different ingredient icons, player may see incorrect affordability |
+| `StencilSelectionPage` (cost grid) | **Medium** — cost icons change | UI shows different ingredient icons, player may see incorrect affordability |
 | `BreakBlockDiagnostic` | **Low** — diagnostic only | Only affects debug output |
 | Tests | **Must update** | 20+ test cases exercise `resolveByResourceType` directly |
 
@@ -262,7 +262,7 @@ Same as above plus: affects the null/Empty ItemId handling path, which all three
 
 ### If `recipeMatchesAnyResourceType()` changes:
 
-Only `BlueprintSelectionPage` resource filter affected. Lower blast radius.
+Only `StencilSelectionPage` resource filter affected. Lower blast radius.
 
 ### If `itemsWithResourceType()` changes:
 
@@ -286,7 +286,7 @@ The `SET_FIELD` reflection access in `ResourceTypeResolver` is the only way to r
 
 ### 9.4 Composition Pattern
 
-Both `AbstractBenchProcessor` and `BlueprintSelectionPage` follow the same composition:
+Both `AbstractBenchProcessor` and `StencilSelectionPage` follow the same composition:
 ```java
 String itemId = ResourceTypeResolver.resolveInputItemId(mq, category);
 if (itemId == null) continue;

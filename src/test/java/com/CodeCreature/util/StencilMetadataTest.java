@@ -56,7 +56,7 @@ class StencilMetadataTest {
         @Test
         void stackWithStencilTagTrueReturnsTrue() {
             BsonDocument metadata = new BsonDocument();
-            metadata.put("BlueprintStencil", new BsonString("true"));
+            metadata.put("StencilStencil", new BsonString("true"));
             ItemStack stack = new ItemStack(TEST_ITEM_ID, 1, metadata);
 
             assertTrue(StencilMetadata.isStencil(stack));
@@ -65,7 +65,7 @@ class StencilMetadataTest {
         @Test
         void stackWithStencilTagFalseReturnsFalse() {
             BsonDocument metadata = new BsonDocument();
-            metadata.put("BlueprintStencil", new BsonString("false"));
+            metadata.put("StencilStencil", new BsonString("false"));
             ItemStack stack = new ItemStack(TEST_ITEM_ID, 1, metadata);
 
             assertFalse(StencilMetadata.isStencil(stack));
@@ -74,7 +74,7 @@ class StencilMetadataTest {
         @Test
         void stackWithStencilTagNonStringTypeReturnsFalse() {
             BsonDocument metadata = new BsonDocument();
-            metadata.put("BlueprintStencil", new BsonBoolean(true));
+            metadata.put("StencilStencil", new BsonBoolean(true));
             ItemStack stack = new ItemStack(TEST_ITEM_ID, 1, metadata);
 
             assertFalse(StencilMetadata.isStencil(stack));
@@ -98,7 +98,7 @@ class StencilMetadataTest {
         @Test
         void stackWithMetadataButNoRecipeIdReturnsNull() {
             BsonDocument metadata = new BsonDocument();
-            metadata.put("BlueprintStencil", new BsonString("true"));
+            metadata.put("StencilStencil", new BsonString("true"));
             ItemStack stack = new ItemStack(TEST_ITEM_ID, 1, metadata);
 
             assertNull(StencilMetadata.getRecipeId(stack));
@@ -144,8 +144,8 @@ class StencilMetadataTest {
             BsonDocument metadata = stencil.getMetadata();
 
             assertNotNull(metadata, "Stencil metadata should not be null");
-            assertTrue(metadata.containsKey("BlueprintStencil"), "Metadata must contain BlueprintStencil key");
-            assertEquals("true", metadata.getString("BlueprintStencil").getValue());
+            assertTrue(metadata.containsKey("StencilStencil"), "Metadata must contain StencilStencil key");
+            assertEquals("true", metadata.getString("StencilStencil").getValue());
         }
 
         @Test

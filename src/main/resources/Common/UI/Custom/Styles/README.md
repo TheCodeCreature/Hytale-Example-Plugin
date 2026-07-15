@@ -63,7 +63,7 @@ Note: `Backgrounds.ui` tokens are only used in `.ui` layout files, not from Java
 
 4. **File placement by type, not by subsystem.** A button style goes in `Buttons.ui` regardless of which page uses it. This prevents style sprawl and makes tokens discoverable.
 
-5. **No per-page style files.** All named styles live in `Styles/`. Subsystem folders (`Pages/BlueprintBook/`, `Pages/StencilRadial/`) contain only layout `.ui` files — no `*Styles.ui` files.
+5. **No per-page style files.** All named styles live in `Styles/`. Subsystem folders (`Pages/StencilBook/`, `Pages/StencilRadial/`) contain only layout `.ui` files — no `*Styles.ui` files.
 
 6. **Leverage $C.@ for backgrounds.** Button styles should reference `$C.@DefaultSquareButtonDefaultBackground`, `$C.@TertiaryDefaultButtonBackground`, etc. from `Common.ui` rather than hardcoding texture paths or colors for backgrounds. This ensures consistency with the engine's built-in theme.
 

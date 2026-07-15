@@ -11,7 +11,7 @@ created: 2026-05-07
 # Unified Affordability Resolver
 
 ## Description
-Extract a shared RecipeAffordabilityResolver utility that consolidates the duplicated ingredient resolution chain and affordability checking logic currently spread across BlueprintSelectionPage, StencilVisualManager, and StencilRadialMenuPage into a single source of truth.
+Extract a shared RecipeAffordabilityResolver utility that consolidates the duplicated ingredient resolution chain and affordability checking logic currently spread across StencilSelectionPage, StencilVisualManager, and StencilRadialMenuPage into a single source of truth.
 
 ## Acceptance Criteria
 
@@ -21,15 +21,15 @@ Extract a shared RecipeAffordabilityResolver utility that consolidates the dupli
 - [ ] Provides per-ingredient resolution with affordability: resolveIngredientCosts(recipe, category, container) → List<ResolvedIngredient>
 - [ ] ResolvedIngredient includes: resolvedItemId, requiredQty, playerHas, sufficient
 - [ ] Encapsulates the 3-step chain: getPerUnitCost → resolveInputItemId → resolveToGatherableForm
-- [ ] BlueprintSelectionPage.updateDetailPanel() uses resolveIngredientCosts() instead of inline resolution chain
+- [ ] StencilSelectionPage.updateDetailPanel() uses resolveIngredientCosts() instead of inline resolution chain
 - [ ] StencilVisualManager.scanAndSend() uses isAffordable() instead of direct canRemoveMaterials()
 - [ ] StencilRadialMenuPage.showCostArc() uses resolveIngredientCosts() instead of inline resolution chain
-- [ ] Existing behavior unchanged: BlueprintBook detail panel, stencil hotbar glow, radial menu cost display all render identically
+- [ ] Existing behavior unchanged: StencilBook detail panel, stencil hotbar glow, radial menu cost display all render identically
 
 ### Scenarios
 **Ingredient resolution is consistent across subsystems**
 - **Given** a recipe with a ResourceTypeId input "Wood_All"
-- **When** BlueprintSelectionPage, StencilVisualManager, and StencilRadialMenuPage all resolve this ingredient
+- **When** StencilSelectionPage, StencilVisualManager, and StencilRadialMenuPage all resolve this ingredient
 - **Then** all three resolve to the same concrete item ID via the same code path
 
 **Per-ingredient affordability check**
@@ -46,5 +46,5 @@ Extract a shared RecipeAffordabilityResolver utility that consolidates the dupli
 
 ## Notes
 - StencilVisualManager runs outside a UI context — the resolver must not depend on UI classes
-- AffordabilityMode remains a UI-layer toggle in BlueprintSelectionPage — the resolver does not replace it
-- BlockGroup interchangeability: currently BlueprintSelectionPage checks it but StencilVisualManager doesn't. Resolver should offer both variants.
+- AffordabilityMode remains a UI-layer toggle in StencilSelectionPage — the resolver does not replace it
+- BlockGroup interchangeability: currently StencilSelectionPage checks it but StencilVisualManager doesn't. Resolver should offer both variants.

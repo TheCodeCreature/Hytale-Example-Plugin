@@ -37,7 +37,7 @@ classDiagram
         -inputMatchesAnyResourceType(MaterialQuantity, Set~String~) boolean$
         -itemsWithResourceType(String) Stream
     }
-    class BlueprintSelectionPage {
+    class StencilSelectionPage {
         -AffordabilityMode affordabilityMode
         -Set~String~ activeResourceTypes
         -applyFilter() void
@@ -51,9 +51,9 @@ classDiagram
         RESOURCE_DRIVEN
     }
     ResourceTypeRegistry --> ResourceTypeEntry : contains
-    BlueprintSelectionPage --> ResourceTypeRegistry : reads entries
-    BlueprintSelectionPage --> ResourceTypeResolver : calls recipeMatchesAnyResourceType
-    BlueprintSelectionPage --> AffordabilityMode : uses
+    StencilSelectionPage --> ResourceTypeRegistry : reads entries
+    StencilSelectionPage --> ResourceTypeResolver : calls recipeMatchesAnyResourceType
+    StencilSelectionPage --> AffordabilityMode : uses
     ResourceTypeResolver ..> ResourceTypeRegistry : resolveFilterIds (via caller)
 ```
 
@@ -106,7 +106,7 @@ graph TB
 ```mermaid
 sequenceDiagram
     participant User
-    participant BSP as BlueprintSelectionPage
+    participant BSP as StencilSelectionPage
     participant RTR as ResourceTypeRegistry
     participant RFP as RecipeFilterPipeline
     participant Resolver as ResourceTypeResolver
@@ -192,7 +192,7 @@ Returns `true` if the given `resourceTypeId` is a meta-filter group entry.
 
 ### 6.2 ResourceTypeResolver — New matching method
 
-**Problem:** `recipeMatchesResourceTypes()` in `BlueprintSelectionPage` only checks `input.getResourceTypeId()`, ignoring `ItemId`-based inputs entirely. It also lives in the wrong class.
+**Problem:** `recipeMatchesResourceTypes()` in `StencilSelectionPage` only checks `input.getResourceTypeId()`, ignoring `ItemId`-based inputs entirely. It also lives in the wrong class.
 
 **Fix:** Add two new static methods to `ResourceTypeResolver`:
 
@@ -220,7 +220,7 @@ Private helper. Checks a single input against the resource type set:
 2. If `input.getItemId()` is non-null and not `"Empty"` → look up `Item.getAssetMap().getAsset(itemId)`, check if any of `item.getResourceTypes()` has an ID in `resourceTypeIds`
 3. Otherwise → return `false`
 
-### 6.3 BlueprintSelectionPage — applyFilter changes
+### 6.3 StencilSelectionPage — applyFilter changes
 
 **In `applyFilter()`, RESOURCE_DRIVEN branch (line ~218):**
 
@@ -247,7 +247,7 @@ resourceTypeChecker = recipe -> {
 
 **Delete** the private `recipeMatchesResourceTypes()` method (lines 894-912).
 
-### 6.4 BlueprintSelectionPage — updateDetailPanel mode-awareness
+### 6.4 StencilSelectionPage — updateDetailPanel mode-awareness
 
 **Problem:** `updateDetailPanel()` unconditionally checks inventory quantities and applies red/green styling regardless of `affordabilityMode`.
 
@@ -307,7 +307,7 @@ No new files. Changes are to existing files:
 src/main/java/com/UnobstructedThirdPerson/
 ├── placeblock/ui/
 │   ├── ResourceTypeRegistry.java          ← MODIFY (meta-filter map, entry removals, new methods)
-│   └── BlueprintSelectionPage.java        ← MODIFY (delete recipeMatchesResourceTypes, fix applyFilter, fix updateDetailPanel)
+│   └── StencilSelectionPage.java        ← MODIFY (delete recipeMatchesResourceTypes, fix applyFilter, fix updateDetailPanel)
 └── resourcecollection/
     └── ResourceTypeResolver.java          ← MODIFY (add recipeMatchesAnyResourceType, inputMatchesAnyResourceType)
 ```
@@ -319,9 +319,9 @@ src/main/java/com/UnobstructedThirdPerson/
 | `ResourceTypeRegistry.java` | Add `metaFilter` field to `ResourceTypeEntry` | Existing callers that construct/destructure the record will need updating |
 | `ResourceTypeRegistry.java` | Remove 5 overlapping entries + 1 orphan (`Any_Recipe`) | `getCount()` return value decreases from 79 to 73; sort order indices shift |
 | `ResourceTypeRegistry.java` | Rename 7 `Any_*` entries to `*_Group` | Any persisted `activeResourceTypes` preferences using old `"Any_*"` IDs will silently fail to match — need migration or graceful fallback in `loadPrefs()` |
-| `BlueprintSelectionPage.java` | Delete `recipeMatchesResourceTypes()` | No other callers — safe to remove |
-| `BlueprintSelectionPage.java` | `applyFilter()` RESOURCE_DRIVEN branch | Lambda now calls `ResourceTypeResolver.recipeMatchesAnyResourceType()` with resolved set |
-| `BlueprintSelectionPage.java` | `updateDetailPanel()` | Conditional inventory check based on `affordabilityMode` |
+| `StencilSelectionPage.java` | Delete `recipeMatchesResourceTypes()` | No other callers — safe to remove |
+| `StencilSelectionPage.java` | `applyFilter()` RESOURCE_DRIVEN branch | Lambda now calls `ResourceTypeResolver.recipeMatchesAnyResourceType()` with resolved set |
+| `StencilSelectionPage.java` | `updateDetailPanel()` | Conditional inventory check based on `affordabilityMode` |
 | Persisted preferences (JSON) | Stale `activeResourceTypes` values | If a user had `"Any_Bone"` saved, it won't match `"Bone_Group"`. Add a migration map in `loadPrefs()` or silently drop unknown entries |
 
 ## 9. Open Questions
@@ -362,7 +362,7 @@ src/main/java/com/UnobstructedThirdPerson/
 
 ### Wave 2 (depends on Wave 1)
 
-#### Unit: BlueprintSelectionPage.java — applyFilter + updateDetailPanel + cleanup
+#### Unit: StencilSelectionPage.java — applyFilter + updateDetailPanel + cleanup
 
 - **Methods**: Modify `applyFilter()` RESOURCE_DRIVEN branch, modify `updateDetailPanel()`, delete `recipeMatchesResourceTypes()`
 - **Contract**: `applyFilter()` expands meta-filters via `ResourceTypeRegistry.resolveFilterIds()` and delegates matching to `ResourceTypeResolver.recipeMatchesAnyResourceType()`. `updateDetailPanel()` applies affordability styling only in INVENTORY_DRIVEN mode; neutral styling in ALL and RESOURCE_DRIVEN modes.
@@ -373,7 +373,7 @@ src/main/java/com/UnobstructedThirdPerson/
 
 #### Unit: Preference migration + validation
 
-- **Files**: `BlueprintSelectionPage.java` `loadPrefs()` section
+- **Files**: `StencilSelectionPage.java` `loadPrefs()` section
 - **Contract**: Map stale `"Any_*"` values in persisted preferences to new `"*_Group"` values. Drop unrecognized entries.
 - **Dependencies**: Wave 2 (registry entries finalized)
 - **Done when**: User with saved `"Any_Bone"` preference loads into `"Bone_Group"`. Unknown entries are silently dropped. No crash on old prefs.

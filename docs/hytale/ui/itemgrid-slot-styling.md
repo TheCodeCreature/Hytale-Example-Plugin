@@ -241,9 +241,9 @@ ItemGrid #ItemMaterialSlot {
 }
 ```
 
-### BlueprintBookPage.ui — No SlotBackground (plain grid)
+### StencilBookPage.ui — No SlotBackground (plain grid)
 
-The plugin's blueprint bench page uses grids **without** `SlotBackground` and with `RenderItemQualityBackground: false`:
+The plugin's stencil bench page uses grids **without** `SlotBackground` and with `RenderItemQualityBackground: false`:
 
 ```
 ItemGrid #RecipeGrid {

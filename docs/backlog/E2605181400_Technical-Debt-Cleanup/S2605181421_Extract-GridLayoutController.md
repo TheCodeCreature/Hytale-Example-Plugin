@@ -21,7 +21,7 @@ As a **developer**, I want **grid rendering logic in a focused controller** so t
 - [ ] Methods moved: `updateRecipeGrid()`, `hideRemainingCells()`, `buildRecipeGridBindings()`
 - [ ] Fields moved: `cellSlotToRecipeIndex`, `groupCellOffset`, `cellsPerSet`, `setNameToGroupIndex`, `totalSetCount`, `maxLayoutSetNames`, `totalCellCount`
 - [ ] `resolveRecipeIndex(int slotIdx)` exposed for event routing
-- [ ] `BlueprintSelectionPage` delegates all grid rendering to controller
+- [ ] `StencilSelectionPage` delegates all grid rendering to controller
 - [ ] Grid renders identically to current behavior
 
 ### Scenarios

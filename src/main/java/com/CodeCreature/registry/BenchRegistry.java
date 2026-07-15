@@ -364,7 +364,7 @@ public final class BenchRegistry {
      * <p>Expected format:
      * <pre>{@code
      * {
-     *   "deniedBenchIds": ["Blueprint"]
+     *   "deniedBenchIds": ["Stencil"]
      * }
      * }</pre>
      *

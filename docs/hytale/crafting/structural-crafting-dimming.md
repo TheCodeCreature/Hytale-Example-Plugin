@@ -204,7 +204,7 @@ For `resourceTypeId`-based input: uses `testRemoveResourceFromSlot()` which chec
 
 Shadow recipes ARE synced to the client:
 
-1. `BlueprintBookRecipeMutator.mutate()` calls `CraftingRecipe.getAssetStore().loadAssets()`
+1. `StencilBookRecipeMutator.mutate()` calls `CraftingRecipe.getAssetStore().loadAssets()`
 2. Inside `AssetStore.loadAssets0()`, it calls `handleRemoveOrUpdate()`
 3. `HytaleAssetStore.handleRemoveOrUpdate()`:
    - **Invalidates `cachedInitPackets`** (`this.cachedInitPackets = null`)
@@ -310,7 +310,7 @@ If switching to itemId and it's still dimmed, investigate:
 1. **Verify the exact item ID matches**: `"Block_Placeholder_Blue"` in recipe input must exactly equal the placeholder item's ID string. Log both.
 2. **Verify UpdateRecipes packet timing**: Add logging to confirm shadow recipes are in the asset map BEFORE the first player connects.
 3. **Check if `processConfig()` is called**: The `afterDecode` callback `processConfig()` normalizes outputs. Shadow recipes created via copy constructor + reflection may bypass this. Specifically: if `outputs` is null/empty, `processConfig()` sets `outputs = [primaryOutput]`. Shadow recipes inherit outputs from the original, so this should be fine.
-4. **Check if the client validates recipe.benchRequirement**: The client might check that the bench the player is using matches one of the recipe's bench requirements. The shadow recipe has `BenchRequirement(StructuralCrafting, "Blueprint", ...)`. The client must know it's at a "Blueprint" bench. Verify the bench block's bench ID is exactly "Blueprint".
+4. **Check if the client validates recipe.benchRequirement**: The client might check that the bench the player is using matches one of the recipe's bench requirements. The shadow recipe has `BenchRequirement(StructuralCrafting, "Stencil", ...)`. The client must know it's at a "Stencil" bench. Verify the bench block's bench ID is exactly "Stencil".
 
 ## See Also
 

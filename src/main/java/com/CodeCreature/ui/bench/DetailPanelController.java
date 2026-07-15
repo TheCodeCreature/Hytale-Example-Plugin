@@ -54,11 +54,11 @@ public class DetailPanelController {
      */
     public void updateUI(UICommandBuilder cmd,
                          @Nullable String selectedRecipeId,
-                         List<BlueprintSelectionPage.RecipeEntry> allRecipes,
+                         List<StencilSelectionPage.RecipeEntry> allRecipes,
                          AffordabilityMode affordabilityMode,
                          @Nullable CombinedItemContainer container) {
         if (selectedRecipeId != null) {
-            BlueprintSelectionPage.RecipeEntry entry = findEntry(selectedRecipeId, allRecipes);
+            StencilSelectionPage.RecipeEntry entry = findEntry(selectedRecipeId, allRecipes);
             if (entry != null) {
                 cmd.set("#OutputIcon.ItemId", entry.outputItemId());
                 cmd.set("#OutputName.Text", entry.blockTypeId() != null
@@ -88,7 +88,7 @@ public class DetailPanelController {
 
                                 cmd.set(sel + ".Visible", true);
                                 cmd.set(sel + " #Icon.ItemId", itemId);
-                                cmd.set(sel + " #Qty.Text", Message.translation("server.ui.blueprint.detail.quantityFormat").param("qty", requiredQty));
+                                cmd.set(sel + " #Qty.Text", Message.translation("server.ui.stencil.detail.quantityFormat").param("qty", requiredQty));
                                 if (checkInventory) {
                                     cmd.set(sel + " #Dim.Visible", !sufficient);
                                     cmd.set(sel + " #Qty.Style", sufficient ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
@@ -101,7 +101,7 @@ public class DetailPanelController {
                         }
                     }
                 } catch (Exception e) {
-                    DebugLogger.log(BLUEPRINT_BOOK, Level.WARNING, "[BlueprintUI] Error populating cost grid: " + e.getMessage());
+                    DebugLogger.log(STENCIL_BOOK, Level.WARNING, "[StencilUI] Error populating cost grid: " + e.getMessage());
                 }
 
                 // Hide remaining cost cells and reset their state
@@ -127,7 +127,7 @@ public class DetailPanelController {
         }
         // No recipe selected — empty state
         cmd.set("#OutputIcon.ItemId", "");
-        cmd.set("#OutputName.Text", Message.translation("server.ui.blueprint.detail.noRecipeSelected"));
+        cmd.set("#OutputName.Text", Message.translation("server.ui.stencil.detail.noRecipeSelected"));
         cmd.set("#OutputName.Style", DETAIL_LABEL_MUTED);
         cmd.set("#OutputFrame.Background", OUTPUT_BG_EMPTY);
         cmd.set("#OutputDim.Visible", false);
@@ -149,8 +149,8 @@ public class DetailPanelController {
     }
 
     @Nullable
-    private BlueprintSelectionPage.RecipeEntry findEntry(String recipeId, List<BlueprintSelectionPage.RecipeEntry> allRecipes) {
-        for (BlueprintSelectionPage.RecipeEntry entry : allRecipes) {
+    private StencilSelectionPage.RecipeEntry findEntry(String recipeId, List<StencilSelectionPage.RecipeEntry> allRecipes) {
+        for (StencilSelectionPage.RecipeEntry entry : allRecipes) {
             if (entry.recipeId().equals(recipeId)) return entry;
         }
         return null;

@@ -45,7 +45,7 @@ As a **server operator**, I want **a `/Debug Logging` command** so that **I can 
 
 **Invalid subsystem**
 - **Given** a player runs `/Debug Logging FooBar`
-- **Then** the player sees `§c[Debug] Unknown subsystem: FooBar. Valid: Plugin, Stencil, BlueprintBook, BlueprintBook, Scaling, Registry, Crafting, IngredientTree`
+- **Then** the player sees `§c[Debug] Unknown subsystem: FooBar. Valid: Plugin, Stencil, StencilBook, StencilBook, Scaling, Registry, Crafting, IngredientTree`
 
 ## Notes
 - Find how `/Debug BreakLog` is registered and follow the same pattern — **Note: Hytale Expert found that `/Debug BreakLog` was never actually wired. This story will also create the `/Debug` command group.**

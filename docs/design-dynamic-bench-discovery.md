@@ -4,7 +4,7 @@
 
 The current plugin hardcodes bench support to `Builders` and `Furniture_Bench` via the `BenchCategory` enum. Any new bench (Workbench, Fieldcraft, future modded benches) requires manual enum expansion, new processor classes, and hardcoded string matching scattered across at least four files. A separate hardcoded set (`NaturalResourceRegistry.CRAFTING_BENCH_IDS`) further compounds the problem.
 
-This design replaces the static `BenchCategory` enum with a runtime-discovered `BenchRegistry` that scans all `CraftingRecipe` assets, extracts unique `BenchRequirement.id` values, and registers a `BenchConfig` per bench. An opt-out deny list (loaded from `deny-list.json`) filters unwanted benches. The three concrete processor classes (`BuildersProcessor`, `FurnitureProcessor`, `OverlapProcessor`) collapse into a single `GenericBenchProcessor` parameterized by `boolean preferNatural`. All downstream consumers (`RecipeFilterRegistry`, `BenchRecipeRegistries`, `NaturalResourceRegistry`, `BenchBlockClassifier`, `ResourceTypeResolver`, `FilteredRecipeEntry`, `BlueprintSelectionPage`) switch from `BenchCategory` references to `BenchRegistry` queries.
+This design replaces the static `BenchCategory` enum with a runtime-discovered `BenchRegistry` that scans all `CraftingRecipe` assets, extracts unique `BenchRequirement.id` values, and registers a `BenchConfig` per bench. An opt-out deny list (loaded from `deny-list.json`) filters unwanted benches. The three concrete processor classes (`BuildersProcessor`, `FurnitureProcessor`, `OverlapProcessor`) collapse into a single `GenericBenchProcessor` parameterized by `boolean preferNatural`. All downstream consumers (`RecipeFilterRegistry`, `BenchRecipeRegistries`, `NaturalResourceRegistry`, `BenchBlockClassifier`, `ResourceTypeResolver`, `FilteredRecipeEntry`, `StencilSelectionPage`) switch from `BenchCategory` references to `BenchRegistry` queries.
 
 Core design principle: **the asset data is the source of truth for bench identity — the code never enumerates bench IDs.**
 
@@ -313,7 +313,7 @@ for (var entry : benchSetToBlocks.entrySet()) {
 }
 ```
 
-### 6.10 `BlueprintSelectionPage.java`
+### 6.10 `StencilSelectionPage.java`
 
 **No changes required.** The UI already discovers tabs dynamically from `RecipeFilterRegistry.getAllEntries()`. It reads `FilteredRecipeEntry.benchIds()` and does not access `benchCategory` for tab rendering.
 
@@ -425,7 +425,7 @@ File: `<pluginDataDir>/deny-list.json`
 ```json
 {
   "deniedBenchIds": [
-    "Blueprint"
+    "Stencil"
   ]
 }
 ```
@@ -450,7 +450,7 @@ File: `<pluginDataDir>/deny-list.json`
 **Behavior:**
 - File missing → empty deny list (all benches included)
 - File malformed → logged warning, empty deny list
-- `"Blueprint"` should be in the default deny list since Blueprint recipes use the `Blueprint_` prefix skip anyway (defense in depth)
+- `"Stencil"` should be in the default deny list since Stencil recipes use the `Stencil_` prefix skip anyway (defense in depth)
 - The deny list only affects `BenchRegistry.allBenchIds()` — denied bench IDs are still discovered but excluded from the returned set
 
 ## 9. Init Order — Sequence Diagram
@@ -700,7 +700,7 @@ src/main/java/com/CodeCreature/
 │   └── StencilVisualManager.java     ← MODIFIED (BenchCategory.BUILDERS_ONLY → false)
 └── ui/
     ├── bench/
-    │   ├── BlueprintSelectionPage.java ← VERIFY (likely no changes)
+    │   ├── StencilSelectionPage.java ← VERIFY (likely no changes)
     │   └── DetailPanelController.java  ← MODIFIED (fe.benchCategory() → fe.preferNatural())
     └── radial/
         └── StencilRadialMenuPage.java  ← MODIFIED (fe.benchCategory() → fe.preferNatural())
