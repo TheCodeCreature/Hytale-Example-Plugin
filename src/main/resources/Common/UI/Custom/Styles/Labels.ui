@@ -44,7 +44,7 @@ $C = "../Common.ui";
 );
 
 @SetGroupLabelStyle = LabelStyle(
-    FontSize: 18, TextColor: #8b9bb5, RenderBold: true,
+    FontSize: 18, TextColor: #8b9bb5, RenderBold: true, Wrap: false,
     HorizontalAlignment: Start, VerticalAlignment: Center
 );
 

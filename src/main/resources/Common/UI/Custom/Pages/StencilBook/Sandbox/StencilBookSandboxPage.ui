@@ -38,7 +38,7 @@ Group {
                 $Divider.@VerticalDivider {}
 
                 $Center.@CenterScrollPanel {
-                    Group #SetGroups {
+                    Group #SetRows {
                         LayoutMode: Top;
                         Anchor: (Left: 0, Right: 0);
                     }
