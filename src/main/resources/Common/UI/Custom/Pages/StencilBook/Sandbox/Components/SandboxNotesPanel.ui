@@ -1,0 +1,23 @@
+$L = "../../../../Styles/Labels.ui";
+
+Group {
+    LayoutMode: Top;
+
+    Label #NotesTitle {
+        Text: "";
+        Style: $L.@SectionLabelStyle;
+        Anchor: (Height: 28);
+    }
+
+    Label #NotesBodyPrimary {
+        Text: "";
+        Style: $L.@SubtextStyle;
+        Anchor: (Height: 80);
+    }
+
+    Label #NotesBodySecondary {
+        Text: "";
+        Style: $L.@SubtextStyle;
+        Anchor: (Height: 26);
+    }
+}

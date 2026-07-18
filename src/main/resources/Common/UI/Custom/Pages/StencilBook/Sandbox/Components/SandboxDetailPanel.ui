@@ -1,0 +1,35 @@
+$L = "../../../../Styles/Labels.ui";
+$BG = "../../../../Styles/Backgrounds.ui";
+
+Group {
+    LayoutMode: Top;
+
+    Label #DetailTitle {
+        Text: "";
+        Style: $L.@DetailLabelStyle;
+    }
+
+    Group {
+        Anchor: (Height: 8);
+    }
+
+    Group {
+        Anchor: (Width: 96, Height: 96);
+        Background: $BG.@OutputSlotFrame;
+
+        Group #DetailIcon {
+            Anchor: (Full: 10);
+            Background: "";
+        }
+    }
+
+    Group {
+        Anchor: (Height: 12);
+    }
+
+    Label #DetailBody {
+        Text: "";
+        Style: $L.@SubtextStyle;
+        Anchor: (Height: 60);
+    }
+}

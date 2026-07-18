@@ -1,0 +1,21 @@
+$L = "../../../../Styles/Labels.ui";
+$C = "../../../../Common.ui";
+
+Group {
+    LayoutMode: Top;
+    Anchor: (Left: 0, Right: 0);
+    Padding: (Left: 4, Right: 4, Top: 4, Bottom: 10);
+    Background: $C.@TertiaryDefaultButtonBackground;
+
+    Label #SetTitle {
+        Text: "";
+        Style: $L.@SetGroupLabelStyle;
+        Anchor: (Height: 24, Left: 0, Right: 0);
+        Padding: (Left: 4, Top: 8, Bottom: 8);
+    }
+
+    Group #Tiles {
+        LayoutMode: LeftCenterWrap;
+        Anchor: (Left: 0, Right: 0);
+    }
+}

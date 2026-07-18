@@ -11,6 +11,8 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
+import java.util.List;
+
 /**
  * Dedicated sandbox page route for Stencil Book UI experimentation.
  *
@@ -20,6 +22,40 @@ import org.jspecify.annotations.NonNull;
 public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookSandboxPage.EventPayload> {
 
     private static final String SANDBOX_UI_PATH = "Pages/StencilBook/Sandbox/StencilBookSandboxPage.ui";
+    private static final String NOTES_PANEL_UI_PATH = "Pages/StencilBook/Sandbox/Components/SandboxNotesPanel.ui";
+    private static final String SET_GROUP_UI_PATH = "Pages/StencilBook/Sandbox/Components/SandboxSetGroup.ui";
+    private static final String ICON_TILE_UI_PATH = "Pages/StencilBook/Sandbox/Components/SandboxIconTile.ui";
+    private static final String DETAIL_PANEL_UI_PATH = "Pages/StencilBook/Sandbox/Components/SandboxDetailPanel.ui";
+
+    private static final String WORKBENCH_ICON_PATH = "Common/Icons/ItemsGenerated/Bench_WorkBench.png";
+    private static final String ARMORY_ICON_PATH = "Common/Icons/ItemsGenerated/Bench_Armory.png";
+
+    private static final List<GroupViewModel> GROUPS = List.of(
+        new GroupViewModel("Deco Iron", List.of(
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH
+        )),
+        new GroupViewModel("Furniture Adventure", List.of(
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH
+        )),
+        new GroupViewModel("Furniture Castle", List.of(
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH
+        ))
+    );
 
     public StencilBookSandboxPage(@NonNull PlayerRef playerRef) {
         super(playerRef, CustomPageLifetime.CanDismissOrCloseThroughInteraction, EventPayload.CODEC);
@@ -31,14 +67,57 @@ public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookS
                       @NonNull UIEventBuilder evt,
                       @NonNull Store<EntityStore> store) {
         cmd.append(SANDBOX_UI_PATH);
+
+        cmd.append("#NotesHost", NOTES_PANEL_UI_PATH);
+        cmd.append("#DetailHost", DETAIL_PANEL_UI_PATH);
+
+        for (int groupIndex = 0; groupIndex < GROUPS.size(); groupIndex++) {
+            cmd.append("#SetGroups", SET_GROUP_UI_PATH);
+
+            int tileCount = GROUPS.get(groupIndex).tileIconPaths().size();
+            for (int tileIndex = 0; tileIndex < tileCount; tileIndex++) {
+                cmd.append("#SetGroups[" + groupIndex + "] #Tiles", ICON_TILE_UI_PATH);
+            }
+        }
+
+        applyViewState(cmd);
     }
 
     @Override
     public void handleDataEvent(@NonNull Ref<EntityStore> ref,
                                 @NonNull Store<EntityStore> store,
                                 @NonNull EventPayload data) {
-        sendUpdate(new UICommandBuilder(), null, false);
+        UICommandBuilder cmd = new UICommandBuilder();
+        applyViewState(cmd);
+        sendUpdate(cmd, null, false);
     }
+
+    private void applyViewState(@NonNull UICommandBuilder cmd) {
+        cmd.set("#PageTitle.Text", "Stencil Crafting Sandbox:");
+        cmd.set("#PageSubtitle.Text", "Static Icon Grid Sample");
+
+        cmd.set("#NotesHost #NotesTitle.Text", "Sandbox Notes");
+        cmd.set("#NotesHost #NotesBodyPrimary.Text", "Use this static layout to prototype a dynamic grid-in-grid view.");
+        cmd.set("#NotesHost #NotesBodySecondary.Text", "No runtime filtering is wired on this page.");
+
+        for (int groupIndex = 0; groupIndex < GROUPS.size(); groupIndex++) {
+            GroupViewModel group = GROUPS.get(groupIndex);
+            cmd.set("#SetGroups[" + groupIndex + "] #SetTitle.Text", group.title());
+
+            for (int tileIndex = 0; tileIndex < group.tileIconPaths().size(); tileIndex++) {
+                String tilePath = group.tileIconPaths().get(tileIndex);
+                String tileSelector = "#SetGroups[" + groupIndex + "] #Tiles[" + tileIndex + "]";
+                cmd.set(tileSelector + " #TileIcon.Background", tilePath);
+                cmd.set(tileSelector + " #TileBtn.TooltipText", group.title() + " - Tile " + (tileIndex + 1));
+            }
+        }
+
+        cmd.set("#DetailHost #DetailTitle.Text", "Sandbox Detail");
+        cmd.set("#DetailHost #DetailIcon.Background", WORKBENCH_ICON_PATH);
+        cmd.set("#DetailHost #DetailBody.Text", "Static placeholder side panel for quick layout testing.");
+    }
+
+    private record GroupViewModel(String title, List<String> tileIconPaths) {}
 
     public static class EventPayload {
         public static final BuilderCodec<EventPayload> CODEC =

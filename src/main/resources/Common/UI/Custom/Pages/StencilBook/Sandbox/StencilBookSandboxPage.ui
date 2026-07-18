@@ -3,9 +3,7 @@
 // This file is intentionally static and uses hardcoded sample icon groups.
 
 $C = "../../../Common.ui";
-$B = "../../../Styles/Buttons.ui";
 $L = "../../../Styles/Labels.ui";
-$BG = "../../../Styles/Backgrounds.ui";
 $T = "Templates/IconTiles.ui";
 
 Group {
@@ -34,8 +32,12 @@ Group {
                 LayoutMode: Left;
                 Anchor: (Left: 0, Right: 0, Top: 0, Height: 34);
 
-                $C.@Title { @Text = "Stencil Crafting Sandbox:"; }
-                Label {
+                Label #PageTitle {
+                    Text: "Stencil Crafting Sandbox:";
+                    Style: $L.@HeaderStyle;
+                    Anchor: (Left: 0, Top: 0);
+                }
+                Label #PageSubtitle {
                     Text: "Static Icon Grid Sample";
                     Style: $L.@SubheaderStyle;
                     Anchor: (Left: 0, Top: 4);
@@ -47,54 +49,28 @@ Group {
             $T.@ContentRow {
 
                 $T.@LeftPanel {
-
-                $T.@SectionLabel { @Text = "Sandbox Notes"; }
-
-                $T.@SubtextLabel {
-                    @Text = "Use this static layout to prototype a dynamic grid-in-grid view.";
-                    @Height = 80;
+                    Group #NotesHost {
+                        LayoutMode: Top;
+                        Anchor: (Left: 0, Right: 0);
+                    }
                 }
-
-                $T.@SubtextLabel {
-                    @Text = "No runtime filtering is wired on this page.";
-                    @Height = 26;
-                }
-            }
 
                 $T.@VerticalDivider {}
 
                 $T.@CenterScrollPanel {
-
-                $T.@StackFillWidth {
-
-                    $T.@DecoIronGroup {}
-
-                    $T.@VSpace8 {}
-
-                    $T.@FurnitureAdventureGroup {}
-
-                    $T.@VSpace8 {}
-
-                    $T.@FurnitureCastleGroup {}
+                    Group #SetGroups {
+                        LayoutMode: Top;
+                        Anchor: (Left: 0, Right: 0);
+                    }
                 }
-            }
 
                 $T.@VerticalDivider {}
 
                 $T.@RightPanel {
-
-                $T.@DetailLabel { @Text = "Sandbox Detail"; }
-
-                $T.@VSpace8 {}
-
-                    $T.@IconPreviewFrame { @IconPath = "../../../../Common/Icons/ItemsGenerated/Bench_WorkBench.png"; }
-
-                $T.@VSpace12 {}
-
-                $T.@SubtextLabel {
-                    @Text = "Static placeholder side panel for quick layout testing.";
-                    @Height = 60;
-                }
+                    Group #DetailHost {
+                        LayoutMode: Top;
+                        Anchor: (Left: 0, Right: 0);
+                    }
                 }
             }
         }

@@ -1,7 +1,7 @@
 ---
 description: "Use when: answering questions about Hytale engine internals, ECS architecture, plugin API capabilities, asset config formats, server vs client boundaries, block types, gathering configs, crafting recipes, or any Hytale-specific technical knowledge. This agent researches the repository and maintains Hytale knowledge in the Fractonomical wiki. Do NOT use for: writing plugin code, designing systems, managing backlog items."
 tools: [read, search, web, edit, edit/editFiles, vscode/askQuestions]
-agents: []
+agents: [Judge]
 name: "Hytale Expert"
 user-invocable: true
 ---

@@ -1,0 +1,19 @@
+$B = "../../../../Styles/Buttons.ui";
+$BG = "../../../../Styles/Backgrounds.ui";
+
+Group {
+    Anchor: (Width: 72, Height: 72);
+    Background: $BG.@ItemSlotFrame;
+
+    Group #TileIcon {
+        Anchor: (Full: 10);
+        Background: "";
+    }
+
+    TextButton #TileBtn {
+        Text: "";
+        Anchor: (Full: 2);
+        Style: $B.@TransparentButtonStyle;
+        TooltipText: "";
+    }
+}
