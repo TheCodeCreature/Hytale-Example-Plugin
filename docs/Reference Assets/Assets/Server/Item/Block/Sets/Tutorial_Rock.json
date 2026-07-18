@@ -1,9 +1,0 @@
-{
-  "IncludeBlockTypes": [
-    "Rubble_*",
-    "Rock_Stone",
-    "Rock_Marble",
-    "Rock_Chalk",
-    "Rock_*_Cobble"
-  ]
-}

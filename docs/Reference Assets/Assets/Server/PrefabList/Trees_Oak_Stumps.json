@@ -1,9 +1,0 @@
-{
-    "Prefabs": [
-        {
-            "RootDirectory": "Asset",
-            "Path": "Trees/Oak_Stumps/",
-            "Recursive": true
-        }
-    ]
-}

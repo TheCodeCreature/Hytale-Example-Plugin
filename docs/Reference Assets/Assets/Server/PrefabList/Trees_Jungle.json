@@ -1,9 +1,0 @@
-{
-    "Prefabs": [
-        {
-            "RootDirectory": "Asset",
-            "Path": "Trees/Jungle/Stage_2/",
-            "Recursive": true
-        }
-    ]
-}

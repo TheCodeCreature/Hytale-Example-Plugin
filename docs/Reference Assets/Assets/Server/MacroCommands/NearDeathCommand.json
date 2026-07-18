@@ -1,7 +1,0 @@
-{
-  "Name": "neardeath",
-  "Description": "server.commands.nearDeath.desc",
-  "Commands": [
-    "player stat set Health 1"
-  ]
-}

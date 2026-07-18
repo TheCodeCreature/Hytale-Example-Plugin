@@ -1,9 +1,0 @@
-{
-  "$Comment": "|||| GRID GENERATORS & ENTRY POINTS & FACTION NOISEMAPS & ENVIRONMENT NOISEMAPS NEEDS TO BE UPDATED MANUALLY ||||",
-  "Seed": "Pattern_Monuments",
-  "NoiseType": "CELL",
-  "Formula": "INVERTED_SQRT",
-  "CellMode": "DISTANCE",
-  "Scale": 0.004,
-  "Jitter": 0.75
-}

@@ -1,6 +1,0 @@
-{
-  "Parent": "Stone",
-  "IncludeBlockTypes": [
-    "Soil*"
-  ]
-}

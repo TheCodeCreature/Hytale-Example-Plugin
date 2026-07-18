@@ -1,7 +1,0 @@
-{
-  "Type": "CameraShake",
-  "CameraShake": "Daggers_Stab",
-  "Intensity": {
-    "Value": 0.05
-  }
-}

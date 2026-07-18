@@ -1,9 +1,0 @@
-{
-  "Default": ["*", "!Empty"],
-  "Specific": [
-    {
-      "Block": ["Rock_Quartzite"],
-      "Rule": ["Rock_Stone"]
-    }
-  ]
-}

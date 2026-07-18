@@ -1,9 +1,0 @@
-{
-  "SoundEvents": {
-    "Walk": "SFX_Cocoon_Walk",
-    "Land": "SFX_Mud_Land",
-    "Hit": "SFX_Cocoon_Hit",
-    "Break": "SFX_Cocoon_Break",
-    "Build": "SFX_Default_Build"
-  }
-}

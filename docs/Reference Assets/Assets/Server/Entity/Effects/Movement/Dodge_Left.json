@@ -1,7 +1,0 @@
-{
-  "Duration": 0.25,
-  "ApplicationEffects": {
-    "EntityAnimationId": "DashLeft"
-  },
-  "OverlapBehavior": "Extend"
-}

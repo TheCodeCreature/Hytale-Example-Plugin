@@ -1,8 +1,0 @@
-{
-  "ApplicationEffects": {
-    "MouseSensitivityAdjustmentTarget": 0.25,
-    "MouseSensitivityAdjustmentDuration": 0.1
-  },
-  "OverlapBehavior": "Overwrite",
-  "Duration": 5
-}

@@ -1,8 +1,0 @@
-{
-  "Type": "Simple",
-  "RunTime": 0.25,
-  "Effects": {
-    "ItemAnimationId": "Interact",
-    "LocalSoundEventId": "SFX_Bow_No_Ammo"
-  }
-}

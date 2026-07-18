@@ -1,8 +1,0 @@
-{
-  "Type": "Variant",
-  "Reference": "Scarak_Fighter",
-  "Modify": {
-    "Patrol": true,
-    "FollowPatrolPath": true
-  }
-}

@@ -1,9 +1,0 @@
-{
-    "Prefabs": [
-        {
-            "RootDirectory": "Asset",
-            "Path": "Trees/Ash_twisted_Large/",
-            "Recursive": true
-        }
-    ]
-}

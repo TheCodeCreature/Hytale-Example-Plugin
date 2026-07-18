@@ -1,9 +1,0 @@
-{
-  "Type": "Variant",
-  "Reference": "Test_Template_Instruction_Culling",
-  "Modify": {
-    "Wander": false,
-    "MaxHealth": 100
-  },
-  "TestType": "Normal"
-}

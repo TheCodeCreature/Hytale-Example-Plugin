@@ -1,8 +1,0 @@
-{
-  "Type": "Simple",
-  "RunTime": 0,
-  "Effects": {
-    "LocalSoundEventId": "SFX_Consume_Bread_Local",
-    "ClearSoundEventOnFinish": true
-  }
-}

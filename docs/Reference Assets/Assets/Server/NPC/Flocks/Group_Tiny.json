@@ -1,9 +1,0 @@
-{
-  "Type": "Weighted",
-  "MinSize": 2,
-  "SizeWeights": [
-    60,
-    25,
-    15
-  ]
-}

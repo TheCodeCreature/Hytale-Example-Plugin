@@ -1,8 +1,0 @@
-{
-  "SuppressionRadius": 10,
-  "SuppressedGroups": [
-    "Trork",
-    "Prey"
-  ],
-  "SuppressSpawnMarkers": true
-}

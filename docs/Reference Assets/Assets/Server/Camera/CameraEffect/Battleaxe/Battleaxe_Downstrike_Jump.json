@@ -1,7 +1,0 @@
-{
-  "Type": "CameraShake",
-  "CameraShake": "Battleaxe_Downstrike_Jump",
-  "Intensity": {
-    "Value": 0.05
-  }
-}

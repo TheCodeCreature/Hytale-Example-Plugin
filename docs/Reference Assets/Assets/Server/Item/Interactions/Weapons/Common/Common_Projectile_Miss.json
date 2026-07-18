@@ -1,8 +1,0 @@
-{
-  "Type": "Simple",
-  "RunTime": 5,
-  "Effects": {
-    "LocalSoundEventId": "SFX_Arrow_FullCharge_Miss",
-    "WorldSoundEventId": "SFX_Arrow_FullCharge_Miss"
-  }
-}

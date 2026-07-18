@@ -1,8 +1,0 @@
-{
-  "StatModifiers": {
-    "Stamina": 80
-  },
-  "OverlapBehavior": "Overwrite",
-  "Duration": 0.1,
-  "DamageCalculatorCooldown": 0
-}

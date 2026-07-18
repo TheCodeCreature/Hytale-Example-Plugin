@@ -1,9 +1,0 @@
-{
-  "Cooldown": {
-    "Id": "SlowEffect",
-    "Cooldown": 0.1
-  },
-  "Interactions": [
-    "Block_Speed"
-  ]
-}

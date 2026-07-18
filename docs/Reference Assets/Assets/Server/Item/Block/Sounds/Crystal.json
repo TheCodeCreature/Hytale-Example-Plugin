@@ -1,9 +1,0 @@
-{
-  "SoundEvents": {
-    "Walk": "SFX_Crystal_Walk",
-    "Land": "SFX_Ice_Land",
-    "Hit": "SFX_Crystal_Hit",
-    "Break": "SFX_Crystal_Break",
-    "Build": "SFX_Default_Build"
-  }
-}

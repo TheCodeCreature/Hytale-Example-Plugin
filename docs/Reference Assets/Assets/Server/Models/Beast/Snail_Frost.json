@@ -1,8 +1,0 @@
-{
-  "Model": "NPC/Beast/Snail/Models/Model.blockymodel",
-  "Texture": "NPC/Beast/Snail/Models/Model_Frost.png",
-  "Parent": "Snail_Magma",
-  "Light": {
-    "Color": "#234"
-  }
-}

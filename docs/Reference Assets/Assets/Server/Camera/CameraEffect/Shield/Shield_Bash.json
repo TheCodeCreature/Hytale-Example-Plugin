@@ -1,7 +1,0 @@
-{
-  "Type": "CameraShake",
-  "CameraShake": "Shield_Bash",
-  "Intensity": {
-    "Value": 0.05
-  }
-}

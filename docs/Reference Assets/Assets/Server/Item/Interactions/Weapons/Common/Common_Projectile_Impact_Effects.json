@@ -1,7 +1,0 @@
-{
-  "Type": "Simple",
-  "Effects": {
-    "LocalSoundEventId": "SFX_Arrow_FullCharge_Hit",
-    "WorldSoundEventId": "SFX_Arrow_FullCharge_Hit"
-  }
-}

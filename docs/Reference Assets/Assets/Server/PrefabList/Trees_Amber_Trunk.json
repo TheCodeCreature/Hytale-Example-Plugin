@@ -1,9 +1,0 @@
-{
-    "Prefabs": [
-        {
-            "RootDirectory": "Asset",
-            "Path": "Trees/Amber_Trunk/",
-            "Recursive": true
-        }
-    ]
-}

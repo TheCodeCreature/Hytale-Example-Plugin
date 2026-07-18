@@ -1,9 +1,0 @@
-{
-  "Spawners": [
-    {
-      "SpawnerId": "ForgottenTemple_Sparks_Roof"
-    }
-  ],
-  "CullDistance": 300.0,
-  "IsImportant": false
-}

@@ -1,9 +1,0 @@
-{
-  "Spawners": [
-    {
-      "SpawnerId": "Ember",
-      "FixedRotation": true
-    }
-  ],
-  "CullDistance": 30
-}

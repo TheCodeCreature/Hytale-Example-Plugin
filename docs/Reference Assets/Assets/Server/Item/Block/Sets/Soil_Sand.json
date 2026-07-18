@@ -1,6 +1,0 @@
-{
-  "IncludeBlockTypes": [
-    "Soil_Sand*",
-    "Soil_Gravel*"
-  ]
-}

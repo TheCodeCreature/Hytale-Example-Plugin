@@ -19,7 +19,7 @@ import org.jspecify.annotations.NonNull;
  */
 public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookSandboxPage.EventPayload> {
 
-    private static final String SANDBOX_UI_PATH = "Pages/StencilBook/StencilBookSandboxPage.ui";
+    private static final String SANDBOX_UI_PATH = "Pages/StencilBook/Sandbox/StencilBookSandboxPage.ui";
 
     public StencilBookSandboxPage(@NonNull PlayerRef playerRef) {
         super(playerRef, CustomPageLifetime.CanDismissOrCloseThroughInteraction, EventPayload.CODEC);

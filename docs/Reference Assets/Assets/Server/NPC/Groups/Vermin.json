@@ -1,8 +1,0 @@
-{
-  "IncludeRoles": [
-    "Rat*",
-    "Snake*",
-    "Spider*",
-    "Scorpion*"
-  ]
-}

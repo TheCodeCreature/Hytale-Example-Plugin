@@ -1,9 +1,0 @@
-{
-    "Prefabs": [
-        {
-            "RootDirectory": "Asset",
-            "Path": "Trees/Petrified_Coral_Bulbs/Stage_1/",
-            "Recursive": true
-        }
-    ]
-}

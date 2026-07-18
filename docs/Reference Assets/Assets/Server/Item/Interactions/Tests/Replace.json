@@ -1,9 +1,0 @@
-{
-  "Type": "Replace",
-  "DefaultValue": {
-    "Interactions": [
-      "Simple"
-    ]
-  },
-  "Var": "Variable"
-}

@@ -1,8 +1,0 @@
-{
-  "Type": "Variant",
-  "Reference": "Skeleton_Frost_Archmage",
-  "Modify": {
-    "Patrol": true,
-    "FollowPatrolPath": true
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "SuppressionRadius": 45,
-  "SuppressedGroups": [
-    "Aggressive",
-    "Passive",
-    "Neutral"
-  ],
-  "SuppressSpawnMarkers": true
-}

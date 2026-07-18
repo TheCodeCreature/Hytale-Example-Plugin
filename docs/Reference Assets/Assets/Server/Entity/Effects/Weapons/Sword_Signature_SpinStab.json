@@ -1,8 +1,0 @@
-{
-  "ApplicationEffects": {
-    "ModelVFXId": "Mace_Signature"
-  },
-  "OverlapBehavior": "Overwrite",
-  "Infinite": false,
-  "Duration": 2.0
-}

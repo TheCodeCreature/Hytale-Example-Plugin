@@ -1,8 +1,0 @@
-{
-  "Type": "Projectile",
-  "Config": "Projectile_Config_Fireball",
-  "Next": {
-    "Type": "Simple",
-    "RunTime": 0.2
-  }
-}

@@ -1,9 +1,0 @@
-{
-  "SoundEvents": {
-    "Walk": "SFX_Dirt_Walk",
-    "Land": "SFX_Dirt_Land",
-    "Hit": "SFX_Dirt_Hit",
-    "Break": "SFX_Dirt_Break",
-    "Build": "SFX_Default_Build"
-  }
-}

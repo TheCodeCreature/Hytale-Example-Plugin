@@ -1,6 +1,0 @@
-{
-  "$Comment": "Damage type for environmental hazards like plants (bushes, cactus, etc.)",
-  "DurabilityLoss": true,
-  "StaminaLoss": true,
-  "BypassResistances": false
-}

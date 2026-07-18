@@ -1,9 +1,0 @@
-{
-  "Name": "Cylinder4",
-  "Children": [],
-  "Priority": 5,
-  "Type": "CYLINDER",
-  "InheritParentRadius": false,
-  "Length": [2,4],
-  "Radius": [3, 3.25]
-}

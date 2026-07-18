@@ -1,0 +1,102 @@
+// Temporary sandbox page for Stencil Crafting layout experimentation.
+// Loaded via feature-flagged sandbox page route.
+// This file is intentionally static and uses hardcoded sample icon groups.
+
+$C = "../../../Common.ui";
+$B = "../../../Styles/Buttons.ui";
+$L = "../../../Styles/Labels.ui";
+$BG = "../../../Styles/Backgrounds.ui";
+$T = "Templates/IconTiles.ui";
+
+Group {
+    Anchor: (Width: 1480, Height: 720);
+    LayoutMode: Top;
+
+    TabNavigation {
+        Style: $C.@TopTabsStyle;
+        SelectedTab: "All";
+        Anchor: (Height: 66, Left: 2, Right: 0);
+
+        TabButton {
+            Icon: "../../../Common/RecipesIcon.png";
+            TooltipText: "Stencil Sandbox";
+            Id: "All";
+            Visible: true;
+        }
+    }
+
+    $C.@Container {
+        @ContentPadding = (Left: 0, Right: 0, Top: 10, Bottom: 0);
+        Anchor: (Height: 644, Left: 0, Right: 0);
+
+        #Title {
+            Group {
+                LayoutMode: Left;
+                Anchor: (Left: 0, Right: 0, Top: 0, Height: 34);
+
+                $C.@Title { @Text = "Stencil Crafting Sandbox:"; }
+                Label {
+                    Text: "Static Icon Grid Sample";
+                    Style: $L.@SubheaderStyle;
+                    Anchor: (Left: 0, Top: 4);
+                }
+            }
+        }
+
+        #Content {
+            $T.@ContentRow {
+
+                $T.@LeftPanel {
+
+                $T.@SectionLabel { @Text = "Sandbox Notes"; }
+
+                $T.@SubtextLabel {
+                    @Text = "Use this static layout to prototype a dynamic grid-in-grid view.";
+                    @Height = 80;
+                }
+
+                $T.@SubtextLabel {
+                    @Text = "No runtime filtering is wired on this page.";
+                    @Height = 26;
+                }
+            }
+
+                $T.@VerticalDivider {}
+
+                $T.@CenterScrollPanel {
+
+                $T.@StackFillWidth {
+
+                    $T.@DecoIronGroup {}
+
+                    $T.@VSpace8 {}
+
+                    $T.@FurnitureAdventureGroup {}
+
+                    $T.@VSpace8 {}
+
+                    $T.@FurnitureCastleGroup {}
+                }
+            }
+
+                $T.@VerticalDivider {}
+
+                $T.@RightPanel {
+
+                $T.@DetailLabel { @Text = "Sandbox Detail"; }
+
+                $T.@VSpace8 {}
+
+                $T.@IconPreviewFrame { @IconPath = "../../../Common/Icons/ItemsGenerated/Bench_WorkBench.png"; }
+
+                $T.@VSpace12 {}
+
+                $T.@SubtextLabel {
+                    @Text = "Static placeholder side panel for quick layout testing.";
+                    @Height = 60;
+                }
+                }
+            }
+        }
+    }
+}

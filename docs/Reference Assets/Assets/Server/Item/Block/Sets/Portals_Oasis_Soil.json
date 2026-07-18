@@ -1,6 +1,0 @@
-{
-  "Parent": "Soil",
-  "ExcludeBlockTypes": [
-    "Soil_Sand*"
-  ]
-}

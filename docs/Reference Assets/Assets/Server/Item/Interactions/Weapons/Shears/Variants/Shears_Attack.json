@@ -1,7 +1,0 @@
-{
-  "Type": "Chaining",
-  "ChainingAllowance": 0.5,
-  "Next": [
-    "Shears_Snip"
-  ]
-}

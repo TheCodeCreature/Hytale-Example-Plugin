@@ -1,8 +1,0 @@
-{
-  "Type": "Variant",
-  "Reference": "Skeleton_Incandescent_Mage",
-  "Modify": {
-    "Patrol": true,
-    "FollowPatrolPath": true
-  }
-}

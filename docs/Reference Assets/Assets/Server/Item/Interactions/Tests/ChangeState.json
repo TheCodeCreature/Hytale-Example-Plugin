@@ -1,8 +1,0 @@
-{
-  "Type": "ChangeState",
-  "Changes": {
-    "default": "Off",
-    "On": "Off",
-    "Off": "On"
-  }
-}

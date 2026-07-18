@@ -1,8 +1,0 @@
-{
-  "Parent": "Water_Source",
-  "MaxFluidLevel": 8,
-  "Ticker": {
-    "CanDemote": true,
-    "SupportedBy": "Water_Source"
-  }
-}

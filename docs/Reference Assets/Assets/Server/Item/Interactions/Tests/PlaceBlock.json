@@ -1,6 +1,0 @@
-{
-  "Type": "PlaceBlock",
-  "BlockTypeToPlace": "Rock_Stone",
-  "RemoveItemInHand": false,
-  "RunTime": 0.5
-}

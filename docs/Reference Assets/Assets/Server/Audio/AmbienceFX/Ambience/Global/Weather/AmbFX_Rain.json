@@ -1,8 +1,0 @@
-{
-  "Conditions": {
-    "WeatherTagPattern": {
-      "Op": "Equals",
-      "Tag": "Rain"
-    }
-  }
-}

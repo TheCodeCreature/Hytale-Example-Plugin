@@ -1,6 +1,0 @@
-{
-  "$Comment": "Root interaction for spawning NPCs. Items can override the NPC to spawn via InteractionVars.",
-  "Interactions": [
-    "SpawnNPC_Default"
-  ]
-}

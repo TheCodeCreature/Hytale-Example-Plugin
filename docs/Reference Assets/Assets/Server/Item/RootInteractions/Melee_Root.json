@@ -1,9 +1,0 @@
-{
-  "ClickQueuingTimeout": 0.35,
-  "Interactions": [
-    {
-      "Type": "SendMessage",
-      "Message": "This interaction shouldn't be used directly"
-    }
-  ]
-}

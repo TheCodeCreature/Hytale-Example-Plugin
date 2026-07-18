@@ -1,8 +1,0 @@
-{
-  "Type": "Simple",
-  "$Comment": "Length of Effect",
-  "RunTime": 0.167,
-  "Effects": {
-    "WorldSoundEventId": "SFX_Unarmed_Swing"
-  }
-}
