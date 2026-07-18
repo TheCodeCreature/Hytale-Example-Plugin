@@ -1,5 +1,7 @@
 package com.CodeCreature.ui.bench;
 
+import com.CodeCreature.ui.bench.sandbox.StencilBookSandboxPage;
+import com.CodeCreature.util.FeatureFlags;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
@@ -16,6 +18,8 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import javax.annotation.Nonnull;
 
 public class StencilBookOpenUIInteraction extends SimpleInstantInteraction {
+
+    private static final String SANDBOX_ROUTE_FLAG = "ui.stencil_book.sandbox_route";
 
     public static final BuilderCodec<StencilBookOpenUIInteraction> CODEC =
             BuilderCodec.builder(StencilBookOpenUIInteraction.class,
@@ -37,8 +41,12 @@ public class StencilBookOpenUIInteraction extends SimpleInstantInteraction {
         PageManager pageManager = playerComponent.getPageManager();
         if (pageManager.getCustomPage() != null) return;
 
-        StencilSelectionPage page = new StencilSelectionPage(playerRef);
         Store<EntityStore> store = commandBuffer.getStore();
-        pageManager.openCustomPage(ref, store, page);
+        if (FeatureFlags.get(SANDBOX_ROUTE_FLAG)) {
+            pageManager.openCustomPage(ref, store, new StencilBookSandboxPage(playerRef));
+            return;
+        }
+
+        pageManager.openCustomPage(ref, store, new StencilSelectionPage(playerRef));
     }
 }

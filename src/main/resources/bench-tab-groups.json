@@ -28,9 +28,10 @@
     },
     {
       "displayName": "Processing",
-      "benchIds": ["Workbench", "Furnace", "Loombench", "Salvagebench", "Tannery"]
+      "benchIds": ["Workbench", "Furnace", "Loombench", "Tannery"]
     }
   ],
+  "skipPrefixes": ["Blueprint_", "Salvage"],
   "tabIcons": {
     "Arcane": "Bench_Arcane.png",
     "Armory": "Bench_Armory.png",

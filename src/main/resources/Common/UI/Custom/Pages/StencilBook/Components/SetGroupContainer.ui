@@ -14,7 +14,8 @@ $C = "../../../Common.ui";
 
 Group {
     LayoutMode: Top;
-    Anchor: (Full: 8);
+    Anchor: (Left: 0, Right: 0);
+    Padding: (Left: 8, Right: 8, Bottom: 8);
     Visible: false;
 
     Group {

@@ -47,6 +47,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
 
     private static final int MAX_GROUP_BUTTONS = 30;
     private static final int MAX_BENCH_TABS = 16;
+    private static final int GRID_CELLS_PER_ROW = 12;
     private static final Value<String> FILTER_ACTIVE =
             Value.ref("Styles/Buttons.ui", "FilterActiveStyle");
     private static final Value<String> FILTER_INACTIVE =
@@ -79,9 +80,9 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     private int totalSetCount;
     private String[] maxLayoutSetNames; // set name for each group slot, indexed 0..totalSetCount-1
     private int[] cellsPerSet;         // recipe count per set, indexed 0..totalSetCount-1
-    private int[] groupCellOffset;     // prefix-sum: groupCellOffset[g] = sum(cellsPerSet[0..g-1])
     private int totalCellCount;        // sum of all cellsPerSet
-    private Map<String, Integer> setNameToGroupIndex; // set name â†’ max layout group index
+    private int totalRecipeRows;
+    private int totalGridRows;
     private GridLayoutController gridController;
     private DetailPanelController detailController;
     private Map<String, RecipeFilterPipeline.CategoryInfo> categoryInfoMap = Map.of();
@@ -270,22 +271,12 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         this.maxLayoutSetNames = maxLayout.setNames().clone();
         this.cellsPerSet = maxLayout.recipesPerSet().clone();
         this.totalCellCount = maxLayout.totalCells();
-
-        // Build prefix-sum offset array
-        this.groupCellOffset = new int[totalSetCount];
-        for (int i = 1; i < totalSetCount; i++) {
-            groupCellOffset[i] = groupCellOffset[i - 1] + cellsPerSet[i - 1];
-        }
-
-        // Build set name â†’ group index lookup (case-insensitive)
-        this.setNameToGroupIndex = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        for (int i = 0; i < totalSetCount; i++) {
-            setNameToGroupIndex.put(maxLayoutSetNames[i], i);
-        }
+        int totalGridCells = totalCellCount + totalSetCount;
+        this.totalRecipeRows = Math.max(1, (totalGridCells + GRID_CELLS_PER_ROW - 1) / GRID_CELLS_PER_ROW);
+        this.totalGridRows = totalRecipeRows;
 
         // Create grid layout controller
-        this.gridController = new GridLayoutController(totalSetCount, maxLayoutSetNames,
-                cellsPerSet, groupCellOffset, totalCellCount, setNameToGroupIndex);
+        this.gridController = new GridLayoutController(totalGridRows, GRID_CELLS_PER_ROW);
 
         // Create detail panel controller
         this.detailController = new DetailPanelController();
@@ -305,12 +296,12 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             cmd.append("#MaterialGroups", "Pages/StencilBook/Components/GroupFilterButton.ui");
         }
 
-        // Per-set group containers with VARIABLE cell counts
-        for (int g = 0; g < totalSetCount; g++) {
-            cmd.append("#RecipeGridArea", "Pages/StencilBook/Components/SetGroupContainer.ui");
-            for (int c = 0; c < cellsPerSet[g]; c++) {
-                cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
-                           "Common/Components/ClickableIconCell.ui");
+        // Row-model recipe grid: preallocate rows and cells-per-row.
+        for (int r = 0; r < totalGridRows; r++) {
+            cmd.append("#RecipeGridArea", "Pages/StencilBook/Components/RecipeGridRow.ui");
+            for (int c = 0; c < GRID_CELLS_PER_ROW; c++) {
+                cmd.append("#RecipeGridArea[" + r + "] #RowCells",
+                        "Pages/StencilBook/Components/LabelCell.ui");
             }
         }
 
@@ -394,8 +385,8 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         // so we must explicitly remove the data that drives tooltips.
         UICommandBuilder cmd = new UICommandBuilder();
         cmd.set("#OutputIcon.ItemId", "");
-        for (int g = 0; g < totalSetCount; g++) {
-            cmd.set("#RecipeGridArea[" + g + "].Visible", false);
+        for (int r = 0; r < totalGridRows; r++) {
+            cmd.set("#RecipeGridArea[" + r + "].Visible", false);
         }
         detailController.clearUI(cmd);
 
@@ -611,14 +602,19 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             }
             sendUpdate(cmd, null, false);
 
-        } else if (data.action != null && data.action.startsWith("RecipeSelect:idx:")) {
-            int slotIdx = -1;
-            try { slotIdx = Integer.parseInt(data.action.substring("RecipeSelect:idx:".length())); } catch (NumberFormatException ignored) {}
-            if (slotIdx >= 0 && slotIdx < gridController.getTotalCellCount()) {
-                int recipeIdx = gridController.resolveRecipeIndex(slotIdx);
-                if (recipeIdx >= 0 && recipeIdx < displayedRecipes.size()) {
-                    RecipeFilterPipeline.TaggedRecipe entry = displayedRecipes.get(recipeIdx);
-                    this.selectedRecipeId = entry.recipeId();
+        } else if (data.action != null && data.action.startsWith("RecipeSelect:rid:")) {
+            String recipeId = data.action.substring("RecipeSelect:rid:".length());
+            if (recipeId != null && !recipeId.isEmpty()) {
+                boolean visible = false;
+                for (RecipeFilterPipeline.TaggedRecipe entry : displayedRecipes) {
+                    if (entry.recipeId().equals(recipeId)) {
+                        visible = true;
+                        break;
+                    }
+                }
+
+                if (visible) {
+                    this.selectedRecipeId = recipeId;
                     gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
                     updateDetail(cmd);
                 }

@@ -191,5 +191,6 @@ public final class FeatureFlags {
         register("logging.crafting", false);
         register("logging.ingredient_tree", false);
         register("diagnostics.breakLog", false);
+        register("ui.stencil_book.sandbox_route", true);
     }
 }
