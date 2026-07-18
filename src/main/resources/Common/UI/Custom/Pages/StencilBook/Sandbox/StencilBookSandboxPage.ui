@@ -3,70 +3,50 @@
 // This file is intentionally static and uses hardcoded sample icon groups.
 
 $C = "../../../Common.ui";
-$L = "../../../Styles/Labels.ui";
-$T = "Templates/IconTiles.ui";
+$Tabs = "Templates/Layout/SandboxTopTabs.ui";
+$Title = "Templates/Layout/SandboxTitleBar.ui";
+$Row = "Templates/Layout/ContentRow.ui";
+$Left = "Templates/Layout/LeftPanel.ui";
+$Divider = "Templates/Layout/VerticalDivider.ui";
+$Center = "Templates/Layout/CenterScrollPanel.ui";
+$Right = "Templates/Layout/RightPanel.ui";
 
 Group {
     Anchor: (Width: 1480, Height: 720);
     LayoutMode: Top;
 
-    TabNavigation {
-        Style: $C.@TopTabsStyle;
-        SelectedTab: "All";
-        Anchor: (Height: 66, Left: 2, Right: 0);
-
-        TabButton {
-            Icon: "../../../Common/RecipesIcon.png";
-            TooltipText: "Stencil Sandbox";
-            Id: "All";
-            Visible: true;
-        }
-    }
+    $Tabs.@SandboxTopTabs { @TabIcon = "../../../../../Common/RecipesIcon.png"; }
 
     $C.@Container {
         @ContentPadding = (Left: 0, Right: 0, Top: 10, Bottom: 0);
         Anchor: (Height: 644, Left: 0, Right: 0);
 
         #Title {
-            Group {
-                LayoutMode: Left;
-                Anchor: (Left: 0, Right: 0, Top: 0, Height: 34);
-
-                Label #PageTitle {
-                    Text: "Stencil Crafting Sandbox:";
-                    Style: $L.@HeaderStyle;
-                    Anchor: (Left: 0, Top: 0);
-                }
-                Label #PageSubtitle {
-                    Text: "Static Icon Grid Sample";
-                    Style: $L.@SubheaderStyle;
-                    Anchor: (Left: 0, Top: 4);
-                }
-            }
+            $Title.@SandboxTitleBar {}
         }
 
         #Content {
-            $T.@ContentRow {
+            $Row.@ContentRow {
 
-                $T.@LeftPanel {
+                $Left.@LeftPanel {
                     Group #NotesHost {
                         LayoutMode: Top;
                         Anchor: (Left: 0, Right: 0);
                     }
                 }
 
-                $T.@VerticalDivider {}
+                $Divider.@VerticalDivider {}
 
-                $T.@CenterScrollPanel {
+                $Center.@CenterScrollPanel {
                     Group #SetGroups {
                         LayoutMode: Top;
                         Anchor: (Left: 0, Right: 0);
                     }
                 }
 
-                $T.@VerticalDivider {}
+                $Divider.@VerticalDivider {}
 
-                $T.@RightPanel {
+                $Right.@RightPanel {
                     Group #DetailHost {
                         LayoutMode: Top;
                         Anchor: (Left: 0, Right: 0);

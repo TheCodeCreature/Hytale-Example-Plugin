@@ -1,0 +1,5 @@
+@LeftPanel = Group {
+    Anchor: (Width: 210);
+    LayoutMode: Top;
+    Padding: (Right: 8);
+};

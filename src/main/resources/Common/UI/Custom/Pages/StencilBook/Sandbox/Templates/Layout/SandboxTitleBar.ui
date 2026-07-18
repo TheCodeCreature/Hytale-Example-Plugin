@@ -1,0 +1,20 @@
+$L = "../../../../../Styles/Labels.ui";
+
+@SandboxTitleBar = Group {
+    @TitleText = "Stencil Crafting Sandbox:";
+    @SubtitleText = "Static Icon Grid Sample";
+    LayoutMode: Left;
+    Anchor: (Left: 0, Right: 0, Top: 0, Height: 34);
+
+    Label #PageTitle {
+        Text: @TitleText;
+        Style: $L.@HeaderStyle;
+        Anchor: (Left: 0, Top: 0);
+    }
+
+    Label #PageSubtitle {
+        Text: @SubtitleText;
+        Style: $L.@SubheaderStyle;
+        Anchor: (Left: 0, Top: 4);
+    }
+};

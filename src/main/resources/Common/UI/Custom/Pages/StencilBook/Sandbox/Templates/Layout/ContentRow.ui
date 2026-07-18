@@ -1,0 +1,5 @@
+@ContentRow = Group {
+    LayoutMode: Left;
+    Anchor: (Left: 0, Right: 0, Top: 44, Bottom: 0);
+    Padding: (Left: 8, Right: 8, Bottom: 8);
+};

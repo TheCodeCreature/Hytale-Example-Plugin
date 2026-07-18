@@ -1,0 +1,8 @@
+$C = "../../../../../Common.ui";
+
+@CenterScrollPanel = Group {
+    FlexWeight: 1;
+    LayoutMode: TopScrolling;
+    ScrollbarStyle: $C.@DefaultScrollbarStyle;
+    Padding: (Left: 8, Right: 8);
+};

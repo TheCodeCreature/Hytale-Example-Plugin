@@ -42,6 +42,42 @@ $C = "../../../../Common.ui";
 @VSpace8 = Group { Anchor: (Height: 8); };
 @VSpace12 = Group { Anchor: (Height: 12); };
 
+@SandboxTopTabs = TabNavigation {
+    @SelectedTab = "All";
+    @TabId = "All";
+    @TabIcon = "../../../Common/RecipesIcon.png";
+    @TabTooltip = "Stencil Sandbox";
+    Style: $C.@TopTabsStyle;
+    SelectedTab: @SelectedTab;
+    Anchor: (Height: 66, Left: 2, Right: 0);
+
+    TabButton {
+        Icon: @TabIcon;
+        TooltipText: @TabTooltip;
+        Id: @TabId;
+        Visible: true;
+    }
+};
+
+@SandboxTitleBar = Group {
+    @TitleText = "Stencil Crafting Sandbox:";
+    @SubtitleText = "Static Icon Grid Sample";
+    LayoutMode: Left;
+    Anchor: (Left: 0, Right: 0, Top: 0, Height: 34);
+
+    Label #PageTitle {
+        Text: @TitleText;
+        Style: $L.@HeaderStyle;
+        Anchor: (Left: 0, Top: 0);
+    }
+
+    Label #PageSubtitle {
+        Text: @SubtitleText;
+        Style: $L.@SubheaderStyle;
+        Anchor: (Left: 0, Top: 4);
+    }
+};
+
 @ContentRow = Group {
     LayoutMode: Left;
     Anchor: (Left: 0, Right: 0, Top: 44, Bottom: 0);

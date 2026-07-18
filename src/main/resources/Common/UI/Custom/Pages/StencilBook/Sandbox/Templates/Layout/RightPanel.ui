@@ -1,0 +1,5 @@
+@RightPanel = Group {
+    Anchor: (Width: 300);
+    LayoutMode: Top;
+    Padding: (Left: 10);
+};

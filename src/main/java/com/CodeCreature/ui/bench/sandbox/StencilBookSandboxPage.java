@@ -39,7 +39,51 @@ public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookS
             WORKBENCH_ICON_PATH,
             ARMORY_ICON_PATH
         )),
+        new GroupViewModel("Deco Iron", List.of(
+            WORKBENCH_ICON_PATH
+        )),
+        new GroupViewModel("Deco Iron", List.of(
+            ARMORY_ICON_PATH
+        )),
+        new GroupViewModel("Deco Iron", List.of(
+            WORKBENCH_ICON_PATH
+        )),
+        new GroupViewModel("Deco Iron", List.of(
+            ARMORY_ICON_PATH
+        )),
+        new GroupViewModel("Deco Iron", List.of(
+            WORKBENCH_ICON_PATH
+        )),
+        new GroupViewModel("Deco Iron", List.of(
+            ARMORY_ICON_PATH
+        )),
+        new GroupViewModel("Deco Iron", List.of(
+            WORKBENCH_ICON_PATH
+        )),
+        new GroupViewModel("Deco Iron", List.of(
+            ARMORY_ICON_PATH
+        )),
         new GroupViewModel("Furniture Adventure", List.of(
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
+            ARMORY_ICON_PATH,
+            WORKBENCH_ICON_PATH,
             ARMORY_ICON_PATH,
             WORKBENCH_ICON_PATH,
             ARMORY_ICON_PATH,

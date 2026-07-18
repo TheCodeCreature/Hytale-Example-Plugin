@@ -1,0 +1,6 @@
+$BG = "../../../../../Styles/Backgrounds.ui";
+
+@VerticalDivider = Group {
+    Anchor: (Width: 1);
+    Background: $BG.@DividerColor;
+};
