@@ -87,7 +87,7 @@ Group {
 
                 $T.@VSpace8 {}
 
-                $T.@IconPreviewFrame { @IconPath = "../../../Common/Icons/ItemsGenerated/Bench_WorkBench.png"; }
+                    $T.@IconPreviewFrame { @IconPath = "../../../../Common/Icons/ItemsGenerated/Bench_WorkBench.png"; }
 
                 $T.@VSpace12 {}
 
