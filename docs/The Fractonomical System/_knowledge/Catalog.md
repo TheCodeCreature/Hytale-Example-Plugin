@@ -1,10 +1,11 @@
 # Knowledge Catalog
-> Last updated: 2026-07-16
+> Last updated: 2026-07-18
 
 ## Sources
 | ID | Title | Kind | Updated |
 |---|---|---|---|
 | FS-0001 | [Fractonomical System](./_sources/Fractonomical%20System/Overview.md) | system-definition | 2026-07-16 |
+| FS-0002 | [Hytale UI](./_sources/Hytale%20UI/Overview.md) | code-reference | 2026-07-18 |
 
 ## Catalog Rules
 1. List top-level source folders only.
