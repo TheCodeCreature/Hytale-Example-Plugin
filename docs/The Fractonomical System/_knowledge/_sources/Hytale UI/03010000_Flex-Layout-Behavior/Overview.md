@@ -4,7 +4,7 @@ type: knowledge-topic
 title: "Flex Layout Behavior"
 parent: "03000000"
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-19
 tags:
   - domain:hytale-ui
   - kind:topic
@@ -38,6 +38,8 @@ Observed behavior indicates `FlexWeight` is used to consume remaining parent spa
    - Parent: `LayoutMode: LeftCenterWrap`
    - Child group containers: no `FlexWeight`, no forced full-width anchors
    - Result: small groups remain content-sized; large groups wrap to next row when they no longer fit.
+5. Sandbox weighting strategy now computes row-level base weights from visible tile counts, then applies the remainder bonus to the smallest groups per row. This keeps group-level flex intent explicit in Java placement metadata while avoiding fixed-width card assignment.
+6. Sandbox sample data construction was refactored from repeated inline icon arrays to helper-generated alternating tile lists to reduce duplication while preserving render behavior.
 
 ## Evidence
 - UI usage of flex and wrap in stencil page:
@@ -50,6 +52,8 @@ Observed behavior indicates `FlexWeight` is used to consume remaining parent spa
   - [.tmp_hytale_src/com/hypixel/hytale/server/core/ui/Anchor.java](../../../../../.tmp_hytale_src/com/hypixel/hytale/server/core/ui/Anchor.java)
   - [.tmp_hytale_src/com/hypixel/hytale/server/core/ui/Area.java](../../../../../.tmp_hytale_src/com/hypixel/hytale/server/core/ui/Area.java)
   - [.tmp_hytale_src/com/hypixel/hytale/server/core/ui/builder/UICommandBuilder.java](../../../../../.tmp_hytale_src/com/hypixel/hytale/server/core/ui/builder/UICommandBuilder.java)
+- Sandbox row-weight and placement implementation:
+  - [src/main/java/com/CodeCreature/ui/bench/sandbox/StencilBookSandboxPage.java](../../../../../src/main/java/com/CodeCreature/ui/bench/sandbox/StencilBookSandboxPage.java)
 
 ## Gaps
 - Unknown from available source evidence: exact internal flex measurement/placement algorithm implementation.

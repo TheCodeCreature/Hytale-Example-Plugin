@@ -35,10 +35,10 @@ public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookS
     /**
      * Single grid tuning knob.
      *
-      * <p>Changing this value changes the projected width used to decide whether a group
-      * fits in the current row:
+     * <p>Changing this value changes the projected width used to decide whether a group
+     * fits in the current row:
      * <pre>
-      * rowFitWidth = paddingX * 2 + (visibleTiles * tileSize) + ((visibleTiles - 1) * tileGap)
+     * rowFitWidth = paddingX * 2 + (visibleTiles * tileSize) + ((visibleTiles - 1) * tileGap)
      * </pre>
      */
     private static final int MAX_TILES_PER_ROW = 10;
@@ -50,76 +50,7 @@ public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookS
     private static final int MAX_ROW_WIDTH_PX = 920;
     private static final int MIN_GROUP_WIDTH_PX = 120;
 
-    private static final List<GroupViewModel> GROUPS = List.of(
-        new GroupViewModel("Deco Iron", List.of(
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH
-        )),
-        new GroupViewModel("Deco Iron", List.of(
-            WORKBENCH_ICON_PATH
-        )),
-        new GroupViewModel("Deco Iron asdf asdf asdf asdf asdf", List.of(
-            ARMORY_ICON_PATH
-        )),
-        new GroupViewModel("Deco Iron asdf asdf asdf asdf asdf ", List.of(
-            WORKBENCH_ICON_PATH
-        )),
-        new GroupViewModel("Deco Iron", List.of(
-            ARMORY_ICON_PATH
-        )),
-        new GroupViewModel("Deco Iron", List.of(
-            WORKBENCH_ICON_PATH
-        )),
-        new GroupViewModel("Deco Iron", List.of(
-            ARMORY_ICON_PATH
-        )),
-        new GroupViewModel("Deco Iron", List.of(
-            WORKBENCH_ICON_PATH
-        )),
-        new GroupViewModel("Deco Iron", List.of(
-            ARMORY_ICON_PATH
-        )),
-        new GroupViewModel("Furniture Adventure", List.of(
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH
-        )),
-        new GroupViewModel("Furniture Castle", List.of(
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH,
-            WORKBENCH_ICON_PATH,
-            ARMORY_ICON_PATH
-        ))
-    );
+    private static final List<GroupViewModel> GROUPS = buildGroups();
 
     private static final List<GroupCardPlacement> GROUP_PLACEMENTS = computePlacements(GROUPS);
 
@@ -278,6 +209,30 @@ public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookS
 
     private static String groupSelector(@NonNull GroupCardPlacement placement) {
         return rowGroupsSelector(placement.rowIndex()) + "[" + placement.groupIndexInRow() + "]";
+    }
+
+    private static List<GroupViewModel> buildGroups() {
+        return List.of(
+            new GroupViewModel("Deco Iron", alternatingTiles(6, WORKBENCH_ICON_PATH, ARMORY_ICON_PATH)),
+            new GroupViewModel("Deco Iron", List.of(WORKBENCH_ICON_PATH)),
+            new GroupViewModel("Deco Iron asdf asdf asdf asdf asdf", List.of(ARMORY_ICON_PATH)),
+            new GroupViewModel("Deco Iron asdf asdf asdf asdf asdf ", List.of(WORKBENCH_ICON_PATH)),
+            new GroupViewModel("Deco Iron", List.of(ARMORY_ICON_PATH)),
+            new GroupViewModel("Deco Iron", List.of(WORKBENCH_ICON_PATH)),
+            new GroupViewModel("Deco Iron", List.of(ARMORY_ICON_PATH)),
+            new GroupViewModel("Deco Iron", List.of(WORKBENCH_ICON_PATH)),
+            new GroupViewModel("Deco Iron", List.of(ARMORY_ICON_PATH)),
+            new GroupViewModel("Furniture Adventure", alternatingTiles(28, ARMORY_ICON_PATH, WORKBENCH_ICON_PATH)),
+            new GroupViewModel("Furniture Castle", alternatingTiles(4, WORKBENCH_ICON_PATH, ARMORY_ICON_PATH))
+        );
+    }
+
+    private static List<String> alternatingTiles(int count, @NonNull String first, @NonNull String second) {
+        List<String> tiles = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            tiles.add(i % 2 == 0 ? first : second);
+        }
+        return List.copyOf(tiles);
     }
 
     private record GroupViewModel(String title, List<String> tileIconPaths) {}
