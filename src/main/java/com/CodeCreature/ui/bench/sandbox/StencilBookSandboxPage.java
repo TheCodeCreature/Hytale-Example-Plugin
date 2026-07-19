@@ -144,11 +144,13 @@ public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookS
                 cmd.append("#SetRows", SET_ROW_UI_PATH);
             }
 
-            String rowSelector = "#SetRows[" + placement.rowIndex() + "] #RowGroups";
+            String rowSelector = rowGroupsSelector(placement.rowIndex());
             cmd.append(rowSelector, SET_GROUP_UI_PATH);
 
-            String tileHost = rowSelector + "[" + placement.groupIndexInRow() + "] #Tiles";
-            for (int tileIndex = 0; tileIndex < placement.group().tileIconPaths().size(); tileIndex++) {
+            GroupViewModel group = placement.group();
+            List<String> tilePaths = group.tileIconPaths();
+            String tileHost = groupSelector(placement) + " #Tiles";
+            for (int tileIndex = 0; tileIndex < tilePaths.size(); tileIndex++) {
                 cmd.append(tileHost, ICON_TILE_UI_PATH);
             }
         }
@@ -175,18 +177,15 @@ public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookS
 
         for (GroupCardPlacement placement : GROUP_PLACEMENTS) {
             GroupViewModel group = placement.group();
-            String groupSelector = "#SetRows["
-                    + placement.rowIndex()
-                    + "] #RowGroups["
-                    + placement.groupIndexInRow()
-                    + "]";
+            List<String> tilePaths = group.tileIconPaths();
+            String groupSelector = groupSelector(placement);
 
             cmd.set(groupSelector + ".FlexWeight", placement.flexWeight());
             cmd.set(groupSelector + " #SetTitle.Text", group.title());
             cmd.set(groupSelector + " #SetTitle.TooltipText", group.title());
 
-            for (int tileIndex = 0; tileIndex < group.tileIconPaths().size(); tileIndex++) {
-                String tilePath = group.tileIconPaths().get(tileIndex);
+            for (int tileIndex = 0; tileIndex < tilePaths.size(); tileIndex++) {
+                String tilePath = tilePaths.get(tileIndex);
                 String tileSelector = groupSelector + " #Tiles[" + tileIndex + "]";
                 cmd.set(tileSelector + " #TileIcon.Background", tilePath);
                 cmd.set(tileSelector + " #TileBtn.TooltipText", group.title() + " - Tile " + (tileIndex + 1));
@@ -271,6 +270,14 @@ public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookS
         int tileWidth = (visibleTiles * TILE_SIZE_PX) + (Math.max(0, visibleTiles - 1) * TILE_GAP_PX);
 
         return Math.max(MIN_GROUP_WIDTH_PX, (CARD_PADDING_X_PX * 2) + tileWidth);
+    }
+
+    private static String rowGroupsSelector(int rowIndex) {
+        return "#SetRows[" + rowIndex + "] #RowGroups";
+    }
+
+    private static String groupSelector(@NonNull GroupCardPlacement placement) {
+        return rowGroupsSelector(placement.rowIndex()) + "[" + placement.groupIndexInRow() + "]";
     }
 
     private record GroupViewModel(String title, List<String> tileIconPaths) {}
