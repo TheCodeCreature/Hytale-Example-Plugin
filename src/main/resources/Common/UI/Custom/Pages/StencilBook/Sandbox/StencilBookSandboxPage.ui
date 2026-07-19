@@ -40,7 +40,7 @@ Group {
                 $Center.@CenterScrollPanel {
                     Group #SetRows {
                         LayoutMode: Top;
-                        Anchor: (Left: 0, Right: 0);
+                        Anchor: (Left: 0);
                     }
                 }
 

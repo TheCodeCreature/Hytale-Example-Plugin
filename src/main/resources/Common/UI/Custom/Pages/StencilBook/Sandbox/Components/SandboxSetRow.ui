@@ -1,9 +1,9 @@
 Group {
-    LayoutMode: Center;
-    Anchor: (Left: 0, Right: 0);
+    LayoutMode: Top;
+    Anchor: (Left: 0);
 
     Group #RowGroups {
-        LayoutMode: Left;
-        Anchor: (Left: 0, Right: 0);
+        LayoutMode: LeftCenterWrap;
+        Anchor: (Left: 0);
     }
 }
