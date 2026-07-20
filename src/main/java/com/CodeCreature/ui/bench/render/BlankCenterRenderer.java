@@ -13,12 +13,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 /**
  * Sandbox-style center renderer mounted into the production center panel.
  * Uses dynamic displayed recipe data instead of static sandbox sample arrays.
  */
 public final class BlankCenterRenderer implements StencilCenterRenderer {
+
+    private static final Logger LOGGER = Logger.getLogger(BlankCenterRenderer.class.getSimpleName());
 
     private static final String SET_ROW_UI_PATH = "Pages/StencilBook/Sandbox/Components/SandboxSetRow.ui";
     private static final String SET_GROUP_UI_PATH = "Pages/StencilBook/Sandbox/Components/SandboxSetGroup.ui";
@@ -46,6 +49,8 @@ public final class BlankCenterRenderer implements StencilCenterRenderer {
     private final boolean[] slotWasVisible;
     private final int[] slotLastRenderedTileCount;
     private final boolean[] rowWasVisible;
+
+    private String lastLayoutLogSignature = "";
 
     private boolean appended;
 
@@ -129,21 +134,30 @@ public final class BlankCenterRenderer implements StencilCenterRenderer {
 
         boolean[] slotActiveNow = new boolean[slotCapacities.length];
         boolean[] rowActiveNow = new boolean[rowCount];
+        boolean[] rowSlotTaken = new boolean[slotCapacities.length];
+        List<ResolvedPlacement> resolvedPlacements = new ArrayList<>(placements.size());
 
-        int placementCount = Math.min(placements.size(), slotCapacities.length);
-        for (int i = 0; i < placementCount; i++) {
-            GroupCardPlacement placement = placements.get(i);
-            int slotIndex = i;
+        for (GroupCardPlacement placement : placements) {
+            SlotAssignment assignment = resolveSlotAssignment(placement, rowSlotTaken);
+            int slotIndex = assignment.slotIndex();
+            if (slotIndex < 0) {
+                continue;
+            }
+
+            rowSlotTaken[slotIndex] = true;
             slotActiveNow[slotIndex] = true;
             rowActiveNow[slotRowIndices[slotIndex]] = true;
+            resolvedPlacements.add(new ResolvedPlacement(placement, slotIndex, assignment.usedFallback()));
             applyGroupToSlot(cmd, slotIndex, placement, selectedRecipeId);
         }
+
+        logLayoutIfChanged(displayedRecipes, groups, placements, resolvedPlacements);
 
         for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
             if (rowActiveNow[rowIndex]) {
                 cmd.set(rowSelector(rowIndex) + ".Visible", true);
                 rowWasVisible[rowIndex] = true;
-            } else if (rowWasVisible[rowIndex]) {
+            } else {
                 cmd.set(rowSelector(rowIndex) + ".Visible", false);
                 rowWasVisible[rowIndex] = false;
             }
@@ -151,9 +165,6 @@ public final class BlankCenterRenderer implements StencilCenterRenderer {
 
         for (int slotIndex = 0; slotIndex < slotCapacities.length; slotIndex++) {
             if (slotActiveNow[slotIndex]) {
-                continue;
-            }
-            if (!slotWasVisible[slotIndex] && slotLastRenderedTileCount[slotIndex] == 0) {
                 continue;
             }
             clearGroupSlot(cmd, slotIndex);
@@ -199,6 +210,7 @@ public final class BlankCenterRenderer implements StencilCenterRenderer {
 
             cmd.set(tileSelector + ".Visible", true);
             cmd.set(tileSelector + " #TileIcon.ItemId", recipe.outputItemId() == null ? "" : recipe.outputItemId());
+            cmd.set(tileSelector + " #Dim.Visible", !recipe.affordable());
             cmd.set(tileSelector + " #TileBtn.TooltipText", toRecipeSelectPayload(recipe.recipeId()));
 
             boolean isSelected = recipe.recipeId().equals(selectedRecipeId);
@@ -206,7 +218,9 @@ public final class BlankCenterRenderer implements StencilCenterRenderer {
                     Objects.requireNonNull(isSelected ? TILE_SELECTED_STYLE : TILE_UNSELECTED_STYLE));
         }
 
-        for (int tileIndex = renderCount; tileIndex < previousCount; tileIndex++) {
+        int clearStart = Math.min(renderCount, cellCapacity);
+        int clearEnd = Math.max(previousCount, cellCapacity);
+        for (int tileIndex = clearStart; tileIndex < clearEnd; tileIndex++) {
             clearTile(cmd, currentGroupSelector + " #Tiles[" + tileIndex + "]");
         }
 
@@ -217,18 +231,134 @@ public final class BlankCenterRenderer implements StencilCenterRenderer {
     private void clearGroupSlot(UICommandBuilder cmd, int slotIndex) {
         String currentGroupSelector = groupSelector(slotIndex);
         int previousCount = Math.min(slotLastRenderedTileCount[slotIndex], slotCapacities[slotIndex]);
+        int clearEnd = Math.max(previousCount, slotCapacities[slotIndex]);
 
         cmd.set(currentGroupSelector + ".Visible", false);
         cmd.set(currentGroupSelector + ".FlexWeight", 1);
         cmd.set(currentGroupSelector + " #SetTitle.Text", "");
         cmd.set(currentGroupSelector + " #SetTitle.TooltipText", "");
 
-        for (int tileIndex = 0; tileIndex < previousCount; tileIndex++) {
+        for (int tileIndex = 0; tileIndex < clearEnd; tileIndex++) {
             clearTile(cmd, currentGroupSelector + " #Tiles[" + tileIndex + "]");
         }
 
         slotWasVisible[slotIndex] = false;
         slotLastRenderedTileCount[slotIndex] = 0;
+    }
+
+    private SlotAssignment resolveSlotAssignment(GroupCardPlacement placement, boolean[] rowSlotTaken) {
+        int rowIndex = placement.rowIndex();
+        int indexInRow = placement.groupIndexInRow();
+
+        if (rowIndex >= 0 && rowIndex < rowSlotIndices.length) {
+            int[] rowSlots = rowSlotIndices[rowIndex];
+            if (indexInRow >= 0 && indexInRow < rowSlots.length) {
+                int slotIndex = rowSlots[indexInRow];
+                if (!rowSlotTaken[slotIndex]) {
+                    return new SlotAssignment(slotIndex, false);
+                }
+            }
+        }
+
+        for (int slotIndex = 0; slotIndex < slotCapacities.length; slotIndex++) {
+            if (!rowSlotTaken[slotIndex]) {
+                return new SlotAssignment(slotIndex, true);
+            }
+        }
+        return new SlotAssignment(-1, true);
+    }
+
+    private void logLayoutIfChanged(List<RecipeFilterPipeline.TaggedRecipe> displayedRecipes,
+                                    List<GroupViewModel> groups,
+                                    List<GroupCardPlacement> placements,
+                                    List<ResolvedPlacement> resolvedPlacements) {
+        String signature = buildLayoutSignature(displayedRecipes, placements);
+        if (signature.equals(lastLayoutLogSignature)) {
+            return;
+        }
+        lastLayoutLogSignature = signature;
+
+        LOGGER.info("[StencilCenterLayout][SUMMARY] groups="
+            + groups.size()
+            + " displayedRecipes="
+            + displayedRecipes.size()
+            + " placements="
+            + placements.size());
+
+        for (ResolvedPlacement resolved : resolvedPlacements) {
+            GroupCardPlacement placement = resolved.placement();
+            GroupViewModel group = placement.group();
+            int affordableCount = 0;
+            for (RecipeFilterPipeline.TaggedRecipe recipe : group.recipes()) {
+                if (recipe.affordable()) {
+                    affordableCount++;
+                }
+            }
+
+            LOGGER.info("[StencilCenterLayout][CONTAINER] category='"
+                    + group.title()
+                    + "' row="
+                    + placement.rowIndex()
+                    + " rowIndex="
+                    + placement.groupIndexInRow()
+                    + " flex="
+                    + placement.flexWeight()
+                    + " recipes="
+                    + group.recipes().size()
+                    + " affordable="
+                    + affordableCount
+                    + " slot="
+                    + resolved.slotIndex()
+                    + " slotRow="
+                    + slotRowIndices[resolved.slotIndex()]
+                    + " slotIdx="
+                    + slotIndexInRow[resolved.slotIndex()]
+                    + " fallback="
+                    + resolved.usedFallback());
+        }
+
+        for (int rowIndex = 0; rowIndex < rowSlotIndices.length; rowIndex++) {
+            int[] slots = rowSlotIndices[rowIndex];
+            StringBuilder indices = new StringBuilder();
+            for (int i = 0; i < slots.length; i++) {
+                if (i > 0) {
+                    indices.append(',');
+                }
+                indices.append(slots[i]);
+            }
+
+            LOGGER.info("[StencilCenterLayout][ROW] row="
+                    + rowIndex
+                    + " slots="
+                    + slots.length
+                    + " indices="
+                    + indices);
+        }
+    }
+
+    private static String buildLayoutSignature(List<RecipeFilterPipeline.TaggedRecipe> displayedRecipes,
+                                               List<GroupCardPlacement> placements) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("r:").append(displayedRecipes.size()).append("|p:").append(placements.size());
+        for (RecipeFilterPipeline.TaggedRecipe recipe : displayedRecipes) {
+            sb.append('|')
+                    .append(recipe.recipeId())
+                    .append(':')
+                    .append(recipe.effectiveSet())
+                    .append(':')
+                    .append(recipe.affordable());
+        }
+        for (GroupCardPlacement placement : placements) {
+            sb.append("|pl:")
+                    .append(placement.group().title())
+                    .append(':')
+                    .append(placement.rowIndex())
+                    .append(':')
+                    .append(placement.groupIndexInRow())
+                    .append(':')
+                    .append(placement.flexWeight());
+        }
+        return sb.toString();
     }
 
     private static String toRecipeSelectPayload(String recipeId) {
@@ -238,6 +368,7 @@ public final class BlankCenterRenderer implements StencilCenterRenderer {
     private void clearTile(UICommandBuilder cmd, String tileSelector) {
         cmd.set(tileSelector + ".Visible", false);
         cmd.set(tileSelector + " #TileIcon.ItemId", "");
+        cmd.set(tileSelector + " #Dim.Visible", false);
         cmd.set(tileSelector + " #TileBtn.TooltipText", "");
         cmd.set(tileSelector + " #TileBtn.Style", Objects.requireNonNull(TILE_UNSELECTED_STYLE));
     }
@@ -370,7 +501,18 @@ public final class BlankCenterRenderer implements StencilCenterRenderer {
 
         List<GroupViewModel> groups = new ArrayList<>();
         for (Map.Entry<String, List<RecipeFilterPipeline.TaggedRecipe>> entry : recipesBySet.entrySet()) {
-            groups.add(new GroupViewModel(entry.getKey(), List.copyOf(entry.getValue())));
+            List<RecipeFilterPipeline.TaggedRecipe> recipes = List.copyOf(entry.getValue());
+            boolean hasMatchingRecipe = false;
+            for (RecipeFilterPipeline.TaggedRecipe recipe : recipes) {
+                if (recipe.affordable()) {
+                    hasMatchingRecipe = true;
+                    break;
+                }
+            }
+            if (!hasMatchingRecipe) {
+                continue;
+            }
+            groups.add(new GroupViewModel(entry.getKey(), recipes));
         }
         return groups;
     }
@@ -379,5 +521,11 @@ public final class BlankCenterRenderer implements StencilCenterRenderer {
     }
 
     private record GroupCardPlacement(int rowIndex, int groupIndexInRow, int flexWeight, GroupViewModel group) {
+    }
+
+    private record SlotAssignment(int slotIndex, boolean usedFallback) {
+    }
+
+    private record ResolvedPlacement(GroupCardPlacement placement, int slotIndex, boolean usedFallback) {
     }
 }

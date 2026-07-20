@@ -10,6 +10,12 @@ Group {
         ShowItemTooltip: true;
     }
 
+    Group #Dim {
+        Anchor: (Full: 2);
+        Background: $BG.@DimOverlay;
+        Visible: false;
+    }
+
     TextButton #TileBtn {
         Text: "";
         Anchor: (Full: 2);
