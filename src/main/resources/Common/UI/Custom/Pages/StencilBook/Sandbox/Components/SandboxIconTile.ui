@@ -5,9 +5,9 @@ Group {
     Anchor: (Width: 72, Height: 72);
     Background: $BG.@ItemSlotFrame;
 
-    Group #TileIcon {
+    ItemIcon #TileIcon {
         Anchor: (Full: 10);
-        Background: "";
+        ShowItemTooltip: true;
     }
 
     TextButton #TileBtn {

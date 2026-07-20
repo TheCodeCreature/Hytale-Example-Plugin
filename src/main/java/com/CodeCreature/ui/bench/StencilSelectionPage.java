@@ -292,7 +292,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         this.totalRecipeRows = Math.max(1, (totalGridCells + GRID_CELLS_PER_ROW - 1) / GRID_CELLS_PER_ROW);
         this.totalGridRows = totalRecipeRows;
 
-        this.centerRenderer = new BlankCenterRenderer();
+        this.centerRenderer = new BlankCenterRenderer(maxLayoutSetNames, cellsPerSet);
 
         // Create detail panel controller
         this.detailController = new DetailPanelController();
