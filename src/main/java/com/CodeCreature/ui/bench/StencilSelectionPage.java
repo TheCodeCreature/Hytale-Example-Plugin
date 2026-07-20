@@ -19,8 +19,10 @@ import com.CodeCreature.registry.FilteredRecipeEntry;
 import com.CodeCreature.registry.BenchRegistry;
 import com.CodeCreature.registry.BenchTabGrouper;
 import com.CodeCreature.registry.RecipeFilterRegistry;
+import com.CodeCreature.ui.bench.render.BlankCenterRenderer;
 import com.CodeCreature.ui.bench.render.GroupedCenterRenderer;
 import com.CodeCreature.ui.bench.render.LegacyGridCenterRenderer;
+import com.CodeCreature.ui.bench.render.SandboxCenterRenderer;
 import com.CodeCreature.ui.bench.render.StencilCenterRenderer;
 import com.CodeCreature.util.StencilMetadata;
 import com.CodeCreature.util.FeatureFlags;
@@ -290,9 +292,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         this.totalRecipeRows = Math.max(1, (totalGridCells + GRID_CELLS_PER_ROW - 1) / GRID_CELLS_PER_ROW);
         this.totalGridRows = totalRecipeRows;
 
-        // Force grouped renderer while legacy grid parity issues are resolved.
-        // This keeps set labels attached to set containers and tile buttons inside containers.
-        this.centerRenderer = new GroupedCenterRenderer(maxLayoutSetNames, cellsPerSet);
+        this.centerRenderer = new BlankCenterRenderer();
 
         // Create detail panel controller
         this.detailController = new DetailPanelController();
