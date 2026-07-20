@@ -1,9 +1,13 @@
 Group {
-    LayoutMode: Center;
+    LayoutMode: Top;
     Anchor: (Left: 0, Right: 0);
+    Background: #ff0000(0.3);
+    Padding: (Left: 2, Right: 2, Top: 2, Bottom: 2);
 
     Group #RowGroups {
-        LayoutMode: Left;
+        LayoutMode: LeftCenterWrap;
         Anchor: (Left: 0, Right: 0);
+        Background: #00ff00(0.3);
+        Padding: (Left: 2, Right: 2, Top: 2, Bottom: 2);
     }
 }

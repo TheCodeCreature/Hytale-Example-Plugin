@@ -31,13 +31,8 @@ public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookS
     private static final String WORKBENCH_ICON_PATH = "Common/Icons/ItemsGenerated/Bench_WorkBench.png";
     private static final String ARMORY_ICON_PATH = "Common/Icons/ItemsGenerated/Bench_Armory.png";
 
-    // Width model used to assign groups into invisible row hosts before append.
-    private static final int MAX_ROW_WIDTH = 920;
-    private static final int ROW_ITEM_SPACING = 8;
-    private static final int GROUP_SIDE_PADDING = 8;
-    private static final int TILE_SIZE = 72;
-    private static final int TILE_GAP = 4;
-    private static final int MIN_GROUP_WIDTH = 120;
+    // Maximum tiles per group container before splitting across multiple rows
+    private static final int MAX_TILES_PER_ROW = 12;
 
     private static final List<GroupViewModel> GROUPS = List.of(
         new GroupViewModel("Deco Iron", List.of(
@@ -110,7 +105,7 @@ public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookS
         ))
     );
 
-    private static final List<GroupPlacement> GROUP_PLACEMENTS = computePlacements(GROUPS);
+    private static final List<RowContainer> ROW_CONTAINERS = computeRowContainers(GROUPS);
 
     public StencilBookSandboxPage(@NonNull PlayerRef playerRef) {
         super(playerRef, CustomPageLifetime.CanDismissOrCloseThroughInteraction, EventPayload.CODEC);
@@ -126,20 +121,22 @@ public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookS
         cmd.append("#NotesHost", NOTES_PANEL_UI_PATH);
         cmd.append("#DetailHost", DETAIL_PANEL_UI_PATH);
 
-        int currentRow = -1;
-        for (GroupPlacement placement : GROUP_PLACEMENTS) {
-            if (placement.rowIndex() != currentRow) {
-                currentRow = placement.rowIndex();
-                cmd.append("#SetRows", SET_ROW_UI_PATH);
-            }
+        for (int rowIndex = 0; rowIndex < ROW_CONTAINERS.size(); rowIndex++) {
+            RowContainer row = ROW_CONTAINERS.get(rowIndex);
+            cmd.append("#SetRows", SET_ROW_UI_PATH);
 
-            String rowSelector = "#SetRows[" + placement.rowIndex() + "] #RowGroups";
-            cmd.append(rowSelector, SET_GROUP_UI_PATH);
+            String rowSelector = "#SetRows[" + rowIndex + "] #RowGroups";
+            for (int groupIndex = 0; groupIndex < row.groups().size(); groupIndex++) {
+                GroupViewModel group = row.groups().get(groupIndex);
+                cmd.append(rowSelector, SET_GROUP_UI_PATH);
 
-            int tileCount = placement.group().tileIconPaths().size();
-            String tileHost = rowSelector + "[" + placement.groupIndexInRow() + "] #Tiles";
-            for (int tileIndex = 0; tileIndex < tileCount; tileIndex++) {
-                cmd.append(tileHost, ICON_TILE_UI_PATH);
+                String groupSelector = rowSelector + "[" + groupIndex + "]";
+                int tileCount = group.tileIconPaths().size();
+                String tileHost = groupSelector + " #Tiles";
+
+                for (int tileIndex = 0; tileIndex < tileCount; tileIndex++) {
+                    cmd.append(tileHost, ICON_TILE_UI_PATH);
+                }
             }
         }
 
@@ -163,22 +160,23 @@ public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookS
         cmd.set("#NotesHost #NotesBodyPrimary.Text", "Use this static layout to prototype a dynamic grid-in-grid view.");
         cmd.set("#NotesHost #NotesBodySecondary.Text", "No runtime filtering is wired on this page.");
 
-        for (GroupPlacement placement : GROUP_PLACEMENTS) {
-            GroupViewModel group = placement.group();
-            String groupSelector = "#SetRows["
-                    + placement.rowIndex()
-                    + "] #RowGroups["
-                    + placement.groupIndexInRow()
-                    + "]";
+        for (int rowIndex = 0; rowIndex < ROW_CONTAINERS.size(); rowIndex++) {
+            RowContainer row = ROW_CONTAINERS.get(rowIndex);
+            String rowSelector = "#SetRows[" + rowIndex + "] #RowGroups";
 
-            cmd.set(groupSelector + " #SetTitle.Text", group.title());
-            cmd.set(groupSelector + " #SetTitle.TooltipText", group.title());
+            for (int groupIndex = 0; groupIndex < row.groups().size(); groupIndex++) {
+                GroupViewModel group = row.groups().get(groupIndex);
+                String groupSelector = rowSelector + "[" + groupIndex + "]";
 
-            for (int tileIndex = 0; tileIndex < group.tileIconPaths().size(); tileIndex++) {
-                String tilePath = group.tileIconPaths().get(tileIndex);
-                String tileSelector = groupSelector + " #Tiles[" + tileIndex + "]";
-                cmd.set(tileSelector + " #TileIcon.Background", tilePath);
-                cmd.set(tileSelector + " #TileBtn.TooltipText", group.title() + " - Tile " + (tileIndex + 1));
+                cmd.set(groupSelector + " #SetTitle.Text", group.title());
+                cmd.set(groupSelector + " #SetTitle.TooltipText", group.title());
+
+                for (int tileIndex = 0; tileIndex < group.tileIconPaths().size(); tileIndex++) {
+                    String tilePath = group.tileIconPaths().get(tileIndex);
+                    String tileSelector = groupSelector + " #Tiles[" + tileIndex + "]";
+                    cmd.set(tileSelector + " #TileIcon.Background", tilePath);
+                    cmd.set(tileSelector + " #TileBtn.TooltipText", group.title() + " - Tile " + (tileIndex + 1));
+                }
             }
         }
 
@@ -187,38 +185,43 @@ public class StencilBookSandboxPage extends InteractiveCustomUIPage<StencilBookS
         cmd.set("#DetailHost #DetailBody.Text", "Static placeholder side panel for quick layout testing.");
     }
 
-    private static List<GroupPlacement> computePlacements(@NonNull List<GroupViewModel> groups) {
-        int row = 0;
-        int widthInRow = 0;
-        int indexInRow = 0;
-        List<GroupPlacement> placements = new java.util.ArrayList<>();
+    private static List<RowContainer> computeRowContainers(@NonNull List<GroupViewModel> groups) {
+        List<RowContainer> rows = new java.util.ArrayList<>();
+        List<GroupViewModel> currentRowGroups = new java.util.ArrayList<>();
 
         for (GroupViewModel group : groups) {
-            int groupWidth = estimateGroupWidth(group.tileIconPaths().size());
-            int projected = widthInRow == 0 ? groupWidth : widthInRow + ROW_ITEM_SPACING + groupWidth;
+            int tileCount = group.tileIconPaths().size();
 
-            if (widthInRow > 0 && projected > MAX_ROW_WIDTH) {
-                row++;
-                widthInRow = 0;
-                indexInRow = 0;
+            if (tileCount > MAX_TILES_PER_ROW) {
+                // Start new row for oversized group
+                if (!currentRowGroups.isEmpty()) {
+                    rows.add(new RowContainer(new java.util.ArrayList<>(currentRowGroups)));
+                    currentRowGroups.clear();
+                }
+
+                // Split oversized group into multiple rows
+                for (int i = 0; i < tileCount; i += MAX_TILES_PER_ROW) {
+                    int endIndex = Math.min(i + MAX_TILES_PER_ROW, tileCount);
+                    List<String> tileBatch = new java.util.ArrayList<>(group.tileIconPaths().subList(i, endIndex));
+                    rows.add(new RowContainer(List.of(new GroupViewModel(group.title(), tileBatch))));
+                }
+            } else {
+                // Add normal-sized group to current row
+                currentRowGroups.add(group);
             }
-
-            placements.add(new GroupPlacement(row, indexInRow, group));
-            widthInRow = widthInRow == 0 ? groupWidth : widthInRow + ROW_ITEM_SPACING + groupWidth;
-            indexInRow++;
         }
 
-        return placements;
-    }
+        // Add remaining groups
+        if (!currentRowGroups.isEmpty()) {
+            rows.add(new RowContainer(currentRowGroups));
+        }
 
-    private static int estimateGroupWidth(int tileCount) {
-        int tilesWidth = (tileCount * TILE_SIZE) + Math.max(0, tileCount - 1) * TILE_GAP;
-        return Math.max(MIN_GROUP_WIDTH, GROUP_SIDE_PADDING + tilesWidth);
+        return rows;
     }
 
     private record GroupViewModel(String title, List<String> tileIconPaths) {}
 
-    private record GroupPlacement(int rowIndex, int groupIndexInRow, GroupViewModel group) {}
+    private record RowContainer(List<GroupViewModel> groups) {}
 
     public static class EventPayload {
         public static final BuilderCodec<EventPayload> CODEC =
