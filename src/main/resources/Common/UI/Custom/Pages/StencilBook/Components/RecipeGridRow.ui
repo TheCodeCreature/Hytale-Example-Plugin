@@ -1,0 +1,12 @@
+// RecipeGridRow — fixed row container for legacy stencil grid renderer
+// Java appends LabelCell instances into #RowCells during build.
+
+Group {
+    Anchor: (Left: 0, Right: 0);
+    LayoutMode: LeftCenterWrap;
+
+    Group #RowCells {
+        LayoutMode: LeftCenterWrap;
+        Anchor: (Left: 0, Right: 0);
+    }
+}

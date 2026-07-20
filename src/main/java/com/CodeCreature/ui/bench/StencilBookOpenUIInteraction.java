@@ -1,7 +1,15 @@
 package com.CodeCreature.ui.bench;
 
-import com.CodeCreature.ui.bench.sandbox.StencilBookSandboxPage;
-import com.CodeCreature.util.FeatureFlags;
+/**
+ * @node    StencilBookOpenUIInteraction
+ * @wiki    docs/wiki/StencilBook/StencilBookOpenUIInteraction.md
+ * @intent  Opens the production stencil selection page directly so renderer
+ *          migration is handled inside page-level feature flags, not route swaps.
+ * @wave    1 (dual renderer migration)
+ * @status  Wave 1 - sandbox route dependency removed
+ * @do-not  Reintroduce sandbox routing as a production migration path.
+ */
+
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
@@ -18,8 +26,6 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import javax.annotation.Nonnull;
 
 public class StencilBookOpenUIInteraction extends SimpleInstantInteraction {
-
-    private static final String SANDBOX_ROUTE_FLAG = "ui.stencil_book.sandbox_route";
 
     public static final BuilderCodec<StencilBookOpenUIInteraction> CODEC =
             BuilderCodec.builder(StencilBookOpenUIInteraction.class,
@@ -42,11 +48,6 @@ public class StencilBookOpenUIInteraction extends SimpleInstantInteraction {
         if (pageManager.getCustomPage() != null) return;
 
         Store<EntityStore> store = commandBuffer.getStore();
-        if (FeatureFlags.get(SANDBOX_ROUTE_FLAG)) {
-            pageManager.openCustomPage(ref, store, new StencilBookSandboxPage(playerRef));
-            return;
-        }
-
         pageManager.openCustomPage(ref, store, new StencilSelectionPage(playerRef));
     }
 }

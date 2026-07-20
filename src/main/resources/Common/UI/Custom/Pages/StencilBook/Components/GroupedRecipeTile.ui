@@ -1,0 +1,43 @@
+// GroupedRecipeTile — single grouped renderer tile
+// Selector contract used by GroupedCenterRenderer:
+//   root            #GroupCells[i]
+//   icon            #GroupCells[i] #Icon
+//   dim overlay     #GroupCells[i] #Dim
+//   action payload  #GroupCells[i] #Action.Text
+//   click target    #GroupCells[i] #Btn
+
+$B = "../../../Styles/Buttons.ui";
+$BG = "../../../Styles/Backgrounds.ui";
+
+Group {
+    Anchor: (Width: 72, Height: 72);
+    Padding: (Left: 4, Right: 4, Top: 4, Bottom: 4);
+    Visible: false;
+
+    Group {
+        Anchor: (Full: 0);
+        Background: $BG.@ItemSlotFrame;
+
+        ItemIcon #Icon {
+            Anchor: (Full: 4);
+            ShowItemTooltip: true;
+        }
+
+        Group #Dim {
+            Anchor: (Full: 2);
+            Background: $BG.@DimOverlay;
+            Visible: false;
+        }
+
+        Label #Action {
+            Text: "";
+            Visible: false;
+        }
+
+        TextButton #Btn {
+            Text: "";
+            Anchor: (Full: 2);
+            Style: $B.@TransparentButtonStyle;
+        }
+    }
+}

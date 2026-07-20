@@ -1,5 +1,15 @@
 package com.CodeCreature.util;
 
+/**
+ * @node    FeatureFlags
+ * @wiki    docs/wiki/Core/FeatureFlags.md
+ * @intent  Central runtime flag registry and persistence for controlled feature
+ *          rollout, including stencil center renderer migration toggles.
+ * @wave    1 (stencil renderer migration)
+ * @status  Wave 1 - grouped center renderer flag added
+ * @do-not  Encode page-routing migration behavior in feature defaults.
+ */
+
 import com.hypixel.hytale.server.core.util.BsonUtil;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -191,6 +201,7 @@ public final class FeatureFlags {
         register("logging.crafting", false);
         register("logging.ingredient_tree", false);
         register("diagnostics.breakLog", false);
+        register("ui.stencil_book.grouped_center_renderer", false);
         register("ui.stencil_book.sandbox_route", true);
     }
 }

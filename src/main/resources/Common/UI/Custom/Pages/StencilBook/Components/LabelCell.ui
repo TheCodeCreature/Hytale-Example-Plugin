@@ -1,0 +1,47 @@
+// LabelCell — legacy stencil grid cell
+// Selectors consumed by GridLayoutController:
+//   #CategoryCell #CategoryBtn
+//   #RecipeCell #Icon #Dim #RecipeAction #Btn
+
+$B = "../../../Styles/Buttons.ui";
+$L = "../../../Styles/Labels.ui";
+$CP = "../../../Common/Components/Components.ui";
+
+Group {
+    Anchor: (Width: 72, Height: 72);
+    Visible: false;
+    Padding: (Left: 4, Right: 4, Top: 4, Bottom: 4);
+
+    Group #CategoryCell {
+        Anchor: (Full: 0);
+        Visible: false;
+
+        TextButton #CategoryBtn {
+            Text: "";
+            Anchor: (Full: 0);
+            Style: $B.@SectionHeaderStyle;
+            Padding: (Left: 8, Right: 8);
+        }
+    }
+
+    Group #RecipeCell {
+        Anchor: (Full: 0);
+        Visible: false;
+
+        $CP.@ItemIconCell {
+            @Anchor = (Full: 0);
+        }
+
+        Label #RecipeAction {
+            Text: "";
+            Visible: false;
+            Style: $L.@SubtextStyle;
+        }
+
+        TextButton #Btn {
+            Text: "";
+            Anchor: (Full: 2);
+            Style: $B.@TransparentButtonStyle;
+        }
+    }
+}

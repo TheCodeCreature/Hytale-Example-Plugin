@@ -1,5 +1,15 @@
 package com.CodeCreature.ui.bench;
 
+/**
+ * @node    StencilSelectionPage
+ * @wiki    docs/wiki/StencilBook/StencilSelectionPage.md
+ * @intent  Orchestrates stencil book filtering, selection, and details while
+ *          delegating center rendering to a feature-flagged renderer contract.
+ * @wave    1 (dual renderer migration)
+ * @status  Wave 1 - renderer abstraction integrated
+ * @do-not  Move pipeline or detail-panel behavior authority into renderers.
+ */
+
 import com.CodeCreature.crafting.PlaceBlockCostUtil;
 import com.CodeCreature.ui.common.IconPathResolver;
 import com.CodeCreature.ui.ingredienttree.IngredientTree;
@@ -9,7 +19,11 @@ import com.CodeCreature.registry.FilteredRecipeEntry;
 import com.CodeCreature.registry.BenchRegistry;
 import com.CodeCreature.registry.BenchTabGrouper;
 import com.CodeCreature.registry.RecipeFilterRegistry;
+import com.CodeCreature.ui.bench.render.GroupedCenterRenderer;
+import com.CodeCreature.ui.bench.render.LegacyGridCenterRenderer;
+import com.CodeCreature.ui.bench.render.StencilCenterRenderer;
 import com.CodeCreature.util.StencilMetadata;
+import com.CodeCreature.util.FeatureFlags;
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
@@ -48,6 +62,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     private static final int MAX_GROUP_BUTTONS = 30;
     private static final int MAX_BENCH_TABS = 16;
     private static final int GRID_CELLS_PER_ROW = 12;
+    private static final String GROUPED_CENTER_RENDERER_FLAG = "ui.stencil_book.grouped_center_renderer";
     private static final Value<String> FILTER_ACTIVE =
             Value.ref("Styles/Buttons.ui", "FilterActiveStyle");
     private static final Value<String> FILTER_INACTIVE =
@@ -83,7 +98,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     private int totalCellCount;        // sum of all cellsPerSet
     private int totalRecipeRows;
     private int totalGridRows;
-    private GridLayoutController gridController;
+    private StencilCenterRenderer centerRenderer;
     private DetailPanelController detailController;
     private Map<String, RecipeFilterPipeline.CategoryInfo> categoryInfoMap = Map.of();
 
@@ -275,8 +290,9 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         this.totalRecipeRows = Math.max(1, (totalGridCells + GRID_CELLS_PER_ROW - 1) / GRID_CELLS_PER_ROW);
         this.totalGridRows = totalRecipeRows;
 
-        // Create grid layout controller
-        this.gridController = new GridLayoutController(totalGridRows, GRID_CELLS_PER_ROW);
+        // Force grouped renderer while legacy grid parity issues are resolved.
+        // This keeps set labels attached to set containers and tile buttons inside containers.
+        this.centerRenderer = new GroupedCenterRenderer(maxLayoutSetNames, cellsPerSet);
 
         // Create detail panel controller
         this.detailController = new DetailPanelController();
@@ -296,14 +312,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             cmd.append("#MaterialGroups", "Pages/StencilBook/Components/GroupFilterButton.ui");
         }
 
-        // Row-model recipe grid: preallocate rows and cells-per-row.
-        for (int r = 0; r < totalGridRows; r++) {
-            cmd.append("#RecipeGridArea", "Pages/StencilBook/Components/RecipeGridRow.ui");
-            for (int c = 0; c < GRID_CELLS_PER_ROW; c++) {
-                cmd.append("#RecipeGridArea[" + r + "] #RowCells",
-                        "Pages/StencilBook/Components/LabelCell.ui");
-            }
-        }
+        centerRenderer.appendStructure(cmd);
 
         // Cost grid rows (fixed) with fixed cells per row.
         for (int row = 0; row < DetailPanelController.MAX_COST_ROWS; row++) {
@@ -348,7 +357,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         buildBenchTabs(cmd, evt);
         buildSetFilterBindings(evt);
         buildMaterialGroupBindings(evt);
-        gridController.buildBindings(evt);
+        centerRenderer.buildBindings(evt);
 
         // Ingredient tree grid â€” dynamically appended
         if (ingredientController != null) {
@@ -372,7 +381,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         updateBenchTabs(cmd);
         updateMaterialGroups(cmd);
         updateSetFilters(cmd);
-        gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+        centerRenderer.updateUI(cmd, displayedRecipes, selectedRecipeId);
         updateDetail(cmd);
     }
 
@@ -385,9 +394,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         // so we must explicitly remove the data that drives tooltips.
         UICommandBuilder cmd = new UICommandBuilder();
         cmd.set("#OutputIcon.ItemId", "");
-        for (int r = 0; r < totalGridRows; r++) {
-            cmd.set("#RecipeGridArea[" + r + "].Visible", false);
-        }
+        centerRenderer.clearOnDismiss(cmd);
         detailController.clearUI(cmd);
 
         sendUpdate(cmd, null, false);
@@ -435,7 +442,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 updateBenchTabs(cmd);
                 updateMaterialGroups(cmd);
                 updateSetFilters(cmd);
-                gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+                centerRenderer.updateUI(cmd, displayedRecipes, selectedRecipeId);
                 updateDetail(cmd);
             }
             sendUpdate(cmd, null, false);
@@ -477,7 +484,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             }
             updateSetFilters(cmd);
             updateMaterialGroups(cmd);
-            gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+            centerRenderer.updateUI(cmd, displayedRecipes, selectedRecipeId);
             updateDetail(cmd);
             sendUpdate(cmd, null, false);
 
@@ -515,7 +522,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             applyFilter();
             updateMaterialGroups(cmd);
             updateSetFilters(cmd);
-            gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+            centerRenderer.updateUI(cmd, displayedRecipes, selectedRecipeId);
             updateDetail(cmd);
             sendUpdate(cmd, null, false);
 
@@ -529,7 +536,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             updateBenchTabs(cmd);
             updateMaterialGroups(cmd);
             updateSetFilters(cmd);
-            gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+            centerRenderer.updateUI(cmd, displayedRecipes, selectedRecipeId);
             updateDetail(cmd);
             sendUpdate(cmd, null, false);
 
@@ -546,7 +553,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             }
             updateMaterialGroups(cmd);
             updateSetFilters(cmd);
-            gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+            centerRenderer.updateUI(cmd, displayedRecipes, selectedRecipeId);
             updateDetail(cmd);
             savePrefs();
             sendUpdate(cmd, null, false);
@@ -580,7 +587,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 ingredientController.updateUI(cmd);
                 updateMaterialGroups(cmd);
                 updateSetFilters(cmd);
-                gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+                centerRenderer.updateUI(cmd, displayedRecipes, selectedRecipeId);
                 updateDetail(cmd);
                 savePrefs();
             }
@@ -596,7 +603,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 ingredientController.updateUI(cmd);
                 updateMaterialGroups(cmd);
                 updateSetFilters(cmd);
-                gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+                centerRenderer.updateUI(cmd, displayedRecipes, selectedRecipeId);
                 updateDetail(cmd);
                 savePrefs();
             }
@@ -615,7 +622,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
 
                 if (visible) {
                     this.selectedRecipeId = recipeId;
-                    gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+                    centerRenderer.updateUI(cmd, displayedRecipes, selectedRecipeId);
                     updateDetail(cmd);
                 }
             }
