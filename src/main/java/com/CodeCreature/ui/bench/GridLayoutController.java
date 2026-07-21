@@ -28,7 +28,6 @@ public class GridLayoutController {
     private final int[] cellsPerSet;
     private final int maxTilesPerRow;
     private final List<RowSpec> rowSpecs;
-    private final Map<String, List<GroupSlot>> slotsBySetName;
 
     public GridLayoutController(String[] setNames, int[] cellsPerSet, int maxTilesPerRow) {
         this.setNames = setNames == null ? new String[0] : setNames.clone();
@@ -37,16 +36,14 @@ public class GridLayoutController {
 
         List<List<GroupSeed>> rowSeeds = buildRowSeeds();
         this.rowSpecs = new ArrayList<>(rowSeeds.size());
-        this.slotsBySetName = new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
         for (int rowIndex = 0; rowIndex < rowSeeds.size(); rowIndex++) {
             List<GroupSeed> seeds = rowSeeds.get(rowIndex);
             List<GroupSlot> slots = new ArrayList<>(seeds.size());
             for (int groupIndex = 0; groupIndex < seeds.size(); groupIndex++) {
                 GroupSeed seed = seeds.get(groupIndex);
-                GroupSlot slot = new GroupSlot(rowIndex, groupIndex, seed.setName(), seed.capacity());
+                GroupSlot slot = new GroupSlot(rowIndex, groupIndex, seed.capacity());
                 slots.add(slot);
-                slotsBySetName.computeIfAbsent(seed.setName(), ignored -> new ArrayList<>()).add(slot);
             }
             rowSpecs.add(new RowSpec(slots));
         }
@@ -92,6 +89,8 @@ public class GridLayoutController {
     public void updateUI(UICommandBuilder cmd,
                          List<RecipeFilterPipeline.TaggedRecipe> displayedRecipes,
                          String selectedRecipeId) {
+        // Recompute per-set placement from the current filtered view so row/group
+        // packing reflows whenever tab/search/material/set filters change.
         Map<String, List<RecipeFilterPipeline.TaggedRecipe>> recipesBySet = new LinkedHashMap<>();
         for (RecipeFilterPipeline.TaggedRecipe entry : displayedRecipes) {
             String effectiveSet = entry.effectiveSet();
@@ -102,61 +101,61 @@ public class GridLayoutController {
         }
 
         boolean[] rowVisible = new boolean[rowSpecs.size()];
-        java.util.Set<GroupSlot> visibleSlots = new java.util.HashSet<>();
+        List<GroupSlot> orderedSlots = new ArrayList<>();
+        for (RowSpec row : rowSpecs) {
+            orderedSlots.addAll(row.groups());
+        }
 
+        List<RenderChunk> chunks = new ArrayList<>();
         for (Map.Entry<String, List<RecipeFilterPipeline.TaggedRecipe>> bySet : recipesBySet.entrySet()) {
-            List<GroupSlot> setSlots = slotsBySetName.get(bySet.getKey());
-            if (setSlots == null || setSlots.isEmpty()) {
+            String setLabel = Objects.requireNonNull(RecipeFilterPipeline.setDisplayLabel(bySet.getKey()));
+            List<RecipeFilterPipeline.TaggedRecipe> recipes = bySet.getValue();
+            chunks.add(new RenderChunk(setLabel, recipes));
+        }
+
+        boolean[] slotUsed = new boolean[orderedSlots.size()];
+        int searchStart = 0;
+
+        for (RenderChunk chunk : chunks) {
+            int slotIndex = findSlotIndex(orderedSlots, slotUsed, searchStart, chunk.recipes().size());
+            if (slotIndex < 0) {
                 continue;
             }
 
-            List<RecipeFilterPipeline.TaggedRecipe> recipes = bySet.getValue();
-            int consumed = 0;
-            String setLabel = Objects.requireNonNull(RecipeFilterPipeline.setDisplayLabel(bySet.getKey()));
+            GroupSlot slot = orderedSlots.get(slotIndex);
+            slotUsed[slotIndex] = true;
+            searchStart = slotIndex + 1;
 
-            for (GroupSlot slot : setSlots) {
-                String slotSel = groupSelector(slot);
-                int remaining = Math.max(0, recipes.size() - consumed);
-                int renderCount = Math.min(slot.capacity(), remaining);
+            String slotSel = groupSelector(slot);
+            int renderCount = chunk.recipes().size();
 
-                if (renderCount <= 0) {
-                    hideSlot(cmd, slot);
-                    continue;
-                }
+            rowVisible[slot.rowIndex()] = true;
+            cmd.set(slotSel + ".Visible", true);
+            cmd.set(slotSel + " #SetGroupLabel.Text", Objects.requireNonNull(chunk.setLabel()));
+            cmd.set(slotSel + ".FlexWeight", renderCount);
 
-                visibleSlots.add(slot);
-                rowVisible[slot.rowIndex()] = true;
+            for (int i = 0; i < renderCount; i++) {
+                RecipeFilterPipeline.TaggedRecipe recipe = chunk.recipes().get(i);
+                String cellSel = slotSel + " #GroupCells[" + i + "]";
+                boolean isSelected = recipe.recipeId().equals(selectedRecipeId);
+                String outputItemId = recipe.outputItemId() == null ? "" : recipe.outputItemId();
 
-                cmd.set(slotSel + ".Visible", true);
-                cmd.set(slotSel + " #SetGroupLabel.Text", setLabel);
+                cmd.set(cellSel + ".Visible", true);
+                cmd.set(cellSel + " #CellIcon.ItemId", Objects.requireNonNull(outputItemId));
+                cmd.set(cellSel + " #CellDim.Visible", !recipe.affordable());
+                cmd.set(cellSel + " #CellBtn.TooltipText", "RecipeSelect:rid:" + recipe.recipeId());
+                cmd.set(cellSel + " #CellBtn.Style",
+                        Objects.requireNonNull(isSelected ? CELL_SELECTED_STYLE : CELL_UNSELECTED_STYLE));
+            }
 
-                for (int i = 0; i < renderCount; i++) {
-                    RecipeFilterPipeline.TaggedRecipe recipe = recipes.get(consumed + i);
-                    String cellSel = slotSel + " #GroupCells[" + i + "]";
-                    boolean isSelected = recipe.recipeId().equals(selectedRecipeId);
-
-                    cmd.set(cellSel + ".Visible", true);
-                    cmd.set(cellSel + " #CellIcon.ItemId",
-                            recipe.outputItemId() == null ? "" : recipe.outputItemId());
-                    cmd.set(cellSel + " #CellDim.Visible", !recipe.affordable());
-                    cmd.set(cellSel + " #CellBtn.TooltipText", "RecipeSelect:rid:" + recipe.recipeId());
-                    cmd.set(cellSel + " #CellBtn.Style",
-                            Objects.requireNonNull(isSelected ? CELL_SELECTED_STYLE : CELL_UNSELECTED_STYLE));
-                }
-
-                for (int i = renderCount; i < slot.capacity(); i++) {
-                    clearCell(cmd, slotSel + " #GroupCells[" + i + "]");
-                }
-
-                consumed += renderCount;
+            for (int i = renderCount; i < slot.capacity(); i++) {
+                clearCell(cmd, slotSel + " #GroupCells[" + i + "]");
             }
         }
 
-        for (RowSpec row : rowSpecs) {
-            for (GroupSlot slot : row.groups()) {
-                if (!visibleSlots.contains(slot)) {
-                    hideSlot(cmd, slot);
-                }
+        for (int i = 0; i < orderedSlots.size(); i++) {
+            if (!slotUsed[i]) {
+                hideSlot(cmd, orderedSlots.get(i));
             }
         }
 
@@ -179,14 +178,9 @@ public class GridLayoutController {
                     currentRow = new ArrayList<>();
                 }
 
-                int remaining = tileCount;
-                while (remaining > 0) {
-                    int chunk = Math.min(maxTilesPerRow, remaining);
-                    List<GroupSeed> oversizedRow = new ArrayList<>(1);
-                    oversizedRow.add(new GroupSeed(setName, chunk));
-                    rows.add(oversizedRow);
-                    remaining -= chunk;
-                }
+                List<GroupSeed> oversizedRow = new ArrayList<>(1);
+                oversizedRow.add(new GroupSeed(setName, tileCount));
+                rows.add(oversizedRow);
             } else {
                 currentRow.add(new GroupSeed(setName, tileCount));
             }
@@ -207,9 +201,26 @@ public class GridLayoutController {
         return rowSelector(slot.rowIndex()) + " #RowGroups[" + slot.groupIndexInRow() + "]";
     }
 
+    private int findSlotIndex(List<GroupSlot> orderedSlots, boolean[] slotUsed, int startIndex, int requiredCapacity) {
+        for (int i = Math.max(0, startIndex); i < orderedSlots.size(); i++) {
+            if (!slotUsed[i] && orderedSlots.get(i).capacity() >= requiredCapacity) {
+                return i;
+            }
+        }
+
+        for (int i = 0; i < Math.max(0, startIndex); i++) {
+            if (!slotUsed[i] && orderedSlots.get(i).capacity() >= requiredCapacity) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     private void hideSlot(UICommandBuilder cmd, GroupSlot slot) {
         String slotSel = groupSelector(slot);
         cmd.set(slotSel + ".Visible", false);
+        cmd.set(slotSel + ".FlexWeight", 0);
         cmd.set(slotSel + " #SetGroupLabel.Text", "");
         for (int i = 0; i < slot.capacity(); i++) {
             clearCell(cmd, slotSel + " #GroupCells[" + i + "]");
@@ -226,7 +237,9 @@ public class GridLayoutController {
 
     private record GroupSeed(String setName, int capacity) {}
 
-    private record GroupSlot(int rowIndex, int groupIndexInRow, String setName, int capacity) {}
+    private record GroupSlot(int rowIndex, int groupIndexInRow, int capacity) {}
+
+    private record RenderChunk(String setLabel, List<RecipeFilterPipeline.TaggedRecipe> recipes) {}
 
     private record RowSpec(List<GroupSlot> groups) {}
 }
