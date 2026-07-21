@@ -106,9 +106,20 @@ Group {
                                 Style: $B.@SectionHeaderStyle;
                             }
 
-                            Group {
+                            Group #ClearCategoriesIcon {
                                 Anchor: (Width: 24, Height: 24, Right: 2);
-                                Background: $BG.@TrashIcon;
+
+                                Group #IconTrash {
+                                    Anchor: (Full: 0);
+                                    Background: $BG.@TrashIcon;
+                                    Visible: true;
+                                }
+
+                                Group #IconCheck {
+                                    Anchor: (Full: 0);
+                                    Background: $BG.@CheckIcon;
+                                    Visible: false;
+                                }
 
                                 TextButton #ClearCategoriesBtn {
                                     Text: "";
@@ -140,9 +151,20 @@ Group {
                                 Style: $B.@SectionHeaderStyle;
                             }
 
-                            Group {
+                            Group #ClearSetsIcon {
                                 Anchor: (Width: 24, Height: 24, Right: 2);
-                                Background: $BG.@TrashIcon;
+
+                                Group #IconTrash {
+                                    Anchor: (Full: 0);
+                                    Background: $BG.@TrashIcon;
+                                    Visible: true;
+                                }
+
+                                Group #IconCheck {
+                                    Anchor: (Full: 0);
+                                    Background: $BG.@CheckIcon;
+                                    Visible: false;
+                                }
 
                                 TextButton #ClearSetsBtn {
                                     Text: "";

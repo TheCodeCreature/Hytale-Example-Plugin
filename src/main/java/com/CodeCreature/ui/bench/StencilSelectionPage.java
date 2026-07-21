@@ -68,6 +68,12 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     private static final String ALL_TAB = "All";
     private static final String ALL_FILTER = "All";
 
+    private enum FilterSelectionState {
+        NONE,
+        SOME,
+        ALL
+    }
+
     private final RecipeFilterPipeline pipeline = new RecipeFilterPipeline();
     private final List<RecipeEntry> allRecipes = new ArrayList<>();
     private final List<String> benchIds = new ArrayList<>();  // sorted bench IDs
@@ -477,27 +483,12 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             // Set filter toggle â€” index-based resolution
             String filterPayload = data.action.substring("SetFilter:".length());
             if (ALL_FILTER.equals(filterPayload)) {
-                // Clear all set filters
-                selectAllSets = false;
-                activeSetFilters.clear();
+                toggleAllSetsState();
             } else if (filterPayload.startsWith("idx:")) {
                 int idx = Integer.parseInt(filterPayload.substring(4));
                 if (idx >= 0 && idx < currentSets.size()) {
                     String setName = currentSets.get(idx);
-                    if (selectAllSets) {
-                        // Transitioning from Select All to individual: populate all EXCEPT toggled
-                        selectAllSets = false;
-                        activeSetFilters.clear();
-                        activeSetFilters.addAll(currentSets);
-                        activeSetFilters.remove(setName);
-                    } else {
-                        // Normal toggle
-                        if (activeSetFilters.contains(setName)) {
-                            activeSetFilters.remove(setName);
-                        } else {
-                            activeSetFilters.add(setName);
-                        }
-                    }
+                    toggleSetFilter(setName);
                 }
             }
             this.selectedRecipeId = null;
@@ -514,29 +505,12 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         } else if (data.action != null && data.action.startsWith("MaterialGroup:")) {
             String payload = data.action.substring("MaterialGroup:".length());
             if ("All".equals(payload)) {
-                // Clear all category filters
-                selectAllCategories = false;
-                activeMaterialGroups.clear();
+                toggleAllCategoriesState();
             } else if (payload.startsWith("idx:")) {
                 int idx = Integer.parseInt(payload.substring(4));
                 if (idx >= 0 && idx < currentGroups.size()) {
                     String groupName = currentGroups.get(idx).categoryId();
-                    if (selectAllCategories) {
-                        // Transitioning from Select All to individual: populate all EXCEPT toggled
-                        selectAllCategories = false;
-                        activeMaterialGroups.clear();
-                        for (RecipeFilterPipeline.MaterialGroup g : currentGroups) {
-                            activeMaterialGroups.add(g.categoryId());
-                        }
-                        activeMaterialGroups.remove(groupName);
-                    } else {
-                        // Normal toggle
-                        if (activeMaterialGroups.contains(groupName)) {
-                            activeMaterialGroups.remove(groupName);
-                        } else {
-                            activeMaterialGroups.add(groupName);
-                        }
-                    }
+                    toggleCategoryFilter(groupName);
                 }
             }
             pruneIncompatibleSetFilters();
@@ -741,22 +715,26 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                     CustomUIEventBindingType.Activating, "#SetFilters[" + idx + "] #Btn",
                     action
             );
-            // Bind checkbox so toggling it fires the same action as the button
-            evt.addEventBinding(
-                    CustomUIEventBindingType.ValueChanged, "#SetFilters[" + idx + "] #Check",
-                    action
-            );
         }
     }
 
     private void updateSetFilters(UICommandBuilder cmd) {
+        FilterSelectionState selectionState = getSetSelectionState();
+        boolean showSelectAllIcon = selectionState == FilterSelectionState.NONE;
+        cmd.set("#ClearSetsIcon #IconCheck.Visible", showSelectAllIcon);
+        cmd.set("#ClearSetsIcon #IconTrash.Visible", !showSelectAllIcon);
+        cmd.set("#ClearSetsBtn.TooltipText", selectionState == FilterSelectionState.NONE
+            ? "Select all sets"
+            : "Clear selected sets");
+
         // Per-set filter buttons (indices 0..totalSetCount-1)
         for (int i = 0; i < totalSetCount; i++) {
             String sel = "#SetFilters[" + i + "]";
             if (i < currentSets.size()) {
                 String setName = currentSets.get(i);
                 String label = RecipeFilterPipeline.setDisplayLabel(setName);
-                boolean checked = selectAllSets || activeSetFilters.contains(setName);
+                boolean checked = selectionState == FilterSelectionState.ALL
+                        || activeSetFilters.contains(setName);
                 cmd.set(sel + ".Visible", true);
                 cmd.set(sel + " #Btn.Text", label);
                 cmd.set(sel + " #Btn.Style", checked ? FILTER_ACTIVE : FILTER_INACTIVE);
@@ -799,12 +777,21 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     }
 
     private void updateMaterialGroups(UICommandBuilder cmd) {
+        FilterSelectionState selectionState = getCategorySelectionState();
+        boolean showSelectAllIcon = selectionState == FilterSelectionState.NONE;
+        cmd.set("#ClearCategoriesIcon #IconCheck.Visible", showSelectAllIcon);
+        cmd.set("#ClearCategoriesIcon #IconTrash.Visible", !showSelectAllIcon);
+        cmd.set("#ClearCategoriesBtn.TooltipText", selectionState == FilterSelectionState.NONE
+            ? "Select all categories"
+            : "Clear selected categories");
+
         // Per-group icon buttons (indices 0..N-1)
         for (int i = 0; i < MAX_GROUP_BUTTONS; i++) {
             String sel = "#MaterialGroups[" + i + "]";
             if (i < currentGroups.size()) {
                 RecipeFilterPipeline.MaterialGroup group = currentGroups.get(i);
-                boolean active = selectAllCategories || activeMaterialGroups.contains(group.categoryId());
+                boolean active = selectionState == FilterSelectionState.ALL
+                        || activeMaterialGroups.contains(group.categoryId());
                 cmd.set(sel + ".Visible", true);
                 cmd.set(sel + ".TooltipText", group.displayName());
                 cmd.set(sel + " #ActiveOverlay.Visible", active);
@@ -832,6 +819,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             }
             return true; // no recipe with this set has an active category
         });
+        normalizeSetSelectionState();
     }
 
     private boolean pruneInvalidMaterialGroups() {
@@ -840,7 +828,175 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         for (RecipeFilterPipeline.MaterialGroup g : currentGroups) {
             validCats.add(g.categoryId());
         }
-        return activeMaterialGroups.removeIf(c -> !validCats.contains(c));
+        boolean changed = activeMaterialGroups.removeIf(c -> !validCats.contains(c));
+        if (changed) {
+            normalizeCategorySelectionState();
+        }
+        return changed;
+    }
+
+    private void toggleSetFilter(String setName) {
+        if (setName == null || setName.isEmpty()) return;
+        FilterSelectionState state = getSetSelectionState();
+        if (state == FilterSelectionState.ALL) {
+            selectAllSets = false;
+            activeSetFilters.clear();
+            activeSetFilters.addAll(currentSets);
+            activeSetFilters.remove(setName);
+            normalizeSetSelectionState();
+            return;
+        }
+
+        if (activeSetFilters.contains(setName)) {
+            activeSetFilters.remove(setName);
+        } else {
+            activeSetFilters.add(setName);
+        }
+        normalizeSetSelectionState();
+    }
+
+    private void toggleAllSetsState() {
+        FilterSelectionState state = getSetSelectionState();
+        if (state == FilterSelectionState.SOME || state == FilterSelectionState.ALL) {
+            selectAllSets = false;
+            activeSetFilters.clear();
+            return;
+        }
+        if (currentSets.isEmpty()) {
+            selectAllSets = false;
+            activeSetFilters.clear();
+            return;
+        }
+        selectAllSets = true;
+        activeSetFilters.clear();
+    }
+
+    private void normalizeSetSelectionState() {
+        if (currentSets.isEmpty()) {
+            selectAllSets = false;
+            activeSetFilters.clear();
+            return;
+        }
+
+        activeSetFilters.retainAll(currentSets);
+        if (activeSetFilters.size() >= currentSets.size()) {
+            selectAllSets = true;
+            activeSetFilters.clear();
+            return;
+        }
+
+        if (selectAllSets && activeSetFilters.isEmpty()) {
+            return;
+        }
+        selectAllSets = false;
+    }
+
+    private FilterSelectionState getSetSelectionState() {
+        if (currentSets.isEmpty()) {
+            return FilterSelectionState.NONE;
+        }
+        if (selectAllSets) {
+            return FilterSelectionState.ALL;
+        }
+        int selectedCount = 0;
+        for (String setName : currentSets) {
+            if (activeSetFilters.contains(setName)) {
+                selectedCount++;
+            }
+        }
+        if (selectedCount <= 0) {
+            return FilterSelectionState.NONE;
+        }
+        if (selectedCount >= currentSets.size()) {
+            return FilterSelectionState.ALL;
+        }
+        return FilterSelectionState.SOME;
+    }
+
+    private void toggleCategoryFilter(String categoryId) {
+        if (categoryId == null || categoryId.isEmpty()) return;
+        FilterSelectionState state = getCategorySelectionState();
+        if (state == FilterSelectionState.ALL) {
+            selectAllCategories = false;
+            activeMaterialGroups.clear();
+            for (RecipeFilterPipeline.MaterialGroup group : currentGroups) {
+                activeMaterialGroups.add(group.categoryId());
+            }
+            activeMaterialGroups.remove(categoryId);
+            normalizeCategorySelectionState();
+            return;
+        }
+
+        if (activeMaterialGroups.contains(categoryId)) {
+            activeMaterialGroups.remove(categoryId);
+        } else {
+            activeMaterialGroups.add(categoryId);
+        }
+        normalizeCategorySelectionState();
+    }
+
+    private void toggleAllCategoriesState() {
+        FilterSelectionState state = getCategorySelectionState();
+        if (state == FilterSelectionState.SOME || state == FilterSelectionState.ALL) {
+            selectAllCategories = false;
+            activeMaterialGroups.clear();
+            return;
+        }
+        if (currentGroups.isEmpty()) {
+            selectAllCategories = false;
+            activeMaterialGroups.clear();
+            return;
+        }
+        selectAllCategories = true;
+        activeMaterialGroups.clear();
+    }
+
+    private void normalizeCategorySelectionState() {
+        if (currentGroups.isEmpty()) {
+            selectAllCategories = false;
+            activeMaterialGroups.clear();
+            return;
+        }
+
+        Set<String> categoryIds = new HashSet<>();
+        for (RecipeFilterPipeline.MaterialGroup group : currentGroups) {
+            categoryIds.add(group.categoryId());
+        }
+
+        activeMaterialGroups.removeIf(categoryId -> !categoryIds.contains(categoryId));
+        if (activeMaterialGroups.size() >= categoryIds.size()) {
+            selectAllCategories = true;
+            activeMaterialGroups.clear();
+            return;
+        }
+
+        if (selectAllCategories && activeMaterialGroups.isEmpty()) {
+            return;
+        }
+        selectAllCategories = false;
+    }
+
+    private FilterSelectionState getCategorySelectionState() {
+        if (currentGroups.isEmpty()) {
+            return FilterSelectionState.NONE;
+        }
+        if (selectAllCategories) {
+            return FilterSelectionState.ALL;
+        }
+
+        int selectedCount = 0;
+        for (RecipeFilterPipeline.MaterialGroup group : currentGroups) {
+            if (activeMaterialGroups.contains(group.categoryId())) {
+                selectedCount++;
+            }
+        }
+        if (selectedCount <= 0) {
+            return FilterSelectionState.NONE;
+        }
+        if (selectedCount >= currentGroups.size()) {
+            return FilterSelectionState.ALL;
+        }
+        return FilterSelectionState.SOME;
     }
 
     private Map<String, RecipeFilterPipeline.CategoryInfo> buildCategoryInfoMap() {

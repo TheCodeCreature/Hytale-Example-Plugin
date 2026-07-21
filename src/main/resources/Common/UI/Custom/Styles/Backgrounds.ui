@@ -21,3 +21,5 @@
 @ItemSlotFrame = PatchStyle(TexturePath: "../Common/BlockSelectorSlotBackground.png", Border: 12);
 @OutputSlotFrame = PatchStyle(TexturePath: "../Common/Buttons/Tertiary.png", Border: 12);
 @TrashIcon = "../Common/Icons/AssetNotifications/Trash.png";
+@CheckIcon = "../Common/Icons/AssetNotifications/IconCheckmark.png";
+@WarningIcon = "../Common/Icons/AssetNotifications/Warning.png";
