@@ -276,7 +276,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         this.totalGridRows = totalRecipeRows;
 
         // Create grid layout controller
-        this.gridController = new GridLayoutController(totalGridRows, GRID_CELLS_PER_ROW);
+        this.gridController = new GridLayoutController(maxLayoutSetNames, cellsPerSet);
 
         // Create detail panel controller
         this.detailController = new DetailPanelController();
@@ -296,12 +296,13 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             cmd.append("#MaterialGroups", "Pages/StencilBook/Components/GroupFilterButton.ui");
         }
 
-        // Row-model recipe grid: preallocate rows and cells-per-row.
-        for (int r = 0; r < totalGridRows; r++) {
-            cmd.append("#RecipeGridArea", "Pages/StencilBook/Components/RecipeGridRow.ui");
-            for (int c = 0; c < GRID_CELLS_PER_ROW; c++) {
-                cmd.append("#RecipeGridArea[" + r + "] #RowCells",
-                        "Pages/StencilBook/Components/LabelCell.ui");
+        // Grouped recipe grid: one set container per known set, with preallocated icon cells.
+        for (int g = 0; g < totalSetCount; g++) {
+            cmd.append("#RecipeGridArea", "Pages/StencilBook/Components/SetGroupContainer.ui");
+            int cellCount = (g < cellsPerSet.length) ? Math.max(0, cellsPerSet[g]) : 0;
+            for (int c = 0; c < cellCount; c++) {
+                cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
+                        "Pages/StencilBook/RecipeIconCell.ui");
             }
         }
 
@@ -385,8 +386,8 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         // so we must explicitly remove the data that drives tooltips.
         UICommandBuilder cmd = new UICommandBuilder();
         cmd.set("#OutputIcon.ItemId", "");
-        for (int r = 0; r < totalGridRows; r++) {
-            cmd.set("#RecipeGridArea[" + r + "].Visible", false);
+        for (int g = 0; g < totalSetCount; g++) {
+            cmd.set("#RecipeGridArea[" + g + "].Visible", false);
         }
         detailController.clearUI(cmd);
 

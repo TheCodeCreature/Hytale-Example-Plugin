@@ -1,13 +1,15 @@
 // Production recipe grid row container.
-// Server appends LabelCell.ui instances into #RowCells and indexes by row.
+// Styled to mirror sandbox middle-column row spacing while keeping #RowCells for Java selectors.
 
 Group {
+    LayoutMode: Top;
     Anchor: (Left: 0, Right: 0);
-    LayoutMode: Left;
-    Padding: (Bottom: 4);
+    Padding: (Left: 2, Right: 2, Top: 2, Bottom: 2);
     Visible: false;
 
     Group #RowCells {
         LayoutMode: LeftCenterWrap;
+        Anchor: (Left: 0, Right: 0);
+        Padding: (Left: 2, Right: 2, Top: 2, Bottom: 2);
     }
 }
