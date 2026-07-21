@@ -7,6 +7,7 @@ import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,11 +29,17 @@ public class GridLayoutController {
     private final int[] cellsPerSet;
     private final int maxTilesPerRow;
     private final List<RowSpec> rowSpecs;
+    private final Map<String, String> recipeButtonSelectorById;
+    private final Map<String, String> recipeIdByCellToken;
+    private String lastSelectedRecipeId;
 
     public GridLayoutController(String[] setNames, int[] cellsPerSet, int maxTilesPerRow) {
         this.setNames = setNames == null ? new String[0] : setNames.clone();
         this.cellsPerSet = cellsPerSet == null ? new int[0] : cellsPerSet.clone();
         this.maxTilesPerRow = Math.max(1, maxTilesPerRow);
+        this.recipeButtonSelectorById = new HashMap<>();
+        this.recipeIdByCellToken = new HashMap<>();
+        this.lastSelectedRecipeId = null;
 
         List<List<GroupSeed>> rowSeeds = buildRowSeeds();
         this.rowSpecs = new ArrayList<>(rowSeeds.size());
@@ -79,7 +86,7 @@ public class GridLayoutController {
                     String base = groupSelector(slot) + " #GroupCells[" + c + "]";
                     evt.addEventBinding(CustomUIEventBindingType.Activating,
                             base + " #CellBtn",
-                            EventData.of("Action", base + " #CellBtn.TooltipText"));
+                            EventData.of("Action", selectionAction(slot, c)));
                 }
             }
         }
@@ -89,6 +96,9 @@ public class GridLayoutController {
     public void updateUI(UICommandBuilder cmd,
                          List<RecipeFilterPipeline.TaggedRecipe> displayedRecipes,
                          String selectedRecipeId) {
+        recipeButtonSelectorById.clear();
+        recipeIdByCellToken.clear();
+
         // Recompute per-set placement from the current filtered view so row/group
         // packing reflows whenever tab/search/material/set filters change.
         Map<String, List<RecipeFilterPipeline.TaggedRecipe>> recipesBySet = new LinkedHashMap<>();
@@ -143,9 +153,10 @@ public class GridLayoutController {
                 cmd.set(cellSel + ".Visible", true);
                 cmd.set(cellSel + " #CellIcon.ItemId", Objects.requireNonNull(outputItemId));
                 cmd.set(cellSel + " #CellDim.Visible", !recipe.affordable());
-                cmd.set(cellSel + " #CellBtn.TooltipText", "RecipeSelect:rid:" + recipe.recipeId());
                 cmd.set(cellSel + " #CellBtn.Style",
                         Objects.requireNonNull(isSelected ? CELL_SELECTED_STYLE : CELL_UNSELECTED_STYLE));
+                recipeButtonSelectorById.put(recipe.recipeId(), cellSel + " #CellBtn");
+                recipeIdByCellToken.put(cellToken(slot, i), recipe.recipeId());
             }
 
             for (int i = renderCount; i < slot.capacity(); i++) {
@@ -162,6 +173,34 @@ public class GridLayoutController {
         for (int rowIndex = 0; rowIndex < rowSpecs.size(); rowIndex++) {
             cmd.set(rowSelector(rowIndex) + ".Visible", rowVisible[rowIndex]);
         }
+
+        lastSelectedRecipeId = selectedRecipeId;
+    }
+
+    /**
+     * Selection-only update for icon clicks.
+     * Keeps click payload minimal by updating only button styles.
+     */
+    public void updateSelection(UICommandBuilder cmd, String selectedRecipeId) {
+        if (Objects.equals(lastSelectedRecipeId, selectedRecipeId)) {
+            return;
+        }
+
+        if (lastSelectedRecipeId != null) {
+            String previous = recipeButtonSelectorById.get(lastSelectedRecipeId);
+            if (previous != null) {
+                cmd.set(previous + ".Style", Objects.requireNonNull(CELL_UNSELECTED_STYLE));
+            }
+        }
+
+        if (selectedRecipeId != null) {
+            String current = recipeButtonSelectorById.get(selectedRecipeId);
+            if (current != null) {
+                cmd.set(current + ".Style", Objects.requireNonNull(CELL_SELECTED_STYLE));
+            }
+        }
+
+        lastSelectedRecipeId = selectedRecipeId;
     }
 
     private List<List<GroupSeed>> buildRowSeeds() {
@@ -201,6 +240,21 @@ public class GridLayoutController {
         return rowSelector(slot.rowIndex()) + " #RowGroups[" + slot.groupIndexInRow() + "]";
     }
 
+    public String getRecipeIdForAction(String action) {
+        if (action == null || !action.startsWith("RecipeCell:")) {
+            return null;
+        }
+        return recipeIdByCellToken.get(action.substring("RecipeCell:".length()));
+    }
+
+    private String selectionAction(GroupSlot slot, int cellIndex) {
+        return "RecipeCell:" + cellToken(slot, cellIndex);
+    }
+
+    private String cellToken(GroupSlot slot, int cellIndex) {
+        return slot.rowIndex() + ":" + slot.groupIndexInRow() + ":" + cellIndex;
+    }
+
     private int findSlotIndex(List<GroupSlot> orderedSlots, boolean[] slotUsed, int startIndex, int requiredCapacity) {
         for (int i = Math.max(0, startIndex); i < orderedSlots.size(); i++) {
             if (!slotUsed[i] && orderedSlots.get(i).capacity() >= requiredCapacity) {
@@ -232,7 +286,6 @@ public class GridLayoutController {
         cmd.set(cellSel + " #CellIcon.ItemId", "");
         cmd.set(cellSel + " #CellDim.Visible", false);
         cmd.set(cellSel + " #CellBtn.Style", Objects.requireNonNull(CELL_UNSELECTED_STYLE));
-        cmd.set(cellSel + " #CellBtn.TooltipText", "");
     }
 
     private record GroupSeed(String setName, int capacity) {}

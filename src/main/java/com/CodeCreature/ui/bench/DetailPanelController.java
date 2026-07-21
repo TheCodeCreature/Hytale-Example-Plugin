@@ -12,11 +12,6 @@ import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.logging.Level;
-
-import com.CodeCreature.util.DebugLogger;
-import static com.CodeCreature.util.DebugLogger.Subsystem.*;
-
 /**
  * Owns detail panel rendering for the Stencil Crafting selection page.
  * Renders the output icon, name, and per-ingredient cost grid with
@@ -62,48 +57,48 @@ public class DetailPanelController {
         if (selectedRecipeId != null) {
             StencilSelectionPage.RecipeEntry entry = findEntry(selectedRecipeId, allRecipes);
             if (entry != null) {
-                cmd.set("#OutputIcon.ItemId", entry.outputItemId());
-                cmd.set("#OutputName.Text", entry.blockTypeId() != null
-                        ? entry.blockTypeId().replace('_', ' ') : entry.outputItemId());
+                String outputItemId = entry.outputItemId() == null ? "" : entry.outputItemId();
+                String outputName = entry.blockTypeId() != null
+                        ? entry.blockTypeId().replace('_', ' ')
+                        : outputItemId;
+
+                cmd.set("#OutputIcon.ItemId", outputItemId);
+                cmd.set("#OutputName.Text", outputName);
 
                 boolean checkInventory = (affordabilityMode == AffordabilityMode.INVENTORY_DRIVEN);
 
                 boolean allAffordable = true;
                 int costIdx = 0;
-                try {
-                    CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId());
-                    if (recipe != null) {
-                        FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(entry.recipeId());
-                        boolean preferNatural = fe != null && fe.preferNatural();
+                CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId());
+                if (recipe != null) {
+                    FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(entry.recipeId());
+                    boolean preferNatural = fe != null && fe.preferNatural();
 
-                        List<ResolvedIngredient> ingredients =
-                            RecipeAffordabilityResolver.resolveIngredientCosts(recipe, preferNatural, container);
+                    List<ResolvedIngredient> ingredients =
+                        RecipeAffordabilityResolver.resolveIngredientCosts(recipe, preferNatural, container);
 
-                        if (!ingredients.isEmpty()) {
-                            for (ResolvedIngredient ing : ingredients) {
-                                if (costIdx >= MAX_COST_CELLS) break;
-                                String sel = costCellSelector(costIdx);
-                                String itemId = ing.resolvedItemId();
-                                int requiredQty = ing.requiredQty();
-                                boolean sufficient = ing.sufficient();
-                                if (!sufficient) allAffordable = false;
+                    if (!ingredients.isEmpty()) {
+                        for (ResolvedIngredient ing : ingredients) {
+                            if (costIdx >= MAX_COST_CELLS) break;
+                            String sel = costCellSelector(costIdx);
+                            String itemId = ing.resolvedItemId() == null ? "" : ing.resolvedItemId();
+                            int requiredQty = ing.requiredQty();
+                            boolean sufficient = ing.sufficient();
+                            if (!sufficient) allAffordable = false;
 
-                                cmd.set(sel + ".Visible", true);
-                                cmd.set(sel + " #Icon.ItemId", itemId);
-                                cmd.set(sel + " #Qty.Text", Message.translation("server.ui.stencil.detail.quantityFormat").param("qty", requiredQty));
-                                if (checkInventory) {
-                                    cmd.set(sel + " #Dim.Visible", !sufficient);
-                                    cmd.set(sel + " #Qty.Style", sufficient ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
-                                } else {
-                                    cmd.set(sel + " #Dim.Visible", false);
-                                    cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
-                                }
-                                costIdx++;
+                            cmd.set(sel + ".Visible", true);
+                            cmd.set(sel + " #Icon.ItemId", itemId);
+                            cmd.set(sel + " #Qty.Text", Message.translation("server.ui.stencil.detail.quantityFormat").param("qty", requiredQty));
+                            if (checkInventory) {
+                                cmd.set(sel + " #Dim.Visible", !sufficient);
+                                cmd.set(sel + " #Qty.Style", sufficient ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
+                            } else {
+                                cmd.set(sel + " #Dim.Visible", false);
+                                cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
                             }
+                            costIdx++;
                         }
                     }
-                } catch (Exception e) {
-                    DebugLogger.log(STENCIL_BOOK, Level.WARNING, "[StencilUI] Error populating cost grid: " + e.getMessage());
                 }
 
                 // Hide remaining cost cells and reset their state

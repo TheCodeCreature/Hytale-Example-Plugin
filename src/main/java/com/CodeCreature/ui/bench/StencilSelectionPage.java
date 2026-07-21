@@ -448,6 +448,18 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             }
             sendUpdate(cmd, null, false);
 
+        } else if (data.action != null && data.action.startsWith("RecipeCell:")) {
+            String recipeId = gridController.getRecipeIdForAction(data.action);
+            if (recipeId != null && !recipeId.isEmpty()) {
+                RecipeEntry entry = findEntry(recipeId);
+                if (entry != null) {
+                    this.selectedRecipeId = recipeId;
+                    gridController.updateSelection(cmd, selectedRecipeId);
+                    updateDetail(cmd);
+                }
+            }
+            sendUpdate(cmd, null, false);
+
         } else if (data.action != null && data.action.startsWith("SetFilter:")) {
             // Set filter toggle â€” index-based resolution
             String filterPayload = data.action.substring("SetFilter:".length());
@@ -456,10 +468,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 selectAllSets = false;
                 activeSetFilters.clear();
             } else if (filterPayload.startsWith("idx:")) {
-                int idx = -1;
-                try {
-                    idx = Integer.parseInt(filterPayload.substring(4));
-                } catch (NumberFormatException ignored) {}
+                int idx = Integer.parseInt(filterPayload.substring(4));
                 if (idx >= 0 && idx < currentSets.size()) {
                     String setName = currentSets.get(idx);
                     if (selectAllSets) {
@@ -496,8 +505,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 selectAllCategories = false;
                 activeMaterialGroups.clear();
             } else if (payload.startsWith("idx:")) {
-                int idx = -1;
-                try { idx = Integer.parseInt(payload.substring(4)); } catch (Exception ignored) {}
+                int idx = Integer.parseInt(payload.substring(4));
                 if (idx >= 0 && idx < currentGroups.size()) {
                     String groupName = currentGroups.get(idx).categoryId();
                     if (selectAllCategories) {
@@ -610,27 +618,12 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             }
             sendUpdate(cmd, null, false);
 
-        } else if (data.action != null && data.action.startsWith("RecipeSelect:rid:")) {
-            String recipeId = data.action.substring("RecipeSelect:rid:".length());
-            if (recipeId != null && !recipeId.isEmpty()) {
-                boolean visible = false;
-                for (RecipeFilterPipeline.TaggedRecipe entry : displayedRecipes) {
-                    if (entry.recipeId().equals(recipeId)) {
-                        visible = true;
-                        break;
-                    }
-                }
-
-                if (visible) {
-                    this.selectedRecipeId = recipeId;
-                    gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
-                    updateDetail(cmd);
-                }
-            }
-            sendUpdate(cmd, null, false);
-
         } else if ("GiveStencil".equals(data.action)) {
             giveSelectedStencil(store, ref, cmd);
+            sendUpdate(cmd, null, false);
+        } else {
+            // Always acknowledge events, even when payload is empty or unknown,
+            // to prevent client-side loading overlays from hanging.
             sendUpdate(cmd, null, false);
         }
     }
@@ -950,7 +943,6 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         public static final BuilderCodec<EventPayload> CODEC = BuilderCodec.builder(EventPayload.class, EventPayload::new)
                 .append(new KeyedCodec<>("@SearchQuery", Codec.STRING), (e, s) -> e.searchQuery = s, e -> e.searchQuery).add()
                 .append(new KeyedCodec<>("@SelectedTab", Codec.STRING), (e, s) -> e.selectedTab = s, e -> e.selectedTab).add()
-                .append(new KeyedCodec<>("RecipeId", Codec.STRING), (e, s) -> e.recipeId = s, e -> e.recipeId).add()
                 .append(new KeyedCodec<>("Action", Codec.STRING), (e, s) -> e.action = s, e -> e.action).add()
                 .append(new KeyedCodec<>("ItemStackId", Codec.STRING), (e, s) -> e.itemStackId = s, e -> e.itemStackId).add()
                 .append(new KeyedCodec<>("SlotIndex", Codec.INTEGER), (e, i) -> e.slotIndex = i, e -> e.slotIndex).add()
@@ -958,7 +950,6 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
 
         String searchQuery;
         String selectedTab;
-        String recipeId;
         String action;
         String itemStackId;
         Integer slotIndex;
