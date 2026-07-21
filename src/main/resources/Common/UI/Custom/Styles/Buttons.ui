@@ -58,6 +58,30 @@ $C = "../Common.ui";
              HorizontalAlignment: Center, VerticalAlignment: Center))
 );
 
+@SuccessButtonStyle = TextButtonStyle(
+    Default: (Background: #2f8f4e,
+             LabelStyle: (Wrap: true, FontSize: 12, TextColor: #ffffff, RenderBold: true, RenderUppercase: true,
+             HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: #3aa95c,
+             LabelStyle: (Wrap: true, FontSize: 12, TextColor: #ffffff, RenderBold: true, RenderUppercase: true,
+             HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: #276f3d,
+             LabelStyle: (Wrap: true, FontSize: 12, TextColor: #ffffff, RenderBold: true, RenderUppercase: true,
+             HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
+@ErrorButtonStyle = TextButtonStyle(
+    Default: (Background: PatchStyle(TexturePath: "../Common/Buttons/Destructive.png", Border: $C.@ButtonBorder),
+             LabelStyle: (Wrap: true, FontSize: 12, TextColor: #ffffff, RenderBold: true, RenderUppercase: true,
+             HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Hovered: (Background: PatchStyle(TexturePath: "../Common/Buttons/Destructive_Hovered.png", Border: $C.@ButtonBorder),
+             LabelStyle: (Wrap: true, FontSize: 12, TextColor: #ffffff, RenderBold: true, RenderUppercase: true,
+             HorizontalAlignment: Center, VerticalAlignment: Center)),
+    Pressed: (Background: PatchStyle(TexturePath: "../Common/Buttons/Destructive_Pressed.png", Border: $C.@ButtonBorder),
+             LabelStyle: (Wrap: true, FontSize: 12, TextColor: #ffffff, RenderBold: true, RenderUppercase: true,
+             HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
 // ── Transparent / Invisible Hit Targets ──
 
 @TransparentButtonStyle = TextButtonStyle(
@@ -75,11 +99,11 @@ $C = "../Common.ui";
 // ── Destructive / Navigation ──
 
 @DestructiveButtonStyle = TextButtonStyle(
-    Default: (Background: #8b2020(0.9),
+    Default: (Background: PatchStyle(TexturePath: "../Common/Buttons/Destructive.png", Border: $C.@ButtonBorder),
              LabelStyle: (FontSize: 18, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Hovered: (Background: #cc3333(0.9),
+    Hovered: (Background: PatchStyle(TexturePath: "../Common/Buttons/Destructive_Hovered.png", Border: $C.@ButtonBorder),
              LabelStyle: (FontSize: 18, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center)),
-    Pressed: (Background: #661515(0.9),
+    Pressed: (Background: PatchStyle(TexturePath: "../Common/Buttons/Destructive_Pressed.png", Border: $C.@ButtonBorder),
              LabelStyle: (FontSize: 18, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center))
 );
 

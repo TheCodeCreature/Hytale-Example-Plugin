@@ -58,6 +58,18 @@ $C = "../Common.ui";
     HorizontalAlignment: Center, VerticalAlignment: Center
 );
 
+@StatusSuccessStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
+    FontSize: 12, TextColor: #86d8a1, RenderBold: true,
+    HorizontalAlignment: Center, VerticalAlignment: Center
+);
+
+@StatusErrorStyle = LabelStyle(
+    ...$C.@DefaultLabelStyle,
+    FontSize: 12, TextColor: #ff8f8f, RenderBold: true,
+    HorizontalAlignment: Center, VerticalAlignment: Center
+);
+
 // ── Cost Quantity (panel variant — no outline) ──
 
 @CostQuantityStyle = LabelStyle(

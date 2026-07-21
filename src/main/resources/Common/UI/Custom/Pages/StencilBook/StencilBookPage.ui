@@ -224,11 +224,25 @@ Group {
                     }
 
                     // ── Give Stencil Button ──
-                    TextButton #GetPlaceholderBtn {
-                        Text: "Give Stencil";
+                    Group #GetPlaceholderBtnFrame {
                         Anchor: (Height: 40, Width: 96, Right: 0, Left: 0, Top: 10);
-                        Padding: (Left: 12, Right: 12);
-                        Style: $B.@WrapPrimaryButtonStyle;
+                        Background: #000000(0.0);
+
+                        TextButton #GetPlaceholderBtn {
+                            Text: "Give Stencil";
+                            Anchor: (Full: 1);
+                            Padding: (Left: 12, Right: 12);
+                            Style: $B.@WrapPrimaryButtonStyle;
+                        }
+                    }
+
+                    Group { Anchor: (Height: 6); }
+
+                    Label #GiveStencilStatusLabel {
+                        Text: "";
+                        Anchor: (Height: 16, Left: 0, Right: 0);
+                        Style: $L.@PageIndicatorLabelStyle;
+                        Visible: false;
                     }
                 }
 

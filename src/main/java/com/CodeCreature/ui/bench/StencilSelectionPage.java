@@ -17,12 +17,14 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
+import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.asset.type.item.config.BlockGroup;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
+import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.ui.Value;
@@ -30,11 +32,14 @@ import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.NonNull;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.CodeCreature.util.DebugLogger;
 import static com.CodeCreature.util.DebugLogger.Subsystem.*;
@@ -53,6 +58,12 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             Value.ref("Styles/Buttons.ui", "FilterActiveStyle");
     private static final Value<String> FILTER_INACTIVE =
             Value.ref("Styles/Buttons.ui", "FilterInactiveStyle");
+    private static final Value<String> GIVE_BTN_PRIMARY =
+            Value.ref("Styles/Buttons.ui", "WrapPrimaryButtonStyle");
+        private static final Value<String> GIVE_STATUS_SUCCESS =
+            Value.ref("Styles/Labels.ui", "StatusSuccessStyle");
+        private static final Value<String> GIVE_STATUS_ERROR =
+            Value.ref("Styles/Labels.ui", "StatusErrorStyle");
 
     private static final String ALL_TAB = "All";
     private static final String ALL_FILTER = "All";
@@ -87,6 +98,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     private GridLayoutController gridController;
     private DetailPanelController detailController;
     private Map<String, RecipeFilterPipeline.CategoryInfo> categoryInfoMap = Map.of();
+    private final AtomicLong giveStencilFeedbackSeq = new AtomicLong();
 
     private Ref<EntityStore> playerRef_ref;
     private Store<EntityStore> playerStore;
@@ -376,6 +388,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         applyFilter();
         //  Set initial state 
         updateAffordabilityToggle(cmd);
+        resetGiveStencilFeedback(cmd);
 
         updateBenchTabs(cmd);
         updateMaterialGroups(cmd);
@@ -755,6 +768,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     }
 
     private void updateDetail(UICommandBuilder cmd) {
+        resetGiveStencilFeedback(cmd);
         Player player = playerStore != null
                 ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
         CombinedItemContainer container = player != null
@@ -871,25 +885,98 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     }
 
     private void giveSelectedStencil(Store<EntityStore> store, Ref<EntityStore> ref,
-                                  UICommandBuilder cmd) {
+                                     UICommandBuilder cmd) {
         if (selectedRecipeId == null) {
+            showGiveStencilStatusFeedback(cmd, store, "Pick One", GIVE_STATUS_ERROR);
             DebugLogger.chat(this.playerRef, STENCIL_BOOK,
                     "\u00a7c[StencilBook] No recipe selected.");
             return;
         }
 
         RecipeEntry entry = findEntry(selectedRecipeId);
-        if (entry == null) return;
+        if (entry == null) {
+            showGiveStencilStatusFeedback(cmd, store, "Unavailable", GIVE_STATUS_ERROR);
+            return;
+        }
 
         Player player = store.getComponent(ref, Player.getComponentType());
-        if (player == null) return;
+        if (player == null) {
+            showGiveStencilStatusFeedback(cmd, store, "Try Again", GIVE_STATUS_ERROR);
+            return;
+        }
 
         ItemStack item = StencilMetadata.createStencil(entry.outputItemId(), entry.recipeId());
+        int beforeQty = getStencilQuantity(player, entry.recipeId());
         player.getInventory().getCombinedHotbarFirst().addItemStack(item);
+        int afterQty = getStencilQuantity(player, entry.recipeId());
+
+        if (afterQty <= beforeQty) {
+            showGiveStencilStatusFeedback(cmd, store, "No Space", GIVE_STATUS_ERROR);
+            DebugLogger.chat(this.playerRef, STENCIL_BOOK,
+                "\u00a7c[StencilBook] Could not give stencil: inventory is full.");
+            return;
+        }
+
+        showGiveStencilStatusFeedback(cmd, store, "Given", GIVE_STATUS_SUCCESS);
 
         DebugLogger.chat(this.playerRef, STENCIL_BOOK,
                 "\u00a7a[StencilBook] Given stencil: " + entry.outputItemId().replace('_', ' '));
         DebugLogger.log(STENCIL_BOOK, Level.INFO, "[StencilUI] Gave player stencil for " + entry.outputItemId() + " (recipe: " + entry.recipeId() + ")");
+    }
+
+    private int getStencilQuantity(Player player, String recipeId) {
+        return getStencilQuantity(player.getInventory().getHotbar(), recipeId)
+                + getStencilQuantity(player.getInventory().getBackpack(), recipeId)
+                + getStencilQuantity(player.getInventory().getStorage(), recipeId);
+    }
+
+    private int getStencilQuantity(ItemContainer container, String recipeId) {
+        if (container == null) return 0;
+        int total = 0;
+        short capacity = container.getCapacity();
+        for (short slot = 0; slot < capacity; slot++) {
+            ItemStack stack = container.getItemStack(slot);
+            if (stack == null) continue;
+            if (!StencilMetadata.isStencil(stack)) continue;
+            if (!recipeId.equals(StencilMetadata.getRecipeId(stack))) continue;
+            total += stack.getQuantity();
+        }
+        return total;
+    }
+
+    private void resetGiveStencilFeedback(UICommandBuilder cmd) {
+        cmd.set("#GetPlaceholderBtn.Text", "Give Stencil");
+        cmd.set("#GetPlaceholderBtn.Style", GIVE_BTN_PRIMARY);
+        cmd.set("#GiveStencilStatusLabel.Text", "");
+        cmd.set("#GiveStencilStatusLabel.Style", GIVE_STATUS_SUCCESS);
+        cmd.set("#GiveStencilStatusLabel.Visible", false);
+    }
+
+    private void showGiveStencilStatusFeedback(UICommandBuilder cmd,
+                                               Store<EntityStore> store,
+                                               String message,
+                                               Value<String> labelStyle) {
+        cmd.set("#GetPlaceholderBtn.Text", "Give Stencil");
+        cmd.set("#GetPlaceholderBtn.Style", GIVE_BTN_PRIMARY);
+        cmd.set("#GiveStencilStatusLabel.Text", message);
+        cmd.set("#GiveStencilStatusLabel.Style", labelStyle);
+        cmd.set("#GiveStencilStatusLabel.Visible", true);
+        long seq = giveStencilFeedbackSeq.incrementAndGet();
+        scheduleGiveStencilButtonReset(store, seq);
+    }
+
+    private void scheduleGiveStencilButtonReset(Store<EntityStore> store, long seq) {
+        if (store == null || store.getExternalData() == null) return;
+        World world = store.getExternalData().getWorld();
+        if (world == null) return;
+
+        HytaleServer.SCHEDULED_EXECUTOR.schedule(() -> world.execute(() -> {
+            if (giveStencilFeedbackSeq.get() != seq) return;
+            if (playerRef_ref == null || !playerRef_ref.isValid()) return;
+            UICommandBuilder reset = new UICommandBuilder();
+            resetGiveStencilFeedback(reset);
+            sendUpdate(reset, null, false);
+        }), 1, TimeUnit.SECONDS);
     }
 
     @Nullable
