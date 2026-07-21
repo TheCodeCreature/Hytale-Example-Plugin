@@ -1,5 +1,5 @@
 // Production recipe grid row container.
-// Styled to mirror sandbox middle-column row spacing while keeping #RowCells for Java selectors.
+// Hosts grouped set containers using sandbox-style row packing under #RowGroups.
 
 Group {
     LayoutMode: Top;
@@ -7,7 +7,7 @@ Group {
     Padding: (Left: 2, Right: 2, Top: 2, Bottom: 2);
     Visible: false;
 
-    Group #RowCells {
+    Group #RowGroups {
         LayoutMode: LeftCenterWrap;
         Anchor: (Left: 0, Right: 0);
         Padding: (Left: 2, Right: 2, Top: 2, Bottom: 2);

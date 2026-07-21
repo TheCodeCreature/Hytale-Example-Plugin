@@ -7,7 +7,6 @@ import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,26 +26,64 @@ public class GridLayoutController {
 
     private final String[] setNames;
     private final int[] cellsPerSet;
-    private final Map<String, Integer> setIndexByName;
+    private final int maxTilesPerRow;
+    private final List<RowSpec> rowSpecs;
+    private final Map<String, List<GroupSlot>> slotsBySetName;
 
-    public GridLayoutController(String[] setNames, int[] cellsPerSet) {
+    public GridLayoutController(String[] setNames, int[] cellsPerSet, int maxTilesPerRow) {
         this.setNames = setNames == null ? new String[0] : setNames.clone();
         this.cellsPerSet = cellsPerSet == null ? new int[0] : cellsPerSet.clone();
+        this.maxTilesPerRow = Math.max(1, maxTilesPerRow);
 
-        this.setIndexByName = new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        for (int i = 0; i < this.setNames.length; i++) {
-            this.setIndexByName.put(this.setNames[i], i);
+        List<List<GroupSeed>> rowSeeds = buildRowSeeds();
+        this.rowSpecs = new ArrayList<>(rowSeeds.size());
+        this.slotsBySetName = new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+        for (int rowIndex = 0; rowIndex < rowSeeds.size(); rowIndex++) {
+            List<GroupSeed> seeds = rowSeeds.get(rowIndex);
+            List<GroupSlot> slots = new ArrayList<>(seeds.size());
+            for (int groupIndex = 0; groupIndex < seeds.size(); groupIndex++) {
+                GroupSeed seed = seeds.get(groupIndex);
+                GroupSlot slot = new GroupSlot(rowIndex, groupIndex, seed.setName(), seed.capacity());
+                slots.add(slot);
+                slotsBySetName.computeIfAbsent(seed.setName(), ignored -> new ArrayList<>()).add(slot);
+            }
+            rowSpecs.add(new RowSpec(slots));
         }
+    }
+
+    public int getRowCount() {
+        return rowSpecs.size();
+    }
+
+    public int getGroupCountInRow(int rowIndex) {
+        if (rowIndex < 0 || rowIndex >= rowSpecs.size()) {
+            return 0;
+        }
+        return rowSpecs.get(rowIndex).groups().size();
+    }
+
+    public int getGroupCapacity(int rowIndex, int groupIndexInRow) {
+        if (rowIndex < 0 || rowIndex >= rowSpecs.size()) {
+            return 0;
+        }
+        List<GroupSlot> groups = rowSpecs.get(rowIndex).groups();
+        if (groupIndexInRow < 0 || groupIndexInRow >= groups.size()) {
+            return 0;
+        }
+        return groups.get(groupIndexInRow).capacity();
     }
 
     /** Binds click events for all preallocated recipe icon cells. Called once during build(). */
     public void buildBindings(UIEventBuilder evt) {
-        for (int setIndex = 0; setIndex < cellsPerSet.length; setIndex++) {
-            int cellCount = Math.max(0, cellsPerSet[setIndex]);
-            for (int c = 0; c < cellCount; c++) {
-                evt.addEventBinding(CustomUIEventBindingType.Activating,
-                        "#RecipeGridArea[" + setIndex + "] #GroupCells[" + c + "] #CellBtn",
-                        EventData.of("Action", "#RecipeGridArea[" + setIndex + "] #GroupCells[" + c + "] #CellBtn.TooltipText"));
+        for (RowSpec row : rowSpecs) {
+            for (GroupSlot slot : row.groups()) {
+                for (int c = 0; c < slot.capacity(); c++) {
+                    String base = groupSelector(slot) + " #GroupCells[" + c + "]";
+                    evt.addEventBinding(CustomUIEventBindingType.Activating,
+                            base + " #CellBtn",
+                            EventData.of("Action", base + " #CellBtn.TooltipText"));
+                }
             }
         }
     }
@@ -64,59 +101,118 @@ public class GridLayoutController {
             recipesBySet.computeIfAbsent(effectiveSet, ignored -> new ArrayList<>()).add(entry);
         }
 
-        List<Map.Entry<String, List<RecipeFilterPipeline.TaggedRecipe>>> orderedSets = new java.util.ArrayList<>(recipesBySet.entrySet());
-        orderedSets.sort(Comparator.comparingInt(e -> setIndexByName.getOrDefault(e.getKey(), Integer.MAX_VALUE)));
+        boolean[] rowVisible = new boolean[rowSpecs.size()];
+        java.util.Set<GroupSlot> visibleSlots = new java.util.HashSet<>();
 
-        boolean[] setVisible = new boolean[setNames.length];
-
-        for (Map.Entry<String, List<RecipeFilterPipeline.TaggedRecipe>> bySet : orderedSets) {
-            Integer setIndex = setIndexByName.get(bySet.getKey());
-            if (setIndex == null || setIndex < 0 || setIndex >= setNames.length) {
+        for (Map.Entry<String, List<RecipeFilterPipeline.TaggedRecipe>> bySet : recipesBySet.entrySet()) {
+            List<GroupSlot> setSlots = slotsBySetName.get(bySet.getKey());
+            if (setSlots == null || setSlots.isEmpty()) {
                 continue;
             }
 
-            setVisible[setIndex] = true;
-            String setSel = "#RecipeGridArea[" + setIndex + "]";
             List<RecipeFilterPipeline.TaggedRecipe> recipes = bySet.getValue();
+            int consumed = 0;
+            String setLabel = Objects.requireNonNull(RecipeFilterPipeline.setDisplayLabel(bySet.getKey()));
 
-            cmd.set(setSel + ".Visible", true);
-            cmd.set(setSel + " #SetGroupLabel.Text",
-                    Objects.requireNonNull(RecipeFilterPipeline.setDisplayLabel(bySet.getKey())));
+            for (GroupSlot slot : setSlots) {
+                String slotSel = groupSelector(slot);
+                int remaining = Math.max(0, recipes.size() - consumed);
+                int renderCount = Math.min(slot.capacity(), remaining);
 
-            int capacity = setIndex < cellsPerSet.length ? Math.max(0, cellsPerSet[setIndex]) : 0;
-            int renderCount = Math.min(capacity, recipes.size());
+                if (renderCount <= 0) {
+                    hideSlot(cmd, slot);
+                    continue;
+                }
 
-            for (int i = 0; i < renderCount; i++) {
-                RecipeFilterPipeline.TaggedRecipe recipe = recipes.get(i);
-                String cellSel = setSel + " #GroupCells[" + i + "]";
-                boolean isSelected = recipe.recipeId().equals(selectedRecipeId);
+                visibleSlots.add(slot);
+                rowVisible[slot.rowIndex()] = true;
 
-                cmd.set(cellSel + ".Visible", true);
-                cmd.set(cellSel + " #CellIcon.ItemId",
-                        recipe.outputItemId() == null ? "" : recipe.outputItemId());
-                cmd.set(cellSel + " #CellDim.Visible", !recipe.affordable());
-                cmd.set(cellSel + " #CellBtn.TooltipText", "RecipeSelect:rid:" + recipe.recipeId());
-                cmd.set(cellSel + " #CellBtn.Style",
-                        Objects.requireNonNull(isSelected ? CELL_SELECTED_STYLE : CELL_UNSELECTED_STYLE));
-            }
+                cmd.set(slotSel + ".Visible", true);
+                cmd.set(slotSel + " #SetGroupLabel.Text", setLabel);
 
-            for (int i = renderCount; i < capacity; i++) {
-                clearCell(cmd, setSel + " #GroupCells[" + i + "]");
+                for (int i = 0; i < renderCount; i++) {
+                    RecipeFilterPipeline.TaggedRecipe recipe = recipes.get(consumed + i);
+                    String cellSel = slotSel + " #GroupCells[" + i + "]";
+                    boolean isSelected = recipe.recipeId().equals(selectedRecipeId);
+
+                    cmd.set(cellSel + ".Visible", true);
+                    cmd.set(cellSel + " #CellIcon.ItemId",
+                            recipe.outputItemId() == null ? "" : recipe.outputItemId());
+                    cmd.set(cellSel + " #CellDim.Visible", !recipe.affordable());
+                    cmd.set(cellSel + " #CellBtn.TooltipText", "RecipeSelect:rid:" + recipe.recipeId());
+                    cmd.set(cellSel + " #CellBtn.Style",
+                            Objects.requireNonNull(isSelected ? CELL_SELECTED_STYLE : CELL_UNSELECTED_STYLE));
+                }
+
+                for (int i = renderCount; i < slot.capacity(); i++) {
+                    clearCell(cmd, slotSel + " #GroupCells[" + i + "]");
+                }
+
+                consumed += renderCount;
             }
         }
 
-        for (int setIndex = 0; setIndex < setNames.length; setIndex++) {
-            if (setVisible[setIndex]) {
-                continue;
+        for (RowSpec row : rowSpecs) {
+            for (GroupSlot slot : row.groups()) {
+                if (!visibleSlots.contains(slot)) {
+                    hideSlot(cmd, slot);
+                }
             }
-            String setSel = "#RecipeGridArea[" + setIndex + "]";
-            cmd.set(setSel + ".Visible", false);
-            cmd.set(setSel + " #SetGroupLabel.Text", "");
+        }
 
-            int capacity = setIndex < cellsPerSet.length ? Math.max(0, cellsPerSet[setIndex]) : 0;
-            for (int i = 0; i < capacity; i++) {
-                clearCell(cmd, setSel + " #GroupCells[" + i + "]");
+        for (int rowIndex = 0; rowIndex < rowSpecs.size(); rowIndex++) {
+            cmd.set(rowSelector(rowIndex) + ".Visible", rowVisible[rowIndex]);
+        }
+    }
+
+    private List<List<GroupSeed>> buildRowSeeds() {
+        List<List<GroupSeed>> rows = new ArrayList<>();
+        List<GroupSeed> currentRow = new ArrayList<>();
+
+        for (int i = 0; i < setNames.length; i++) {
+            String setName = setNames[i];
+            int tileCount = (i < cellsPerSet.length) ? Math.max(0, cellsPerSet[i]) : 0;
+
+            if (tileCount > maxTilesPerRow) {
+                if (!currentRow.isEmpty()) {
+                    rows.add(currentRow);
+                    currentRow = new ArrayList<>();
+                }
+
+                int remaining = tileCount;
+                while (remaining > 0) {
+                    int chunk = Math.min(maxTilesPerRow, remaining);
+                    List<GroupSeed> oversizedRow = new ArrayList<>(1);
+                    oversizedRow.add(new GroupSeed(setName, chunk));
+                    rows.add(oversizedRow);
+                    remaining -= chunk;
+                }
+            } else {
+                currentRow.add(new GroupSeed(setName, tileCount));
             }
+        }
+
+        if (!currentRow.isEmpty()) {
+            rows.add(currentRow);
+        }
+
+        return rows;
+    }
+
+    private String rowSelector(int rowIndex) {
+        return "#RecipeGridArea[" + rowIndex + "]";
+    }
+
+    private String groupSelector(GroupSlot slot) {
+        return rowSelector(slot.rowIndex()) + " #RowGroups[" + slot.groupIndexInRow() + "]";
+    }
+
+    private void hideSlot(UICommandBuilder cmd, GroupSlot slot) {
+        String slotSel = groupSelector(slot);
+        cmd.set(slotSel + ".Visible", false);
+        cmd.set(slotSel + " #SetGroupLabel.Text", "");
+        for (int i = 0; i < slot.capacity(); i++) {
+            clearCell(cmd, slotSel + " #GroupCells[" + i + "]");
         }
     }
 
@@ -127,4 +223,10 @@ public class GridLayoutController {
         cmd.set(cellSel + " #CellBtn.Style", Objects.requireNonNull(CELL_UNSELECTED_STYLE));
         cmd.set(cellSel + " #CellBtn.TooltipText", "");
     }
+
+    private record GroupSeed(String setName, int capacity) {}
+
+    private record GroupSlot(int rowIndex, int groupIndexInRow, String setName, int capacity) {}
+
+    private record RowSpec(List<GroupSlot> groups) {}
 }

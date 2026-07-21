@@ -48,6 +48,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     private static final int MAX_GROUP_BUTTONS = 30;
     private static final int MAX_BENCH_TABS = 16;
     private static final int GRID_CELLS_PER_ROW = 12;
+    private static final int MAX_TILES_PER_ROW = 12;
     private static final Value<String> FILTER_ACTIVE =
             Value.ref("Styles/Buttons.ui", "FilterActiveStyle");
     private static final Value<String> FILTER_INACTIVE =
@@ -276,7 +277,8 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         this.totalGridRows = totalRecipeRows;
 
         // Create grid layout controller
-        this.gridController = new GridLayoutController(maxLayoutSetNames, cellsPerSet);
+        this.gridController = new GridLayoutController(maxLayoutSetNames, cellsPerSet, MAX_TILES_PER_ROW);
+        this.totalGridRows = gridController.getRowCount();
 
         // Create detail panel controller
         this.detailController = new DetailPanelController();
@@ -296,13 +298,18 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             cmd.append("#MaterialGroups", "Pages/StencilBook/Components/GroupFilterButton.ui");
         }
 
-        // Grouped recipe grid: one set container per known set, with preallocated icon cells.
-        for (int g = 0; g < totalSetCount; g++) {
-            cmd.append("#RecipeGridArea", "Pages/StencilBook/Components/SetGroupContainer.ui");
-            int cellCount = (g < cellsPerSet.length) ? Math.max(0, cellsPerSet[g]) : 0;
-            for (int c = 0; c < cellCount; c++) {
-                cmd.append("#RecipeGridArea[" + g + "] #GroupCells",
-                        "Pages/StencilBook/RecipeIconCell.ui");
+        // Grouped recipe grid with sandbox-style row packing.
+        for (int r = 0; r < gridController.getRowCount(); r++) {
+            cmd.append("#RecipeGridArea", "Pages/StencilBook/Components/RecipeGridRow.ui");
+            int groupCount = gridController.getGroupCountInRow(r);
+            for (int g = 0; g < groupCount; g++) {
+                cmd.append("#RecipeGridArea[" + r + "] #RowGroups",
+                        "Pages/StencilBook/Components/SetGroupContainer.ui");
+                int cellCount = gridController.getGroupCapacity(r, g);
+                for (int c = 0; c < cellCount; c++) {
+                    cmd.append("#RecipeGridArea[" + r + "] #RowGroups[" + g + "] #GroupCells",
+                            "Pages/StencilBook/RecipeIconCell.ui");
+                }
             }
         }
 

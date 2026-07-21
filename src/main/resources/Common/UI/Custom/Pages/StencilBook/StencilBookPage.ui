@@ -174,7 +174,8 @@ Group {
                     Padding: (Left: 8);
 
                     Group #RecipeGridArea {
-                        LayoutMode: LeftCenterWrap;
+                        LayoutMode: Top;
+                        Anchor: (Left: 0, Right: 0);
                     }
                 }
             }
