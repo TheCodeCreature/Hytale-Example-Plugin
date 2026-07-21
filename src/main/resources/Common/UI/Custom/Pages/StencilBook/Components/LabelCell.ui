@@ -1,0 +1,54 @@
+// Reusable grid cell that can render either a recipe tile or a category separator cell.
+// Java toggles #RecipeCell/#CategoryCell visibility and sets text/action payloads.
+
+$B = "../../../Styles/Buttons.ui";
+$BG = "../../../Styles/Backgrounds.ui";
+$L = "../../../Styles/Labels.ui";
+
+Group {
+    Anchor: (Width: 72, Height: 72);
+    Padding: (Left: 2, Right: 2, Top: 2, Bottom: 2);
+    Visible: false;
+
+    Group #RecipeCell {
+        Anchor: (Full: 0);
+        Background: $BG.@ItemSlotFrame;
+        Visible: false;
+
+        ItemIcon #Icon {
+            Anchor: (Full: 4);
+            ShowItemTooltip: true;
+        }
+
+        Group #Dim {
+            Anchor: (Full: 2);
+            Background: $BG.@DimOverlay;
+            Visible: false;
+        }
+
+        TextButton #Btn {
+            Text: "";
+            Anchor: (Full: 2);
+            Style: $B.@TransparentButtonStyle;
+        }
+
+        Label #RecipeAction {
+            Text: "";
+            Anchor: (Width: 0, Height: 0);
+            Visible: false;
+        }
+    }
+
+    Group #CategoryCell {
+        Anchor: (Full: 0);
+        Background: $BG.@CategoryCellBg;
+        Visible: false;
+
+        TextButton #CategoryBtn {
+            Text: "";
+            Anchor: (Full: 2);
+            Padding: (Left: 8, Right: 8);
+            Style: $B.@FilterInactiveStyle;
+        }
+    }
+}

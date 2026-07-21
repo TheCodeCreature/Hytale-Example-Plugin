@@ -1,0 +1,13 @@
+// Production recipe grid row container.
+// Server appends LabelCell.ui instances into #RowCells and indexes by row.
+
+Group {
+    Anchor: (Left: 0, Right: 0);
+    LayoutMode: Left;
+    Padding: (Bottom: 4);
+    Visible: false;
+
+    Group #RowCells {
+        LayoutMode: LeftCenterWrap;
+    }
+}
