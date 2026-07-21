@@ -13,6 +13,7 @@ import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.EntityEventSystem;
+import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -81,6 +82,11 @@ public class StencilPlacementSystem extends EntityEventSystem<EntityStore, Place
         Player player = archetypeChunk.getComponent(index, Player.getComponentType());
         if (player == null) return;
         PlayerRef playerRef = archetypeChunk.getComponent(index, PlayerRef.getComponentType());
+
+        // Resource consumption checks apply only in Adventure mode.
+        if (player.getGameMode() != GameMode.Adventure) {
+            return;
+        }
 
         // 3. Recipe resolution
         String recipeId = StencilMetadata.getRecipeId(itemInHand);

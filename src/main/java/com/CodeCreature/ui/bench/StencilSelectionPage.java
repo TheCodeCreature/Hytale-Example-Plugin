@@ -15,6 +15,7 @@ import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
 import com.hypixel.hytale.server.core.HytaleServer;
@@ -221,6 +222,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         // Get player inventory for affordability checks
         Player filterPlayer = playerStore != null
                 ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
+        boolean bypassAffordabilityChecks = shouldBypassAffordabilityChecks(filterPlayer);
         var container = filterPlayer != null
                 ? filterPlayer.getInventory().getCombinedBackpackStorageHotbar() : null;
 
@@ -230,7 +232,9 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         RecipeFilterPipeline.ResourceTypeChecker resourceTypeChecker = null;
         switch (affordabilityMode) {
             case INVENTORY_DRIVEN -> {
-                if (container != null) {
+                if (bypassAffordabilityChecks) {
+                    checker = recipe -> true;
+                } else if (container != null) {
                     final var inv = container;
                     checker = recipe -> isAffordable(recipe, inv);
                 }
@@ -751,7 +755,10 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
         CombinedItemContainer container = player != null
                 ? player.getInventory().getCombinedBackpackStorageHotbar() : null;
-        detailController.updateUI(cmd, selectedRecipeId, allRecipes, affordabilityMode, container);
+        boolean checkInventoryAffordability = affordabilityMode == AffordabilityMode.INVENTORY_DRIVEN
+            && !shouldBypassAffordabilityChecks(player)
+            && container != null;
+        detailController.updateUI(cmd, selectedRecipeId, allRecipes, checkInventoryAffordability, container);
     }
 
     private void updateAffordabilityToggle(UICommandBuilder cmd) {
@@ -1176,6 +1183,11 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         }
 
         return false;
+    }
+
+    private boolean shouldBypassAffordabilityChecks(@Nullable Player player) {
+        // Adventure mode is the only mode where stencil affordability/resource checks are enforced.
+        return player == null || player.getGameMode() != GameMode.Adventure;
     }
 
     record RecipeEntry(String recipeId, String outputItemId, String blockTypeId,

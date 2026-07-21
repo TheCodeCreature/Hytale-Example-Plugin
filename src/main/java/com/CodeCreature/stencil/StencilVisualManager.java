@@ -2,6 +2,7 @@ package com.CodeCreature.stencil;
 
 import com.CodeCreature.crafting.RecipeAffordabilityResolver;
 import com.CodeCreature.util.StencilMetadata;
+import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.protocol.ItemBase;
 import com.hypixel.hytale.protocol.ItemTranslationProperties;
 import com.hypixel.hytale.protocol.UpdateType;
@@ -244,6 +245,7 @@ public final class StencilVisualManager {
                                     @Nonnull PlayerVisualState state) {
         ItemContainer hotbar = player.getInventory().getHotbar();
         var container = player.getInventory().getCombinedBackpackStorageHotbar();
+        boolean bypassAffordabilityChecks = shouldBypassAffordabilityChecks(player);
 
         Set<String> currentStencils = new HashSet<>();
         Map<String, ItemVisualState> changedItems = new HashMap<>();
@@ -268,7 +270,8 @@ public final class StencilVisualManager {
             CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(recipeId);
             if (recipe == null) continue;
 
-            boolean affordable = RecipeAffordabilityResolver.isAffordableWithAutoCraft(recipe, false, container);
+                boolean affordable = bypassAffordabilityChecks
+                    || RecipeAffordabilityResolver.isAffordableWithAutoCraft(recipe, false, container);
 
             if (state.updateItem(itemId, affordable)) {
                 changedItems.put(itemId, state.getTrackedItems().get(itemId));
@@ -287,6 +290,11 @@ public final class StencilVisualManager {
                 DebugLogger.log(STENCIL, Level.WARNING, "[StencilVisual] buildUpdatePacket returned null despite " + changedItems.size() + " changed items");
             }
         }
+    }
+
+    private static boolean shouldBypassAffordabilityChecks(@Nullable Player player) {
+        // Adventure mode is the only mode where stencil affordability visuals are enforced.
+        return player == null || player.getGameMode() != GameMode.Adventure;
     }
 
     /**

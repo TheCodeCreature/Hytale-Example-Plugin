@@ -10,6 +10,7 @@ import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -26,6 +27,7 @@ import org.jspecify.annotations.NonNull;
 
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
+import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -379,14 +381,15 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
         boolean preferNatural = fe != null && fe.preferNatural();
 
         Player player = playerStore != null ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
+        boolean bypassAffordabilityChecks = shouldBypassAffordabilityChecks(player);
         CombinedItemContainer container = null;
         if (player != null) {
             container = player.getInventory().getCombinedBackpackStorageHotbar();
         }
 
-        boolean affordable = container != null
-                && RecipeAffordabilityResolver.resolveIngredientCosts(recipe, preferNatural, container)
-                        .stream().allMatch(ResolvedIngredient::sufficient);
+        boolean affordable = bypassAffordabilityChecks || (container != null
+            && RecipeAffordabilityResolver.resolveIngredientCosts(recipe, preferNatural, container)
+                .stream().allMatch(ResolvedIngredient::sufficient));
         cmd.set("#Segments[" + slotIndex + "] #SegFrame.Background", affordable ? SEG_FRAME_NORMAL : SEG_FRAME_UNAFFORDABLE);
         cmd.set("#Segments[" + slotIndex + "] #Dim.Visible", !affordable);
     }
@@ -405,6 +408,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
 
         // Get player inventory for affordability checking
         Player player = playerStore != null ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
+        boolean bypassAffordabilityChecks = shouldBypassAffordabilityChecks(player);
         CombinedItemContainer container = null;
         if (player != null) {
             container = player.getInventory().getCombinedBackpackStorageHotbar();
@@ -443,13 +447,19 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
                 cmd.set("#CostSlots[" + j + "] #Icon.ItemId", ing.resolvedItemId());
                 cmd.set("#CostSlots[" + j + "] #Qty.Text", "x" + ing.requiredQty());
                 cmd.set("#CostSlots[" + j + "] #Name.Text", costName);
-                cmd.set("#CostSlots[" + j + "] #Dim.Visible", !ing.sufficient());
-                cmd.set("#CostSlots[" + j + "] #Qty.Style", ing.sufficient() ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
+                boolean sufficient = bypassAffordabilityChecks || ing.sufficient();
+                cmd.set("#CostSlots[" + j + "] #Dim.Visible", !sufficient);
+                cmd.set("#CostSlots[" + j + "] #Qty.Style", sufficient ? COST_QTY_NORMAL : COST_QTY_INSUFFICIENT);
                 cmd.set("#CostSlots[" + j + "].Visible", true);
             } else {
                 cmd.set("#CostSlots[" + j + "].Visible", false);
             }
         }
+    }
+
+    private boolean shouldBypassAffordabilityChecks(@Nullable Player player) {
+        // Adventure mode is the only mode where stencil affordability highlighting is enforced.
+        return player == null || player.getGameMode() != GameMode.Adventure;
     }
 
     /**

@@ -3,6 +3,7 @@ package com.CodeCreature.ui.stencilbook;
 import com.CodeCreature.crafting.RecipeAffordabilityResolver;
 import com.CodeCreature.registry.BenchRecipeRegistries;
 import com.CodeCreature.util.BoundingBoxRayCast;
+import com.hypixel.hytale.protocol.GameMode;
 import com.hypixel.hytale.component.AddReason;
 import com.hypixel.hytale.component.Holder;
 import com.hypixel.hytale.component.Ref;
@@ -182,7 +183,7 @@ public class StencilBookParticleLoop {
 
         // Target has a recipe — resolve affordability
         boolean affordable;
-        if (ENABLE_AFFORDABILITY_CHECK) {
+        if (ENABLE_AFFORDABILITY_CHECK && !shouldBypassAffordabilityChecks(player)) {
             CombinedItemContainer container = player.getInventory().getCombinedBackpackStorageHotbar();
             affordable = RecipeAffordabilityResolver.isAffordable(recipe, container);
         } else {
@@ -285,6 +286,11 @@ public class StencilBookParticleLoop {
         activeEntity = null;
         lastTargetBlock = null;
         lastAffordable = false;
+    }
+
+    private static boolean shouldBypassAffordabilityChecks(@Nonnull Player player) {
+        // Adventure mode is the only mode where stencil affordability highlighting is enforced.
+        return player.getGameMode() != GameMode.Adventure;
     }
 
     private void shutdown() {

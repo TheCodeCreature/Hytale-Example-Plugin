@@ -52,7 +52,7 @@ public class DetailPanelController {
     public void updateUI(UICommandBuilder cmd,
                          @Nullable String selectedRecipeId,
                          List<StencilSelectionPage.RecipeEntry> allRecipes,
-                         AffordabilityMode affordabilityMode,
+                         boolean checkInventory,
                          @Nullable CombinedItemContainer container) {
         if (selectedRecipeId != null) {
             StencilSelectionPage.RecipeEntry entry = findEntry(selectedRecipeId, allRecipes);
@@ -64,8 +64,6 @@ public class DetailPanelController {
 
                 cmd.set("#OutputIcon.ItemId", outputItemId);
                 cmd.set("#OutputName.Text", outputName);
-
-                boolean checkInventory = (affordabilityMode == AffordabilityMode.INVENTORY_DRIVEN);
 
                 boolean allAffordable = true;
                 int costIdx = 0;
