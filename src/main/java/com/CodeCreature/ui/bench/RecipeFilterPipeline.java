@@ -38,11 +38,13 @@ public final class RecipeFilterPipeline {
      * A recipe entering the pipeline. Contains only registry-sourced data;
      * no affordability information.
      *
-     * @param recipeId     recipe asset ID (e.g. "Wood_Hardwood_Planks")
-     * @param outputItemId output item asset ID
-     * @param blockTypeId  output block type ID
-     * @param benchIds     resolved bench group keys for tab filtering
-     * @param set          {@code Item.set} value; may be {@code null}
+         * @param recipeId           recipe asset ID (e.g. "Wood_Hardwood_Planks")
+         * @param outputItemId       output item asset ID
+         * @param blockTypeId        output block type ID
+         * @param benchIds           resolved bench group keys for tab filtering
+         * @param set                {@code Item.set} value; may be {@code null}
+         * @param searchableName     precomputed display/search name text; may be {@code null}
+         * @param searchableDescription precomputed description text; may be {@code null}
      */
     public record InputRecipe(
             String recipeId,
@@ -50,7 +52,9 @@ public final class RecipeFilterPipeline {
             String blockTypeId,
             Set<String> benchIds,
             @Nullable String set,
-            List<String> categoryIds
+            List<String> categoryIds,
+            @Nullable String searchableName,
+            @Nullable String searchableDescription
     ) {}
 
     /**
@@ -258,9 +262,18 @@ public final class RecipeFilterPipeline {
     /**
      * Stage 2: Retain recipes matching the search query.
      *
-     * <p>Matches against {@code recipeId}, {@code blockTypeId}, and {@code set}
-     * (all case-insensitive substring match). If query is null or empty,
-     * all recipes pass through.
+    * <p>Matches against recipe IDs and user-facing metadata using fuzzy logic:
+    * {@code recipeId}, {@code outputItemId}, {@code blockTypeId}, {@code set},
+    * {@code searchableName}, and {@code searchableDescription}.
+    *
+    * <p>Matching rules (case-insensitive):
+    * <ul>
+    *   <li>Direct substring match</li>
+    *   <li>Ordered-subsequence match (for shorthand queries)</li>
+    *   <li>Per-token edit-distance match (for typos)</li>
+    * </ul>
+    *
+    * <p>If query is null or empty, all recipes pass through.
      *
      * @param recipes input recipe list
      * @param query   search text (may be null or empty)
@@ -270,16 +283,212 @@ public final class RecipeFilterPipeline {
         if (query == null || query.isBlank()) {
             return new ArrayList<>(recipes);
         }
-        String lowerQuery = query.toLowerCase(Locale.ROOT);
+        String normalizedQuery = normalizeSearchText(query);
+        if (normalizedQuery.isEmpty()) {
+            return new ArrayList<>(recipes);
+        }
+
+        String[] terms = normalizedQuery.split("\\s+");
         List<InputRecipe> result = new ArrayList<>();
         for (InputRecipe recipe : recipes) {
-            if (recipe.recipeId().toLowerCase(Locale.ROOT).contains(lowerQuery)
-                    || recipe.blockTypeId().toLowerCase(Locale.ROOT).contains(lowerQuery)
-                    || (recipe.set() != null && recipe.set().toLowerCase(Locale.ROOT).contains(lowerQuery))) {
+            List<String> fields = buildSearchFields(recipe);
+            if (matchesAllTerms(terms, fields)) {
                 result.add(recipe);
             }
         }
         return result;
+    }
+
+    private static List<String> buildSearchFields(InputRecipe recipe) {
+        List<String> fields = new ArrayList<>(6);
+        fields.add(normalizeSearchText(recipe.recipeId()));
+        fields.add(normalizeSearchText(recipe.outputItemId()));
+        fields.add(normalizeSearchText(recipe.blockTypeId()));
+        fields.add(normalizeSearchText(recipe.set()));
+        fields.add(normalizeSearchText(recipe.searchableName()));
+        fields.add(normalizeSearchText(recipe.searchableDescription()));
+        return fields;
+    }
+
+    private static boolean matchesAllTerms(String[] terms, List<String> fields) {
+        for (String term : terms) {
+            if (term.isEmpty()) {
+                continue;
+            }
+            boolean matched = false;
+            for (String field : fields) {
+                if (field.isEmpty()) {
+                    continue;
+                }
+                if (matchesTerm(term, field)) {
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean matchesTerm(String term, String field) {
+        if (field.contains(term)) {
+            return true;
+        }
+
+        String compactTerm = compactAlnum(term);
+        String compactField = compactAlnum(field);
+        // Keep shorthand matching for compact abbreviations (e.g., "hwp").
+        // Allow slightly longer consonant-style shorthand (e.g., "hrdwd"),
+        // but avoid applying this to normal words like "cloth".
+        boolean allowSubsequence = compactTerm.length() <= 4
+            || (compactTerm.length() <= 6 && isConsonantAbbreviation(compactTerm));
+        if (allowSubsequence && !compactTerm.isEmpty()
+                && isSubsequence(compactTerm, compactField)) {
+            return true;
+        }
+
+        if (compactTerm.length() < 4) {
+            return false;
+        }
+
+        String[] fieldTokens = field.split("\\s+");
+        int maxDistance = maxTyposForTerm(compactTerm.length());
+        for (String fieldToken : fieldTokens) {
+            String compactToken = compactAlnum(fieldToken);
+            if (compactToken.isEmpty()) {
+                continue;
+            }
+            if (compactToken.length() < 4) {
+                continue;
+            }
+            if (compactToken.charAt(0) != compactTerm.charAt(0)) {
+                continue;
+            }
+            int lengthDelta = Math.abs(compactToken.length() - compactTerm.length());
+            if (lengthDelta > maxDistance) {
+                continue;
+            }
+            if (levenshteinDistance(compactTerm, compactToken, maxDistance) <= maxDistance) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static int maxTyposForTerm(int length) {
+        if (length <= 4) return 1;
+        if (length <= 8) return 2;
+        return 3;
+    }
+
+    private static String normalizeSearchText(@Nullable String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        String lowered = value.toLowerCase(Locale.ROOT)
+                .replace('_', ' ')
+                .replace('-', ' ')
+                .replace('.', ' ');
+        StringBuilder normalized = new StringBuilder(lowered.length());
+        boolean previousWasSpace = true;
+        for (int i = 0; i < lowered.length(); i++) {
+            char c = lowered.charAt(i);
+            if (Character.isLetterOrDigit(c)) {
+                normalized.append(c);
+                previousWasSpace = false;
+            } else if (!previousWasSpace) {
+                normalized.append(' ');
+                previousWasSpace = true;
+            }
+        }
+        int end = normalized.length();
+        while (end > 0 && normalized.charAt(end - 1) == ' ') {
+            end--;
+        }
+        return normalized.substring(0, end);
+    }
+
+    private static String compactAlnum(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        StringBuilder compact = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (Character.isLetterOrDigit(c)) {
+                compact.append(c);
+            }
+        }
+        return compact.toString();
+    }
+
+    private static boolean isSubsequence(String needle, String haystack) {
+        if (needle.isEmpty()) {
+            return true;
+        }
+        int j = 0;
+        for (int i = 0; i < haystack.length() && j < needle.length(); i++) {
+            if (haystack.charAt(i) == needle.charAt(j)) {
+                j++;
+            }
+        }
+        return j == needle.length();
+    }
+
+    private static boolean isConsonantAbbreviation(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static int levenshteinDistance(String a, String b, int cutoff) {
+        if (a.equals(b)) {
+            return 0;
+        }
+        if (a.isEmpty()) {
+            return b.length();
+        }
+        if (b.isEmpty()) {
+            return a.length();
+        }
+
+        int[] previous = new int[b.length() + 1];
+        int[] current = new int[b.length() + 1];
+        for (int j = 0; j <= b.length(); j++) {
+            previous[j] = j;
+        }
+
+        for (int i = 1; i <= a.length(); i++) {
+            current[0] = i;
+            int minInRow = current[0];
+            char ca = a.charAt(i - 1);
+            for (int j = 1; j <= b.length(); j++) {
+                int cost = (ca == b.charAt(j - 1)) ? 0 : 1;
+                int insertion = current[j - 1] + 1;
+                int deletion = previous[j] + 1;
+                int substitution = previous[j - 1] + cost;
+                int best = Math.min(Math.min(insertion, deletion), substitution);
+                current[j] = best;
+                if (best < minInRow) {
+                    minInRow = best;
+                }
+            }
+            if (minInRow > cutoff) {
+                return cutoff + 1;
+            }
+            int[] tmp = previous;
+            previous = current;
+            current = tmp;
+        }
+
+        return previous[b.length()];
     }
 
     /**

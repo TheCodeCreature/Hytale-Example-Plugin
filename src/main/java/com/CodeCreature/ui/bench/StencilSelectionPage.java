@@ -166,8 +166,11 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 tabKeyCounts.merge(key, 1, Integer::sum);
             }
 
-            allRecipes.add(new RecipeEntry(fe.recipeId(), fe.outputItemId(), fe.blockTypeId(),
-                    resolvedKeys, fe.set(), fe.categoryIds()));
+                String searchableName = resolveSearchableName(fe.outputItemId(), fe.blockTypeId());
+                String searchableDescription = resolveSearchableDescription(fe.outputItemId());
+
+                allRecipes.add(new RecipeEntry(fe.recipeId(), fe.outputItemId(), fe.blockTypeId(),
+                    resolvedKeys, fe.set(), fe.categoryIds(), searchableName, searchableDescription));
         }
         allRecipes.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.recipeId, b.recipeId));
 
@@ -176,7 +179,8 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         for (RecipeEntry entry : allRecipes) {
             inputs.add(new RecipeFilterPipeline.InputRecipe(
                     entry.recipeId(), entry.outputItemId(), entry.blockTypeId(),
-                    entry.benchIds(), entry.set(), entry.categoryIds()));
+                    entry.benchIds(), entry.set(), entry.categoryIds(),
+                    entry.searchableName(), entry.searchableDescription()));
         }
         this.cachedInputs = Collections.unmodifiableList(inputs);
 
@@ -1190,9 +1194,89 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         return player == null || player.getGameMode() != GameMode.Adventure;
     }
 
+    private static String resolveSearchableName(@Nullable String outputItemId, @Nullable String blockTypeId) {
+        StringBuilder searchText = new StringBuilder();
+        appendSearchFragment(searchText, humanizeId(blockTypeId));
+        appendSearchFragment(searchText, humanizeId(outputItemId));
+
+        if (outputItemId != null && !outputItemId.isBlank()) {
+            Item outputItem = Item.getAssetMap().getAsset(outputItemId);
+            if (outputItem != null) {
+                var packet = outputItem.toPacket();
+                if (packet != null) {
+                    var translationProperties = packet.translationProperties;
+                    if (translationProperties != null) {
+                        appendSearchFragment(searchText, translationProperties.name);
+                        appendSearchFragment(searchText, translationKeyToSearchTerms(translationProperties.name));
+                    }
+                }
+            }
+        }
+
+        return searchText.toString();
+    }
+
+    private static String resolveSearchableDescription(@Nullable String outputItemId) {
+        if (outputItemId == null || outputItemId.isBlank()) {
+            return "";
+        }
+        Item outputItem = Item.getAssetMap().getAsset(outputItemId);
+        if (outputItem == null) {
+            return "";
+        }
+        var packet = outputItem.toPacket();
+        if (packet == null) {
+            return "";
+        }
+        var translationProperties = packet.translationProperties;
+        if (translationProperties == null) {
+            return "";
+        }
+
+        StringBuilder searchText = new StringBuilder();
+        appendSearchFragment(searchText, translationProperties.description);
+        appendSearchFragment(searchText, translationKeyToSearchTerms(translationProperties.description));
+        return searchText.toString();
+    }
+
+    private static String humanizeId(@Nullable String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        return value.replace('_', ' ');
+    }
+
+    private static String translationKeyToSearchTerms(@Nullable String key) {
+        if (key == null || key.isBlank()) {
+            return "";
+        }
+        String normalized = key;
+        int itemsIdx = normalized.indexOf("items.");
+        if (itemsIdx >= 0) {
+            normalized = normalized.substring(itemsIdx + "items.".length());
+        }
+        normalized = normalized.replace(".name", "")
+                .replace(".description", "")
+                .replace('.', ' ')
+                .replace('_', ' ');
+        return normalized;
+    }
+
+    private static void appendSearchFragment(StringBuilder sb, @Nullable String fragment) {
+        if (fragment == null || fragment.isBlank()) {
+            return;
+        }
+        if (!sb.isEmpty()) {
+            sb.append(' ');
+        }
+        sb.append(fragment);
+    }
+
     record RecipeEntry(String recipeId, String outputItemId, String blockTypeId,
                        Set<String> benchIds, String set,
-                       List<String> categoryIds) {}
+                       List<String> categoryIds,
+                       String searchableName,
+                       String searchableDescription) {}
 
     public static class EventPayload {
         public static final BuilderCodec<EventPayload> CODEC = BuilderCodec.builder(EventPayload.class, EventPayload::new)
