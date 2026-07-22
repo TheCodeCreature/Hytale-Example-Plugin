@@ -12,6 +12,8 @@ public class StencilBookPrefs {
             .append(new KeyedCodec<>("ActiveTab", Codec.STRING, true), (p, v) -> p.activeTab = v, p -> p.activeTab).add()
             .append(new KeyedCodec<>("ActiveSetFilters", new ArrayCodec<>(Codec.STRING, String[]::new), true),
                     (p, v) -> p.activeSetFilters = Arrays.asList(v), p -> p.activeSetFilters.toArray(new String[0])).add()
+            .append(new KeyedCodec<>("IgnoredSetFilters", new ArrayCodec<>(Codec.STRING, String[]::new), true),
+                    (p, v) -> p.ignoredSetFilters = Arrays.asList(v), p -> p.ignoredSetFilters.toArray(new String[0])).add()
             .append(new KeyedCodec<>("ActiveMaterialGroups", new ArrayCodec<>(Codec.STRING, String[]::new), true),
                     (p, v) -> p.activeMaterialGroups = Arrays.asList(v), p -> p.activeMaterialGroups.toArray(new String[0])).add()
             .append(new KeyedCodec<>("AffordabilityMode", Codec.STRING, true), (p, v) -> p.affordabilityMode = v, p -> p.affordabilityMode).add()
@@ -32,6 +34,7 @@ public class StencilBookPrefs {
 
     String activeTab = "All";
     List<String> activeSetFilters = new ArrayList<>();
+        List<String> ignoredSetFilters = new ArrayList<>();
     List<String> activeMaterialGroups = new ArrayList<>();
     String affordabilityMode = AffordabilityMode.INVENTORY_DRIVEN.name();
     List<String> activeResourceTypes = new ArrayList<>();

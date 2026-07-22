@@ -82,17 +82,20 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     private String selectedRecipeId;
     private String activeTab = ALL_TAB;
     private final Set<String> activeSetFilters = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    private final Set<String> ignoredSetFilters = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     private AffordabilityMode affordabilityMode = AffordabilityMode.INVENTORY_DRIVEN;
     private IngredientTree ingredientTree;
     private IngredientTreeGridController ingredientController;
     private boolean categoriesExpanded = true;
     private boolean setsExpanded = true;
+    private boolean ignoredSetsExpanded = true;
     private boolean selectAllSets = false;
     private boolean selectAllCategories = false;
     private final Set<String> activeMaterialGroups = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     private List<RecipeFilterPipeline.MaterialGroup> currentGroups = new ArrayList<>();
     private List<RecipeFilterPipeline.TaggedRecipe> displayedRecipes = new ArrayList<>();
     private List<String> currentSets = new ArrayList<>();  // sets for active tab
+    private List<String> currentIgnoredSets = new ArrayList<>();
     private List<RecipeFilterPipeline.InputRecipe> cachedInputs = List.of();
 
     /** Computed at build time from unfiltered pipeline output. */
@@ -223,6 +226,8 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
      * in {@link #displayedRecipes} and {@link #currentSets}.
      */
     private void applyFilter() {
+        List<RecipeFilterPipeline.InputRecipe> effectiveInputs = getInputsExcludingIgnoredSets();
+
         // Get player inventory for affordability checks
         Player filterPlayer = playerStore != null
                 ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
@@ -258,12 +263,33 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         Set<String> effectiveSets = selectAllSets ? Set.of() : activeSetFilters;
         Set<String> effectiveGroups = selectAllCategories ? Set.of() : activeMaterialGroups;
         RecipeFilterPipeline.PipelineResult result = pipeline.execute(
-                this.cachedInputs, activeTab, effectiveGroups, effectiveSets, searchQuery, checker,
+                effectiveInputs, activeTab, effectiveGroups, effectiveSets, searchQuery, checker,
                 affordableOnly, categoryInfoMap, resourceTypeChecker);
 
         this.displayedRecipes = result.displayedRecipes();
         this.currentSets = result.currentSets();
         this.currentGroups = result.currentGroups();
+        this.currentIgnoredSets = new ArrayList<>(ignoredSetFilters);
+        this.currentIgnoredSets.sort(String.CASE_INSENSITIVE_ORDER);
+
+        normalizeSetSelectionState();
+    }
+
+    private List<RecipeFilterPipeline.InputRecipe> getInputsExcludingIgnoredSets() {
+        if (ignoredSetFilters.isEmpty()) {
+            return cachedInputs;
+        }
+
+        List<RecipeFilterPipeline.InputRecipe> filtered = new ArrayList<>(cachedInputs.size());
+        for (RecipeFilterPipeline.InputRecipe input : cachedInputs) {
+            String effectiveSet = (input.set() != null && !input.set().isEmpty())
+                    ? input.set()
+                    : RecipeFilterPipeline.UNCATEGORIZED_SET;
+            if (!ignoredSetFilters.contains(effectiveSet)) {
+                filtered.add(input);
+            }
+        }
+        return filtered;
     }
 
     @Override
@@ -280,6 +306,8 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         this.activeTab = prefs.activeTab != null ? prefs.activeTab : ALL_TAB;
         this.activeSetFilters.clear();
         this.activeSetFilters.addAll(prefs.activeSetFilters);
+        this.ignoredSetFilters.clear();
+        this.ignoredSetFilters.addAll(prefs.ignoredSetFilters);
         this.activeMaterialGroups.clear();
         this.activeMaterialGroups.addAll(prefs.activeMaterialGroups);
         this.affordabilityMode = AffordabilityMode.fromString(prefs.affordabilityMode);
@@ -317,6 +345,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         // Set filter buttons â€” one per set
         for (int i = 0; i < totalSetCount; i++) {
             cmd.append("#SetFilters", "Pages/StencilBook/Components/SetFilterButton.ui");
+            cmd.append("#IgnoredSetFilters", "Pages/StencilBook/Components/SetFilterButton.ui");
         }
 
         // Material group icon buttons (keep MAX_GROUP_BUTTONS)
@@ -371,6 +400,10 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         evt.addEventBinding(
                 CustomUIEventBindingType.Activating, "#SetsHeader",
                 EventData.of("Action", "ToggleSets")
+        );
+        evt.addEventBinding(
+            CustomUIEventBindingType.Activating, "#IgnoredSetsHeader",
+            EventData.of("Action", "ToggleIgnoredSets")
         );
 
         // Give Stencil button
@@ -432,6 +465,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         StencilBookPrefs prefs = new StencilBookPrefs();
         prefs.activeTab = this.activeTab;
         prefs.activeSetFilters = new ArrayList<>(this.activeSetFilters);
+        prefs.ignoredSetFilters = new ArrayList<>(this.ignoredSetFilters);
         prefs.activeMaterialGroups = new ArrayList<>(this.activeMaterialGroups);
         prefs.affordabilityMode = this.affordabilityMode.name();
         prefs.searchQuery = this.searchQuery;
@@ -510,6 +544,56 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             updateDetail(cmd);
             sendUpdate(cmd, null, false);
 
+        } else if (data.action != null && data.action.startsWith("IgnoreSet:idx:")) {
+            int idx = Integer.parseInt(data.action.substring("IgnoreSet:idx:".length()));
+            if (idx >= 0 && idx < currentSets.size()) {
+                String setName = currentSets.get(idx);
+                ignoreSet(setName);
+            }
+            this.selectedRecipeId = null;
+            applyFilter();
+            if (pruneInvalidMaterialGroups()) {
+                applyFilter();
+            }
+            updateSetFilters(cmd);
+            updateMaterialGroups(cmd);
+            gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+            updateDetail(cmd);
+            savePrefs();
+            sendUpdate(cmd, null, false);
+
+        } else if (data.action != null && data.action.startsWith("RestoreIgnoredSet:idx:")) {
+            int idx = Integer.parseInt(data.action.substring("RestoreIgnoredSet:idx:".length()));
+            if (idx >= 0 && idx < currentIgnoredSets.size()) {
+                String setName = currentIgnoredSets.get(idx);
+                restoreIgnoredSet(setName);
+            }
+            this.selectedRecipeId = null;
+            applyFilter();
+            if (pruneInvalidMaterialGroups()) {
+                applyFilter();
+            }
+            updateSetFilters(cmd);
+            updateMaterialGroups(cmd);
+            gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+            updateDetail(cmd);
+            savePrefs();
+            sendUpdate(cmd, null, false);
+
+        } else if ("ClearIgnoredSets".equals(data.action)) {
+            clearIgnoredSets();
+            this.selectedRecipeId = null;
+            applyFilter();
+            if (pruneInvalidMaterialGroups()) {
+                applyFilter();
+            }
+            updateSetFilters(cmd);
+            updateMaterialGroups(cmd);
+            gridController.updateUI(cmd, displayedRecipes, selectedRecipeId);
+            updateDetail(cmd);
+            savePrefs();
+            sendUpdate(cmd, null, false);
+
         } else if (data.action != null && data.action.startsWith("MaterialGroup:")) {
             String payload = data.action.substring("MaterialGroup:".length());
             if ("All".equals(payload)) {
@@ -568,7 +652,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             cmd.set("#CategoriesHeader.Text", Message.translation(categoriesExpanded
                     ? "server.ui.stencil.sidebar.categoriesExpanded"
                     : "server.ui.stencil.sidebar.categoriesCollapsed"));
-            cmd.set("#MaterialGroups.Visible", categoriesExpanded);
+            cmd.set("#MaterialGroupsContainer.Visible", categoriesExpanded);
             sendUpdate(cmd, null, false);
 
         } else if ("ToggleSets".equals(data.action)) {
@@ -577,6 +661,14 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                     ? "server.ui.stencil.sidebar.setsExpanded"
                     : "server.ui.stencil.sidebar.setsCollapsed"));
             cmd.set("#SetFilters.Visible", setsExpanded);
+            sendUpdate(cmd, null, false);
+
+        } else if ("ToggleIgnoredSets".equals(data.action)) {
+            this.ignoredSetsExpanded = !this.ignoredSetsExpanded;
+            cmd.set("#IgnoredSetsHeader.Text", Message.translation(ignoredSetsExpanded
+                    ? "server.ui.stencil.sidebar.ignoredExpanded"
+                    : "server.ui.stencil.sidebar.ignoredCollapsed"));
+            cmd.set("#IgnoredSetFilters.Visible", ignoredSetsExpanded);
             sendUpdate(cmd, null, false);
 
         } else if (data.action != null && (data.action.startsWith("IngredientCheckbox:") 
@@ -723,10 +815,27 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                     CustomUIEventBindingType.Activating, "#SetFilters[" + idx + "] #Btn",
                     action
             );
+            evt.addEventBinding(
+                CustomUIEventBindingType.Activating, "#SetFilters[" + idx + "] #IgnoreBtn",
+                EventData.of("Action", "IgnoreSet:idx:" + i)
+            );
+            evt.addEventBinding(
+                CustomUIEventBindingType.Activating, "#IgnoredSetFilters[" + idx + "] #IgnoreBtn",
+                EventData.of("Action", "RestoreIgnoredSet:idx:" + i)
+            );
         }
+        evt.addEventBinding(
+            CustomUIEventBindingType.Activating, "#ClearIgnoredSetsBtn",
+            EventData.of("Action", "ClearIgnoredSets")
+        );
     }
 
     private void updateSetFilters(UICommandBuilder cmd) {
+        cmd.set("#IgnoredSetsHeader.Text", Message.translation(ignoredSetsExpanded
+            ? "server.ui.stencil.sidebar.ignoredExpanded"
+            : "server.ui.stencil.sidebar.ignoredCollapsed"));
+        cmd.set("#IgnoredSetFilters.Visible", ignoredSetsExpanded);
+
         FilterSelectionState selectionState = getSetSelectionState();
         boolean showSelectAllIcon = selectionState == FilterSelectionState.NONE;
         cmd.set("#ClearSetsIcon #IconCheck.Visible", showSelectAllIcon);
@@ -747,6 +856,28 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 cmd.set(sel + " #Btn.Text", label);
                 cmd.set(sel + " #Btn.Style", checked ? FILTER_ACTIVE : FILTER_INACTIVE);
                 cmd.set(sel + " #Check.Value", checked);
+                cmd.set(sel + " #Check.Visible", true);
+                cmd.set(sel + " #IgnoreIconCross.Visible", true);
+                cmd.set(sel + " #IgnoreBtn.TooltipText", "Ignore set");
+                cmd.set(sel + " #IgnoreIconCheck.Visible", false);
+            } else {
+                cmd.set(sel + ".Visible", false);
+            }
+        }
+
+        cmd.set("#ClearIgnoredSetsBtn.Visible", !currentIgnoredSets.isEmpty());
+        for (int i = 0; i < totalSetCount; i++) {
+            String sel = "#IgnoredSetFilters[" + i + "]";
+            if (i < currentIgnoredSets.size()) {
+                String setName = currentIgnoredSets.get(i);
+                String label = RecipeFilterPipeline.setDisplayLabel(setName);
+                cmd.set(sel + ".Visible", true);
+                cmd.set(sel + " #Btn.Text", label);
+                cmd.set(sel + " #Btn.Style", FILTER_INACTIVE);
+                cmd.set(sel + " #Check.Visible", false);
+                cmd.set(sel + " #IgnoreIconCross.Visible", false);
+                cmd.set(sel + " #IgnoreBtn.TooltipText", "Restore set");
+                cmd.set(sel + " #IgnoreIconCheck.Visible", true);
             } else {
                 cmd.set(sel + ".Visible", false);
             }
@@ -848,6 +979,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
 
     private void toggleSetFilter(String setName) {
         if (setName == null || setName.isEmpty()) return;
+        if (ignoredSetFilters.contains(setName)) return;
         FilterSelectionState state = getSetSelectionState();
         if (state == FilterSelectionState.ALL) {
             selectAllSets = false;
@@ -889,6 +1021,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             return;
         }
 
+        activeSetFilters.removeIf(ignoredSetFilters::contains);
         activeSetFilters.retainAll(currentSets);
         if (activeSetFilters.size() >= currentSets.size()) {
             selectAllSets = true;
@@ -922,6 +1055,22 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             return FilterSelectionState.ALL;
         }
         return FilterSelectionState.SOME;
+    }
+
+    private void ignoreSet(String setName) {
+        if (setName == null || setName.isEmpty()) return;
+        ignoredSetFilters.add(setName);
+        activeSetFilters.remove(setName);
+        normalizeSetSelectionState();
+    }
+
+    private void restoreIgnoredSet(String setName) {
+        if (setName == null || setName.isEmpty()) return;
+        ignoredSetFilters.remove(setName);
+    }
+
+    private void clearIgnoredSets() {
+        ignoredSetFilters.clear();
     }
 
     private void toggleCategoryFilter(String categoryId) {

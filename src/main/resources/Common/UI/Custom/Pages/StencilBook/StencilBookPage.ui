@@ -95,7 +95,6 @@ Group {
                         ScrollbarStyle: $C.@DefaultScrollbarStyle;
                         FlexWeight: 1;
 
-                        // Category group icon buttons — collapsible section
                         Group {
                             Anchor: (Height: 24, Left: 0, Right: 0);
 
@@ -128,8 +127,8 @@ Group {
                             }
                         }
 
-                        Group {
-                            Anchor: (Height: 100);
+                        Group #MaterialGroupsContainer {
+                            FlexWeight: 1;
                             LayoutMode: TopScrolling;
                             ScrollbarStyle: $C.@DefaultScrollbarStyle;
 
@@ -174,6 +173,40 @@ Group {
                         }
 
                         Group #SetFilters {
+                            FlexWeight: 1;
+                            LayoutMode: TopScrolling;
+                            ScrollbarStyle: $C.@DefaultScrollbarStyle;
+                        }
+
+                        Group { Anchor: (Height: 6); }
+
+                        Group {
+                            Anchor: (Height: 30, Left: 0, Right: 0);
+
+                            TextButton #IgnoredSetsHeader {
+                                Text: "v Ignored";
+                                Anchor: (Full: 0);
+                                Padding: (Left: 6, Right: 22);
+                                Style: $B.@SectionHeaderStyle;
+                            }
+
+                            Group {
+                                Anchor: (Width: 24, Height: 24, Right: 2);
+
+                                Group {
+                                    Anchor: (Full: 0);
+                                    Background: $BG.@TrashIcon;
+                                }
+
+                                TextButton #ClearIgnoredSetsBtn {
+                                    Text: "";
+                                    Anchor: (Full: 0);
+                                    TooltipText: "Clear ignored sets";
+                                }
+                            }
+                        }
+
+                        Group #IgnoredSetFilters {
                             FlexWeight: 1;
                             LayoutMode: TopScrolling;
                             ScrollbarStyle: $C.@DefaultScrollbarStyle;

@@ -3,6 +3,9 @@
 // Server updates via cmd.set() on indexed selectors: #SetFilters[N].Visible, #Btn.Text, #Btn.Style, #Check.Value
 
 $C = "../../../Common.ui";
+$B = "../../../Styles/Buttons.ui";
+$BG = "../../../Styles/Backgrounds.ui";
+$L = "../../../Styles/Labels.ui";
 
 Group {
     Anchor: (Height: 24);
@@ -11,7 +14,7 @@ Group {
     TextButton #Btn {
         Text: "";
         Anchor: (Full: 0);
-        Padding: (Left: 22, Right: 6);
+        Padding: (Left: 22, Right: 24);
     }
 
     CheckBox #Check {
@@ -19,5 +22,28 @@ Group {
         Background: (TexturePath: "../../../Common/CheckBoxFrame.png", Border: 7);
         Padding: (Full: 2);
         Style: $C.@DefaultCheckBoxStyle;
+    }
+
+    Group {
+        Anchor: (Width: 18, Height: 18, Right: 3, Top: 3);
+
+        Label #IgnoreIconCross {
+            Text: "x";
+            Anchor: (Full: 0);
+            Style: $L.@SectionLabelStyle;
+            Visible: true;
+        }
+
+        Group #IgnoreIconCheck {
+            Anchor: (Full: 1);
+            Background: $BG.@CheckIcon;
+            Visible: false;
+        }
+
+        TextButton #IgnoreBtn {
+            Text: "";
+            Anchor: (Full: 0);
+            Style: $B.@InvisibleHitTargetButtonStyle;
+        }
     }
 }

@@ -90,6 +90,12 @@ $C = "../Common.ui";
     Pressed: (Background: $C.@TertiaryPressedButtonBackground, LabelStyle: (FontSize: 1, TextColor: #000000(0.0)))
 );
 
+@InvisibleHitTargetButtonStyle = TextButtonStyle(
+    Default: (Background: #000000(0.0), LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
+    Hovered: (Background: #000000(0.0), LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
+    Pressed: (Background: #000000(0.0), LabelStyle: (FontSize: 1, TextColor: #000000(0.0)))
+);
+
 @SelectedCellButtonStyle = TextButtonStyle(
     Default: (Background: $C.@TertiaryActiveButtonBackground, LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
     Hovered: (Background: $C.@TertiaryActiveButtonBackground, LabelStyle: (FontSize: 1, TextColor: #000000(0.0))),
