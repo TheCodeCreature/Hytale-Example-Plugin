@@ -5,7 +5,6 @@
 $C = "../../../Common.ui";
 $B = "../../../Styles/Buttons.ui";
 $BG = "../../../Styles/Backgrounds.ui";
-$L = "../../../Styles/Labels.ui";
 
 Group {
     Anchor: (Height: 24);
@@ -27,10 +26,9 @@ Group {
     Group {
         Anchor: (Width: 18, Height: 18, Right: 3, Top: 3);
 
-        Label #IgnoreIconCross {
-            Text: "x";
-            Anchor: (Full: 0);
-            Style: $L.@SectionLabelStyle;
+        Group #IgnoreIconCross {
+            Anchor: (Full: 1);
+            Background: $BG.@TrashIcon;
             Visible: true;
         }
 
