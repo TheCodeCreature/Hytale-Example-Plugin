@@ -1222,11 +1222,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         }
 
         ItemStack item = StencilMetadata.createStencil(entry.outputItemId(), entry.recipeId());
-        int beforeQty = getStencilQuantity(player, entry.recipeId());
-        player.getInventory().getCombinedHotbarFirst().addItemStack(item);
-        int afterQty = getStencilQuantity(player, entry.recipeId());
-
-        if (afterQty <= beforeQty) {
+        if (!upsertSingleStencilStack(player, item, entry.recipeId())) {
             showGiveStencilStatusFeedback(cmd, store, "No Space", GIVE_STATUS_ERROR);
             DebugLogger.chat(this.playerRef, STENCIL_BOOK,
                 "\u00a7c[StencilBook] Could not give stencil: inventory is full.");
@@ -1244,6 +1240,52 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         return getStencilQuantity(player.getInventory().getHotbar(), recipeId)
                 + getStencilQuantity(player.getInventory().getBackpack(), recipeId)
                 + getStencilQuantity(player.getInventory().getStorage(), recipeId);
+    }
+
+    private boolean upsertSingleStencilStack(Player player, ItemStack stencil, String recipeId) {
+        if (upsertStencilInContainer(player.getInventory().getHotbar(), recipeId)) {
+            return true;
+        }
+        if (upsertStencilInContainer(player.getInventory().getBackpack(), recipeId)) {
+            return true;
+        }
+        if (upsertStencilInContainer(player.getInventory().getStorage(), recipeId)) {
+            return true;
+        }
+        return placeInFirstEmptySlot(player.getInventory().getHotbar(), stencil)
+                || placeInFirstEmptySlot(player.getInventory().getBackpack(), stencil)
+                || placeInFirstEmptySlot(player.getInventory().getStorage(), stencil);
+    }
+
+    private boolean upsertStencilInContainer(ItemContainer container, String recipeId) {
+        if (container == null) return false;
+        short capacity = container.getCapacity();
+        for (short slot = 0; slot < capacity; slot++) {
+            ItemStack stack = container.getItemStack(slot);
+            if (stack == null) continue;
+            if (!StencilMetadata.isStencil(stack)) continue;
+            if (!recipeId.equals(StencilMetadata.getRecipeId(stack))) continue;
+            if (stack.getQuantity() != StencilMetadata.STENCIL_STACK_SIZE) {
+                ItemStack normalized = new ItemStack(
+                        stack.getItemId(),
+                        StencilMetadata.STENCIL_STACK_SIZE,
+                        stack.getMetadata());
+                container.setItemStackForSlot(slot, normalized);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private boolean placeInFirstEmptySlot(ItemContainer container, ItemStack stackToPlace) {
+        if (container == null) return false;
+        short capacity = container.getCapacity();
+        for (short slot = 0; slot < capacity; slot++) {
+            if (container.getItemStack(slot) != null) continue;
+            container.setItemStackForSlot(slot, stackToPlace);
+            return true;
+        }
+        return false;
     }
 
     private int getStencilQuantity(ItemContainer container, String recipeId) {

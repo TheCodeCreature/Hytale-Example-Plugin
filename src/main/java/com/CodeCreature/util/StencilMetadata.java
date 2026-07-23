@@ -30,7 +30,7 @@ public final class StencilMetadata {
     /** BSON key storing the recipe ID to consume resources from. */
     private static final String RECIPE_ID_KEY = "RecipeId";
 
-    public static final int STENCIL_STACK_SIZE = 99;
+    public static final int STENCIL_STACK_SIZE = 9;
 
     private StencilMetadata() {}
 
@@ -80,14 +80,14 @@ public final class StencilMetadata {
     /**
      * Creates a new stencil ItemStack with the given item type and recipe ID.
      *
-     * <p>Constructs an {@code ItemStack(itemTypeKey, 1, bsonDoc)} where
+    * <p>Constructs an {@code ItemStack(itemTypeKey, STENCIL_STACK_SIZE, bsonDoc)} where
      * the BSON document contains:
      * <ul>
      *   <li>{@value #STENCIL_TAG_KEY} = {@code "true"}</li>
      *   <li>{@value #RECIPE_ID_KEY} = the provided recipeId</li>
      * </ul>
      *
-     * <p>The returned item has quantity 1. The {@code itemTypeKey} should
+    * <p>The returned item uses {@link #STENCIL_STACK_SIZE}. The {@code itemTypeKey} should
      * be a valid block item ID (e.g., {@code "Oak_Planks"}) so that the
      * engine renders the correct block preview and fires PlaceBlockEvent.
      *
