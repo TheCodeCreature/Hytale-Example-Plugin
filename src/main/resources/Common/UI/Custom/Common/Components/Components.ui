@@ -30,6 +30,11 @@ $B = "../../Styles/Buttons.ui";
         Anchor: (Full: @IconPadding);
         ShowItemTooltip: @ShowTooltip;
     }
+    Group #GenericIcon {
+        Anchor: (Full: @IconPadding);
+        Background: "";
+        Visible: false;
+    }
     Group #Dim {
         Anchor: (Full: 2);
         Background: $BG.@DimOverlay;

@@ -1,16 +1,39 @@
 package com.CodeCreature.ui.ingredienttree;
 
+/**
+ * @node    IngredientTreeBuilder
+ * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
+ * @intent  Builds the ingredient tree from display-only representative projections so tree icons
+ *          remain stable without treating one concrete item as semantic truth for a generic input.
+ * @wave    2 (affordability and UI projection migration)
+ * @status  Wave 2 - tree display now routes through presentation-oriented generic projections
+ * @do-not  Change grouping or ordering semantics in this wave.
+ *          Reuse tree representative choice as a semantic resolution policy.
+ */
+
+import com.CodeCreature.crafting.GenericIngredientResolution;
+import com.CodeCreature.crafting.IngredientPresentation;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.protocol.ItemResourceType;
 import com.CodeCreature.scaling.ResourceTypeResolver;
 
-import java.util.*;
+import com.CodeCreature.util.DebugLogger;
+import com.CodeCreature.scaling.ResourceTypeResolver;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 
-import com.CodeCreature.util.DebugLogger;
-import javax.annotation.Nullable;
 import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 public final class IngredientTreeBuilder {
@@ -82,11 +105,11 @@ public final class IngredientTreeBuilder {
         DebugLogger.log(INGREDIENT_TREE, Level.FINE, () -> "Collected " + directItemIds.size() + " direct item IDs");
 
         // ── Step 2: Resolve representative item IDs for each resource type ID ──
-        Map<String, String> representativeItemIdMap = new HashMap<>();
+        Map<String, IngredientPresentation> representativePresentationMap = new HashMap<>();
         for (String resId : resourceTypeIds) {
-            String representativeItemId = resolveRepresentativeItemIdForResourceType(resId);
-            if (representativeItemId != null) {
-                representativeItemIdMap.put(resId, representativeItemId);
+            IngredientPresentation representativePresentation = resolveRepresentativePresentationForResourceType(resId);
+            if (representativePresentation != null) {
+                representativePresentationMap.put(resId, representativePresentation);
             }
             // Absent key = unresolvable; UI falls back to blank icon instead of broken texture path.
         }
@@ -128,7 +151,7 @@ public final class IngredientTreeBuilder {
             String displayName = prefix.replace('_', ' ');
 
             // Group header icon uses ItemIcon with a representative item id.
-            String groupDisplayItemId = resolveGroupDisplayItemId(resIds, representativeItemIdMap, directItemIds);
+            String groupDisplayItemId = resolveGroupDisplayItemId(resIds, representativePresentationMap, directItemIds);
 
             // Placeholder group for parent back-references in RT nodes
             IngredientGroup placeholderGroup = new IngredientGroup(
@@ -147,7 +170,8 @@ public final class IngredientTreeBuilder {
                     rtDisplayItemId = resId;
                     isDirectItem = true;
                 } else {
-                    rtDisplayItemId = representativeItemIdMap.get(resId);
+                    IngredientPresentation presentation = representativePresentationMap.get(resId);
+                    rtDisplayItemId = presentation != null ? presentation.iconItemId() : null;
                     isDirectItem = false;
                 }
                 String rtDisplayName = resId.replace('_', ' ');
@@ -183,26 +207,34 @@ public final class IngredientTreeBuilder {
 
     @Nullable
     private static String resolveGroupDisplayItemId(List<String> resIds,
-                                                    Map<String, String> representativeItemIdMap,
+                                                    Map<String, IngredientPresentation> representativePresentationMap,
                                                     Set<String> directItemIds) {
         // Walk the list in order and take the first child that yields a representative item id.
         for (String resId : resIds) {
             if (directItemIds.contains(resId)) {
                 return resId;
             }
-            String representativeItemId = representativeItemIdMap.get(resId);
-            if (representativeItemId != null) {
-                return representativeItemId;
+            IngredientPresentation presentation = representativePresentationMap.get(resId);
+            if (presentation != null && presentation.iconItemId() != null) {
+                return presentation.iconItemId();
             }
         }
         return null;
     }
 
     @Nullable
-    private static String resolveRepresentativeItemIdForResourceType(String resId) {
-        List<String> indexedMatches = ResourceTypeResolver.getAllMatchingItemIds(resId);
+    private static IngredientPresentation resolveRepresentativePresentationForResourceType(String resId) {
+        GenericIngredientResolution resolution = ResourceTypeResolver.resolveGenericIngredient(
+                new MaterialQuantity(null, resId, null, 1, null),
+                false);
+        List<String> indexedMatches = resolution.orderedMatchingItemIds();
         if (!indexedMatches.isEmpty()) {
-            return indexedMatches.get(0);
+            String representativeItemId = indexedMatches.get(0);
+            return new IngredientPresentation(
+                    representativeItemId,
+                    representativeItemId,
+                    representativeItemId.replace('_', ' '),
+                    false);
         }
 
         // Fallback for cases where resolver index has not been initialized yet.
@@ -218,7 +250,15 @@ public final class IngredientTreeBuilder {
             }
         }
         fallbackMatches.sort(String.CASE_INSENSITIVE_ORDER);
-        return fallbackMatches.isEmpty() ? null : fallbackMatches.get(0);
+        if (fallbackMatches.isEmpty()) {
+            return null;
+        }
+        String representativeItemId = fallbackMatches.get(0);
+        return new IngredientPresentation(
+                representativeItemId,
+                representativeItemId,
+                representativeItemId.replace('_', ' '),
+                false);
     }
 
 }

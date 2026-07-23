@@ -1,7 +1,17 @@
 package com.CodeCreature.ui.radial;
 
-import com.CodeCreature.crafting.RecipeAffordabilityResolver;
-import com.CodeCreature.crafting.ResolvedIngredient;
+/**
+ * @node    StencilRadialMenuPage
+ * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
+ * @intent  Drives radial stencil affordability visuals from the Wave 2 facade so cost icons and
+ *          segment states consume presentation data instead of semantic concrete IDs.
+ * @wave    2 (affordability and UI projection migration)
+ * @status  Wave 2 - radial menu now consumes facade-projected affordability and ingredient views
+ * @do-not  Move planner or raw-cost policy into this page.
+ *          Reinterpret one icon item as the semantic identity of a generic ingredient.
+ */
+
+import com.CodeCreature.crafting.CraftingAffordabilityFacade;
 import com.CodeCreature.registry.FilteredRecipeEntry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
 import com.CodeCreature.util.StencilMetadata;
@@ -388,8 +398,7 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
         }
 
         boolean affordable = bypassAffordabilityChecks || (container != null
-            && RecipeAffordabilityResolver.resolveIngredientCosts(recipe, preferNatural, container)
-                .stream().allMatch(ResolvedIngredient::sufficient));
+            && CraftingAffordabilityFacade.isAffordable(recipe, preferNatural, container));
         cmd.set("#Segments[" + slotIndex + "] #SegFrame.Background", affordable ? SEG_FRAME_NORMAL : SEG_FRAME_UNAFFORDABLE);
         cmd.set("#Segments[" + slotIndex + "] #Dim.Visible", !affordable);
     }
@@ -414,7 +423,8 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
             container = player.getInventory().getCombinedBackpackStorageHotbar();
         }
 
-        List<ResolvedIngredient> ingredients = RecipeAffordabilityResolver.resolveIngredientCosts(recipe, preferNatural, container);
+        List<CraftingAffordabilityFacade.DirectIngredientView> ingredients =
+            CraftingAffordabilityFacade.resolveDirectIngredients(recipe, preferNatural, container);
         int count = Math.min(ingredients.size(), MAX_COST_SLOTS);
         if (ingredients.isEmpty()) { hideCostArc(cmd); return; }
 
@@ -442,9 +452,14 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
                 anchor.setTop(Value.of(top));
                 cmd.setObject("#CostSlots[" + j + "].Anchor", anchor);
 
-                ResolvedIngredient ing = ingredients.get(j);
-                String costName = ing.resolvedItemId().replace('_', ' ');
-                cmd.set("#CostSlots[" + j + "] #Icon.ItemId", ing.resolvedItemId());
+                CraftingAffordabilityFacade.DirectIngredientView ing = ingredients.get(j);
+                String iconItemId = ing.presentation().iconItemId() == null ? "" : ing.presentation().iconItemId();
+                String genericIconPath = ing.presentation().genericIconPath();
+                boolean useGenericIcon = genericIconPath != null && !genericIconPath.isEmpty();
+                String costName = ing.presentation().displayName();
+                cmd.set("#CostSlots[" + j + "] #Icon.ItemId", useGenericIcon ? "" : iconItemId);
+                cmd.set("#CostSlots[" + j + "] #GenericIcon.Visible", useGenericIcon);
+                cmd.set("#CostSlots[" + j + "] #GenericIcon.Background", useGenericIcon ? genericIconPath : "");
                 cmd.set("#CostSlots[" + j + "] #Qty.Text", "x" + ing.requiredQty());
                 cmd.set("#CostSlots[" + j + "] #Name.Text", costName);
                 boolean sufficient = bypassAffordabilityChecks || ing.sufficient();
@@ -453,6 +468,8 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
                 cmd.set("#CostSlots[" + j + "].Visible", true);
             } else {
                 cmd.set("#CostSlots[" + j + "].Visible", false);
+                cmd.set("#CostSlots[" + j + "] #GenericIcon.Visible", false);
+                cmd.set("#CostSlots[" + j + "] #GenericIcon.Background", "");
             }
         }
     }
@@ -468,6 +485,8 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
     private void hideCostArc(UICommandBuilder cmd) {
         for (int j = 0; j < MAX_COST_SLOTS; j++) {
             cmd.set("#CostSlots[" + j + "].Visible", false);
+            cmd.set("#CostSlots[" + j + "] #GenericIcon.Visible", false);
+            cmd.set("#CostSlots[" + j + "] #GenericIcon.Background", "");
             cmd.set("#CostSlots[" + j + "] #Dim.Visible", false);
         }
     }

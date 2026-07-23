@@ -1,6 +1,6 @@
 package com.CodeCreature.ui.bench;
 
-import com.CodeCreature.crafting.PlaceBlockCostUtil;
+import com.CodeCreature.crafting.CraftingAffordabilityFacade;
 import com.CodeCreature.ui.common.IconPathResolver;
 import com.CodeCreature.ui.ingredienttree.IngredientTree;
 import com.CodeCreature.ui.ingredienttree.IngredientTreeBuilder;
@@ -1317,8 +1317,9 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     private boolean isAffordable(RecipeFilterPipeline.InputRecipe entry, CombinedItemContainer container) {
         CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId());
         if (recipe != null) {
-            List<MaterialQuantity> materials = PlaceBlockCostUtil.getPerUnitCost(recipe);
-            if (container.canRemoveMaterials(materials)) return true;
+            FilteredRecipeEntry filteredEntry = RecipeFilterRegistry.getEntry(entry.recipeId());
+            boolean preferNatural = filteredEntry != null && filteredEntry.preferNatural();
+            if (CraftingAffordabilityFacade.isAffordable(recipe, preferNatural, container)) return true;
         }
 
         Item outputItem = Item.getAssetMap().getAsset(entry.outputItemId());

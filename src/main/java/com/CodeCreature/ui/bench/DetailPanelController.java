@@ -1,7 +1,17 @@
 package com.CodeCreature.ui.bench;
 
-import com.CodeCreature.crafting.RecipeAffordabilityResolver;
-import com.CodeCreature.crafting.ResolvedIngredient;
+/**
+ * @node    DetailPanelController
+ * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
+ * @intent  Renders stencil detail-panel ingredient costs from Wave 2 presentation-oriented
+ *          affordability data instead of inferring semantics from a resolved concrete item ID.
+ * @wave    2 (affordability and UI projection migration)
+ * @status  Wave 2 - detail panel now consumes facade-projected ingredient presentation
+ * @do-not  Reintroduce semantic coupling to one representative concrete item here.
+ *          Add planner or raw-cost policy here.
+ */
+
+import com.CodeCreature.crafting.CraftingAffordabilityFacade;
 import com.CodeCreature.registry.FilteredRecipeEntry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
@@ -72,20 +82,24 @@ public class DetailPanelController {
                     FilteredRecipeEntry fe = RecipeFilterRegistry.getEntry(entry.recipeId());
                     boolean preferNatural = fe != null && fe.preferNatural();
 
-                    List<ResolvedIngredient> ingredients =
-                        RecipeAffordabilityResolver.resolveIngredientCosts(recipe, preferNatural, container);
+                    List<CraftingAffordabilityFacade.DirectIngredientView> ingredients =
+                        CraftingAffordabilityFacade.resolveDirectIngredients(recipe, preferNatural, container);
 
                     if (!ingredients.isEmpty()) {
-                        for (ResolvedIngredient ing : ingredients) {
+                        for (CraftingAffordabilityFacade.DirectIngredientView ing : ingredients) {
                             if (costIdx >= MAX_COST_CELLS) break;
                             String sel = costCellSelector(costIdx);
-                            String itemId = ing.resolvedItemId() == null ? "" : ing.resolvedItemId();
+                            String itemId = ing.presentation().iconItemId() == null ? "" : ing.presentation().iconItemId();
+                            String genericIconPath = ing.presentation().genericIconPath();
+                            boolean useGenericIcon = genericIconPath != null && !genericIconPath.isEmpty();
                             int requiredQty = ing.requiredQty();
                             boolean sufficient = ing.sufficient();
                             if (!sufficient) allAffordable = false;
 
                             cmd.set(sel + ".Visible", true);
-                            cmd.set(sel + " #Icon.ItemId", itemId);
+                            cmd.set(sel + " #Icon.ItemId", useGenericIcon ? "" : itemId);
+                            cmd.set(sel + " #GenericIcon.Visible", useGenericIcon);
+                            cmd.set(sel + " #GenericIcon.Background", useGenericIcon ? genericIconPath : "");
                             cmd.set(sel + " #Qty.Text", Message.translation("server.ui.stencil.detail.quantityFormat").param("qty", requiredQty));
                             if (checkInventory) {
                                 cmd.set(sel + " #Dim.Visible", !sufficient);
@@ -103,6 +117,8 @@ public class DetailPanelController {
                 for (int i = costIdx; i < MAX_COST_CELLS; i++) {
                     String sel = costCellSelector(i);
                     cmd.set(sel + ".Visible", false);
+                    cmd.set(sel + " #GenericIcon.Visible", false);
+                    cmd.set(sel + " #GenericIcon.Background", "");
                     cmd.set(sel + " #Dim.Visible", false);
                     cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
                 }
@@ -130,6 +146,8 @@ public class DetailPanelController {
         for (int i = 0; i < MAX_COST_CELLS; i++) {
             String sel = costCellSelector(i);
             cmd.set(sel + ".Visible", false);
+            cmd.set(sel + " #GenericIcon.Visible", false);
+            cmd.set(sel + " #GenericIcon.Background", "");
             cmd.set(sel + " #Dim.Visible", false);
             cmd.set(sel + " #Qty.Style", COST_QTY_NORMAL);
         }

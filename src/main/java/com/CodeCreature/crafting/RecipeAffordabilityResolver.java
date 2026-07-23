@@ -1,7 +1,20 @@
 package com.CodeCreature.crafting;
 
+/**
+ * @node    RecipeAffordabilityResolver
+ * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
+ * @intent  Resolves direct recipe ingredient affordability against the Wave 1 typed generic
+ *          ingredient boundary while preserving the legacy ResolvedIngredient adapter for
+ *          transitional callers.
+ * @wave    2 (affordability and UI projection migration)
+ * @status  Wave 2 - direct affordability now routes through generic identity plus presentation
+ * @do-not  Migrate auto-craft planner semantics here beyond facade delegation.
+ *          Treat representativeItemId as the semantic identity for generic inputs.
+ */
+
 import com.CodeCreature.scaling.NaturalResourceRegistry;
 import com.CodeCreature.scaling.ResourceTypeResolver;
+import com.CodeCreature.ui.common.IconPathResolver;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
@@ -15,6 +28,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -55,7 +69,79 @@ import java.util.Set;
  */
 public final class RecipeAffordabilityResolver {
 
+    private record DirectIngredientKey(@Nullable String itemId, @Nullable String resourceTypeId) {}
+
+    private static final class MutableDirectIngredient {
+        private final GenericIngredientIdentity identity;
+        private final IngredientPresentation presentation;
+        private int requiredQty;
+        private final int playerHas;
+
+        private MutableDirectIngredient(GenericIngredientIdentity identity,
+                                        IngredientPresentation presentation,
+                                        int requiredQty,
+                                        int playerHas) {
+            this.identity = identity;
+            this.presentation = presentation;
+            this.requiredQty = requiredQty;
+            this.playerHas = playerHas;
+        }
+    }
+
     private RecipeAffordabilityResolver() {}
+
+    /** @intent Resolve direct ingredient affordability on the typed generic ingredient boundary and attach UI-facing presentation data.
+     *  @wave   2 - implemented typed direct affordability projection
+     *  @status implemented
+     *  @node   RecipeAffordabilityResolver#resolveIngredientAffordability
+     */
+    @Nonnull
+    public static List<CraftingAffordabilityFacade.DirectIngredientView> resolveIngredientAffordability(
+            @Nonnull CraftingRecipe recipe,
+            boolean preferNatural,
+            @Nullable CombinedItemContainer container) {
+        Objects.requireNonNull(recipe, "recipe");
+
+        List<MaterialQuantity> perUnitInputs = PlaceBlockCostUtil.getPerUnitCost(recipe);
+        if (perUnitInputs.isEmpty()) {
+            return List.of();
+        }
+
+        Map<DirectIngredientKey, MutableDirectIngredient> merged = new LinkedHashMap<>();
+        for (MaterialQuantity input : perUnitInputs) {
+            if (input == null) {
+                continue;
+            }
+
+            GenericIngredientResolution resolution = ResourceTypeResolver.resolveGenericIngredient(input, preferNatural);
+            String displayItemId = resolveDisplayItemId(resolution);
+            if (displayItemId == null || displayItemId.isEmpty()) {
+                continue;
+            }
+
+            GenericIngredientIdentity identity = resolution.identity();
+            DirectIngredientKey key = new DirectIngredientKey(identity.itemId(), identity.resourceTypeId());
+            MutableDirectIngredient existing = merged.get(key);
+            if (existing == null) {
+                IngredientPresentation presentation = toPresentation(identity, resolution, displayItemId);
+                int playerHas = countPlayerHas(resolution, displayItemId, container);
+                merged.put(key, new MutableDirectIngredient(identity, presentation, input.getQuantity(), playerHas));
+            } else {
+                existing.requiredQty += input.getQuantity();
+            }
+        }
+
+        List<CraftingAffordabilityFacade.DirectIngredientView> result = new ArrayList<>(merged.size());
+        for (MutableDirectIngredient ingredient : merged.values()) {
+            result.add(new CraftingAffordabilityFacade.DirectIngredientView(
+                    ingredient.identity,
+                    ingredient.presentation,
+                    ingredient.requiredQty,
+                    ingredient.playerHas,
+                    ingredient.playerHas >= ingredient.requiredQty));
+        }
+        return List.copyOf(result);
+    }
 
     /**
      * Resolves all ingredients for a recipe and checks each against the
@@ -92,49 +178,20 @@ public final class RecipeAffordabilityResolver {
             @Nonnull CraftingRecipe recipe,
             boolean preferNatural,
             @Nullable CombinedItemContainer container) {
-        List<MaterialQuantity> perUnitInputs = PlaceBlockCostUtil.getPerUnitCost(recipe);
-        if (perUnitInputs.isEmpty()) {
-            return List.of();
-        }
+        List<CraftingAffordabilityFacade.DirectIngredientView> ingredients =
+                resolveIngredientAffordability(recipe, preferNatural, container);
 
-        Map<String, Integer> ingredientMap = new LinkedHashMap<>();
-        Map<String, String> resolvedToResourceType = new LinkedHashMap<>();
-        for (MaterialQuantity mq : perUnitInputs) {
-            if (mq == null) continue;
-            String itemId = ResourceTypeResolver.resolveInputItemId(mq, preferNatural);
-            if (itemId == null || itemId.isEmpty()) continue;
-            itemId = NaturalResourceRegistry.resolveToGatherableForm(itemId);
-            ingredientMap.merge(itemId, mq.getQuantity(), Integer::sum);
-            if (mq.getResourceTypeId() != null) {
-                resolvedToResourceType.putIfAbsent(itemId, mq.getResourceTypeId());
+        List<ResolvedIngredient> result = new ArrayList<>(ingredients.size());
+        for (CraftingAffordabilityFacade.DirectIngredientView ingredient : ingredients) {
+            String itemId = ingredient.presentation().itemId();
+            if (itemId == null || itemId.isEmpty()) {
+                continue;
             }
-        }
-
-        List<ResolvedIngredient> result = new ArrayList<>(ingredientMap.size());
-        for (var e : ingredientMap.entrySet()) {
-            String itemId = e.getKey();
-            int requiredQty = e.getValue();
-            int playerHas;
-            String resourceTypeId = resolvedToResourceType.get(itemId);
-            if (container != null && resourceTypeId != null) {
-                // Multi-variant: sum across all matching variants, excluding stencils
-                List<String> allVariants = ResourceTypeResolver.getAllMatchingItemIds(resourceTypeId);
-                int total = 0;
-                Set<String> seen = new HashSet<>();
-                for (String variantId : allVariants) {
-                    String resolved = NaturalResourceRegistry.resolveToGatherableForm(variantId);
-                    if (!seen.add(resolved)) continue;
-                    final String lookupId = resolved;
-                    total += container.countItemStacks(stack ->
-                            lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
-                }
-                playerHas = total;
-            } else if (container != null) {
-                playerHas = container.countItemStacks(stack -> itemId.equals(stack.getItemId()));
-            } else {
-                playerHas = 0;
-            }
-            result.add(new ResolvedIngredient(itemId, requiredQty, playerHas, playerHas >= requiredQty));
+            result.add(new ResolvedIngredient(
+                    itemId,
+                    ingredient.requiredQty(),
+                    ingredient.playerHas(),
+                    ingredient.sufficient()));
         }
         return List.copyOf(result);
     }
@@ -162,8 +219,9 @@ public final class RecipeAffordabilityResolver {
      */
     public static boolean isAffordable(@Nonnull CraftingRecipe recipe,
                                        @Nonnull CombinedItemContainer container) {
-        List<ResolvedIngredient> ingredients = resolveIngredientCosts(recipe, false, container);
-        return ingredients.isEmpty() || ingredients.stream().allMatch(ResolvedIngredient::sufficient);
+        List<CraftingAffordabilityFacade.DirectIngredientView> ingredients =
+            resolveIngredientAffordability(recipe, false, container);
+        return ingredients.isEmpty() || ingredients.stream().allMatch(CraftingAffordabilityFacade.DirectIngredientView::sufficient);
     }
 
     /**
@@ -186,5 +244,93 @@ public final class RecipeAffordabilityResolver {
                                                      boolean preferNatural,
                                                      @Nonnull CombinedItemContainer container) {
         return AutoCraftPlanner.plan(recipe, preferNatural, container).affordable();
+    }
+
+    /** @intent Preserve current gatherable display projection for direct affordability without implying semantic identity.
+     *  @wave   2 - implemented display projection helper
+     *  @status implemented
+     *  @node   RecipeAffordabilityResolver#resolveDisplayItemId
+     */
+    @Nullable
+    private static String resolveDisplayItemId(GenericIngredientResolution resolution) {
+        String representativeItemId = resolution.representativeItemId();
+        if ((representativeItemId == null || representativeItemId.isEmpty())
+                && !resolution.orderedMatchingItemIds().isEmpty()) {
+            representativeItemId = resolution.orderedMatchingItemIds().get(0);
+        }
+        if (representativeItemId == null || representativeItemId.isEmpty()) {
+            return null;
+        }
+        return NaturalResourceRegistry.resolveToGatherableForm(representativeItemId);
+    }
+
+    /** @intent Build a UI-facing ingredient projection that separates generic identity from representative icon choice.
+     *  @wave   2 - implemented presentation adapter
+     *  @status implemented
+     *  @node   RecipeAffordabilityResolver#toPresentation
+     */
+    @Nonnull
+    private static IngredientPresentation toPresentation(GenericIngredientIdentity identity,
+                                                         GenericIngredientResolution resolution,
+                                                         String displayItemId) {
+        String resourceTypeId = identity.resourceTypeId();
+        boolean genericMode = resourceTypeId != null && !resourceTypeId.isEmpty();
+
+        String displayNameSource = genericMode ? resourceTypeId : displayItemId;
+        if (displayNameSource == null || displayNameSource.isEmpty()) {
+            displayNameSource = identity.itemId();
+        }
+        boolean semanticRepresentative = !resolution.requiresGenericMatching();
+        String genericIconPath = genericMode ? IconPathResolver.resolveResourceTypeIcon(resourceTypeId) : null;
+
+        return new IngredientPresentation(
+                displayItemId,
+                displayItemId,
+                displayNameSource == null ? "" : displayNameSource.replace('_', ' '),
+                semanticRepresentative,
+                genericMode,
+                resourceTypeId,
+                genericIconPath);
+    }
+
+    /** @intent Count the player's holdings for one typed ingredient while preserving current generic mixed-variant and stencil-exclusion behavior.
+     *  @wave   2 - implemented player-holdings helper
+     *  @status implemented
+     *  @node   RecipeAffordabilityResolver#countPlayerHas
+     */
+    private static int countPlayerHas(GenericIngredientResolution resolution,
+                                      String displayItemId,
+                                      @Nullable CombinedItemContainer container) {
+        if (container == null) {
+            return 0;
+        }
+
+        String resourceTypeId = resolution.identity().resourceTypeId();
+        if (resourceTypeId != null) {
+            Set<String> seen = new HashSet<>();
+            int total = 0;
+            for (String variantId : resolution.orderedMatchingItemIds()) {
+                String resolved = NaturalResourceRegistry.resolveToGatherableForm(variantId);
+                if (!seen.add(resolved)) {
+                    continue;
+                }
+                total += countConcreteItem(container, resolved, true);
+            }
+            return total;
+        }
+
+        return countConcreteItem(container, displayItemId, true);
+    }
+
+    /** @intent Count one concrete item ID in the container with optional stencil filtering for generic direct-affordability parity.
+     *  @wave   2 - implemented concrete count helper
+     *  @status implemented
+     *  @node   RecipeAffordabilityResolver#countConcreteItem
+     */
+    private static int countConcreteItem(@Nonnull CombinedItemContainer container,
+                                         @Nonnull String itemId,
+                                         boolean excludeStencils) {
+        return container.countItemStacks(stack ->
+                itemId.equals(stack.getItemId()) && (!excludeStencils || !StencilMetadata.isStencil(stack)));
     }
 }

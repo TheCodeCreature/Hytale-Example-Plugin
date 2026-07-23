@@ -1,5 +1,17 @@
 package com.CodeCreature.crafting;
 
+/**
+ * @node    AutoCraftPlanner
+ * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
+ * @intent  Plans stencil-safe crafting consumption through the Wave 1/2 typed generic ingredient
+ *          boundary, separating variant-aware direct stock accounting from late concrete deficit
+ *          projection for raw-cost compatibility.
+ * @wave    3 (planner migration)
+ * @status  Wave 3 - typed generic resolution drives planner accounting; raw-cost projection remains late
+ * @do-not  Change RecipeTreeResolver raw-cost policy in this wave.
+ *          Claim exact engine removeMaterials ordering from planner consumptions.
+ */
+
 import com.CodeCreature.scaling.NaturalResourceRegistry;
 import com.CodeCreature.scaling.RecipeTierClassifier;
 import com.CodeCreature.scaling.ResourceTypeResolver;
@@ -10,9 +22,11 @@ import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Computes an {@link AutoCraftPlan} for a stencil placement, determining
@@ -55,6 +69,19 @@ import java.util.Map;
  * @see com.CodeCreature.stencil.StencilPlacementSystem
  */
 public final class AutoCraftPlanner {
+
+    private record PlannerIngredientNeed(
+            GenericIngredientResolution resolution,
+            String compatibilityItemId,
+            List<ConsumptionEntry> directConsumptions,
+            int deficitQty
+    ) {
+        private boolean directlyAvailable() {
+            return deficitQty <= 0;
+        }
+    }
+
+    private record DeficitExpansionResult(boolean resolved, boolean requiresAutoCraft) {}
 
     private AutoCraftPlanner() {}
 
@@ -104,6 +131,11 @@ public final class AutoCraftPlanner {
      * @return an {@link AutoCraftPlan} with the consumption list and
      *         affordability result
      */
+    /** @intent Plan direct and auto-craft consumption through typed ingredient resolution, variant-aware stock accounting, and late compatibility projection.
+     *  @wave   3 - implemented planner migration to the generic ingredient boundary
+     *  @status implemented
+     *  @node   AutoCraftPlanner#plan
+     */
     @Nonnull
     public static AutoCraftPlan plan(@Nonnull CraftingRecipe recipe,
                                      boolean preferNatural,
@@ -120,176 +152,195 @@ public final class AutoCraftPlanner {
             return AutoCraftPlan.direct(List.of(), directView, rawView);
         }
 
-        // Step 2: Fast path — player has all direct ingredients (excluding stencils)
-        // NOTE: We cannot use container.canRemoveMaterials(directMaterials) here because
-        // ResourceTypeId-based matching incorrectly matches stencil items (which share
-        // the same ResourceTypes as regular items but have stencil BSON metadata).
-        // Instead, resolve each ingredient to a concrete ItemId and count non-stencil items.
-        boolean directlyAvailable = true;
+        List<GenericIngredientResolution> directResolutions =
+                ResourceTypeResolver.resolveGenericIngredients(directMaterials, preferNatural);
+
+        // Step 2: Typed resolution plus variant-aware direct stock accounting.
+        // We still avoid container.canRemoveMaterials(directMaterials) because generic
+        // engine matching includes stencil-tagged items that the planner must exclude.
+        List<PlannerIngredientNeed> plannerNeeds = new ArrayList<>(directResolutions.size());
         List<ConsumptionEntry> fastPathConsumptions = new ArrayList<>();
-        for (MaterialQuantity mq : directMaterials) {
-            if (mq == null) continue;
-            int needed = mq.getQuantity();
-            String resourceTypeId = mq.getResourceTypeId();
-
-            if (resourceTypeId != null) {
-                // Multi-variant path: check all matching items for this ResourceTypeId
-                List<String> allVariants = ResourceTypeResolver.getAllMatchingItemIds(resourceTypeId);
-                if (allVariants.isEmpty()) { directlyAvailable = false; break; }
-
-                // Collect per-variant availability, deduplicating by resolved gatherable form
-                Map<String, Integer> variantAvailability = new LinkedHashMap<>();
-                for (String variantId : allVariants) {
-                    String resolved = NaturalResourceRegistry.resolveToGatherableForm(variantId);
-                    if (variantAvailability.containsKey(resolved)) continue;
-                    final String lookupId = resolved;
-                    int available = container.countItemStacks(stack ->
-                            lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
-                    variantAvailability.put(resolved, available);
-                }
-
-                int totalAvailable = variantAvailability.values().stream().mapToInt(Integer::intValue).sum();
-                if (totalAvailable < needed) { directlyAvailable = false; break; }
-
-                // Greedy fill across variants
-                int remaining = needed;
-                for (var entry : variantAvailability.entrySet()) {
-                    if (remaining <= 0) break;
-                    int use = Math.min(entry.getValue(), remaining);
-                    if (use > 0) {
-                        fastPathConsumptions.add(new ConsumptionEntry(entry.getKey(), use));
-                        remaining -= use;
-                    }
-                }
-            } else {
-                // Single-item path (ItemId): existing logic unchanged
-                String itemId = ResourceTypeResolver.resolveInputItemId(mq, preferNatural);
-                if (itemId == null || itemId.isEmpty()) { directlyAvailable = false; break; }
-                itemId = NaturalResourceRegistry.resolveToGatherableForm(itemId);
-                final String lookupId = itemId;
-                int available = container.countItemStacks(stack ->
-                        lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
-                if (available < needed) { directlyAvailable = false; break; }
-                fastPathConsumptions.add(new ConsumptionEntry(itemId, needed));
+        boolean directlyAvailable = true;
+        for (GenericIngredientResolution resolution : directResolutions) {
+            PlannerIngredientNeed plannerNeed = resolvePlannerIngredientNeed(resolution, container);
+            if (plannerNeed == null) {
+                return AutoCraftPlan.unaffordable(directView, rawView);
             }
+            plannerNeeds.add(plannerNeed);
+            fastPathConsumptions.addAll(plannerNeed.directConsumptions());
+            directlyAvailable &= plannerNeed.directlyAvailable();
         }
         if (directlyAvailable) {
             return AutoCraftPlan.direct(fastPathConsumptions, directView, rawView);
         }
 
-        // Step 3: Slow path — per-ingredient deficit computation
+        // Step 3: Late deficit expansion. Direct variant availability is already accounted for;
+        // only the remaining deficit needs a concrete compatibility projection for current
+        // crafted-item checks and raw-cost lookup policy.
         Map<String, Integer> totalConsumption = new LinkedHashMap<>();
+        for (PlannerIngredientNeed plannerNeed : plannerNeeds) {
+            mergeConsumptionEntries(totalConsumption, plannerNeed.directConsumptions());
+        }
+
         boolean requiresAutoCraft = false;
-
-        for (MaterialQuantity mq : directMaterials) {
-            if (mq == null) continue;
-            int needed = mq.getQuantity();
-            String resourceTypeId = mq.getResourceTypeId();
-
-            if (resourceTypeId != null) {
-                // Multi-variant path
-                List<String> allVariants = ResourceTypeResolver.getAllMatchingItemIds(resourceTypeId);
-
-                // Primary resolved item for auto-craft raw cost lookup
-                String primaryResolvedId = ResourceTypeResolver.resolveInputItemId(mq, preferNatural);
-                if (primaryResolvedId == null || primaryResolvedId.isEmpty()) {
-                    return AutoCraftPlan.unaffordable(directView, rawView);
-                }
-                primaryResolvedId = NaturalResourceRegistry.resolveToGatherableForm(primaryResolvedId);
-
-                // Collect per-variant availability, deduplicating by resolved gatherable form
-                Map<String, Integer> variantAvailability = new LinkedHashMap<>();
-                for (String variantId : allVariants) {
-                    String resolved = NaturalResourceRegistry.resolveToGatherableForm(variantId);
-                    if (variantAvailability.containsKey(resolved)) continue;
-                    final String lookupId = resolved;
-                    int available = container.countItemStacks(stack ->
-                            lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
-                    variantAvailability.put(resolved, available);
-                }
-
-                // Greedy consume across variants
-                int remaining = needed;
-                for (var entry : variantAvailability.entrySet()) {
-                    if (remaining <= 0) break;
-                    int use = Math.min(entry.getValue(), remaining);
-                    if (use > 0) {
-                        totalConsumption.merge(entry.getKey(), use, Integer::sum);
-                        remaining -= use;
-                    }
-                }
-
-                // Deficit: auto-craft using primary resolved item's raw cost
-                if (remaining > 0) {
-                    if (RecipeTierClassifier.isCraftedItem(primaryResolvedId)) {
-                        requiresAutoCraft = true;
-                        List<RawMaterialRequirement> rawPerUnit = RecipeTreeResolver.resolveItemToRaw(primaryResolvedId);
-                        if (rawPerUnit == null) {
-                            return AutoCraftPlan.unaffordable(directView, rawView);
-                        }
-                        for (RawMaterialRequirement rawReq : rawPerUnit) {
-                            totalConsumption.merge(rawReq.itemId(), rawReq.quantity() * remaining, Integer::sum);
-                        }
-                    } else {
-                        totalConsumption.merge(primaryResolvedId, remaining, Integer::sum);
-                    }
-                }
-            } else {
-                // Single-item path (ItemId): existing logic unchanged
-                String resolvedId = ResourceTypeResolver.resolveInputItemId(mq, preferNatural);
-                if (resolvedId == null || resolvedId.isEmpty()) {
-                    return AutoCraftPlan.unaffordable(directView, rawView);
-                }
-                resolvedId = NaturalResourceRegistry.resolveToGatherableForm(resolvedId);
-
-                final String lookupId = resolvedId;
-                int playerHas = container.countItemStacks(stack ->
-                        lookupId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
-                int useExisting = Math.min(playerHas, needed);
-                int deficit = needed - useExisting;
-
-                if (useExisting > 0) {
-                    totalConsumption.merge(resolvedId, useExisting, Integer::sum);
-                }
-
-                if (deficit > 0) {
-                    if (RecipeTierClassifier.isCraftedItem(resolvedId)) {
-                        requiresAutoCraft = true;
-                        List<RawMaterialRequirement> rawPerUnit = RecipeTreeResolver.resolveItemToRaw(resolvedId);
-                        if (rawPerUnit == null) {
-                            return AutoCraftPlan.unaffordable(directView, rawView);
-                        }
-                        for (RawMaterialRequirement rawReq : rawPerUnit) {
-                            totalConsumption.merge(rawReq.itemId(), rawReq.quantity() * deficit, Integer::sum);
-                        }
-                    } else {
-                        totalConsumption.merge(resolvedId, deficit, Integer::sum);
-                    }
-                }
+        for (PlannerIngredientNeed plannerNeed : plannerNeeds) {
+            DeficitExpansionResult expansion = expandDeficit(plannerNeed, totalConsumption);
+            if (!expansion.resolved()) {
+                return AutoCraftPlan.unaffordable(directView, rawView);
             }
+            requiresAutoCraft |= expansion.requiresAutoCraft();
         }
 
         // Step 4: Verify all consumptions are affordable
         for (var entry : totalConsumption.entrySet()) {
             final String itemId = entry.getKey();
             int qtyNeeded = entry.getValue();
-            int available = container.countItemStacks(stack ->
-                    itemId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
+            int available = countConcreteItem(container, itemId);
             if (available < qtyNeeded) {
                 return AutoCraftPlan.unaffordable(directView, rawView);
             }
         }
 
         // Step 5: Build and return affordable plan
-        List<ConsumptionEntry> consumptions = totalConsumption.entrySet().stream()
-                .map(e -> new ConsumptionEntry(e.getKey(), e.getValue()))
-                .toList();
+        List<ConsumptionEntry> consumptions = toConsumptionEntries(totalConsumption);
 
         if (requiresAutoCraft) {
             return AutoCraftPlan.autoCraft(consumptions, directView, rawView);
         } else {
             return AutoCraftPlan.direct(consumptions, directView, rawView);
         }
+    }
+
+    /** @intent Resolve one planner ingredient through typed identity, count directly-usable variants, and leave only the unresolved deficit for late compatibility projection.
+     *  @wave   3 - implemented planner ingredient accounting stage
+     *  @status implemented
+     *  @node   AutoCraftPlanner#resolvePlannerIngredientNeed
+     */
+    private static PlannerIngredientNeed resolvePlannerIngredientNeed(@Nonnull GenericIngredientResolution resolution,
+                                                                     @Nonnull CombinedItemContainer container) {
+        String compatibilityItemId = resolveCompatibilityItemId(resolution);
+        if (compatibilityItemId == null || compatibilityItemId.isEmpty()) {
+            return null;
+        }
+
+        Map<String, Integer> variantAvailability = collectVariantAvailability(resolution, compatibilityItemId, container);
+        int remaining = resolution.identity().quantity();
+        List<ConsumptionEntry> directConsumptions = new ArrayList<>(variantAvailability.size());
+        for (var entry : variantAvailability.entrySet()) {
+            if (remaining <= 0) {
+                break;
+            }
+            int use = Math.min(entry.getValue(), remaining);
+            if (use > 0) {
+                directConsumptions.add(new ConsumptionEntry(entry.getKey(), use));
+                remaining -= use;
+            }
+        }
+        return new PlannerIngredientNeed(resolution, compatibilityItemId, List.copyOf(directConsumptions), remaining);
+    }
+
+    /** @intent Collect direct-stock availability for all concrete variants of a typed ingredient without collapsing generic semantics to one representative item.
+     *  @wave   3 - implemented variant accounting helper
+     *  @status implemented
+     *  @node   AutoCraftPlanner#collectVariantAvailability
+     */
+    @Nonnull
+    private static Map<String, Integer> collectVariantAvailability(@Nonnull GenericIngredientResolution resolution,
+                                                                   @Nonnull String compatibilityItemId,
+                                                                   @Nonnull CombinedItemContainer container) {
+        Map<String, Integer> variantAvailability = new LinkedHashMap<>();
+        Set<String> seen = new HashSet<>();
+        for (String variantId : resolution.orderedMatchingItemIds()) {
+            String resolved = NaturalResourceRegistry.resolveToGatherableForm(variantId);
+            if (!seen.add(resolved)) {
+                continue;
+            }
+            variantAvailability.put(resolved, countConcreteItem(container, resolved));
+        }
+        if (variantAvailability.isEmpty()) {
+            variantAvailability.put(compatibilityItemId, countConcreteItem(container, compatibilityItemId));
+        }
+        return variantAvailability;
+    }
+
+    /** @intent Keep the current representative-item policy as an explicit late compatibility boundary for crafted-item checks and raw-cost lookup.
+     *  @wave   3 - implemented late concrete projection helper
+     *  @status implemented
+     *  @node   AutoCraftPlanner#resolveCompatibilityItemId
+     */
+    private static String resolveCompatibilityItemId(@Nonnull GenericIngredientResolution resolution) {
+        String representativeItemId = resolution.representativeItemId();
+        if ((representativeItemId == null || representativeItemId.isEmpty())
+                && resolution.orderedMatchingItemIds().size() == 1) {
+            representativeItemId = resolution.orderedMatchingItemIds().get(0);
+        }
+        if (representativeItemId == null || representativeItemId.isEmpty()) {
+            return null;
+        }
+        return NaturalResourceRegistry.resolveToGatherableForm(representativeItemId);
+    }
+
+    /** @intent Expand only the unresolved deficit for one planner ingredient, using the late concrete compatibility projection when current raw-cost and crafted-item policies still require it.
+     *  @wave   3 - implemented deficit expansion boundary
+     *  @status implemented
+     *  @node   AutoCraftPlanner#expandDeficit
+     */
+    @Nonnull
+    private static DeficitExpansionResult expandDeficit(@Nonnull PlannerIngredientNeed plannerNeed,
+                                                        @Nonnull Map<String, Integer> totalConsumption) {
+        if (plannerNeed.deficitQty() <= 0) {
+            return new DeficitExpansionResult(true, false);
+        }
+
+        String compatibilityItemId = plannerNeed.compatibilityItemId();
+        if (RecipeTierClassifier.isCraftedItem(compatibilityItemId)) {
+            List<RawMaterialRequirement> rawPerUnit = RecipeTreeResolver.resolveItemToRaw(compatibilityItemId);
+            if (rawPerUnit == null) {
+                return new DeficitExpansionResult(false, false);
+            }
+            for (RawMaterialRequirement rawReq : rawPerUnit) {
+                totalConsumption.merge(rawReq.itemId(), rawReq.quantity() * plannerNeed.deficitQty(), Integer::sum);
+            }
+            return new DeficitExpansionResult(true, true);
+        }
+
+        totalConsumption.merge(compatibilityItemId, plannerNeed.deficitQty(), Integer::sum);
+        return new DeficitExpansionResult(true, false);
+    }
+
+    /** @intent Merge concrete consumption entries into the planner's final verification map without implying engine-exact removal ordering.
+     *  @wave   3 - implemented planner accumulation helper
+     *  @status implemented
+     *  @node   AutoCraftPlanner#mergeConsumptionEntries
+     */
+    private static void mergeConsumptionEntries(@Nonnull Map<String, Integer> totalConsumption,
+                                                @Nonnull List<ConsumptionEntry> consumptions) {
+        for (ConsumptionEntry consumption : consumptions) {
+            totalConsumption.merge(consumption.itemId(), consumption.quantity(), Integer::sum);
+        }
+    }
+
+    /** @intent Count one concrete item in the container while preserving the planner's stencil-exclusion semantics.
+     *  @wave   3 - implemented concrete stock helper
+     *  @status implemented
+     *  @node   AutoCraftPlanner#countConcreteItem
+     */
+    private static int countConcreteItem(@Nonnull CombinedItemContainer container,
+                                         @Nonnull String itemId) {
+        return container.countItemStacks(stack ->
+                itemId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
+    }
+
+    /** @intent Materialize the planner verification map into concrete consumption entries for the existing plan contract.
+     *  @wave   3 - implemented plan materialization helper
+     *  @status implemented
+     *  @node   AutoCraftPlanner#toConsumptionEntries
+     */
+    @Nonnull
+    private static List<ConsumptionEntry> toConsumptionEntries(@Nonnull Map<String, Integer> totalConsumption) {
+        return totalConsumption.entrySet().stream()
+                .map(entry -> new ConsumptionEntry(entry.getKey(), entry.getValue()))
+                .toList();
     }
 
     /**

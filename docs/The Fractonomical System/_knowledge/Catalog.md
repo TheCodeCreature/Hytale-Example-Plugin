@@ -6,6 +6,7 @@
 |---|---|---|---|
 | FS-0001 | [Fractonomical System](./_sources/Fractonomical%20System/Overview.md) | system-definition | 2026-07-16 |
 | FS-0002 | [Hytale UI](./_sources/Hytale%20UI/Overview.md) | code-reference | 2026-07-18 |
+| FS-0003 | [Hytale](./_sources/Hytale/Overview.md) | code-reference | 2026-07-22 |
 
 ## Catalog Rules
 1. List top-level source folders only.

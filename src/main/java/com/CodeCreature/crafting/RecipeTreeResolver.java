@@ -63,6 +63,26 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 public final class RecipeTreeResolver {
 
     /**
+     * Wave 4 compatibility policy for ambiguous generic inputs in raw-cost output.
+     *
+     * <p>Policy contract:
+     * <ul>
+     *   <li>Raw-cost output is a deterministic projection for compatibility/display,
+     *       not semantic identity for generic inputs.</li>
+     *   <li>{@link #init()} pre-computation always uses {@code preferNatural=false}.</li>
+     *   <li>{@link #resolveRecipeToRaw(CraftingRecipe, boolean)} keeps caller-provided
+     *       {@code preferNatural} as a projection toggle.</li>
+     * </ul>
+     */
+    private enum GenericRawCostProjectionPolicy {
+        DETERMINISTIC_COMPATIBILITY_PROJECTION
+    }
+
+    private static final GenericRawCostProjectionPolicy RAW_COST_PROJECTION_POLICY =
+            GenericRawCostProjectionPolicy.DETERMINISTIC_COMPATIBILITY_PROJECTION;
+    private static final boolean CACHE_RAW_COST_PREFER_NATURAL = false;
+
+    /**
      * Maps a crafted item's ID to the crafting recipe that produces it.
      * Only includes non-Salvage recipes from registered crafting benches.
      * If multiple recipes produce the same item, the first by sorted
@@ -183,10 +203,12 @@ public final class RecipeTreeResolver {
         List<MaterialQuantity> perUnit = PlaceBlockCostUtil.getPerUnitCost(recipe);
         if (perUnit.isEmpty()) return List.of();
 
+        // Keep caller preference as a compatibility projection toggle for ambiguous generics.
+        ensureRawCostProjectionPolicyConfigured();
         Map<String, Integer> merged = new LinkedHashMap<>();
         for (MaterialQuantity mq : perUnit) {
             if (mq == null) continue;
-            String resolvedId = ResourceTypeResolver.resolveInputItemId(mq, preferNatural);
+            String resolvedId = projectResolvedInputItemId(mq, preferNatural);
             if (resolvedId == null || resolvedId.isEmpty()) continue;
             resolvedId = NaturalResourceRegistry.resolveToGatherableForm(resolvedId);
             int qty = mq.getQuantity();
@@ -194,7 +216,7 @@ public final class RecipeTreeResolver {
             if (RecipeTierClassifier.isRawInput(mq)) {
                 merged.merge(resolvedId, qty, Integer::sum);
             } else {
-                List<RawMaterialRequirement> subCost = resolveItemToRaw(resolvedId);
+                List<RawMaterialRequirement> subCost = resolveCraftedIntermediateRawCost(resolvedId, preferNatural);
                 if (subCost == null) {
                     merged.merge(resolvedId, qty, Integer::sum);
                 } else {
@@ -264,6 +286,13 @@ public final class RecipeTreeResolver {
     @Nullable
     private static Map<String, Integer> computeRawCost(@Nonnull String itemId,
                                                         @Nonnull Set<String> visited) {
+        return computeRawCost(itemId, visited, CACHE_RAW_COST_PREFER_NATURAL);
+    }
+
+    @Nullable
+    private static Map<String, Integer> computeRawCost(@Nonnull String itemId,
+                                                        @Nonnull Set<String> visited,
+                                                        boolean preferNatural) {
         if (visited.contains(itemId)) {
             DebugLogger.log(CRAFTING, Level.INFO, "[RecipeTreeResolver] Cycle detected at " + itemId);
             return null;
@@ -276,9 +305,11 @@ public final class RecipeTreeResolver {
         List<MaterialQuantity> perUnitCosts = PlaceBlockCostUtil.getPerUnitCost(recipe);
         Map<String, Integer> rawMaterials = new LinkedHashMap<>();
 
+        // Cached raw-cost path is intentionally deterministic for compatibility snapshots.
+        ensureRawCostProjectionPolicyConfigured();
         for (MaterialQuantity mq : perUnitCosts) {
             if (mq == null) continue;
-            String resolvedId = ResourceTypeResolver.resolveInputItemId(mq, false);
+            String resolvedId = projectResolvedInputItemId(mq, preferNatural);
             if (resolvedId == null || resolvedId.isEmpty()) continue;
             resolvedId = NaturalResourceRegistry.resolveToGatherableForm(resolvedId);
             int qty = mq.getQuantity();
@@ -286,7 +317,7 @@ public final class RecipeTreeResolver {
             if (RecipeTierClassifier.isRawInput(mq)) {
                 rawMaterials.merge(resolvedId, qty, Integer::sum);
             } else {
-                Map<String, Integer> subCost = computeRawCost(resolvedId, visited);
+                Map<String, Integer> subCost = computeRawCost(resolvedId, visited, preferNatural);
                 if (subCost == null) {
                     rawMaterials.merge(resolvedId, qty, Integer::sum);
                 } else {
@@ -299,6 +330,59 @@ public final class RecipeTreeResolver {
 
         visited.remove(itemId);
         return rawMaterials;
+    }
+
+    @Nullable
+    private static List<RawMaterialRequirement> resolveCraftedIntermediateRawCost(@Nonnull String itemId,
+                                                                                   boolean preferNatural) {
+        if (!preferNatural) {
+            return resolveItemToRaw(itemId);
+        }
+
+        Map<String, Integer> rawCost = computeRawCost(itemId, new HashSet<>(), true);
+        if (rawCost == null || rawCost.isEmpty()) {
+            return null;
+        }
+
+        return rawCost.entrySet().stream()
+                .map(entry -> new RawMaterialRequirement(entry.getKey(), entry.getValue()))
+                .toList();
+    }
+
+    @Nullable
+    private static String projectResolvedInputItemId(@Nonnull MaterialQuantity input,
+                                                     boolean preferNatural) {
+        GenericIngredientResolution resolution =
+                ResourceTypeResolver.resolveGenericIngredient(input, preferNatural);
+        return projectResolvedItemId(resolution);
+    }
+
+    @Nullable
+    private static String projectResolvedItemId(@Nonnull GenericIngredientResolution resolution) {
+        String concreteItemId = resolution.identity().itemId();
+        if (concreteItemId != null && !concreteItemId.isEmpty() && !"Empty".equals(concreteItemId)) {
+            return concreteItemId;
+        }
+
+        String representativeItemId = resolution.representativeItemId();
+        if (representativeItemId != null && !representativeItemId.isEmpty()) {
+            return representativeItemId;
+        }
+
+        List<String> orderedMatchingItemIds = resolution.orderedMatchingItemIds();
+        if (!orderedMatchingItemIds.isEmpty()) {
+            String fallbackItemId = orderedMatchingItemIds.get(0);
+            if (fallbackItemId != null && !fallbackItemId.isEmpty()) {
+                return fallbackItemId;
+            }
+        }
+        return null;
+    }
+
+    private static void ensureRawCostProjectionPolicyConfigured() {
+        if (RAW_COST_PROJECTION_POLICY != GenericRawCostProjectionPolicy.DETERMINISTIC_COMPATIBILITY_PROJECTION) {
+            throw new IllegalStateException("Unsupported generic raw-cost projection policy: " + RAW_COST_PROJECTION_POLICY);
+        }
     }
 
     /**

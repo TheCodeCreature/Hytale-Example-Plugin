@@ -1,5 +1,18 @@
 package com.CodeCreature.scaling;
 
+/**
+ * @node    ResourceTypeResolverTest
+ * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
+ * @intent  Pins current resource-type resolution ordering and representative selection semantics,
+ *          including the new Wave 1 typed compatibility boundary.
+ * @wave    1 (generic ingredient boundary)
+ * @status  Wave 1 - focused compatibility coverage added for typed generic resolution
+ * @do-not  Assert unknown engine removeMaterials variant-consumption ordering here.
+ *          Broaden this file into planner or UI migration coverage.
+ */
+
+import com.CodeCreature.crafting.GenericIngredientIdentity;
+import com.CodeCreature.crafting.GenericIngredientResolution;
 import com.CodeCreature.scaling.ResourceTypeResolver;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
@@ -7,6 +20,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -281,6 +295,45 @@ class ResourceTypeResolverTest {
             MaterialQuantity input = new MaterialQuantity(null, null, "SomeTag", 1, null);
             assertNull(ResourceTypeResolver.resolveInputItemId(input, false),
                     "Input with no ItemId and no ResourceTypeId should return null");
+        }
+    }
+
+    @Nested
+    class ResolveGenericIngredient {
+
+        /** @intent Verify the Wave 1 typed API preserves current index order while preferNatural only changes the representative item.
+         *  @wave   1 - compatibility-oriented resolver coverage
+         *  @status implemented
+         *  @node   ResourceTypeResolverTest#preservesVariantOrderAndRepresentativePreference
+         */
+        @Test
+        void preservesVariantOrderAndRepresentativePreference() {
+            var items = new LinkedHashMap<String, Item>();
+            items.put("Wood_Hardwood_Ornate", ornate());
+            items.put("Wood_Log_Oak", logOak());
+            items.put("Wood_Hardwood_Decorative", decorative());
+            items.put("Wood_Hardwood_Planks", planks());
+            installMinimal(items);
+
+            MaterialQuantity input = materialQtyResource("Wood_Hardwood", 1);
+
+            GenericIngredientResolution buildersResolution =
+                    ResourceTypeResolver.resolveGenericIngredient(input, false);
+            GenericIngredientResolution furnitureResolution =
+                    ResourceTypeResolver.resolveGenericIngredient(input, true);
+
+            assertEquals(new GenericIngredientIdentity(null, "Wood_Hardwood", 1), buildersResolution.identity());
+                assertEquals("Wood_Hardwood_Planks", buildersResolution.orderedMatchingItemIds().get(0));
+                assertEquals(Set.of(
+                    "Wood_Hardwood_Planks",
+                    "Wood_Hardwood_Ornate",
+                    "Wood_Log_Oak",
+                    "Wood_Hardwood_Decorative"
+                ), Set.copyOf(buildersResolution.orderedMatchingItemIds()));
+            assertEquals("Wood_Hardwood_Planks", buildersResolution.representativeItemId());
+            assertTrue(buildersResolution.requiresGenericMatching());
+            assertEquals(buildersResolution.orderedMatchingItemIds(), furnitureResolution.orderedMatchingItemIds());
+            assertEquals("Wood_Log_Oak", furnitureResolution.representativeItemId());
         }
     }
 }

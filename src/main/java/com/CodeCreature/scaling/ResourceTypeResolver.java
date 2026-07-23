@@ -1,5 +1,19 @@
 package com.CodeCreature.scaling;
 
+/**
+ * @node    ResourceTypeResolver
+ * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
+ * @intent  Resolves crafted inputs against the current item resource-type index, preserving the
+ *          legacy string-returning API while exposing an opt-in generic ingredient boundary.
+ * @wave    1 (generic ingredient boundary)
+ * @status  Wave 1 - compatibility-oriented generic-resolution API added; legacy behavior preserved
+ * @do-not  Claim exact engine removeMaterials ordering from this index.
+ *          Change existing representative-item selection semantics.
+ */
+
+import com.CodeCreature.crafting.GenericIngredientResolution;
+import com.CodeCreature.crafting.GenericIngredientResolver;
+import com.CodeCreature.crafting.IndexedGenericIngredientResolver;
 import com.hypixel.hytale.protocol.ItemResourceType;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
@@ -42,6 +56,8 @@ import java.util.stream.Stream;
  * Each call scans the (read-only, post-init) item asset map.
  */
 public final class ResourceTypeResolver {
+
+    private static final GenericIngredientResolver GENERIC_INGREDIENT_RESOLVER = new IndexedGenericIngredientResolver();
 
     /**
      * Comparator that sorts set-root items (where {@code id == set}) before
@@ -164,6 +180,28 @@ public final class ResourceTypeResolver {
         List<IndexedItem> items = resourceTypeIndex.getOrDefault(resourceTypeId, List.of());
         if (items.isEmpty()) return List.of();
         return items.stream().map(IndexedItem::itemId).toList();
+    }
+
+    /** @intent Expose the Wave 1 generic ingredient boundary without changing the legacy string adapter.
+     *  @wave   1 - implemented typed compatibility API
+     *  @status implemented
+     *  @node   ResourceTypeResolver#resolveGenericIngredient
+     */
+    @Nonnull
+    public static GenericIngredientResolution resolveGenericIngredient(@Nonnull MaterialQuantity input,
+                                                                       boolean preferNatural) {
+        return GENERIC_INGREDIENT_RESOLVER.resolve(input, preferNatural);
+    }
+
+    /** @intent Resolve multiple authored inputs through the same compatibility-oriented generic boundary.
+     *  @wave   1 - implemented bulk typed compatibility API
+     *  @status implemented
+     *  @node   ResourceTypeResolver#resolveGenericIngredients
+     */
+    @Nonnull
+    public static List<GenericIngredientResolution> resolveGenericIngredients(@Nonnull List<MaterialQuantity> inputs,
+                                                                              boolean preferNatural) {
+        return GENERIC_INGREDIENT_RESOLVER.resolveAll(inputs, preferNatural);
     }
 
     /**
