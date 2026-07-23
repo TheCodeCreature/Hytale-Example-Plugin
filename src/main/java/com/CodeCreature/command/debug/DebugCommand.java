@@ -1,5 +1,15 @@
 package com.CodeCreature.command.debug;
 
+/**
+ * @node    DebugCommand
+ * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
+ * @intent  Aggregates debug and diagnostics command entry points, including runtime crafting parity probes.
+ * @wave    1 (runtime parity diagnostics)
+ * @status  Wave 1 - craftprobe subcommand registered
+ * @do-not  Implement diagnostics behavior directly in this collection type.
+ *          Remove existing debug subcommands while adding new probes.
+ */
+
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractCommandCollection;
 
 /**
@@ -19,5 +29,6 @@ public class DebugCommand extends AbstractCommandCollection {
         super("debug", "Debug and diagnostic commands");
         this.addSubCommand(new LoggingSubCommand());
         this.addSubCommand(new BreakLogSubCommand());
+        this.addSubCommand(new CraftingParityProbeSubCommand());
     }
 }
