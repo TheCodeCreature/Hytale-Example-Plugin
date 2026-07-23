@@ -1,5 +1,16 @@
 package com.CodeCreature.ui.bench;
 
+/**
+ * @node    StencilSelectionPage
+ * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
+ * @intent  Drives stencil recipe browsing/filtering and affordability visualization while routing
+ *          primary affordability semantics through CraftingAffordabilityFacade.
+ * @wave    5 (surface parity + regression hardening)
+ * @status  Wave 5 - retained and isolated block-group affordability fallback as intentional UI-only path
+ * @do-not  Treat local fallback checks as the parity source-of-truth for direct recipe affordability.
+ *          Route direct recipe affordability semantics around generic matching through facade/resolver boundaries.
+ */
+
 import com.CodeCreature.crafting.CraftingAffordabilityFacade;
 import com.CodeCreature.ui.common.IconPathResolver;
 import com.CodeCreature.ui.ingredienttree.IngredientTree;
@@ -716,9 +727,6 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     }
 
     private void buildBenchTabs(UICommandBuilder cmd, UIEventBuilder evt) {
-        // Populate pre-declared tab slots (max-slots pattern — same as updateMaterialGroups)
-        int tabIndex = 0;
-
         DebugLogger.logGateStatus(STENCIL_BOOK, "StencilSelectionPage.buildBenchTabs");
         final int totalBenches = benchIds.size();
         DebugLogger.log(STENCIL_BOOK, Level.INFO, () ->
@@ -726,6 +734,8 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 " benches (max slots: " + MAX_BENCH_TABS + "), benchIds=" + benchIds);
 
         // Tab 0: "All"
+        int tabIndex = 0;
+
         cmd.set("#BenchTabs[" + tabIndex + "].Id", ALL_TAB);
         cmd.set("#BenchTabs[" + tabIndex + "].TooltipText", Message.translation("server.ui.stencil.tabs.all"));
         cmd.set("#BenchTabs[" + tabIndex + "].Visible", true);
@@ -1345,16 +1355,10 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         return null;
     }
 
-    /**
-     * Checks if a recipe is affordable, accounting for both raw material
-     * availability and BlockGroup interchangeability (FullBlocks cycling).
-     *
-     * <p>A recipe is affordable if:
-     * <ol>
-     *   <li>The player can directly craft it (has raw materials), OR</li>
-     *   <li>The output belongs to a BlockGroup and the player has any
-     *       member of that group in inventory (free conversion)</li>
-     * </ol>
+    /** @intent Resolve stencil-list affordability through the shared facade first, then apply a legacy block-group fallback for UI parity only.
+     *  @wave   5 - documented fallback-only path and kept facade as the semantic source-of-truth
+     *  @status implemented
+     *  @node   StencilSelectionPage#isAffordable
      */
     private boolean isAffordable(RecipeFilterPipeline.InputRecipe entry, CombinedItemContainer container) {
         CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId());
@@ -1364,7 +1368,21 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
             if (CraftingAffordabilityFacade.isAffordable(recipe, preferNatural, container)) return true;
         }
 
-        Item outputItem = Item.getAssetMap().getAsset(entry.outputItemId());
+        return isBlockGroupFallbackAffordable(entry.outputItemId(), container);
+    }
+
+    /** @intent Keep FullBlocks block-group swap behavior as an explicit fallback-only UI affordance when direct recipe affordability is false.
+     *  @wave   5 - isolated legacy fallback for auditability and parity rationale
+     *  @status implemented
+     *  @node   StencilSelectionPage#isBlockGroupFallbackAffordable
+     */
+    private boolean isBlockGroupFallbackAffordable(@Nullable String outputItemId,
+                                                   CombinedItemContainer container) {
+        // Intentional fallback-only path:
+        // This check models free conversion among BlockGroup members for stencil browsing UX.
+        // It is not the parity source-of-truth for direct recipe affordability semantics.
+        // Keep this isolated so shared facade/resolver logic remains the primary boundary.
+        Item outputItem = Item.getAssetMap().getAsset(outputItemId);
         if (outputItem != null) {
             BlockGroup group = BlockGroup.findItemGroup(outputItem);
             if (group != null) {

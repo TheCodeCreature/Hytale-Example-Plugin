@@ -19,17 +19,13 @@ import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 
-import com.CodeCreature.util.StencilMetadata;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Stateless utility that encapsulates the full ingredient resolution chain
@@ -304,33 +300,6 @@ public final class RecipeAffordabilityResolver {
         if (container == null) {
             return 0;
         }
-
-        String resourceTypeId = resolution.identity().resourceTypeId();
-        if (resourceTypeId != null) {
-            Set<String> seen = new HashSet<>();
-            int total = 0;
-            for (String variantId : resolution.orderedMatchingItemIds()) {
-                String resolved = NaturalResourceRegistry.resolveToGatherableForm(variantId);
-                if (!seen.add(resolved)) {
-                    continue;
-                }
-                total += countConcreteItem(container, resolved, true);
-            }
-            return total;
-        }
-
-        return countConcreteItem(container, displayItemId, true);
-    }
-
-    /** @intent Count one concrete item ID in the container with optional stencil filtering for generic direct-affordability parity.
-     *  @wave   2 - implemented concrete count helper
-     *  @status implemented
-     *  @node   RecipeAffordabilityResolver#countConcreteItem
-     */
-    private static int countConcreteItem(@Nonnull CombinedItemContainer container,
-                                         @Nonnull String itemId,
-                                         boolean excludeStencils) {
-        return container.countItemStacks(stack ->
-                itemId.equals(stack.getItemId()) && (!excludeStencils || !StencilMetadata.isStencil(stack)));
+        return GenericVariantMatcher.countMatchingQuantity(resolution, displayItemId, container, true);
     }
 }

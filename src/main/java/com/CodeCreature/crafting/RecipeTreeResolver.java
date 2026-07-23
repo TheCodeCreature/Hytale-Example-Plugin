@@ -1,5 +1,16 @@
 package com.CodeCreature.crafting;
 
+/**
+ * @node    RecipeTreeResolver
+ * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
+ * @intent  Resolves recipes into deterministic raw-cost compatibility projections while keeping
+ *          execution/removal semantics outside projection helper boundaries.
+ * @wave    5 (raw projection isolation hardening)
+ * @status  Wave 5 - reinforced display-only projection contracts and execution-boundary guardrails
+ * @do-not  Use display projection helpers as final removal semantics.
+ *          Infer engine removal ordering from compatibility projection output.
+ */
+
 import com.CodeCreature.registry.BenchRegistry;
 import com.CodeCreature.scaling.NaturalResourceRegistry;
 import com.CodeCreature.scaling.RecipeTierClassifier;
@@ -190,8 +201,9 @@ public final class RecipeTreeResolver {
      *
      * <p>Duplicate raw material entries are merged (quantities summed).
      *
-     * <p>This method is used by the UI to display the total raw material
-     * cost for a recipe (e.g., "Total: 36 cobblestone" for brick stairs).
+    * <p>This method is used by the UI and diagnostics to display the total
+    * raw material cost for a recipe (e.g., "Total: 36 cobblestone" for brick stairs).
+    * It is not an execution boundary for final removal semantics.
      *
      * @param recipe the crafting recipe to resolve
      * @return list of raw materials needed for one placement; empty if
@@ -208,7 +220,7 @@ public final class RecipeTreeResolver {
         Map<String, Integer> merged = new LinkedHashMap<>();
         for (MaterialQuantity mq : perUnit) {
             if (mq == null) continue;
-            String resolvedId = projectResolvedInputItemId(mq, preferNatural);
+            String resolvedId = projectDisplayOnlyResolvedInputItemId(mq, preferNatural);
             if (resolvedId == null || resolvedId.isEmpty()) continue;
             resolvedId = NaturalResourceRegistry.resolveToGatherableForm(resolvedId);
             int qty = mq.getQuantity();
@@ -309,7 +321,7 @@ public final class RecipeTreeResolver {
         ensureRawCostProjectionPolicyConfigured();
         for (MaterialQuantity mq : perUnitCosts) {
             if (mq == null) continue;
-            String resolvedId = projectResolvedInputItemId(mq, preferNatural);
+            String resolvedId = projectDisplayOnlyResolvedInputItemId(mq, preferNatural);
             if (resolvedId == null || resolvedId.isEmpty()) continue;
             resolvedId = NaturalResourceRegistry.resolveToGatherableForm(resolvedId);
             int qty = mq.getQuantity();
@@ -350,15 +362,26 @@ public final class RecipeTreeResolver {
     }
 
     @Nullable
-    private static String projectResolvedInputItemId(@Nonnull MaterialQuantity input,
-                                                     boolean preferNatural) {
+    /**
+     * Display-only generic projection helper used by raw-cost compatibility snapshots.
+     *
+     * <p>Do not use this helper for final execution/removal semantics.
+     */
+    private static String projectDisplayOnlyResolvedInputItemId(@Nonnull MaterialQuantity input,
+                                                                boolean preferNatural) {
         GenericIngredientResolution resolution =
                 ResourceTypeResolver.resolveGenericIngredient(input, preferNatural);
-        return projectResolvedItemId(resolution);
+        return projectDisplayOnlyResolvedItemId(resolution);
     }
 
+    /**
+     * Display-only compatibility projection of a typed ingredient to one concrete item ID.
+     *
+     * <p>Projection order: concrete identity, representative item, first ordered match.
+     * This remains intentionally non-semantic and deterministic for UI/raw-cost snapshots.
+     */
     @Nullable
-    private static String projectResolvedItemId(@Nonnull GenericIngredientResolution resolution) {
+    private static String projectDisplayOnlyResolvedItemId(@Nonnull GenericIngredientResolution resolution) {
         String concreteItemId = resolution.identity().itemId();
         if (concreteItemId != null && !concreteItemId.isEmpty() && !"Empty".equals(concreteItemId)) {
             return concreteItemId;

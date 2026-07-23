@@ -15,18 +15,16 @@ package com.CodeCreature.crafting;
 import com.CodeCreature.scaling.NaturalResourceRegistry;
 import com.CodeCreature.scaling.RecipeTierClassifier;
 import com.CodeCreature.scaling.ResourceTypeResolver;
-import com.CodeCreature.util.StencilMetadata;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Computes an {@link AutoCraftPlan} for a stencil placement, determining
@@ -36,11 +34,10 @@ import java.util.Set;
  *
  * <h3>Two-pass algorithm</h3>
  * <ol>
- *   <li><b>Fast path:</b> Check if the player has all direct recipe
- *       ingredients via {@code container.canRemoveMaterials()}. This uses
- *       the engine's native {@code ResourceTypeId} matching, so any
- *       matching variant satisfies the check. If yes, return a plan
- *       with no auto-crafting needed.</li>
+ *   <li><b>Fast path:</b> Use typed generic resolution and variant-aware
+ *       counting to satisfy direct ingredients without auto-crafting.
+ *       This avoids direct {@code canRemoveMaterials()} checks so stencil-tag
+ *       exclusions stay consistent with planner parity rules.</li>
  *   <li><b>Slow path:</b> For each direct ingredient:
  *     <ol>
  *       <li>Resolve to a concrete item ID</li>
@@ -59,6 +56,8 @@ import java.util.Set;
  * The planner only produces a plan — it does not consume anything.
  * {@link StencilPlacementSystem} is responsible for executing the
  * plan atomically via {@code container.removeMaterials()}.
+ * Raw projection helpers in {@link RecipeTreeResolver} remain outside
+ * this final removal boundary.
  *
  * <h3>Threading</h3>
  * Stateless — safe to call from any thread. Reads only from immutable
@@ -72,7 +71,8 @@ public final class AutoCraftPlanner {
 
     private record PlannerIngredientNeed(
             GenericIngredientResolution resolution,
-            String compatibilityItemId,
+            @Nullable String deficitProjectionItemId,
+            boolean usedCompatibilityFallback,
             List<ConsumptionEntry> directConsumptions,
             int deficitQty
     ) {
@@ -195,7 +195,7 @@ public final class AutoCraftPlanner {
         for (var entry : totalConsumption.entrySet()) {
             final String itemId = entry.getKey();
             int qtyNeeded = entry.getValue();
-            int available = countConcreteItem(container, itemId);
+            int available = GenericVariantMatcher.countConcreteQuantity(container, itemId, true);
             if (available < qtyNeeded) {
                 return AutoCraftPlan.unaffordable(directView, rawView);
             }
@@ -223,44 +223,57 @@ public final class AutoCraftPlanner {
             return null;
         }
 
-        Map<String, Integer> variantAvailability = collectVariantAvailability(resolution, compatibilityItemId, container);
+        List<GenericVariantMatcher.VariantAvailability> variantAvailability =
+                GenericVariantMatcher.collectVariantAvailability(resolution, compatibilityItemId, container, true);
+
         int remaining = resolution.identity().quantity();
         List<ConsumptionEntry> directConsumptions = new ArrayList<>(variantAvailability.size());
-        for (var entry : variantAvailability.entrySet()) {
+        for (GenericVariantMatcher.VariantAvailability entry
+                : GenericTokenMorphPolicy.orderForConsumption(variantAvailability)) {
             if (remaining <= 0) {
                 break;
             }
-            int use = Math.min(entry.getValue(), remaining);
+            int use = Math.min(entry.quantity(), remaining);
             if (use > 0) {
-                directConsumptions.add(new ConsumptionEntry(entry.getKey(), use));
+                directConsumptions.add(new ConsumptionEntry(entry.itemId(), use));
                 remaining -= use;
             }
         }
-        return new PlannerIngredientNeed(resolution, compatibilityItemId, List.copyOf(directConsumptions), remaining);
+
+        DeficitProjection projection = resolveDeficitProjectionItemId(resolution, variantAvailability, compatibilityItemId);
+        return new PlannerIngredientNeed(
+                resolution,
+                projection.itemId(),
+                projection.compatibilityFallback(),
+                List.copyOf(directConsumptions),
+                remaining);
     }
 
-    /** @intent Collect direct-stock availability for all concrete variants of a typed ingredient without collapsing generic semantics to one representative item.
-     *  @wave   3 - implemented variant accounting helper
+    private record DeficitProjection(@Nullable String itemId, boolean compatibilityFallback) {}
+
+    /** @intent Select deficit projection item using policy A first (largest matching stack), and only use representative compatibility fallback when no concrete stack can be selected.
      *  @status implemented
-     *  @node   AutoCraftPlanner#collectVariantAvailability
+     *  @node   AutoCraftPlanner#resolveDeficitProjectionItemId
      */
     @Nonnull
-    private static Map<String, Integer> collectVariantAvailability(@Nonnull GenericIngredientResolution resolution,
-                                                                   @Nonnull String compatibilityItemId,
-                                                                   @Nonnull CombinedItemContainer container) {
-        Map<String, Integer> variantAvailability = new LinkedHashMap<>();
-        Set<String> seen = new HashSet<>();
-        for (String variantId : resolution.orderedMatchingItemIds()) {
-            String resolved = NaturalResourceRegistry.resolveToGatherableForm(variantId);
-            if (!seen.add(resolved)) {
-                continue;
-            }
-            variantAvailability.put(resolved, countConcreteItem(container, resolved));
+    private static DeficitProjection resolveDeficitProjectionItemId(
+            @Nonnull GenericIngredientResolution resolution,
+            @Nonnull List<GenericVariantMatcher.VariantAvailability> availability,
+            @Nullable String compatibilityItemId) {
+        GenericTokenMorphPolicy.MorphSelection morphSelection =
+                GenericTokenMorphPolicy.selectFromAvailability(resolution, availability);
+        if (morphSelection.concreteItemId() != null && !morphSelection.concreteItemId().isEmpty()) {
+            return new DeficitProjection(morphSelection.concreteItemId(), false);
         }
-        if (variantAvailability.isEmpty()) {
-            variantAvailability.put(compatibilityItemId, countConcreteItem(container, compatibilityItemId));
+
+        if (morphSelection.remainsGeneric()) {
+            // Temporary compatibility path: planner deficit expansion still needs a concrete key
+            // for crafted-item checks and raw-cost recursion; use representative projection only
+            // when policy A cannot pick a concrete matching stack.
+            return new DeficitProjection(compatibilityItemId, true);
         }
-        return variantAvailability;
+
+        return new DeficitProjection(compatibilityItemId, false);
     }
 
     /** @intent Keep the current representative-item policy as an explicit late compatibility boundary for crafted-item checks and raw-cost lookup.
@@ -280,8 +293,8 @@ public final class AutoCraftPlanner {
         return NaturalResourceRegistry.resolveToGatherableForm(representativeItemId);
     }
 
-    /** @intent Expand only the unresolved deficit for one planner ingredient, using the late concrete compatibility projection when current raw-cost and crafted-item policies still require it.
-     *  @wave   3 - implemented deficit expansion boundary
+    /** @intent Expand only the unresolved deficit for one planner ingredient, using late compatibility projection strictly in planner-space before execution consumes explicit item IDs.
+     *  @wave   5 - documented raw-projection isolation at execution boundary
      *  @status implemented
      *  @node   AutoCraftPlanner#expandDeficit
      */
@@ -292,7 +305,18 @@ public final class AutoCraftPlanner {
             return new DeficitExpansionResult(true, false);
         }
 
-        String compatibilityItemId = plannerNeed.compatibilityItemId();
+        String compatibilityItemId = plannerNeed.deficitProjectionItemId();
+        if (compatibilityItemId == null || compatibilityItemId.isEmpty()) {
+            return new DeficitExpansionResult(false, false);
+        }
+
+        if (plannerNeed.usedCompatibilityFallback()) {
+            // Compatibility fallback is non-ideal for parity; keep deterministic behavior while
+            // runtime probe coverage drives a future engine-backed replacement.
+            // Boundary guard: execution still removes the explicit concrete consumption list
+            // emitted by the planner and never calls RecipeTreeResolver display-projection helpers.
+        }
+
         if (RecipeTierClassifier.isCraftedItem(compatibilityItemId)) {
             List<RawMaterialRequirement> rawPerUnit = RecipeTreeResolver.resolveItemToRaw(compatibilityItemId);
             if (rawPerUnit == null) {
@@ -318,17 +342,6 @@ public final class AutoCraftPlanner {
         for (ConsumptionEntry consumption : consumptions) {
             totalConsumption.merge(consumption.itemId(), consumption.quantity(), Integer::sum);
         }
-    }
-
-    /** @intent Count one concrete item in the container while preserving the planner's stencil-exclusion semantics.
-     *  @wave   3 - implemented concrete stock helper
-     *  @status implemented
-     *  @node   AutoCraftPlanner#countConcreteItem
-     */
-    private static int countConcreteItem(@Nonnull CombinedItemContainer container,
-                                         @Nonnull String itemId) {
-        return container.countItemStacks(stack ->
-                itemId.equals(stack.getItemId()) && !StencilMetadata.isStencil(stack));
     }
 
     /** @intent Materialize the planner verification map into concrete consumption entries for the existing plan contract.

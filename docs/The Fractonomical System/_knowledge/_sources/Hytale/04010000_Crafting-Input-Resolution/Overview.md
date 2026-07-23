@@ -4,7 +4,7 @@ type: knowledge-topic
 title: "Crafting Input Resolution"
 parent: "04000000"
 created: 2026-07-22
-updated: 2026-07-22
+updated: 2026-07-23
 tags:
   - domain:hytale
   - kind:topic
@@ -85,7 +85,89 @@ The available plugin evidence shows that Hytale recipe inputs preserve genericit
    - stencil-safe removal behavior to confirm non-stencil filtering still works.
 7. Only after those tests are in place should `ResourceTypeResolver.resolveInputItemId(...)` be narrowed or deprecated. The safer direction is to add a new richer API and migrate callers incrementally rather than rewriting all current call sites in one pass.
 
+## Generic Proxy Items (Design)
+Goal: support generic crafting-resource drops as dedicated non-placeable proxy items (for example, a single "Wood" token item) that later morph to concrete items based on container context.
+
+### Why this is needed
+Current recipe-block drop generation is static and resolved up-front, so generic recipe inputs become fixed concrete item drops in synthetic drop lists and cannot react to player inventory at break time.
+
+### Evidence
+- Static synthetic recipe drop list creation:
+  - [src/main/java/com/CodeCreature/scaling/AbstractBenchProcessor.java](../../../../../src/main/java/com/CodeCreature/scaling/AbstractBenchProcessor.java)
+  - [src/main/java/com/CodeCreature/scaling/DropScaler.java](../../../../../src/main/java/com/CodeCreature/scaling/DropScaler.java)
+- Runtime inventory-change hooks already exist and can be reused for morphing logic:
+  - [src/main/java/com/CodeCreature/stencil/StencilSyncSystem.java](../../../../../src/main/java/com/CodeCreature/stencil/StencilSyncSystem.java)
+  - [src/main/java/com/CodeCreature/stencil/AffordabilityCoalescer.java](../../../../../src/main/java/com/CodeCreature/stencil/AffordabilityCoalescer.java)
+- Existing generic resolution + icon path infrastructure is available:
+  - [src/main/java/com/CodeCreature/scaling/ResourceTypeResolver.java](../../../../../src/main/java/com/CodeCreature/scaling/ResourceTypeResolver.java)
+  - [src/main/java/com/CodeCreature/ui/bench/ResourceTypeRegistry.java](../../../../../src/main/java/com/CodeCreature/ui/bench/ResourceTypeRegistry.java)
+  - [src/main/java/com/CodeCreature/ui/common/IconPathResolver.java](../../../../../src/main/java/com/CodeCreature/ui/common/IconPathResolver.java)
+
+### Architecture
+1. Asset layer:
+   - Generate one non-placeable item asset per chosen generic ResourceType ID (or meta-group ID set), with icon from ResourceTypeRegistry/IconPathResolver and with no blockId.
+   - Mark each proxy item with stable metadata fields that map it back to resourceTypeId and optional compatibility policy.
+2. Drop layer:
+   - For recipe inputs authored as ResourceTypeId, drop proxy token items instead of pre-resolved concrete variants.
+   - Keep direct ItemId recipe inputs unchanged.
+3. Morph layer (container-aware):
+   - Add a new inventory/container sync system (parallel to StencilSyncSystem) that listens to container change events.
+   - On each coalesced refresh, scan proxy tokens and attempt conversion using "closest matching" policy:
+     - if container has matching resource-type items: morph token into preferred concrete variant;
+     - if no matches exist: keep token unchanged.
+4. Conversion policy:
+   - Deterministic score function should be centralized and configurable. Suggested default:
+     - prefer existing stack extension in same container;
+     - then highest quantity among matching variants;
+     - then stable tie-break using resolver order.
+5. Consumption compatibility:
+   - Extend affordability/planner checks so proxy items count as satisfying their resourceTypeId identity.
+   - At removeMaterials boundary, convert proxy consumptions to concrete item removals via the same score policy.
+
+### Rollout Strategy
+1. Add proxy item schema + registry + generated assets.
+2. Add drop projection toggle for generic recipe inputs.
+3. Add morph system with coalesced event handling and deterministic score policy.
+4. Add parity probes and tests for conversion behavior across pickup, drop, transfer, and split-stack actions.
+
+### Risks
+- If conversion policy differs from engine expectations, players may observe surprising variant choices.
+- Over-eager morphing can cause inventory churn; coalescing is required for stability.
+- Proxy item stackability and quality/category metadata must be controlled to avoid accidental crafting loops.
+
+## Runtime Probe Matrix Alignment
+Wave 1 parity work now has a concrete capture matrix in:
+- [docs/review-resource-typeid-parity.md](../../../../../docs/review-resource-typeid-parity.md)
+
+Execution gates are tracked with a per-wave checkbox list in:
+- [docs/review-resource-typeid-parity.md](../../../../../docs/review-resource-typeid-parity.md)
+
+Candidate probe recipe IDs grounded in repository evidence:
+- `Furniture_Kweebec_Bed`
+- `Wood_Hardwood_Fence`
+- `Planks_Oak`
+- `Slab_Oak`
+
+Repository evidence for those candidate IDs:
+- [src/test/java/com/CodeCreature/scaling/TestDataSet.java#L227](../../../../../src/test/java/com/CodeCreature/scaling/TestDataSet.java#L227)
+- [src/test/java/com/CodeCreature/scaling/TestDataSet.java#L293](../../../../../src/test/java/com/CodeCreature/scaling/TestDataSet.java#L293)
+- [src/test/java/com/CodeCreature/scaling/TestDataSet.java#L307](../../../../../src/test/java/com/CodeCreature/scaling/TestDataSet.java#L307)
+
+Interpretation rule:
+- Treat parity as provisional until matrix cases run in live assets and produce no parity warnings.
+
+Locked acceptance decisions (2026-07-23):
+- Parity contract: exact runtime parity for scoped generic-variant cases.
+- Generic token morph policy: choose the currently largest matching stack; deterministic tie-break by stable resolver order.
+- Go/no-go gate: zero parity warnings across all required probe matrix cases.
+
+Additional hardening (2026-07-23):
+- Token fallback acceptance is explicit: if no matching concrete stack exists, token remains generic.
+- Probe validity requires reproducible runtime environment conditions documented in [docs/review-resource-typeid-parity.md](../../../../../docs/review-resource-typeid-parity.md).
+- Unchecked wave/release gate items are now mapped to explicit evidence artifacts in [docs/review-resource-typeid-parity.md](../../../../../docs/review-resource-typeid-parity.md).
+
 ## Gaps
 - Unknown from repository evidence: the exact engine implementation that `CombinedItemContainer.canRemoveMaterials(...)` and `removeMaterials(...)` use to choose among multiple matching variants for a `ResourceTypeId` input.
 - Unknown from repository evidence: whether the engine uses inventory order, insertion order, stack order, set-root preference, or another rule when multiple variants satisfy the same generic ingredient during removal.
 - Unknown from repository evidence: whether engine-side recursive crafting or preview UIs ever collapse `ResourceTypeId` to a representative display item, and if so whether that choice affects actual material consumption.
+- Unknown from repository evidence: whether runtime item-asset registration for new Item assets is supported in this project in the same way as CraftingRecipe and ItemDropList runtime registration; if not, proxy items must be generated as static resource assets before load.
