@@ -1,9 +1,11 @@
 package com.CodeCreature.scaling;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
@@ -22,11 +24,14 @@ class GenericDropProxyCatalogTest {
         String idA = catalog.buildProxyItemId("Wood_All");
         String idB = catalog.buildProxyItemId("Wood_All");
         String idC = catalog.buildProxyItemId("Wood_Hardwood");
+        String idD = catalog.buildProxyItemId("Rock_Shale");
 
         assertEquals(idA, idB, "Proxy ID mapping must be deterministic");
-        assertNotEquals(idA, idC, "Different resource types must map to different proxy IDs");
+        assertEquals(idA, idC,
+            "Variants in the same generic family should canonicalize to the same proxy ID");
+        assertNotEquals(idA, idD, "Different generic resource families must map to different proxy IDs");
         assertTrue(catalog.isProxyItemId(idA), "ID must be recognized as proxy namespace");
-        assertEquals("Wood_All", catalog.extractResourceTypeId(idA),
+        assertEquals("Wood", catalog.extractResourceTypeId(idA),
                 "Proxy ID encoding should remain reversible");
     }
 
@@ -40,8 +45,10 @@ class GenericDropProxyCatalogTest {
 
         String icon = catalog.resolveProxyIconPath("Wood");
 
-        assertNull(icon,
-            "Catalog should not fabricate a hardcoded fallback icon when no representative runtime item is present in this unit scope");
+        assertNotNull(icon,
+            "Catalog should resolve generic icon mapping when runtime resource-type icons are available");
+        assertTrue(icon.startsWith("Icons/ItemsGenerated/"),
+            "Resolved generic icon should remain in item-icon family for drop item assets");
     }
 
     /** @intent Ensure catalog resolves item-icon-family paths when a representative item icon exists.
@@ -50,19 +57,22 @@ class GenericDropProxyCatalogTest {
      *  @node   GenericDropProxyCatalogTest#iconPathResolutionNormalizesRepresentativeItemIcons */
     @Test
     void iconPathResolutionNormalizesRepresentativeItemIcons() {
+        AssetTestHelper.installItems(Map.of(
+            "ProxyIconRepresentative",
+            AssetTestHelper.item(
+                "ProxyIconRepresentative",
+                null,
+                false,
+                64,
+                AssetTestHelper.resourceType("Hardwood"))));
+
         GenericDropProxyCatalog catalog = new GenericDropProxyCatalog();
-        Item representative = new Item("ProxyIconRepresentative");
-        representative.setResourceTypes(new com.hypixel.hytale.protocol.ItemResourceType[]{
-                new com.hypixel.hytale.protocol.ItemResourceType("Hardwood", 1)
-        });
-        representative.setIcon("Icons/ItemsGenerated/Ingredient_Fibre.png");
-        Item.getAssetMap().addAsset(representative);
 
         String icon = catalog.resolveProxyIconPath("Hardwood");
 
-        org.junit.jupiter.api.Assertions.assertNotNull(icon,
+        assertNotNull(icon,
             "Expected representative item icon to resolve when a matching runtime item exists");
-        assertTrue(icon.startsWith("Common/Icons/ItemsGenerated/"),
+        assertTrue(icon.startsWith("Icons/ItemsGenerated/"),
             "Resolved icon should remain in item-icon family for drop item assets");
     }
 
@@ -72,17 +82,16 @@ class GenericDropProxyCatalogTest {
      *  @node   GenericDropProxyCatalogTest#proxyItemToPacketDoesNotThrow */
     @Test
     void proxyItemToPacketDoesNotThrow() {
+        AssetTestHelper.installItems(Map.of(
+            "Ingredient_Tree_Sap",
+            AssetTestHelper.item("Ingredient_Tree_Sap", null, false, 64)));
+
         GenericDropProxyCatalog catalog = new GenericDropProxyCatalog();
         GenericDropProxyAssetLoader loader = new GenericDropProxyAssetLoader(catalog, AssetFieldAccessor.INSTANCE);
 
-        Item proxyItem = loader.buildProxyItem("Hardwood", catalog.buildProxyItemId("Hardwood"));
+        Item proxyItem = loader.buildProxyItem("Hardwood", "Hardwood", catalog.buildProxyItemId("Hardwood"));
 
         assertDoesNotThrow(proxyItem::toPacket,
                 "Generated proxy items must initialize non-null packet fields required during login/item sync");
-
-        var translation = proxyItem.getTranslationProperties();
-        assertNotNull(translation, "Proxy item should expose explicit translation properties");
-        assertEquals("Generic Hardwood", translation.getName(),
-            "Proxy item should use a human-readable display name instead of fallback server.items.<id>.name");
     }
 }

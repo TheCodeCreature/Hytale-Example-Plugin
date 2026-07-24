@@ -1,14 +1,24 @@
 package com.CodeCreature.stencil;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
+ * @node    AffordabilityCoalescer
+ * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
+ * @intent  Coalesces inventory change bursts into one deferred affordability refresh and runs
+ *          a guarded proxy-token morph pass before visual affordability scanning.
+ * @wave    1 (coalesced proxy morph slice)
+ * @status  Wave 1 - implemented proxy morph pre-pass hook with fail-open semantics
+ * @do-not  Change planner math semantics here.
+ *          Let proxy morph failures block affordability refresh.
+ *
  * Coalesces multiple synchronous inventory change events into a single deferred
  * {@link StencilVisualManager#refreshAffordability} call per world tick.
  *
@@ -62,6 +72,9 @@ public final class AffordabilityCoalescer {
     /** Player entity for inventory access. */
     private final Player player;
 
+    /** Coordinator for one-pass proxy morphing during coalesced refresh. */
+    private final ProxyMorphCoordinator proxyMorphCoordinator = new ProxyMorphCoordinator();
+
     /**
      * Guards against scheduling multiple {@code world.execute()} calls.
      * Set to {@code true} by the first {@link #markDirty} call; cleared to
@@ -83,6 +96,9 @@ public final class AffordabilityCoalescer {
      * on the world thread. No cross-thread access.
      */
     private boolean restoringStencils;
+
+    /** Re-entrancy guard for mutation-triggered inventory events during proxy morph pass. */
+    private boolean morphingProxyStacks;
 
     /**
      * Creates a coalescer for the given player.
@@ -151,6 +167,16 @@ public final class AffordabilityCoalescer {
     }
 
     /**
+     * Returns whether proxy stack morphing is currently executing.
+     *
+     * <p>Used by event handlers to avoid recursive refresh scheduling when
+     * morph-triggered inventory mutations fire nested change events.
+     */
+    public boolean isMorphing() {
+        return morphingProxyStacks;
+    }
+
+    /**
      * Executes the deferred affordability refresh.
      *
      * <p>This method is the {@code Runnable} passed to {@code world.execute()}.
@@ -167,9 +193,29 @@ public final class AffordabilityCoalescer {
      */
     private void executeRefresh() {
         try {
+            runProxyMorphPass();
             StencilVisualManager.refreshAffordability(playerRef, player);
         } finally {
             pending.set(false);
+        }
+    }
+
+    /**
+     * Runs one guarded proxy morph pass before affordability refresh.
+     *
+     * <p>Any morphing failure is fail-open: affordability refresh still runs.
+     */
+    private void runProxyMorphPass() {
+        if (morphingProxyStacks) {
+            return;
+        }
+        morphingProxyStacks = true;
+        try {
+            proxyMorphCoordinator.morphProxyStacks(player);
+        } catch (Exception ignored) {
+            // Fail-open by design: never block affordability refresh if morphing fails.
+        } finally {
+            morphingProxyStacks = false;
         }
     }
 }
