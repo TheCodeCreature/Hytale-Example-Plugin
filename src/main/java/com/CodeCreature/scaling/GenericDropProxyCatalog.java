@@ -15,11 +15,15 @@ import java.nio.charset.StandardCharsets;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.CodeCreature.ui.bench.ResourceTypeRegistry;
 import com.CodeCreature.ui.common.IconPathResolver;
 
 public final class GenericDropProxyCatalog {
 
     private static final String PROXY_PREFIX = "Plugin_GenericDropProxy_RT_";
+    private static final String RESOURCE_TYPE_ICON_ASSET_PREFIX = "Icons/ResourceTypes/";
+    private static final String ITEM_ICON_ASSET_PREFIX = "Icons/ItemsGenerated/";
+    private static final String ITEM_TEXTURE_ASSET_PREFIX = "Items/GeneratedProxyTextures/";
 
     /** @intent Build a stable proxy item ID for a ResourceTypeId using reversible hex encoding.
      *  @wave   1 - implemented
@@ -27,7 +31,21 @@ public final class GenericDropProxyCatalog {
      *  @node   GenericDropProxyCatalog#buildProxyItemId */
     @Nonnull
     public String buildProxyItemId(@Nonnull String resourceTypeId) {
-        return PROXY_PREFIX + encodeHex(normalizeResourceTypeId(resourceTypeId));
+        return PROXY_PREFIX + encodeHex(toGenericTypeId(resourceTypeId));
+    }
+
+    /** @intent Canonicalize variant resource IDs (e.g. Rock_Volcanic) to top-level generic IDs (e.g. Rock).
+     *  @wave   4 - implemented
+     *  @status implemented
+     *  @node   GenericDropProxyCatalog#toGenericTypeId */
+    @Nonnull
+    public String toGenericTypeId(@Nonnull String resourceTypeId) {
+        String normalized = normalizeResourceTypeId(resourceTypeId);
+        int sep = normalized.indexOf('_');
+        if (sep <= 0) {
+            return normalized;
+        }
+        return normalized.substring(0, sep);
     }
 
     /** @intent Resolve a normalized generic icon path for a ResourceTypeId proxy.
@@ -36,19 +54,83 @@ public final class GenericDropProxyCatalog {
      *  @node   GenericDropProxyCatalog#resolveProxyIconPath */
     @Nullable
     public String resolveProxyIconPath(@Nonnull String resourceTypeId) {
-        String normalized = normalizeResourceTypeId(resourceTypeId);
+        String normalized = toGenericTypeId(resourceTypeId);
+
+        String resourceTypeIcon = resolveGenericResourceTypeIcon(normalized);
+        if (resourceTypeIcon != null && !resourceTypeIcon.isEmpty()) {
+            return adaptResourceTypeIconForItem(resourceTypeIcon);
+        }
 
         var matches = ResourceTypeResolver.getAllMatchingItemIds(normalized);
         for (String itemId : matches) {
             var item = com.hypixel.hytale.server.core.asset.type.item.config.Item.getAssetMap().getAsset(itemId);
             if (item == null || item.getIcon() == null) continue;
-            String normalizedItemIcon = IconPathResolver.normalizeItemIcon(item.getIcon());
+            String normalizedItemIcon = toAssetIconPath(IconPathResolver.normalizeItemIcon(item.getIcon()));
             if (normalizedItemIcon != null && !normalizedItemIcon.isEmpty()) {
                 return normalizedItemIcon;
             }
         }
 
         return null;
+    }
+
+    /** @intent Resolve an item-valid texture path for a ResourceTypeId proxy.
+     *  @wave   5 - implemented mirrored texture path adaptation
+     *  @status implemented
+     *  @node   GenericDropProxyCatalog#resolveProxyTexturePath */
+    @Nullable
+    public String resolveProxyTexturePath(@Nonnull String resourceTypeId) {
+        String iconPath = resolveProxyIconPath(resourceTypeId);
+        if (iconPath == null || iconPath.isEmpty()) {
+            return null;
+        }
+        return toTexturePath(iconPath);
+    }
+
+    @Nullable
+    private static String resolveGenericResourceTypeIcon(@Nonnull String genericTypeId) {
+        String iconToken = ResourceTypeRegistry.getIconPath(genericTypeId + "_Group");
+        if (iconToken == null || iconToken.isBlank()) {
+            iconToken = ResourceTypeRegistry.getIconPath(genericTypeId);
+        }
+        if (iconToken == null || iconToken.isBlank()) {
+            return null;
+        }
+        return toAssetIconPath(IconPathResolver.normalizeResourceTypeIcon(iconToken));
+    }
+
+    @Nonnull
+    private static String adaptResourceTypeIconForItem(@Nonnull String iconPath) {
+        if (!iconPath.startsWith(RESOURCE_TYPE_ICON_ASSET_PREFIX)) {
+            return iconPath;
+        }
+        return ITEM_ICON_ASSET_PREFIX + iconPath.substring(RESOURCE_TYPE_ICON_ASSET_PREFIX.length());
+    }
+
+    @Nullable
+    private static String toTexturePath(@Nullable String iconPath) {
+        if (iconPath == null || iconPath.isEmpty()) {
+            return null;
+        }
+        if (iconPath.startsWith(ITEM_ICON_ASSET_PREFIX)) {
+            return ITEM_TEXTURE_ASSET_PREFIX + iconPath.substring(ITEM_ICON_ASSET_PREFIX.length());
+        }
+        return null;
+    }
+
+    @Nullable
+    private static String toAssetIconPath(@Nullable String iconPath) {
+        if (iconPath == null) {
+            return null;
+        }
+        String normalized = iconPath.replace('\\', '/').trim();
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        if (normalized.startsWith("Common/")) {
+            return normalized.substring("Common/".length());
+        }
+        return normalized;
     }
 
     /** @intent Check whether an item ID belongs to the generic proxy namespace.

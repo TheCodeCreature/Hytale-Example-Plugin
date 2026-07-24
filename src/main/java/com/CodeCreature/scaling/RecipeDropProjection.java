@@ -57,11 +57,12 @@ public final class RecipeDropProjection {
     public ProjectedDrop fromInput(@Nonnull MaterialQuantity input, boolean preferNatural) {
         String resourceTypeId = normalize(input.getResourceTypeId());
         if (resourceTypeId != null) {
+            String genericTypeId = proxyCatalog.toGenericTypeId(resourceTypeId);
             return new ProjectedDrop(
-                    proxyCatalog.buildProxyItemId(resourceTypeId),
+                    proxyCatalog.buildProxyItemId(genericTypeId),
                     Math.max(1, input.getQuantity()),
                     true,
-                    resourceTypeId
+                    genericTypeId
             );
         }
 

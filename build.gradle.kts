@@ -102,6 +102,28 @@ tasks.named<ProcessResources>("processResources") {
     }
 
     inputs.properties(replaceProperties)
+
+    val resourceTypeIconsDir = project.layout.projectDirectory.dir("src/main/resources/Common/UI/Custom/Common/Icons/ResourceTypes")
+    val mirroredItemIconsDir = layout.buildDirectory.dir("resources/main/Common/Icons/ItemsGenerated")
+    val mirroredItemTexturesDir = layout.buildDirectory.dir("resources/main/Common/Items/GeneratedProxyTextures")
+
+    doLast {
+        val sourceDir = resourceTypeIconsDir.asFile
+        if (!sourceDir.exists()) {
+            return@doLast
+        }
+
+        val iconOutDir = mirroredItemIconsDir.get().asFile
+        val textureOutDir = mirroredItemTexturesDir.get().asFile
+        iconOutDir.mkdirs()
+        textureOutDir.mkdirs()
+
+        sourceDir.listFiles { file -> file.isFile && file.extension.equals("png", ignoreCase = true) }
+            ?.forEach { file ->
+                file.copyTo(iconOutDir.resolve(file.name), overwrite = true)
+                file.copyTo(textureOutDir.resolve(file.name), overwrite = true)
+            }
+    }
 }
 
 tasks.withType<Jar> {

@@ -35,6 +35,7 @@ import com.hypixel.hytale.server.core.modules.interaction.interaction.config.Int
 public final class GenericDropProxyAssetLoader {
 
     private static final String[] DEFAULT_PROXY_CATEGORIES = new String[]{"Plugin", "Plugin.GenericDropProxy"};
+    private static final String DEFAULT_PROXY_MODEL = "Items/GeneratedProxy/Temp_Quad_2D.blockymodel";
 
     private final GenericDropProxyCatalog proxyCatalog;
     private final AssetFieldAccessor fields;
@@ -68,13 +69,14 @@ public final class GenericDropProxyAssetLoader {
     @Nonnull
     public String ensureProxyAsset(@Nonnull String resourceTypeId) {
         String normalizedResourceTypeId = normalizeRequired(resourceTypeId);
-        String proxyItemId = proxyCatalog.buildProxyItemId(normalizedResourceTypeId);
+        String genericTypeId = proxyCatalog.toGenericTypeId(normalizedResourceTypeId);
+        String proxyItemId = proxyCatalog.buildProxyItemId(genericTypeId);
 
         if (Item.getAssetMap().getAsset(proxyItemId) != null) {
             return proxyItemId;
         }
 
-        Item proxyItem = buildProxyItem(normalizedResourceTypeId, proxyItemId);
+        Item proxyItem = buildProxyItem(genericTypeId, proxyItemId);
         List<Item> toLoad = new ArrayList<>(1);
         toLoad.add(proxyItem);
 
@@ -83,7 +85,7 @@ public final class GenericDropProxyAssetLoader {
         } catch (Exception loadFailure) {
             DebugLogger.log(SCALING, Level.WARNING,
                     "[GenericDropProxyAssetLoader] Unable to register proxy asset via loadAssets for "
-                            + normalizedResourceTypeId + " (" + proxyItemId + "): "
+                            + genericTypeId + " (" + proxyItemId + "): "
                             + loadFailure.getClass().getSimpleName() + ": " + loadFailure.getMessage());
         }
 
@@ -103,13 +105,10 @@ public final class GenericDropProxyAssetLoader {
     @Nonnull
     public Item buildProxyItem(@Nonnull String resourceTypeId, @Nonnull String proxyItemId) {
         String iconPath = proxyCatalog.resolveProxyIconPath(resourceTypeId);
+        String texturePath = proxyCatalog.resolveProxyTexturePath(resourceTypeId);
         String displayName = buildDisplayName(resourceTypeId);
-        Item item = buildRepresentativeBackedItem(resourceTypeId, proxyItemId);
-
-        if (item == null) {
-            item = new Item(proxyItemId);
-            setRequiredDefaults(item);
-        }
+        Item item = new Item(proxyItemId);
+        setRequiredDefaults(item);
 
         try {
             setFieldIfPresent(Item.class, item, "id", proxyItemId);
@@ -119,6 +118,12 @@ public final class GenericDropProxyAssetLoader {
             if (iconPath != null && !iconPath.isEmpty()) {
                 setFieldIfPresent(Item.class, item, "icon", iconPath);
             }
+
+            if (texturePath != null && !texturePath.isEmpty()) {
+                setFieldIfPresent(Item.class, item, "texture", texturePath);
+            }
+
+            setFieldIfPresent(Item.class, item, "model", DEFAULT_PROXY_MODEL);
 
             setFieldIfPresent(Item.class, item, "translationProperties",
                     new ItemTranslationProperties(displayName, "Generic crafting resource"));
@@ -136,39 +141,6 @@ public final class GenericDropProxyAssetLoader {
         }
 
         return item;
-    }
-
-    @Nullable
-    private static Item buildRepresentativeBackedItem(@Nonnull String resourceTypeId,
-                                                      @Nonnull String proxyItemId) {
-        Item fallbackRepresentative = null;
-
-        for (String itemId : ResourceTypeResolver.getAllMatchingItemIds(resourceTypeId)) {
-            Item representative = Item.getAssetMap().getAsset(itemId);
-            if (representative == null) {
-                continue;
-            }
-
-            if (fallbackRepresentative == null) {
-                fallbackRepresentative = representative;
-            }
-
-            if (representative.getBlockId() != null) {
-                continue;
-            }
-
-            Item proxy = new Item(representative);
-            setFieldIfPresent(Item.class, proxy, "id", proxyItemId);
-            return proxy;
-        }
-
-        if (fallbackRepresentative != null) {
-            Item proxy = new Item(fallbackRepresentative);
-            setFieldIfPresent(Item.class, proxy, "id", proxyItemId);
-            return proxy;
-        }
-
-        return null;
     }
 
     @Nonnull
@@ -189,9 +161,10 @@ public final class GenericDropProxyAssetLoader {
         setFieldIfPresent(Item.class, item, "itemEntityConfig", ItemEntityConfig.DEFAULT);
         setFieldIfPresent(Item.class, item, "utility", ItemUtility.DEFAULT);
         setFieldIfPresent(Item.class, item, "itemStackContainerConfig", ItemStackContainerConfig.DEFAULT);
-        setFieldIfPresent(Item.class, item, "playerAnimationsId", "Default");
+        setFieldIfPresent(Item.class, item, "playerAnimationsId", "Item");
         setFieldIfPresent(Item.class, item, "usePlayerAnimations", false);
-        setFieldIfPresent(Item.class, item, "texture", "Items/Unknown.png");
+        setFieldIfPresent(Item.class, item, "itemSoundSetId", "ISS_Items_Foliage");
+        setFieldIfPresent(Item.class, item, "dropOnDeath", true);
         setFieldIfPresent(Item.class, item, "interactions", new EnumMap<InteractionType, String>(InteractionType.class));
     }
 

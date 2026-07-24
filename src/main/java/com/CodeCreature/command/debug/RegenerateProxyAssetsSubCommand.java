@@ -106,12 +106,7 @@ public class RegenerateProxyAssetsSubCommand extends AbstractPlayerCommand {
             idsToDump.addAll(ensuredProxyIds);
         }
 
-        Path itemAssetDir = dataDir
-            .resolve("Server")
-            .resolve("Item")
-            .resolve("Items")
-            .resolve("Plugin")
-            .resolve("GenericDropProxy");
+        Path itemAssetDir = resolveCanonicalItemProxyPath(dataDir);
         int dumped = 0;
         int missing = 0;
         int overflowFallback = 0;
@@ -161,6 +156,25 @@ public class RegenerateProxyAssetsSubCommand extends AbstractPlayerCommand {
         if (!dumpAll) {
             playerRef.sendMessage(Message.raw("§7[Debug] Tip: use /debug regenproxiesall (or /debug regenproxiesa) to dump every proxy currently in the runtime item asset map."));
         }
+    }
+
+    @NonNull
+    private static Path resolveCanonicalItemProxyPath(@NonNull Path baseDir) {
+        Path normalized = baseDir.toAbsolutePath().normalize();
+        String forward = normalized.toString().replace('\\', '/');
+        int idx = forward.toLowerCase().indexOf("/server/item/items");
+        if (idx >= 0) {
+            String trimmed = forward.substring(0, idx);
+            normalized = Path.of(trimmed);
+        }
+
+        return normalized
+                .resolve("Server")
+                .resolve("Item")
+                .resolve("Items")
+                .resolve("Plugin")
+                .resolve("GenericDropProxy")
+                .normalize();
     }
 
     @NonNull
@@ -278,13 +292,14 @@ public class RegenerateProxyAssetsSubCommand extends AbstractPlayerCommand {
                                                 @NonNull GenericDropProxyCatalog catalog,
                                                 @NonNull Set<String> usedFileNames) {
         String resourceTypeId = catalog.extractResourceTypeId(proxyId);
+        String genericTypeId = resourceTypeId == null ? null : catalog.toGenericTypeId(resourceTypeId);
         String displayName = readStringField(readField(item, "translationProperties"), "name");
 
         String preferred = displayName;
         if (preferred == null || preferred.isBlank() || preferred.contains(".")) {
-            preferred = resourceTypeId == null || resourceTypeId.isBlank()
+            preferred = genericTypeId == null || genericTypeId.isBlank()
                     ? proxyId
-                    : "Generic_" + resourceTypeId;
+                : "Generic_" + genericTypeId;
         }
 
         String base = sanitizeFileToken(preferred);
