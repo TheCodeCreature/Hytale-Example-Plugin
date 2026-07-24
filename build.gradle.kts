@@ -1,3 +1,6 @@
+import java.awt.RenderingHints
+import java.awt.image.BufferedImage
+import javax.imageio.ImageIO
 import java.util.jar.JarFile
 
 plugins {
@@ -120,8 +123,29 @@ tasks.named<ProcessResources>("processResources") {
 
         sourceDir.listFiles { file -> file.isFile && file.extension.equals("png", ignoreCase = true) }
             ?.forEach { file ->
-                file.copyTo(iconOutDir.resolve(file.name), overwrite = true)
-                file.copyTo(textureOutDir.resolve(file.name), overwrite = true)
+                val sourceImage = ImageIO.read(file)
+                if (sourceImage != null) {
+                    val resizedIcon = BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB)
+                    val iconGraphics = resizedIcon.createGraphics()
+                    iconGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+                    iconGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+                    iconGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+                    iconGraphics.drawImage(sourceImage, 0, 0, 64, 64, null)
+                    iconGraphics.dispose()
+                    ImageIO.write(resizedIcon, "png", iconOutDir.resolve(file.name))
+
+                    val resizedTexture = BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB)
+                    val textureGraphics = resizedTexture.createGraphics()
+                    textureGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+                    textureGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+                    textureGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+                    textureGraphics.drawImage(sourceImage, 0, 0, 16, 16, null)
+                    textureGraphics.dispose()
+                    ImageIO.write(resizedTexture, "png", textureOutDir.resolve(file.name))
+                } else {
+                    file.copyTo(iconOutDir.resolve(file.name), overwrite = true)
+                    file.copyTo(textureOutDir.resolve(file.name), overwrite = true)
+                }
             }
     }
 }
