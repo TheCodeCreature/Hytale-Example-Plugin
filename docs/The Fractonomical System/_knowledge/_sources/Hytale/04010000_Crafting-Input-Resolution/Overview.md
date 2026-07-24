@@ -4,7 +4,7 @@ type: knowledge-topic
 title: "Crafting Input Resolution"
 parent: "04000000"
 created: 2026-07-22
-updated: 2026-07-23
+updated: 2026-07-24
 tags:
   - domain:hytale
   - kind:topic
@@ -233,8 +233,118 @@ Evidence:
   - [src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsSubCommand.java#L69](../../../../../src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsSubCommand.java#L69)
   - [src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsSubCommand.java#L119](../../../../../src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsSubCommand.java#L119)
 
+## Login Disconnect Failure Signature (2026-07-24)
+
+Observed runtime failure:
+1. Client disconnects during login setup at `setup:send-assets` with `client.general.disconnect.loginException`.
+2. Server throws an unhandled exception while serializing item init packets.
+3. Root cause in stack trace: `Item.toPacket(...)` dereferences null `interactionConfig`.
+
+Evidence:
+- Disconnect during send-assets stage:
+  - [run/logs/2026-07-23_23-23-29_server.log#L744](../../../../../run/logs/2026-07-23_23-23-29_server.log#L744)
+  - [run/logs/2026-07-23_23-23-29_server.log#L812](../../../../../run/logs/2026-07-23_23-23-29_server.log#L812)
+- Root exception:
+  - [run/logs/2026-07-23_23-23-29_server.log#L764](../../../../../run/logs/2026-07-23_23-23-29_server.log#L764)
+  - [run/logs/2026-07-23_23-23-29_server.log#L770](../../../../../run/logs/2026-07-23_23-23-29_server.log#L770)
+  - [run/logs/2026-07-23_23-23-29_server.log#L832](../../../../../run/logs/2026-07-23_23-23-29_server.log#L832)
+  - [run/logs/2026-07-23_23-23-29_server.log#L838](../../../../../run/logs/2026-07-23_23-23-29_server.log#L838)
+- Generated proxy default restoration (required interaction fields):
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L157](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L157)
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L158](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L158)
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L163](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L163)
+
+Operational note:
+- Command registration also reports invalid permission node formatting (spaces in node IDs) during startup, but this is separate from the login NPE.
+  - [run/logs/2026-07-23_23-23-29_server.log#L120](../../../../../run/logs/2026-07-23_23-23-29_server.log#L120)
+  - [run/logs/2026-07-23_23-23-29_server.log#L150](../../../../../run/logs/2026-07-23_23-23-29_server.log#L150)
+
+## Minimal Ingredient-Style Proxy Asset Contract (2026-07-24)
+
+Refactor intent:
+1. Keep generated proxy item JSON as small as possible while still functioning as an ingredient-like asset.
+2. Preserve runtime-only defaults required to avoid login-time packet serialization failures.
+
+Author-time fields kept for generated proxy assets:
+1. TranslationProperties
+2. Icon
+3. Categories (ingredient-aligned)
+4. Model
+5. Texture
+6. ResourceTypes
+
+Runtime safety defaults still applied in memory:
+1. interactionConfig
+2. interactions
+3. interactionVars
+4. itemEntityConfig
+5. utility
+6. itemStackContainerConfig
+7. playerAnimationsId
+8. usePlayerAnimations
+9. itemSoundSetId
+10. dropOnDeath
+
+Pickup stability requirement:
+1. Generated proxy items must have a positive `maxStack` value.
+2. `maxStack = -1` causes world-thread crash during item pickup.
+
+Evidence:
+- Lean field authoring in generator:
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L115](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L115)
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L130](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L130)
+- Ingredient category alignment:
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L38](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L38)
+- Runtime-required defaults retained:
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L160](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L160)
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L169](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L169)
+- Pickup crash stack trace (`quantity -1 must be >0`) during item pickup path:
+  - [run/logs/2026-07-23_23-43-05_server.log#L763](../../../../../run/logs/2026-07-23_23-43-05_server.log#L763)
+  - [run/logs/2026-07-23_23-43-05_server.log#L771](../../../../../run/logs/2026-07-23_23-43-05_server.log#L771)
+- Max stack default restored in proxy generator:
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L40](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L40)
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L131](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L131)
+
+## Hotbar Selection Diagnostics (2026-07-24)
+
+Purpose:
+1. Trace hotbar scroll/selection transitions while testing generated proxy items.
+2. Capture proxy item sanity fields at selection time (`maxStack`, `interactionConfig`, interaction maps) without changing gameplay behavior.
+
+Behavior:
+1. Emits `HotbarTrace` logs only when slot or held item state changes.
+2. Logs selected slot, item ID, quantity, metadata presence.
+3. For proxy IDs (`Plugin_GenericDropProxy_RT_*`), logs runtime asset presence and key fields.
+
+Evidence:
+- Logger hook in active hotbar polling loop:
+  - [src/main/java/com/CodeCreature/ui/stencilbook/StencilBookParticleLoop.java#L155](../../../../../src/main/java/com/CodeCreature/ui/stencilbook/StencilBookParticleLoop.java#L155)
+  - [src/main/java/com/CodeCreature/ui/stencilbook/StencilBookParticleLoop.java#L287](../../../../../src/main/java/com/CodeCreature/ui/stencilbook/StencilBookParticleLoop.java#L287)
+
 ## Gaps
 - Unknown from repository evidence: the exact engine implementation that `CombinedItemContainer.canRemoveMaterials(...)` and `removeMaterials(...)` use to choose among multiple matching variants for a `ResourceTypeId` input.
 - Unknown from repository evidence: whether the engine uses inventory order, insertion order, stack order, set-root preference, or another rule when multiple variants satisfy the same generic ingredient during removal.
 - Unknown from repository evidence: whether engine-side recursive crafting or preview UIs ever collapse `ResourceTypeId` to a representative display item, and if so whether that choice affects actual material consumption.
 - Unknown from repository evidence: whether runtime item-asset registration for new Item assets is supported in this project in the same way as CraftingRecipe and ItemDropList runtime registration; if not, proxy items must be generated as static resource assets before load.
+
+## Proxy Input Recognition Fix (2026-07-24)
+
+Issue:
+1. Proxy drops were generated and visible in hotbar, but stencil affordability/consumption did not consistently recognize them as valid ingredients.
+
+Root cause:
+1. Stencil generic matching consumed/counts by concrete variant item IDs.
+2. Proxy item IDs were not in that concrete variant set, so they were invisible to planner accounting.
+
+Fix:
+1. Keep sap-template cloning for proxy asset shape (original server item baseline).
+2. Expand proxy `ResourceTypes` to include the full generic family (specific subtype IDs + generic root).
+3. Extend generic matcher variant list to include proxy item IDs that explicitly declare the requested `ResourceTypeId`.
+
+Evidence:
+- Proxy loader now builds family-wide `ResourceTypes` on cloned sap template:
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L104](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L104)
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L141](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L141)
+- Generic matcher includes proxy IDs for matching resource type:
+  - [src/main/java/com/CodeCreature/crafting/GenericVariantMatcher.java#L126](../../../../../src/main/java/com/CodeCreature/crafting/GenericVariantMatcher.java#L126)
+  - [src/main/java/com/CodeCreature/crafting/GenericVariantMatcher.java#L146](../../../../../src/main/java/com/CodeCreature/crafting/GenericVariantMatcher.java#L146)

@@ -11,9 +11,10 @@ package com.CodeCreature.scaling;
  */
 
 import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 
 import javax.annotation.Nonnull;
@@ -21,29 +22,23 @@ import javax.annotation.Nullable;
 
 import com.CodeCreature.util.DebugLogger;
 import static com.CodeCreature.util.DebugLogger.Subsystem.SCALING;
-import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.protocol.ItemResourceType;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
-import com.hypixel.hytale.server.core.asset.type.item.config.ItemEntityConfig;
-import com.hypixel.hytale.server.core.asset.type.item.config.ItemStackContainerConfig;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemTranslationProperties;
-import com.hypixel.hytale.server.core.asset.type.item.config.ItemUtility;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
-import com.hypixel.hytale.server.core.modules.interaction.interaction.config.InteractionConfiguration;
 
 public final class GenericDropProxyAssetLoader {
 
-    private static final String[] DEFAULT_PROXY_CATEGORIES = new String[]{"Plugin", "Plugin.GenericDropProxy"};
-    private static final String DEFAULT_PROXY_MODEL = "Items/GeneratedProxy/Temp_Quad_2D.blockymodel";
+    private static final String SAP_TEMPLATE_ITEM_ID = "Ingredient_Tree_Sap";
 
     private final GenericDropProxyCatalog proxyCatalog;
-    private final AssetFieldAccessor fields;
 
     public GenericDropProxyAssetLoader(@Nonnull GenericDropProxyCatalog proxyCatalog,
                                        @Nonnull AssetFieldAccessor fields) {
         this.proxyCatalog = proxyCatalog;
-        this.fields = fields;
+        // Kept for call-site compatibility; this loader no longer needs direct field accessor usage.
+        Objects.requireNonNull(fields, "fields");
     }
 
     /** @intent Ensure proxy assets for every generic input in the provided recipe.
@@ -76,7 +71,7 @@ public final class GenericDropProxyAssetLoader {
             return proxyItemId;
         }
 
-        Item proxyItem = buildProxyItem(genericTypeId, proxyItemId);
+        Item proxyItem = buildProxyItem(normalizedResourceTypeId, genericTypeId, proxyItemId);
         List<Item> toLoad = new ArrayList<>(1);
         toLoad.add(proxyItem);
 
@@ -98,22 +93,22 @@ public final class GenericDropProxyAssetLoader {
         return proxyItemId;
     }
 
-    /** @intent Build a runtime proxy item with generic icon metadata and non-placeable defaults.
+    /** @intent Build a runtime proxy item by cloning original server sap asset and
+     *          mutating only sap-existing fields + id.
      *  @wave   1 - implemented
      *  @status implemented
      *  @node   GenericDropProxyAssetLoader#buildProxyItem */
     @Nonnull
-    public Item buildProxyItem(@Nonnull String resourceTypeId, @Nonnull String proxyItemId) {
-        String iconPath = proxyCatalog.resolveProxyIconPath(resourceTypeId);
-        String texturePath = proxyCatalog.resolveProxyTexturePath(resourceTypeId);
-        String displayName = buildDisplayName(resourceTypeId);
-        Item item = new Item(proxyItemId);
-        setRequiredDefaults(item);
+    public Item buildProxyItem(@Nonnull String sourceResourceTypeId,
+                               @Nonnull String genericTypeId,
+                               @Nonnull String proxyItemId) {
+        String iconPath = proxyCatalog.resolveProxyIconPath(genericTypeId);
+        String texturePath = proxyCatalog.resolveProxyTexturePath(genericTypeId);
+        String displayName = buildDisplayName(genericTypeId);
+        Item item = cloneSapTemplate(proxyItemId);
 
         try {
             setFieldIfPresent(Item.class, item, "id", proxyItemId);
-            fields.itemSet.set(item, proxyItemId);
-            fields.itemMaxStack.setInt(item, 1200);
 
             if (iconPath != null && !iconPath.isEmpty()) {
                 setFieldIfPresent(Item.class, item, "icon", iconPath);
@@ -123,17 +118,10 @@ public final class GenericDropProxyAssetLoader {
                 setFieldIfPresent(Item.class, item, "texture", texturePath);
             }
 
-            setFieldIfPresent(Item.class, item, "model", DEFAULT_PROXY_MODEL);
-
             setFieldIfPresent(Item.class, item, "translationProperties",
                     new ItemTranslationProperties(displayName, "Generic crafting resource"));
-            setFieldIfPresent(Item.class, item, "name", displayName);
-            setFieldIfPresent(Item.class, item, "displayName", displayName);
-            setFieldIfPresent(Item.class, item, "categories", DEFAULT_PROXY_CATEGORIES);
-            setFieldIfPresent(Item.class, item, "hasBlockType", false);
-            setFieldIfPresent(Item.class, item, "blockId", null);
             setFieldIfPresent(Item.class, item, "resourceTypes",
-                    new ItemResourceType[]{new ItemResourceType(resourceTypeId, 1)});
+                    buildProxyResourceTypes(sourceResourceTypeId, genericTypeId));
         } catch (Exception e) {
             DebugLogger.log(SCALING, Level.WARNING,
                     "[GenericDropProxyAssetLoader] Failed to populate optional proxy fields for "
@@ -141,6 +129,60 @@ public final class GenericDropProxyAssetLoader {
         }
 
         return item;
+    }
+
+    @Nonnull
+    private ItemResourceType[] buildProxyResourceTypes(@Nonnull String sourceResourceTypeId,
+                                                       @Nonnull String genericTypeId) {
+        Set<String> ids = new LinkedHashSet<>();
+
+        // Always include the specific authored type that triggered this proxy ensure.
+        ids.add(sourceResourceTypeId);
+
+        // Include every known subtype in the same generic family so this proxy can
+        // satisfy recipes that require a specific ResourceTypeId variant.
+        for (Item candidate : Item.getAssetMap().getAssetMap().values()) {
+            if (candidate == null || candidate.getResourceTypes() == null) {
+                continue;
+            }
+            for (ItemResourceType rt : candidate.getResourceTypes()) {
+                String rtId = rt == null ? null : normalize(rt.id);
+                if (rtId == null) {
+                    continue;
+                }
+                if (genericTypeId.equals(proxyCatalog.toGenericTypeId(rtId))) {
+                    ids.add(rtId);
+                }
+            }
+        }
+
+        // Keep generic id too for systems that key directly by top-level family.
+        ids.add(genericTypeId);
+
+        List<ItemResourceType> resourceTypes = new ArrayList<>(ids.size());
+        for (String id : ids) {
+            resourceTypes.add(new ItemResourceType(id, 1));
+        }
+        ItemResourceType[] result = new ItemResourceType[resourceTypes.size()];
+        for (int i = 0; i < resourceTypes.size(); i++) {
+            result[i] = resourceTypes.get(i);
+        }
+        return result;
+    }
+
+    @Nonnull
+    private static Item cloneSapTemplate(@Nonnull String proxyItemId) {
+        Item sapTemplate = Item.getAssetMap().getAsset(SAP_TEMPLATE_ITEM_ID);
+        if (sapTemplate == null) {
+            DebugLogger.log(SCALING, Level.WARNING,
+                    "[GenericDropProxyAssetLoader] Sap template item is unavailable: " + SAP_TEMPLATE_ITEM_ID
+                            + ". Falling back to direct item construction.");
+            return new Item(proxyItemId);
+        }
+
+        Item clone = new Item(proxyItemId);
+        copyAllFields(sapTemplate, clone);
+        return clone;
     }
 
     @Nonnull
@@ -152,20 +194,6 @@ public final class GenericDropProxyAssetLoader {
 
         String pretty = normalized.replace('_', ' ');
         return "Generic " + pretty;
-    }
-
-    private static void setRequiredDefaults(@Nonnull Item item) {
-        setFieldIfPresent(Item.class, item, "interactionConfig", InteractionConfiguration.DEFAULT);
-        setFieldIfPresent(Item.class, item, "interactions", Map.of());
-        setFieldIfPresent(Item.class, item, "interactionVars", Map.of());
-        setFieldIfPresent(Item.class, item, "itemEntityConfig", ItemEntityConfig.DEFAULT);
-        setFieldIfPresent(Item.class, item, "utility", ItemUtility.DEFAULT);
-        setFieldIfPresent(Item.class, item, "itemStackContainerConfig", ItemStackContainerConfig.DEFAULT);
-        setFieldIfPresent(Item.class, item, "playerAnimationsId", "Item");
-        setFieldIfPresent(Item.class, item, "usePlayerAnimations", false);
-        setFieldIfPresent(Item.class, item, "itemSoundSetId", "ISS_Items_Foliage");
-        setFieldIfPresent(Item.class, item, "dropOnDeath", true);
-        setFieldIfPresent(Item.class, item, "interactions", new EnumMap<InteractionType, String>(InteractionType.class));
     }
 
     @Nullable
@@ -191,8 +219,26 @@ public final class GenericDropProxyAssetLoader {
             field.set(target, value);
         } catch (NoSuchFieldException ignored) {
             // Runtime APIs can differ across versions; missing optional fields are tolerated.
-        } catch (Exception ex) {
+        } catch (IllegalAccessException | IllegalArgumentException | SecurityException ex) {
             throw new RuntimeException("Unable to set field " + fieldName, ex);
+        }
+    }
+
+    private static void copyAllFields(@Nonnull Object source, @Nonnull Object target) {
+        Class<?> type = source.getClass();
+        while (type != null) {
+            for (var field : type.getDeclaredFields()) {
+                if (java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
+                    continue;
+                }
+                try {
+                    field.setAccessible(true);
+                    field.set(target, field.get(source));
+                } catch (IllegalAccessException | IllegalArgumentException | SecurityException ignored) {
+                    // Best-effort copy: version-specific/runtime fields may be inaccessible.
+                }
+            }
+            type = type.getSuperclass();
         }
     }
 }
