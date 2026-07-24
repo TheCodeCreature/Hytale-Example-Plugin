@@ -91,7 +91,8 @@ public class DetailPanelController {
                             String sel = costCellSelector(costIdx);
                             String itemId = ing.presentation().iconItemId() == null ? "" : ing.presentation().iconItemId();
                             String genericIconPath = ing.presentation().genericIconPath();
-                            boolean useGenericIcon = genericIconPath != null && !genericIconPath.isEmpty();
+                            boolean hasIconItemId = !itemId.isEmpty();
+                            boolean useGenericIcon = !hasIconItemId && genericIconPath != null && !genericIconPath.isEmpty();
                             int requiredQty = ing.requiredQty();
                             boolean sufficient = ing.sufficient();
                             if (!sufficient) allAffordable = false;

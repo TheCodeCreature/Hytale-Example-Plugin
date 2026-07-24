@@ -455,7 +455,8 @@ public class StencilRadialMenuPage extends InteractiveCustomUIPage<StencilRadial
                 CraftingAffordabilityFacade.DirectIngredientView ing = ingredients.get(j);
                 String iconItemId = ing.presentation().iconItemId() == null ? "" : ing.presentation().iconItemId();
                 String genericIconPath = ing.presentation().genericIconPath();
-                boolean useGenericIcon = genericIconPath != null && !genericIconPath.isEmpty();
+                boolean hasIconItemId = !iconItemId.isEmpty();
+                boolean useGenericIcon = !hasIconItemId && genericIconPath != null && !genericIconPath.isEmpty();
                 String costName = ing.presentation().displayName();
                 cmd.set("#CostSlots[" + j + "] #Icon.ItemId", useGenericIcon ? "" : iconItemId);
                 cmd.set("#CostSlots[" + j + "] #GenericIcon.Visible", useGenericIcon);

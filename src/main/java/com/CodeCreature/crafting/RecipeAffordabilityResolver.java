@@ -12,20 +12,23 @@ package com.CodeCreature.crafting;
  *          Treat representativeItemId as the semantic identity for generic inputs.
  */
 
-import com.CodeCreature.scaling.NaturalResourceRegistry;
-import com.CodeCreature.scaling.ResourceTypeResolver;
-import com.CodeCreature.ui.common.IconPathResolver;
-import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
-import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import com.CodeCreature.scaling.GenericDropProxyCatalog;
+import com.CodeCreature.scaling.NaturalResourceRegistry;
+import com.CodeCreature.scaling.ResourceTypeResolver;
+import com.CodeCreature.ui.common.IconPathResolver;
+import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
+import com.hypixel.hytale.server.core.asset.type.item.config.Item;
+import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
+import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 
 /**
  * Stateless utility that encapsulates the full ingredient resolution chain
@@ -64,6 +67,8 @@ import java.util.Objects;
  * @see NaturalResourceRegistry
  */
 public final class RecipeAffordabilityResolver {
+
+    private static final GenericDropProxyCatalog GENERIC_DROP_PROXY_CATALOG = new GenericDropProxyCatalog();
 
     private record DirectIngredientKey(@Nullable String itemId, @Nullable String resourceTypeId) {}
 
@@ -278,10 +283,18 @@ public final class RecipeAffordabilityResolver {
         }
         boolean semanticRepresentative = !resolution.requiresGenericMatching();
         String genericIconPath = genericMode ? IconPathResolver.resolveResourceTypeIcon(resourceTypeId) : null;
+        String iconItemId = displayItemId;
+        if (genericMode) {
+            String proxyItemId = GENERIC_DROP_PROXY_CATALOG.buildProxyItemId(resourceTypeId);
+            if (Item.getAssetMap().getAsset(proxyItemId) != null) {
+                iconItemId = proxyItemId;
+                genericIconPath = null;
+            }
+        }
 
         return new IngredientPresentation(
                 displayItemId,
-                displayItemId,
+                iconItemId,
                 displayNameSource == null ? "" : displayNameSource.replace('_', ' '),
                 semanticRepresentative,
                 genericMode,
