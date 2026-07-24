@@ -1,11 +1,41 @@
 package com.CodeCreature.scaling;
 
+/**
+ * @node    DropScaler
+ * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
+ * @intent  Applies 12x scaling pipeline and now ensures generic proxy item assets before
+ *          recipe-block synthetic drop projection emits ResourceTypeId proxy IDs.
+ * @wave    3 (pipeline wiring)
+ * @status  Wave 3 - proxy asset ensure pass wired before recipe drop generation
+ * @do-not  Change natural block 12x scaling, placement-cost scaler behavior, or runtime parity probe logic.
+ */
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.logging.Level;
+
+import javax.annotation.Nonnull;
+
 import com.CodeCreature.crafting.RawMaterialRequirement;
 import com.CodeCreature.crafting.RecipeTreeResolver;
 import com.CodeCreature.registry.BenchRecipeRegistries;
 import com.CodeCreature.registry.BenchRecipeRegistry;
 import com.CodeCreature.registry.BenchRegistry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.SCALING;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockBreakingDropType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockGathering;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -19,27 +49,6 @@ import com.hypixel.hytale.server.core.asset.type.item.config.ItemDropList;
 import com.hypixel.hytale.server.core.asset.type.item.config.container.MultipleItemDropContainer;
 import com.hypixel.hytale.server.core.asset.type.item.config.container.SingleItemDropContainer;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.logging.Level;
-
-import javax.annotation.Nonnull;
-
-import com.CodeCreature.util.DebugLogger;
-import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Single-pass asset modifier for the 12x resource economy.
@@ -81,6 +90,8 @@ public final class DropScaler {
     static void applyModifications() {
         int multiplier = ResourceConstants.RESOURCE_MULTIPLIER;
         AssetFieldAccessor f = AssetFieldAccessor.INSTANCE;
+        GenericDropProxyCatalog proxyCatalog = new GenericDropProxyCatalog();
+        GenericDropProxyAssetLoader proxyAssetLoader = new GenericDropProxyAssetLoader(proxyCatalog, f);
 
         // ── Phase 1: Scale all crafting costs ────────────────────────
         int recipesScaled = scaleCraftingCosts(f, multiplier);
@@ -93,6 +104,9 @@ public final class DropScaler {
         // Must run after Phase 1 (scaled costs) and before Phase 3
         // (processors use resolveRecipeToRaw for raw-material drops).
         RecipeTreeResolver.init();
+
+        // Ensure generic proxy assets before recipe drop projection builds synthetic lists.
+        ensureGenericProxyAssets(proxyAssetLoader);
 
         // ── Phase 3: Process blocks ──────────────────────────────────
 
@@ -193,6 +207,16 @@ public final class DropScaler {
                 + recipeModified + " recipe blocks + " + recipeFallbackModified + " fallback (" + recipeSkipped + " skipped), "
                 + syntheticDropLists.size() + " synthetic drop lists, "
                 + stacksBoosted + " stack sizes boosted");
+    }
+
+    private static void ensureGenericProxyAssets(@Nonnull GenericDropProxyAssetLoader loader) {
+        for (BenchRecipeRegistry reg : BenchRecipeRegistries.getAllRegistries()) {
+            for (CraftingRecipe recipe : reg.getAllRecipesById().values()) {
+                if (recipe != null) {
+                    loader.ensureProxyAssetsForRecipe(recipe);
+                }
+            }
+        }
     }
 
     // ═════════════════════════════════════════════════════════════════

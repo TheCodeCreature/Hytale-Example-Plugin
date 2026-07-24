@@ -244,7 +244,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
                 ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
         boolean bypassAffordabilityChecks = shouldBypassAffordabilityChecks(filterPlayer);
         var container = filterPlayer != null
-                ? filterPlayer.getInventory().getCombinedBackpackStorageHotbar() : null;
+            ? filterPlayer.getInventory().getCombinedHotbarFirst() : null;
 
         // Build affordability checker â€” null when disabled or no inventory
         RecipeFilterPipeline.AffordabilityChecker checker = null;
@@ -899,7 +899,7 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         Player player = playerStore != null
                 ? playerStore.getComponent(playerRef_ref, Player.getComponentType()) : null;
         CombinedItemContainer container = player != null
-                ? player.getInventory().getCombinedBackpackStorageHotbar() : null;
+            ? player.getInventory().getCombinedHotbarFirst() : null;
         boolean checkInventoryAffordability = affordabilityMode == AffordabilityMode.INVENTORY_DRIVEN
             && !shouldBypassAffordabilityChecks(player)
             && container != null;
@@ -1253,18 +1253,14 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
     }
 
     private boolean upsertSingleStencilStack(Player player, ItemStack stencil, String recipeId) {
-        if (upsertStencilInContainer(player.getInventory().getHotbar(), recipeId)) {
+        ItemContainer combined = player.getInventory().getCombinedHotbarFirst();
+        if (combined == null) {
+            return false;
+        }
+        if (upsertStencilInContainer(combined, recipeId)) {
             return true;
         }
-        if (upsertStencilInContainer(player.getInventory().getBackpack(), recipeId)) {
-            return true;
-        }
-        if (upsertStencilInContainer(player.getInventory().getStorage(), recipeId)) {
-            return true;
-        }
-        return placeInFirstEmptySlot(player.getInventory().getHotbar(), stencil)
-                || placeInFirstEmptySlot(player.getInventory().getBackpack(), stencil)
-                || placeInFirstEmptySlot(player.getInventory().getStorage(), stencil);
+        return placeInFirstEmptySlot(combined, stencil);
     }
 
     private boolean upsertStencilInContainer(ItemContainer container, String recipeId) {

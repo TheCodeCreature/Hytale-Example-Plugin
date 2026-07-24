@@ -1,8 +1,25 @@
 package com.CodeCreature.scaling;
 
-import com.CodeCreature.crafting.RawMaterialRequirement;
-import com.CodeCreature.crafting.RecipeTreeResolver;
+/**
+ * @node    AbstractBenchProcessor
+ * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
+ * @intent  Builds synthetic recipe drop lists for bench blocks using generic-preserving projection
+ *          so ResourceTypeId inputs become proxy IDs while direct item inputs remain concrete.
+ * @wave    2 (recipe drop projection integration)
+ * @status  Wave 2 - integrated RecipeDropProjection into recipe drop generation
+ * @do-not  Route this execution path through RecipeTreeResolver display/raw projection helpers.
+ */
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+
+import javax.annotation.Nonnull;
+
 import com.CodeCreature.registry.BenchRecipeRegistries;
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.SCALING;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockBreakingDropType;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockGathering;
 import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
@@ -12,15 +29,6 @@ import com.hypixel.hytale.server.core.asset.type.item.config.ItemDrop;
 import com.hypixel.hytale.server.core.asset.type.item.config.ItemDropList;
 import com.hypixel.hytale.server.core.asset.type.item.config.container.MultipleItemDropContainer;
 import com.hypixel.hytale.server.core.asset.type.item.config.container.SingleItemDropContainer;
-
-import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-
-import com.CodeCreature.util.DebugLogger;
-import static com.CodeCreature.util.DebugLogger.Subsystem.*;
 
 /**
  * Abstract base for bench-category processors. Provides the shared
@@ -40,6 +48,10 @@ import static com.CodeCreature.util.DebugLogger.Subsystem.*;
  */
 public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
 
+    private static final GenericDropProxyCatalog PROXY_CATALOG = new GenericDropProxyCatalog();
+    private static final RecipeDropProjection RECIPE_DROP_PROJECTION =
+            new RecipeDropProjection(PROXY_CATALOG);
+
     @Override
     @Nonnull
     public ProcessResult process(@Nonnull Set<String> blockTypeIds,
@@ -57,14 +69,8 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
 
             BlockGathering originalGathering = bt.getGathering();
 
-            record ResolvedIngredient(String itemId, int dropQty) {}
-            List<RawMaterialRequirement> rawCost = RecipeTreeResolver.resolveRecipeToRaw(recipe, preferNatural());
-            if (rawCost.isEmpty()) { skipped++; continue; }
-
-            List<ResolvedIngredient> resolved = new ArrayList<>();
-            for (RawMaterialRequirement raw : rawCost) {
-                resolved.add(new ResolvedIngredient(raw.itemId(), raw.quantity()));
-            }
+            List<RecipeDropProjection.ProjectedDrop> resolved =
+                    RECIPE_DROP_PROJECTION.projectRecipeDrops(recipe, preferNatural());
             if (resolved.isEmpty()) { skipped++; continue; }
 
             // Determine if this block uses the soft drop path.
@@ -99,8 +105,8 @@ public abstract class AbstractBenchProcessor implements BenchCategoryProcessor {
                 String dlId = "Plugin_RecipeDrop_" + btId;
                 SingleItemDropContainer[] containers = new SingleItemDropContainer[resolved.size()];
                 for (int i = 0; i < resolved.size(); i++) {
-                    ResolvedIngredient ing = resolved.get(i);
-                    ItemDrop drop = new ItemDrop(ing.itemId(), null, ing.dropQty(), ing.dropQty());
+                    RecipeDropProjection.ProjectedDrop ing = resolved.get(i);
+                    ItemDrop drop = new ItemDrop(ing.itemId(), null, ing.quantity(), ing.quantity());
                     containers[i] = new SingleItemDropContainer(drop, 100.0);
                 }
                 if (resolved.size() == 1) {

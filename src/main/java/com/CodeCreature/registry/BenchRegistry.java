@@ -1,10 +1,5 @@
 package com.CodeCreature.registry;
 
-import com.hypixel.hytale.protocol.BenchRequirement;
-import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -19,12 +14,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
 import com.CodeCreature.util.DebugLogger;
-import static com.CodeCreature.util.DebugLogger.Subsystem.*;
+import static com.CodeCreature.util.DebugLogger.Subsystem.REGISTRY;
+import com.hypixel.hytale.protocol.BenchRequirement;
+import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 
 /**
  * Runtime registry of all crafting bench IDs discovered from recipe assets.
@@ -97,6 +97,16 @@ public final class BenchRegistry {
     public static void initialize(@Nonnull Path dataDir) {
         BenchRegistry.dataDirectory = dataDir;
         seedDefaultBenchTabGroupsConfig(dataDir);
+    }
+
+    /**
+     * Returns the plugin data directory captured during initialize.
+     *
+     * @return plugin data directory, or null if initialize has not run yet
+     */
+    @Nullable
+    public static Path getDataDirectory() {
+        return dataDirectory;
     }
 
     /**

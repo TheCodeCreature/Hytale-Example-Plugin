@@ -1,26 +1,35 @@
 package com.CodeCreature.scaling;
 
-import com.CodeCreature.scaling.DropScaler;
-import com.hypixel.hytale.protocol.BenchType;
-import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockBreakingDropType;
-import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockGathering;
-import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
-import com.hypixel.hytale.server.core.asset.type.blocktype.config.SoftBlockDropType;
-import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-import com.hypixel.hytale.server.core.asset.type.item.config.Item;
-import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import static com.CodeCreature.scaling.AssetTestHelper.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.CodeCreature.scaling.AssetTestHelper.blockType;
+import static com.CodeCreature.scaling.AssetTestHelper.cleanup;
+import static com.CodeCreature.scaling.AssetTestHelper.readBreakingDropListId;
+import static com.CodeCreature.scaling.AssetTestHelper.readBreakingItemId;
+import static com.CodeCreature.scaling.AssetTestHelper.readBreakingQuantity;
+import static com.CodeCreature.scaling.AssetTestHelper.readGatheringBreaking;
+import static com.CodeCreature.scaling.AssetTestHelper.readHarvestDropListId;
+import static com.CodeCreature.scaling.AssetTestHelper.readHarvestItemId;
+import static com.CodeCreature.scaling.AssetTestHelper.readItemDropQuantityMax;
+import static com.CodeCreature.scaling.AssetTestHelper.readItemDropQuantityMin;
+import static com.CodeCreature.scaling.AssetTestHelper.readItemMaxStack;
+import static com.CodeCreature.scaling.AssetTestHelper.readRecipeInputs;
+import static com.CodeCreature.scaling.AssetTestHelper.readSoftDropListId;
+import static com.CodeCreature.scaling.AssetTestHelper.readSoftItemId;
+import static com.CodeCreature.scaling.AssetTestHelper.readUseDefaultDropWhenPlaced;
+import static com.CodeCreature.scaling.AssetTestHelper.setNaturalRegistry;
+import com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType;
+import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
 // Uses DropScaler.applyModifications() to test the consolidated single-pass pipeline
 
@@ -413,12 +422,20 @@ class ResourceScalingIntegrationTest {
         @Test
         void kweebecBedResolvesWoodAllToNaturalItem() {
             applyFullPipeline();
-            // Wood_All should resolve to Wood_Log_Oak (natural) because the
-            // Furniture Bench uses natural preference in ResourceTypeResolver
+            // Generic ResourceTypeId inputs now project to proxy item IDs.
             var breaking = readGatheringBreaking(data.kweebecBed.getGathering());
             String dropListId = readBreakingDropListId(breaking);
             assertNotNull(dropListId,
-                    "Kweebec bed should have a synthetic drop list (Wood_All resolved)");
+                "Kweebec bed should have a synthetic drop list (generic proxy projection)");
+        }
+
+        @Test
+        void kweebecBedDropProjectionContainsGenericProxyId() {
+            GenericDropProxyCatalog proxyCatalog = new GenericDropProxyCatalog();
+            RecipeDropProjection projection = new RecipeDropProjection(proxyCatalog);
+            var drops = projection.projectRecipeDrops(data.recipeKweebecBed, true);
+            assertTrue(drops.stream().anyMatch(d -> proxyCatalog.isProxyItemId(d.itemId())),
+                "Generic recipe inputs must emit proxy item IDs in projected break drops");
         }
 
         @Test
@@ -453,6 +470,15 @@ class ResourceScalingIntegrationTest {
             assertEquals(1, breaking.getQuantity(),
                     "Breaking quantity should be 1 (actual qty is in the drop list)");
             assertEquals("Plugin_RecipeDrop_Wood_Hardwood_Fence", readBreakingDropListId(breaking));
+        }
+
+        @Test
+        void directRecipeProjectionContainsConcreteItemIdsOnly() {
+            GenericDropProxyCatalog proxyCatalog = new GenericDropProxyCatalog();
+            RecipeDropProjection projection = new RecipeDropProjection(proxyCatalog);
+            var drops = projection.projectRecipeDrops(data.recipeDoorWood, false);
+            assertTrue(drops.stream().noneMatch(d -> proxyCatalog.isProxyItemId(d.itemId())),
+                "Direct item input recipes must remain concrete");
         }
 
         @Test

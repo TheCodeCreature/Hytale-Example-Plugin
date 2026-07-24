@@ -166,6 +166,73 @@ Additional hardening (2026-07-23):
 - Probe validity requires reproducible runtime environment conditions documented in [docs/review-resource-typeid-parity.md](../../../../../docs/review-resource-typeid-parity.md).
 - Unchecked wave/release gate items are now mapped to explicit evidence artifacts in [docs/review-resource-typeid-parity.md](../../../../../docs/review-resource-typeid-parity.md).
 
+## Item Icon Path Contract (Proxy Drop Follow-up)
+Date: 2026-07-23
+
+Finding summary:
+1. Stencil detail UI supports two icon channels: concrete item icon via item ID, and generic-resource icon via a direct UI background path.
+2. Generic proxy drop items in world/inventory do not use the stencil generic background channel; they rely on the Item asset Icon field.
+3. Ingredient-style items (example: Ingredient_Fibre) author Item.Icon as an item icon path under ItemsGenerated, while model/texture data live under Common/Resources.
+4. Therefore proxy drop Item.Icon must resolve using item icon normalization behavior (item icon contract), not resource-type icon normalization behavior.
+
+Evidence:
+- Stencil detail panel dual-channel behavior:
+  - [src/main/java/com/CodeCreature/ui/bench/DetailPanelController.java#L92](../../../../../src/main/java/com/CodeCreature/ui/bench/DetailPanelController.java#L92)
+  - [src/main/java/com/CodeCreature/ui/bench/DetailPanelController.java#L100](../../../../../src/main/java/com/CodeCreature/ui/bench/DetailPanelController.java#L100)
+  - [src/main/java/com/CodeCreature/ui/bench/DetailPanelController.java#L102](../../../../../src/main/java/com/CodeCreature/ui/bench/DetailPanelController.java#L102)
+- IconPathResolver family split:
+  - [src/main/java/com/CodeCreature/ui/common/IconPathResolver.java#L57](../../../../../src/main/java/com/CodeCreature/ui/common/IconPathResolver.java#L57)
+  - [src/main/java/com/CodeCreature/ui/common/IconPathResolver.java#L87](../../../../../src/main/java/com/CodeCreature/ui/common/IconPathResolver.java#L87)
+  - [src/main/java/com/CodeCreature/ui/common/IconPathResolver.java#L140](../../../../../src/main/java/com/CodeCreature/ui/common/IconPathResolver.java#L140)
+- Current proxy drop path applies Item.Icon from proxy catalog resolution:
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyCatalog.java#L39](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyCatalog.java#L39)
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyCatalog.java#L53](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyCatalog.java#L53)
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L105](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L105)
+  - [src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L120](../../../../../src/main/java/com/CodeCreature/scaling/GenericDropProxyAssetLoader.java#L120)
+- Local shared-source mirror confirms Ingredient_Fibre item JSON contract:
+  - local file: C:/src/Code Creature/Hytale Shared Source/hytale-shared-source/HytaleAssets/Server/Item/Items/Ingredient/Ingredient_Fibre.json#L27-L27 (Icon = Icons/ItemsGenerated/Ingredient_Fibre.png)
+  - local file: C:/src/Code Creature/Hytale Shared Source/hytale-shared-source/HytaleAssets/Server/Item/Items/Ingredient/Ingredient_Fibre.json#L23-L24 (Texture/Model under Resources/Plants)
+- Runtime asset-editor evidence of model/texture location:
+  - [run/logs/2026-05-06_10-05-00_server.log#L1139](../../../../../run/logs/2026-05-06_10-05-00_server.log#L1139)
+  - [run/logs/2026-05-06_10-05-00_server.log#L1141](../../../../../run/logs/2026-05-06_10-05-00_server.log#L1141)
+
+Operational implication:
+- For generic proxy drop items, choose icon candidates from representative Item.Icon values and normalize with item icon rules.
+- Do not set proxy Item.Icon from resource-type UI icon paths (ResourceTypes family), because that channel is intended for stencil generic UI backgrounds, not item asset icon serialization.
+
+## Proxy Asset Regeneration + JSON Inspection
+Date: 2026-07-23
+
+New runtime debug command:
+- `/debug regenproxies`
+- `/debug regenproxies all`
+- `/debug regenproxiesall` (alias that always runs dump-all mode)
+- `/debug regenproxiesa` (alias for dump-all mode; tolerates token variant seen in runtime command logs)
+- `/debug regenproxy` (short alias for base mode)
+
+Behavior:
+1. Re-initializes resource-type index.
+2. Scans bench recipe registries for `ResourceTypeId` inputs.
+3. Re-ensures generated proxy assets via `GenericDropProxyAssetLoader`.
+4. Writes each generated proxy `Item` asset to a JSON file using `Item.CODEC.encode(...).toJson()`.
+
+Output directory:
+- `<plugin-data-dir>/Server/Item/Items/Plugin/GenericDropProxy/` (canonical asset location for startup auto-discovery)
+
+Evidence:
+- Command registration:
+  - [src/main/java/com/CodeCreature/command/debug/DebugCommand.java#L33](../../../../../src/main/java/com/CodeCreature/command/debug/DebugCommand.java#L33)
+  - [src/main/java/com/CodeCreature/command/debug/DebugCommand.java#L34](../../../../../src/main/java/com/CodeCreature/command/debug/DebugCommand.java#L34)
+- Command implementation:
+  - [src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsSubCommand.java](../../../../../src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsSubCommand.java)
+  - [src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsAllSubCommand.java](../../../../../src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsAllSubCommand.java)
+  - [src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsAliasSubCommand.java](../../../../../src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsAliasSubCommand.java)
+- Data directory source:
+  - [src/main/java/com/CodeCreature/registry/BenchRegistry.java#L109](../../../../../src/main/java/com/CodeCreature/registry/BenchRegistry.java#L109)
+- Proxy ensure/dump flow:
+  - [src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsSubCommand.java#L69](../../../../../src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsSubCommand.java#L69)
+  - [src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsSubCommand.java#L119](../../../../../src/main/java/com/CodeCreature/command/debug/RegenerateProxyAssetsSubCommand.java#L119)
+
 ## Gaps
 - Unknown from repository evidence: the exact engine implementation that `CombinedItemContainer.canRemoveMaterials(...)` and `removeMaterials(...)` use to choose among multiple matching variants for a `ResourceTypeId` input.
 - Unknown from repository evidence: whether the engine uses inventory order, insertion order, stack order, set-root preference, or another rule when multiple variants satisfy the same generic ingredient during removal.
