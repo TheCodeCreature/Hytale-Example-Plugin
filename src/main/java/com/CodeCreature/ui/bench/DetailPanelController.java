@@ -11,17 +11,18 @@ package com.CodeCreature.ui.bench;
  *          Add planner or raw-cost policy here.
  */
 
+import java.util.List;
+
+import javax.annotation.Nullable;
+
 import com.CodeCreature.crafting.CraftingAffordabilityFacade;
 import com.CodeCreature.registry.FilteredRecipeEntry;
 import com.CodeCreature.registry.RecipeFilterRegistry;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
-import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
-
-import javax.annotation.Nullable;
-import java.util.List;
 /**
  * Owns detail panel rendering for the Stencil Crafting selection page.
  * Renders the output icon, name, and per-ingredient cost grid with

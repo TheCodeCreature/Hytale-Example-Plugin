@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "Plugin"
-version = "13.0.5"
+version = "13.0.7"
 val javaVersion = 25
 val pluginName = findProperty("plugin_name")?.toString() ?: project.name
 val pluginGroup = findProperty("plugin_group")?.toString() ?: "Plugin"
@@ -134,12 +134,12 @@ tasks.named<ProcessResources>("processResources") {
                     iconGraphics.dispose()
                     ImageIO.write(resizedIcon, "png", iconOutDir.resolve(file.name))
 
-                    val resizedTexture = BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB)
+                    val resizedTexture = BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB)
                     val textureGraphics = resizedTexture.createGraphics()
                     textureGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
                     textureGraphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
                     textureGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-                    textureGraphics.drawImage(sourceImage, 0, 0, 16, 16, null)
+                    textureGraphics.drawImage(sourceImage, 0, 0, 32, 32, null)
                     textureGraphics.dispose()
                     ImageIO.write(resizedTexture, "png", textureOutDir.resolve(file.name))
                 } else {

@@ -3,42 +3,146 @@
     {
       "id": "1",
       "name": "Quad",
-      "position": {"x": 0, "y": 8, "z": 0},
+      "position": {"x": 0, "y": 16, "z": 0},
       "orientation": {"x": 0, "y": 0, "z": 0, "w": 1},
       "shape": {
-        "type": "quad",
-        "offset": {"x": 0, "y": 0, "z": 0},
-        "stretch": {"x": 1, "y": 1, "z": 0.1},
+        "type": "none",
+        "offset": {"x": 0, "y": 3, "z": 1},
+        "stretch": {"x": 1, "y": 1, "z": 1},
         "settings": {
-          "isPiece": false,
-          "size": {"x": 16, "y": 16},
-          "normal": "+Z"
+          "isPiece": false
         },
-        "textureLayout": {
-          "front": {
-            "offset": {"x": 0, "y": 0},
-            "mirror": {"x": false, "y": false},
-            "angle": 0
-          }
-        },
+        "textureLayout": {},
         "unwrapMode": "custom",
         "visible": true,
-        "doubleSided": true,
-        "shadingMode": "standard"
+        "doubleSided": false,
+        "shadingMode": "flat"
       },
       "children": [
         {
           "id": "2",
-          "name": "Quad2",
-          "position": {"x": 0, "y": 0, "z": 0},
-          "orientation": {"x": 0, "y": 0.70711, "z": 0, "w": 0.70711},
+          "name": "Quad1",
+          "position": {"x": 0, "y": -3, "z": -1},
+          "orientation": {"x": 0, "y": 0, "z": 0, "w": 1},
           "shape": {
             "type": "quad",
             "offset": {"x": 0, "y": 0, "z": 0},
             "stretch": {"x": 1, "y": 1, "z": 0.1},
             "settings": {
               "isPiece": false,
-              "size": {"x": 16, "y": 16},
+              "size": {"x": 32, "y": 32},
+              "normal": "+Z"
+            },
+            "textureLayout": {
+              "front": {
+                "offset": {"x": 0, "y": 0},
+                "mirror": {"x": false, "y": false},
+                "angle": 0
+              }
+            },
+            "unwrapMode": "custom",
+            "visible": true,
+            "doubleSided": true,
+            "shadingMode": "standard"
+          },
+          "children": [
+            {
+              "id": "3",
+              "name": "Quad2--C1",
+              "position": {"x": 0, "y": 3, "z": 0},
+              "orientation": {"x": 0, "y": -0.03054, "z": 0, "w": 0.99953},
+              "shape": {
+                "type": "quad",
+                "offset": {"x": 0, "y": -3, "z": 0},
+                "stretch": {"x": 1, "y": 1, "z": 0.1},
+                "settings": {
+                  "isPiece": false,
+                  "size": {"x": 32, "y": 32},
+                  "normal": "+Z",
+                  "isStaticBox": true
+                },
+                "textureLayout": {
+                  "front": {
+                    "offset": {"x": 0, "y": 0},
+                    "mirror": {"x": false, "y": false},
+                    "angle": 0
+                  }
+                },
+                "unwrapMode": "custom",
+                "visible": true,
+                "doubleSided": true,
+                "shadingMode": "standard"
+              }
+            },
+            {
+              "id": "4",
+              "name": "Quad2--C2",
+              "position": {"x": 0, "y": 3, "z": 1},
+              "orientation": {"x": 0, "y": 0.03054, "z": 0, "w": 0.99953},
+              "shape": {
+                "type": "quad",
+                "offset": {"x": 0, "y": -3, "z": -1},
+                "stretch": {"x": 1, "y": 1, "z": 0.1},
+                "settings": {
+                  "isPiece": false,
+                  "size": {"x": 32, "y": 32},
+                  "normal": "+Z",
+                  "isStaticBox": true
+                },
+                "textureLayout": {
+                  "front": {
+                    "offset": {"x": 0, "y": 0},
+                    "mirror": {"x": false, "y": false},
+                    "angle": 0
+                  }
+                },
+                "unwrapMode": "custom",
+                "visible": true,
+                "doubleSided": true,
+                "shadingMode": "standard"
+              }
+            }
+          ]
+        },
+        {
+          "id": "5",
+          "name": "Quad2",
+          "position": {"x": 0, "y": -3, "z": -1},
+          "orientation": {"x": 0, "y": 0, "z": 0, "w": 1},
+          "shape": {
+            "type": "quad",
+            "offset": {"x": 0, "y": 0, "z": 1},
+            "stretch": {"x": 1, "y": 1, "z": 0.1},
+            "settings": {
+              "isPiece": false,
+              "size": {"x": 32, "y": 32},
+              "normal": "+Z"
+            },
+            "textureLayout": {
+              "front": {
+                "offset": {"x": 0, "y": 0},
+                "mirror": {"x": false, "y": false},
+                "angle": 0
+              }
+            },
+            "unwrapMode": "custom",
+            "visible": true,
+            "doubleSided": true,
+            "shadingMode": "standard"
+          }
+        },
+        {
+          "id": "6",
+          "name": "Quad3",
+          "position": {"x": 0, "y": -3, "z": -1},
+          "orientation": {"x": 0, "y": 0, "z": 0, "w": 1},
+          "shape": {
+            "type": "quad",
+            "offset": {"x": 0, "y": 0, "z": -1},
+            "stretch": {"x": 1, "y": 1, "z": 0.1},
+            "settings": {
+              "isPiece": false,
+              "size": {"x": 32, "y": 32},
               "normal": "+Z"
             },
             "textureLayout": {

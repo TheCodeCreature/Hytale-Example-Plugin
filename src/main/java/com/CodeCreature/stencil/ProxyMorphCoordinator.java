@@ -18,7 +18,6 @@ import com.CodeCreature.crafting.GenericVariantMatcher;
 import com.CodeCreature.scaling.GenericDropProxyCatalog;
 import com.CodeCreature.scaling.AssetFieldAccessor;
 import com.CodeCreature.scaling.ResourceTypeResolver;
-import com.CodeCreature.ui.bench.ResourceTypeRegistry;
 import com.CodeCreature.util.DebugLogger;
 import com.CodeCreature.util.StencilMetadata;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -30,7 +29,6 @@ import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -138,7 +136,7 @@ public final class ProxyMorphCoordinator {
     }
 
     /** @intent Build typed generic resolution payload for proxy matching using existing resolver ordering.
-     *  @wave   2 - Wood proxy candidate expansion with trunk-family preference
+     *  @wave   2 - exact resource-type candidate resolution
      *  @status implemented
      *  @node   ProxyMorphCoordinator#buildResolution
      */
@@ -150,7 +148,7 @@ public final class ProxyMorphCoordinator {
         return new GenericIngredientResolution(identity, orderedMatches, representative, true);
     }
 
-    /** @intent Build deterministic, deduplicated morph candidates; Wood proxies expand to trunk-family resource types first.
+    /** @intent Build deterministic, deduplicated morph candidates for the proxy resource type only.
      *  @wave   2 - implemented
      *  @status implemented
      *  @node   ProxyMorphCoordinator#buildOrderedMorphCandidates
@@ -158,18 +156,6 @@ public final class ProxyMorphCoordinator {
     @Nonnull
     static List<String> buildOrderedMorphCandidates(@Nonnull String resourceTypeId) {
         LinkedHashSet<String> ordered = new LinkedHashSet<>();
-
-        // Wood proxies should prefer trunk-family variants before generic/exact candidates.
-        if ("Wood".equals(resourceTypeId)) {
-            List<String> trunkTypeIds = ResourceTypeRegistry.resolveFilterIds("Trunk_Group")
-                    .stream()
-                    .sorted(Comparator.naturalOrder())
-                    .toList();
-            for (String trunkTypeId : trunkTypeIds) {
-                ordered.addAll(ResourceTypeResolver.getAllMatchingItemIds(trunkTypeId));
-            }
-        }
-
         ordered.addAll(ResourceTypeResolver.getAllMatchingItemIds(resourceTypeId));
         return new ArrayList<>(ordered);
     }

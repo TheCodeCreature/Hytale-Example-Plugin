@@ -31,6 +31,7 @@ import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 public final class GenericDropProxyAssetLoader {
 
     private static final String SAP_TEMPLATE_ITEM_ID = "Ingredient_Tree_Sap";
+    private static final String PROXY_MODEL_PATH = "Items/GeneratedProxy/Temp_Quad_2D.blockymodel";
 
     private final GenericDropProxyCatalog proxyCatalog;
 
@@ -117,6 +118,10 @@ public final class GenericDropProxyAssetLoader {
             if (texturePath != null && !texturePath.isEmpty()) {
                 setFieldIfPresent(Item.class, item, "texture", texturePath);
             }
+
+            // Use the dedicated generated-proxy quad model so icon/texture framing
+            // does not inherit the sap model's presentation offsets.
+            setFieldIfPresent(Item.class, item, "model", PROXY_MODEL_PATH);
 
             setFieldIfPresent(Item.class, item, "translationProperties",
                     new ItemTranslationProperties(displayName, "Generic crafting resource"));

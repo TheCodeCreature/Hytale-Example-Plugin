@@ -20,7 +20,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -84,13 +83,13 @@ class ProxyMorphCoordinatorTest {
         assertTrue(result);
     }
 
-        /** @intent Wood proxy candidate expansion should include trunk family concrete IDs first.
-         *  @wave   2 - implemented
-         *  @status implemented
-         *  @node   ProxyMorphCoordinatorTest#buildOrderedMorphCandidatesExpandsWoodToTrunkFamily
-         */
-        @Test
-        void buildOrderedMorphCandidatesExpandsWoodToTrunkFamily() {
+    /** @intent Morph candidates should resolve exactly by resource type without Wood->Trunk expansion.
+     *  @wave   2 - implemented
+     *  @status implemented
+     *  @node   ProxyMorphCoordinatorTest#buildOrderedMorphCandidatesUsesExactResourceTypeOnly
+     */
+    @Test
+    void buildOrderedMorphCandidatesUsesExactResourceTypeOnly() {
         Map<String, Item> items = new LinkedHashMap<>();
         items.put("Wood_Log_Oak", item(
             "Wood_Log_Oak", "Wood_Log_Oak", true, 100,
@@ -111,12 +110,10 @@ class ProxyMorphCoordinatorTest {
 
         List<String> candidates = ProxyMorphCoordinator.buildOrderedMorphCandidates("Wood");
         assertNotNull(candidates);
-        assertTrue(candidates.contains("Wood_Log_Oak"));
-        assertTrue(candidates.contains("Wood_Log_Birch"));
         assertTrue(candidates.contains("Wood_Generic_Shaving"));
-        assertNotEquals("Wood_Generic_Shaving", candidates.get(0),
-            "Wood trunk-family candidates should be ordered before exact Wood matches.");
-        }
+        assertFalse(candidates.contains("Wood_Log_Oak"));
+        assertFalse(candidates.contains("Wood_Log_Birch"));
+    }
 
     /** @intent Exact-only condense should allow same itemId with equivalent metadata.
      *  @wave   2 - implemented
