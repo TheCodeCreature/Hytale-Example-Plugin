@@ -1,20 +1,5 @@
 package com.CodeCreature.util;
 
-/**
- * @node    FeatureFlags
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Centralizes persisted runtime feature toggles for diagnostics and logging gates.
- * @wave    1 (runtime parity diagnostics)
- * @status  Wave 1 - added crafting parity probe diagnostics toggle default
- * @do-not  Move subsystem logging gate rules out of DebugLogger.
- *          Introduce non-persisted ad-hoc runtime toggles.
- */
-
-import com.hypixel.hytale.server.core.util.BsonUtil;
-import org.bson.BsonBoolean;
-import org.bson.BsonDocument;
-import org.bson.BsonValue;
-
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -22,6 +7,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
+
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
+import org.bson.BsonValue;
+
+import com.hypixel.hytale.server.core.util.BsonUtil;
 
 /**
  * Centralized, thread-safe feature flag system persisted to JSON.

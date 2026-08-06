@@ -1,15 +1,5 @@
 package com.CodeCreature.scaling;
 
-/**
- * @node    GenericRecipeProxyDropIntegrationTest
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Verifies recipe drop projection preserves generic ResourceTypeId inputs as proxy drops
- *          while direct item inputs stay concrete.
- * @wave    3 (integration tests)
- * @status  Wave 3 - integration coverage implemented
- * @do-not  Change runtime parity probe behavior; this test only validates drop projection output shape.
- */
-
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -29,10 +19,6 @@ class GenericRecipeProxyDropIntegrationTest {
         data.install();
     }
 
-    /** @intent Generic ResourceTypeId recipe inputs should project to proxy item IDs.
-     *  @wave   3 - implemented
-     *  @status implemented
-     *  @node   GenericRecipeProxyDropIntegrationTest#resourceTypeRecipeInputDropsProxyItem */
     @Test
     void resourceTypeRecipeInputDropsProxyItem() {
         GenericDropProxyCatalog catalog = new GenericDropProxyCatalog();
@@ -48,10 +34,6 @@ class GenericRecipeProxyDropIntegrationTest {
                 "Direct item inputs should still appear as concrete IDs in mixed recipes");
     }
 
-    /** @intent Direct item recipes should remain concrete and never emit proxy IDs.
-     *  @wave   3 - implemented
-     *  @status implemented
-     *  @node   GenericRecipeProxyDropIntegrationTest#directItemInputStillDropsConcreteItem */
     @Test
     void directItemInputStillDropsConcreteItem() {
         GenericDropProxyCatalog catalog = new GenericDropProxyCatalog();

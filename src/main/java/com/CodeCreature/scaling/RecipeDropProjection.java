@@ -1,15 +1,5 @@
 package com.CodeCreature.scaling;
 
-/**
- * @node    RecipeDropProjection
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Converts per-unit recipe inputs into break-drop entries while preserving authored
- *          generic ResourceTypeId inputs as proxy item IDs.
- * @wave    2 (projection integration)
- * @status  Wave 2 - implemented generic-preserving recipe drop projection
- * @do-not  Use RecipeTreeResolver raw projection helpers from this execution path.
- */
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,10 +18,6 @@ public final class RecipeDropProjection {
         this.proxyCatalog = proxyCatalog;
     }
 
-    /** @intent Project a recipe into per-unit break-drops while keeping generic inputs generic.
-     *  @wave   2 - implemented
-     *  @status implemented
-     *  @node   RecipeDropProjection#projectRecipeDrops */
     @Nonnull
     public List<ProjectedDrop> projectRecipeDrops(@Nonnull CraftingRecipe recipe, boolean preferNatural) {
         List<MaterialQuantity> perUnitInputs = PlaceBlockCostUtil.getPerUnitCost(recipe);
@@ -49,10 +35,6 @@ public final class RecipeDropProjection {
         return drops;
     }
 
-    /** @intent Project one authored input to either a proxy drop or a concrete drop.
-     *  @wave   2 - implemented
-     *  @status implemented
-     *  @node   RecipeDropProjection#fromInput */
     @Nullable
     public ProjectedDrop fromInput(@Nonnull MaterialQuantity input, boolean preferNatural) {
         String resourceTypeId = normalize(input.getResourceTypeId());
@@ -80,9 +62,5 @@ public final class RecipeDropProjection {
         return normalized.isEmpty() ? null : normalized;
     }
 
-    /** @intent Represent one projected recipe-drop output with generic trace metadata.
-     *  @wave   2 - implemented
-     *  @status implemented
-     *  @node   RecipeDropProjection#ProjectedDrop */
     public record ProjectedDrop(String itemId, int quantity, boolean generic, String resourceTypeId) {}
 }

@@ -1,28 +1,14 @@
 package com.CodeCreature.crafting;
 
+import java.util.List;
+
+import javax.annotation.Nonnull;
+
 import com.CodeCreature.scaling.ResourceTypeResolver;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
-import javax.annotation.Nonnull;
-import java.util.List;
-
-/**
- * @node    IndexedGenericIngredientResolver
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Resolves authored material inputs using the pre-indexed resource-type lookup so variant
- *          ordering stays aligned with ResourceTypeResolver index semantics.
- * @wave    4 (generic icons + generic affordability boundary)
- * @status  Wave 4 - implemented indexed generic resolver for typed affordability boundaries
- * @do-not  Change representative item selection policy independently of ResourceTypeResolver.
- *          Collapse generic inputs into direct concrete identity.
- */
 public class IndexedGenericIngredientResolver implements GenericIngredientResolver {
 
-    /** @intent Resolve a single authored input to typed generic identity plus ordered concrete variants.
-     *  @wave   4 - implemented indexed resolver behavior
-     *  @status implemented
-     *  @node   IndexedGenericIngredientResolver#resolve
-     */
     @Override
     @Nonnull
     public GenericIngredientResolution resolve(@Nonnull MaterialQuantity input, boolean preferNatural) {

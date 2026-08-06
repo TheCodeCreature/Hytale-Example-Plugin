@@ -1,15 +1,5 @@
 package com.CodeCreature.scaling;
 
-/**
- * @node    AbstractBenchProcessor
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Builds synthetic recipe drop lists for bench blocks using generic-preserving projection
- *          so ResourceTypeId inputs become proxy IDs while direct item inputs remain concrete.
- * @wave    2 (recipe drop projection integration)
- * @status  Wave 2 - integrated RecipeDropProjection into recipe drop generation
- * @do-not  Route this execution path through RecipeTreeResolver display/raw projection helpers.
- */
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;

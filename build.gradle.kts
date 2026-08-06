@@ -455,4 +455,17 @@ afterEvaluate {
     } else {
         logger.warn("⚠️ Could not find 'runServer' or 'server' task to hook auto-sync into.")
     }
+    
+    tasks.javadoc {
+    // Tells Gradle to explicitly use your Java 25 toolchain to run Javadoc
+    val javaToolchains = project.extensions.getByType<JavaToolchainService>()
+    javadocTool.set(javaToolchains.javadocToolFor {
+        languageVersion.set(JavaLanguageVersion.of(javaVersion))
+    })
+
+    // Cleaned options (removed the invalid -enable-markdown flag)
+    setDestinationDir(layout.buildDirectory.dir("docs/javadoc").get().asFile)
+    source = sourceSets.main.get().allJava
+    classpath = sourceSets.main.get().compileClasspath
+}
 }

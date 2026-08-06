@@ -1,16 +1,5 @@
 package com.CodeCreature.stencil;
 
-/**
- * @node    ProxyMorphCoordinator
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Performs one guarded morph pass over player inventory proxy-token stacks so generic
- *          drop proxies can become concrete variants when matching inventory is available.
- * @wave    1 (coalesced proxy morph slice)
- * @status  Wave 1 - implemented safe, fail-open per-slot morph pass for hotbar/backpack/storage
- * @do-not  Change planner math or drop generation semantics here.
- *          Allow per-slot failures to abort the overall refresh flow.
- */
-
 import com.CodeCreature.crafting.GenericIngredientIdentity;
 import com.CodeCreature.crafting.GenericIngredientResolution;
 import com.CodeCreature.crafting.GenericTokenMorphPolicy;
@@ -48,11 +37,6 @@ public final class ProxyMorphCoordinator {
         this.proxyCatalog = proxyCatalog;
     }
 
-    /** @intent Perform one morph pass over all player inventory containers used by stencil refresh.
-     *  @wave   1 - implemented
-     *  @status implemented
-     *  @node   ProxyMorphCoordinator#morphProxyStacks
-     */
     public void morphProxyStacks(@Nullable Player player) {
         if (player == null || player.getInventory() == null) {
             return;
@@ -73,11 +57,6 @@ public final class ProxyMorphCoordinator {
         morphContainer(storage, combined, targetContainers);
     }
 
-    /** @intent Iterate one container and morph eligible proxy stacks while isolating failures to each slot.
-     *  @wave   1 - implemented
-     *  @status implemented
-     *  @node   ProxyMorphCoordinator#morphContainer
-     */
     private void morphContainer(@Nullable ItemContainer container,
                                 @Nonnull CombinedItemContainer combined,
                                 @Nonnull List<ItemContainer> targetContainers) {
@@ -135,11 +114,6 @@ public final class ProxyMorphCoordinator {
         }
     }
 
-    /** @intent Build typed generic resolution payload for proxy matching using existing resolver ordering.
-     *  @wave   2 - exact resource-type candidate resolution
-     *  @status implemented
-     *  @node   ProxyMorphCoordinator#buildResolution
-     */
     @Nonnull
     private static GenericIngredientResolution buildResolution(@Nonnull String resourceTypeId, int quantity) {
         List<String> orderedMatches = buildOrderedMorphCandidates(resourceTypeId);
@@ -148,11 +122,6 @@ public final class ProxyMorphCoordinator {
         return new GenericIngredientResolution(identity, orderedMatches, representative, true);
     }
 
-    /** @intent Build deterministic, deduplicated morph candidates for the proxy resource type only.
-     *  @wave   2 - implemented
-     *  @status implemented
-     *  @node   ProxyMorphCoordinator#buildOrderedMorphCandidates
-     */
     @Nonnull
     static List<String> buildOrderedMorphCandidates(@Nonnull String resourceTypeId) {
         LinkedHashSet<String> ordered = new LinkedHashSet<>();
@@ -160,11 +129,6 @@ public final class ProxyMorphCoordinator {
         return new ArrayList<>(ordered);
     }
 
-    /** @intent Merge only a converted source stack into existing exact stacks with capacity.
-     *  @wave   2 - implemented source-only stacking to avoid stack relocation
-     *  @status implemented
-     *  @node   ProxyMorphCoordinator#mergeConvertedStackIntoExistingTargets
-     */
     private static void mergeConvertedStackIntoExistingTargets(@Nonnull ItemContainer sourceContainer,
                                                                short sourceSlot,
                                                                @Nonnull List<ItemContainer> targetContainers) {
@@ -226,11 +190,6 @@ public final class ProxyMorphCoordinator {
         sourceContainer.setItemStackForSlot(sourceSlot, reducedSource);
     }
 
-    /** @intent Check exact stack compatibility for condensing (same item and equivalent metadata, excluding stencils).
-     *  @wave   2 - implemented
-     *  @status implemented
-     *  @node   ProxyMorphCoordinator#canCondenseTogether
-     */
     static boolean canCondenseTogether(@Nullable ItemStack toStack,
                                        @Nullable ItemStack fromStack) {
         if (toStack == null || fromStack == null) {
@@ -261,11 +220,6 @@ public final class ProxyMorphCoordinator {
         }
     }
 
-    /** @intent Determine whether a selected item ID is an eligible concrete morph target for the current proxy stack.
-     *  @wave   1 - implemented
-     *  @status implemented
-     *  @node   ProxyMorphCoordinator#shouldMorph
-     */
     static boolean shouldMorph(@Nullable String currentItemId,
                                @Nullable String selectedItemId,
                                @Nonnull GenericDropProxyCatalog proxyCatalog) {

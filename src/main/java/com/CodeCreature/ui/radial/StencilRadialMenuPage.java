@@ -1,16 +1,5 @@
 package com.CodeCreature.ui.radial;
 
-/**
- * @node    StencilRadialMenuPage
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Drives radial stencil affordability visuals from the Wave 2 facade so cost icons and
- *          segment states consume presentation data instead of semantic concrete IDs.
- * @wave    2 (affordability and UI projection migration)
- * @status  Wave 2 - radial menu now consumes facade-projected affordability and ingredient views
- * @do-not  Move planner or raw-cost policy into this page.
- *          Reinterpret one icon item as the semantic identity of a generic ingredient.
- */
-
 import com.CodeCreature.crafting.CraftingAffordabilityFacade;
 import com.CodeCreature.registry.FilteredRecipeEntry;
 import com.CodeCreature.registry.RecipeFilterRegistry;

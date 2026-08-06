@@ -1,16 +1,5 @@
 package com.CodeCreature.stencil;
 
-/**
- * @node    ProxyMorphCoordinatorTest
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Verifies the minimal decision guardrails for proxy morph eligibility without requiring
- *          heavy runtime container bootstrapping.
- * @wave    1 (coalesced proxy morph slice)
- * @status  Wave 1 - implemented focused helper-level tests for proxy/no-op/morph decisions
- * @do-not  Treat these tests as full runtime inventory mutation coverage.
- *          Assert planner/drop-scaler semantics here.
- */
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,22 +32,12 @@ class ProxyMorphCoordinatorTest {
         cleanup();
     }
 
-    /** @intent Non-proxy current items should never be morph candidates.
-     *  @wave   1 - implemented
-     *  @status implemented
-     *  @node   ProxyMorphCoordinatorTest#shouldMorphReturnsFalseForNonProxyCurrentItem
-     */
     @Test
     void shouldMorphReturnsFalseForNonProxyCurrentItem() {
         boolean result = ProxyMorphCoordinator.shouldMorph("Wood_Hardwood_Planks", "Wood_Hardwood_Raw", catalog);
         assertFalse(result);
     }
 
-    /** @intent Proxy items should no-op when selected target is missing/blank/proxy/self.
-     *  @wave   1 - implemented
-     *  @status implemented
-     *  @node   ProxyMorphCoordinatorTest#shouldMorphReturnsFalseForNoOpTargets
-     */
     @Test
     void shouldMorphReturnsFalseForNoOpTargets() {
         String proxy = catalog.buildProxyItemId("Hardwood");
@@ -71,11 +50,6 @@ class ProxyMorphCoordinatorTest {
         assertFalse(ProxyMorphCoordinator.shouldMorph(proxy, anotherProxy, catalog));
     }
 
-    /** @intent Proxy items should morph only when target is a concrete non-empty item ID different from current.
-     *  @wave   1 - implemented
-     *  @status implemented
-     *  @node   ProxyMorphCoordinatorTest#shouldMorphReturnsTrueForConcreteTarget
-     */
     @Test
     void shouldMorphReturnsTrueForConcreteTarget() {
         String proxy = catalog.buildProxyItemId("Hardwood");
@@ -83,11 +57,6 @@ class ProxyMorphCoordinatorTest {
         assertTrue(result);
     }
 
-    /** @intent Morph candidates should resolve exactly by resource type without Wood->Trunk expansion.
-     *  @wave   2 - implemented
-     *  @status implemented
-     *  @node   ProxyMorphCoordinatorTest#buildOrderedMorphCandidatesUsesExactResourceTypeOnly
-     */
     @Test
     void buildOrderedMorphCandidatesUsesExactResourceTypeOnly() {
         Map<String, Item> items = new LinkedHashMap<>();
@@ -115,11 +84,6 @@ class ProxyMorphCoordinatorTest {
         assertFalse(candidates.contains("Wood_Log_Birch"));
     }
 
-    /** @intent Exact-only condense should allow same itemId with equivalent metadata.
-     *  @wave   2 - implemented
-     *  @status implemented
-     *  @node   ProxyMorphCoordinatorTest#canCondenseTogetherAllowsExactMatch
-     */
     @Test
     void canCondenseTogetherAllowsExactMatch() {
         installItems(Map.of(
@@ -134,11 +98,6 @@ class ProxyMorphCoordinatorTest {
         assertTrue(ProxyMorphCoordinator.canCondenseTogether(a, b));
     }
 
-    /** @intent Exact-only condense should reject stacks with differing metadata or differing item IDs.
-     *  @wave   2 - implemented
-     *  @status implemented
-     *  @node   ProxyMorphCoordinatorTest#canCondenseTogetherRejectsDifferentStacks
-     */
     @Test
     void canCondenseTogetherRejectsDifferentStacks() {
         installItems(Map.of(

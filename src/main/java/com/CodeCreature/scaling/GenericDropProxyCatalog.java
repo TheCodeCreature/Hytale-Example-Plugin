@@ -1,15 +1,5 @@
 package com.CodeCreature.scaling;
 
-/**
- * @node    GenericDropProxyCatalog
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Deterministically maps ResourceTypeId values to proxy item IDs and icon paths for
- *          generic recipe break-drops without collapsing to concrete variants.
- * @wave    1 (proxy catalog)
- * @status  Wave 1 - implemented deterministic ID/icon mapping with reversible encoding
- * @do-not  Resolve runtime affordability or consumption semantics here.
- */
-
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -35,19 +25,11 @@ public final class GenericDropProxyCatalog {
     private static final String ITEM_ICON_ASSET_PREFIX = "Icons/ItemsGenerated/";
     private static final String ITEM_TEXTURE_ASSET_PREFIX = "Items/GeneratedProxyTextures/";
 
-    /** @intent Build a stable proxy item ID for a ResourceTypeId using reversible hex encoding.
-     *  @wave   1 - implemented
-     *  @status implemented
-     *  @node   GenericDropProxyCatalog#buildProxyItemId */
     @Nonnull
     public String buildProxyItemId(@Nonnull String resourceTypeId) {
         return PROXY_PREFIX + encodeHex(toGenericTypeId(resourceTypeId));
     }
 
-    /** @intent Canonicalize variant resource IDs (e.g. Rock_Volcanic) to top-level generic IDs (e.g. Rock).
-     *  @wave   4 - implemented
-     *  @status implemented
-     *  @node   GenericDropProxyCatalog#toGenericTypeId */
     @Nonnull
     public String toGenericTypeId(@Nonnull String resourceTypeId) {
         String normalized = normalizeResourceTypeId(resourceTypeId);
@@ -62,10 +44,6 @@ public final class GenericDropProxyCatalog {
         return normalized.substring(0, sep);
     }
 
-    /** @intent Resolve a normalized generic icon path for a ResourceTypeId proxy.
-     *  @wave   1 - implemented
-     *  @status implemented
-     *  @node   GenericDropProxyCatalog#resolveProxyIconPath */
     @Nullable
     public String resolveProxyIconPath(@Nonnull String resourceTypeId) {
         String normalized = toGenericTypeId(resourceTypeId);
@@ -103,10 +81,6 @@ public final class GenericDropProxyCatalog {
         return normalized;
     }
 
-    /** @intent Resolve an item-valid texture path for a ResourceTypeId proxy.
-     *  @wave   5 - implemented mirrored texture path adaptation
-     *  @status implemented
-     *  @node   GenericDropProxyCatalog#resolveProxyTexturePath */
     @Nullable
     public String resolveProxyTexturePath(@Nonnull String resourceTypeId) {
         String iconPath = resolveProxyIconPath(resourceTypeId);
@@ -276,18 +250,10 @@ public final class GenericDropProxyCatalog {
         return normalized;
     }
 
-    /** @intent Check whether an item ID belongs to the generic proxy namespace.
-     *  @wave   1 - implemented
-     *  @status implemented
-     *  @node   GenericDropProxyCatalog#isProxyItemId */
     public boolean isProxyItemId(@Nullable String itemId) {
         return itemId != null && itemId.startsWith(PROXY_PREFIX);
     }
 
-    /** @intent Reverse a proxy item ID back to the authored ResourceTypeId.
-     *  @wave   1 - implemented
-     *  @status implemented
-     *  @node   GenericDropProxyCatalog#extractResourceTypeId */
     @Nullable
     public String extractResourceTypeId(@Nullable String proxyItemId) {
         if (!isProxyItemId(proxyItemId)) {

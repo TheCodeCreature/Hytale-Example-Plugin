@@ -1,26 +1,5 @@
 package com.CodeCreature.scaling;
 
-/**
- * @node    ResourceTypeResolver
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Resolves crafted inputs against the current item resource-type index, preserving the
- *          legacy string-returning API while exposing an opt-in generic ingredient boundary.
- * @wave    1 (generic ingredient boundary)
- * @status  Wave 1 - compatibility-oriented generic-resolution API added; legacy behavior preserved
- * @do-not  Claim exact engine removeMaterials ordering from this index.
- *          Change existing representative-item selection semantics.
- */
-
-import com.CodeCreature.crafting.GenericIngredientResolution;
-import com.CodeCreature.crafting.GenericIngredientResolver;
-import com.CodeCreature.crafting.IndexedGenericIngredientResolver;
-import com.hypixel.hytale.protocol.ItemResourceType;
-import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-import com.hypixel.hytale.server.core.asset.type.item.config.Item;
-import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +9,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import com.CodeCreature.crafting.GenericIngredientResolution;
+import com.CodeCreature.crafting.GenericIngredientResolver;
+import com.CodeCreature.crafting.IndexedGenericIngredientResolver;
+import com.hypixel.hytale.protocol.ItemResourceType;
+import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
+import com.hypixel.hytale.server.core.asset.type.item.config.Item;
+import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
 /**
  * Resolves {@code ResourceTypeId}-based recipe inputs to concrete item IDs,
@@ -182,34 +172,18 @@ public final class ResourceTypeResolver {
         return items.stream().map(IndexedItem::itemId).toList();
     }
 
-    /** @intent Expose the Wave 1 generic ingredient boundary without changing the legacy string adapter.
-     *  @wave   1 - implemented typed compatibility API
-     *  @status implemented
-     *  @node   ResourceTypeResolver#resolveGenericIngredient
-     */
     @Nonnull
     public static GenericIngredientResolution resolveGenericIngredient(@Nonnull MaterialQuantity input,
                                                                        boolean preferNatural) {
         return GENERIC_INGREDIENT_RESOLVER.resolve(input, preferNatural);
     }
 
-    /** @intent Resolve multiple authored inputs through the same compatibility-oriented generic boundary.
-     *  @wave   1 - implemented bulk typed compatibility API
-     *  @status implemented
-     *  @node   ResourceTypeResolver#resolveGenericIngredients
-     */
     @Nonnull
     public static List<GenericIngredientResolution> resolveGenericIngredients(@Nonnull List<MaterialQuantity> inputs,
                                                                               boolean preferNatural) {
         return GENERIC_INGREDIENT_RESOLVER.resolveAll(inputs, preferNatural);
     }
 
-    /**
-     * Returns a stream of asset-map entries whose item declares the given
-     * ResourceTypeId. Filters out null items, null ResourceType arrays,
-     * and items in the {@code Blocks.Deco} category (decorative props that
-     * cannot be recovered by adventure-mode players).
-     */
     private static Stream<Map.Entry<String, Item>> itemsWithResourceType(@Nonnull String resId) {
         return Item.getAssetMap().getAssetMap().entrySet().stream()
                 .filter(e -> e.getValue() != null && e.getValue().getResourceTypes() != null)
@@ -218,13 +192,6 @@ public final class ResourceTypeResolver {
                         .anyMatch(rt -> resId.equals(rt.id)));
     }
 
-    /**
-     * Returns {@code true} if the item belongs to the {@code Blocks.Deco}
-     * category — decorative props not intended for crafting resolution.
-     *
-     * <p>Package-private so {@link NaturalResourceRegistry} can reuse it
-     * for the two-tier natural item set classification.
-     */
     static boolean isDeco(@Nonnull Item item) {
         String[] cats = item.getCategories();
         if (cats == null) return false;
@@ -234,22 +201,11 @@ public final class ResourceTypeResolver {
         return false;
     }
 
-    /**
-     * Returns {@code true} if this item is a "set root" — its ID matches
-     * its own {@code Set} value (or the set is null/empty, meaning no
-     * derivative relationship). Set roots represent the base item in a
-     * family (e.g. "Hardwood Planks"), while derivatives point their set
-     * to the root (e.g. "Hardwood Decorative" → set = "Wood_Hardwood_Planks").
-     */
     private static boolean isSetRoot(@Nonnull String itemId, @Nonnull Item item) {
         String set = getSetId(item);
         return set == null || set.isEmpty() || set.equals(itemId);
     }
 
-    /**
-     * Reads the protected {@code set} field from an {@link Item} via
-     * cached reflection.
-     */
     @Nullable
     private static String getSetId(@Nonnull Item item) {
         try {
@@ -261,35 +217,6 @@ public final class ResourceTypeResolver {
 
     // ─── Resource type filter matching ──────────────────────────
 
-    /**
-     * Checks whether any input of the given recipe matches any of the
-     * specified resource type IDs.
-     *
-     * <p>Handles both input types:
-     * <ul>
-     *   <li><strong>{@code ResourceTypeId}-based inputs</strong>: checks if
-     *       {@code input.getResourceTypeId()} is contained in
-     *       {@code resourceTypeIds}</li>
-     *   <li><strong>{@code ItemId}-based inputs</strong>: resolves the item
-     *       via the asset map, then checks if any entry in
-     *       {@link Item#getResourceTypes()} has an ID present in
-     *       {@code resourceTypeIds}</li>
-     * </ul>
-     *
-     * <p>Short-circuits on first match. Does NOT apply
-     * {@code preferNatural} preference — this is a filter predicate,
-     * not a resolution operation.
-     *
-     * <p>This method is <strong>thread-safe</strong> — it reads only
-     * immutable post-init data.
-     *
-     * @param recipe          the crafting recipe to check
-     * @param resourceTypeIds the set of engine ResourceTypeId values to
-     *                        match against (already resolved from meta-filters)
-     * @return {@code true} if at least one recipe input matches any of
-     *         the given resource type IDs; {@code false} if recipe has
-     *         no inputs or none match
-     */
     public static boolean recipeMatchesAnyResourceType(
             @Nonnull CraftingRecipe recipe,
             @Nonnull Set<String> resourceTypeIds) {
@@ -305,25 +232,6 @@ public final class ResourceTypeResolver {
         return false;
     }
 
-    /**
-     * Checks whether a single recipe input matches any of the specified
-     * resource type IDs.
-     *
-     * <p>Resolution order:
-     * <ol>
-     *   <li>If {@code input.getResourceTypeId()} is non-null, check direct
-     *       membership in {@code resourceTypeIds}</li>
-     *   <li>If {@code input.getItemId()} is non-null and not {@code "Empty"},
-     *       look up the item in {@link Item#getAssetMap()}, then check if any
-     *       of the item's {@link Item#getResourceTypes()} entries has an ID
-     *       present in {@code resourceTypeIds}</li>
-     *   <li>Otherwise return {@code false}</li>
-     * </ol>
-     *
-     * @param input           a single recipe input (MaterialQuantity)
-     * @param resourceTypeIds the set of resource type IDs to match against
-     * @return {@code true} if this input matches any of the given IDs
-     */
     private static boolean inputMatchesAnyResourceType(
             @Nonnull MaterialQuantity input,
             @Nonnull Set<String> resourceTypeIds) {

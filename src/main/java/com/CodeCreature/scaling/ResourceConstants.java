@@ -9,7 +9,7 @@ public final class ResourceConstants {
      * Recipe input quantities are scaled by RESOURCE_MULTIPLIER / output quantity,
      * so breaking a crafted block returns the correct proportion of base resources.
      */
-    public static final int RESOURCE_MULTIPLIER = 12;
+    public static final int RESOURCE_MULTIPLIER = 1;
 
     private ResourceConstants() {}
 }

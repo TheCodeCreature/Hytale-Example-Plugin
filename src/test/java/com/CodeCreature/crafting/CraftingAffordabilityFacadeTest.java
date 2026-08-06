@@ -1,31 +1,21 @@
 package com.CodeCreature.crafting;
 
-/**
- * @node    CraftingAffordabilityFacadeTest
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Verifies generic-aware direct affordability checks sum concrete variants and expose
- *          presentation metadata for rendering generic icons with concrete fallback behavior.
- * @wave    4 (generic icons + generic affordability boundary)
- * @status  Wave 4 - implemented focused facade coverage for generic affordability and presentation
- * @do-not  Assert engine removeMaterials consumption ordering in this test suite.
- *          Expand this file into planner raw-cost integration behavior.
- */
-
-import com.CodeCreature.scaling.ResourceTypeResolver;
-import com.hypixel.hytale.protocol.BenchType;
-import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-import com.hypixel.hytale.server.core.asset.type.item.config.Item;
-import com.hypixel.hytale.server.core.inventory.ItemStack;
-import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
-import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+
+import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import static com.CodeCreature.scaling.AssetTestHelper.cleanup;
 import static com.CodeCreature.scaling.AssetTestHelper.installItems;
@@ -35,14 +25,13 @@ import static com.CodeCreature.scaling.AssetTestHelper.materialQtyResource;
 import static com.CodeCreature.scaling.AssetTestHelper.recipe;
 import static com.CodeCreature.scaling.AssetTestHelper.resourceType;
 import static com.CodeCreature.scaling.AssetTestHelper.setNaturalRegistry;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.CodeCreature.scaling.ResourceTypeResolver;
+import com.hypixel.hytale.protocol.BenchType;
+import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
+import com.hypixel.hytale.server.core.asset.type.item.config.Item;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
+import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 
 class CraftingAffordabilityFacadeTest {
 
@@ -51,11 +40,6 @@ class CraftingAffordabilityFacadeTest {
         cleanup();
     }
 
-    /** @intent Verify generic affordability counts inventory across all matching variants instead of one representative item.
-     *  @wave   4 - implemented generic affordability variant-summing coverage
-     *  @status implemented
-     *  @node   CraftingAffordabilityFacadeTest#isAffordableSumsGenericVariants
-     */
     @Test
     void isAffordableSumsGenericVariants() {
         installHardwoodItems();
@@ -74,11 +58,6 @@ class CraftingAffordabilityFacadeTest {
         assertFalse(CraftingAffordabilityFacade.isAffordable(recipe, false, insufficientContainer));
     }
 
-    /** @intent Verify direct ingredient view marks generic inputs and exposes generic icon metadata while retaining concrete fallback icon item id.
-     *  @wave   4 - implemented generic presentation metadata coverage
-     *  @status implemented
-     *  @node   CraftingAffordabilityFacadeTest#resolveDirectIngredientsMarksGenericPresentation
-     */
     @Test
     void resolveDirectIngredientsMarksGenericPresentation() {
         installHardwoodItems();
@@ -105,11 +84,6 @@ class CraftingAffordabilityFacadeTest {
         assertNotNull(view.presentation().iconItemId());
     }
 
-    /** @intent Verify concrete authored inputs keep concrete icon fallback metadata without entering generic presentation mode.
-     *  @wave   4 - implemented concrete fallback presentation coverage
-     *  @status implemented
-     *  @node   CraftingAffordabilityFacadeTest#resolveDirectIngredientsKeepsConcretePresentationForDirectItem
-     */
     @Test
     void resolveDirectIngredientsKeepsConcretePresentationForDirectItem() {
         installHardwoodItems();

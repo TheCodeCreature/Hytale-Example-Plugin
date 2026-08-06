@@ -1,15 +1,5 @@
 package com.CodeCreature.scaling;
 
-/**
- * @node    DropScaler
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Applies 12x scaling pipeline and now ensures generic proxy item assets before
- *          recipe-block synthetic drop projection emits ResourceTypeId proxy IDs.
- * @wave    3 (pipeline wiring)
- * @status  Wave 3 - proxy asset ensure pass wired before recipe drop generation
- * @do-not  Change natural block 12x scaling, placement-cost scaler behavior, or runtime parity probe logic.
- */
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;

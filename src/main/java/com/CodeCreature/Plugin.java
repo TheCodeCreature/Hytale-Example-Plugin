@@ -1,39 +1,41 @@
 package com.CodeCreature;
 
-import com.hypixel.hytale.server.core.entity.entities.Player;
+import java.util.UUID;
+import java.util.logging.Level;
+
+import org.jspecify.annotations.NonNull;
+
 import com.CodeCreature.command.ParticleCommand;
 import com.CodeCreature.command.debug.DebugCommand;
 import com.CodeCreature.command.placeblock.PlaceBlockCommand;
 import com.CodeCreature.crafting.StencilBookRecipeMutator;
-import com.CodeCreature.ui.bench.StencilBookOpenUIInteraction;
-import com.CodeCreature.ui.bench.StencilBookPrefsStore;
-import com.CodeCreature.util.DebugLogger;
-import com.CodeCreature.util.FeatureFlags;
 import com.CodeCreature.scaling.BreakBlockDiagnostic;
 import com.CodeCreature.scaling.DropScaler;
 import com.CodeCreature.scaling.PlacementCostScaler;
-import com.CodeCreature.ui.stencilbook.StencilBookParticleLoop;
 import com.CodeCreature.stencil.StencilDropDestroySystem;
 import com.CodeCreature.stencil.StencilPlacementSystem;
-import com.CodeCreature.ui.radial.StencilInputListener;
 import com.CodeCreature.stencil.StencilSyncSystem;
 import com.CodeCreature.stencil.StencilVisualManager;
+import com.CodeCreature.ui.bench.StencilBookOpenUIInteraction;
+import com.CodeCreature.ui.bench.StencilBookPrefsStore;
+import com.CodeCreature.ui.radial.StencilInputListener;
+import com.CodeCreature.ui.stencilbook.StencilBookParticleLoop;
+import com.CodeCreature.util.DebugLogger;
+import com.CodeCreature.util.FeatureFlags;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.server.core.modules.interaction.interaction.config.Interaction;
 import com.hypixel.hytale.server.core.asset.LoadAssetEvent;
+import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent;
 import com.hypixel.hytale.server.core.io.adapter.PacketAdapters;
 import com.hypixel.hytale.server.core.io.adapter.PlayerPacketWatcher;
+import com.hypixel.hytale.server.core.modules.interaction.interaction.config.Interaction;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import java.util.UUID;
-import java.util.logging.Level;
-import org.jspecify.annotations.NonNull;
 
 public class Plugin extends JavaPlugin {
 
@@ -46,7 +48,6 @@ public class Plugin extends JavaPlugin {
         this.getCommandRegistry().registerCommand(new PlaceBlockCommand());
         this.getCommandRegistry().registerCommand(new ParticleCommand());
         this.getCommandRegistry().registerCommand(new DebugCommand());
-//        this.getCommandRegistry().registerCommand(new NewMovementCommand());
         this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, Plugin::onPlayerReady);
         this.getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, Plugin::onPlayerDisconnect);
 

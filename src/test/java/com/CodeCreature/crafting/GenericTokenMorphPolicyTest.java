@@ -1,18 +1,5 @@
 package com.CodeCreature.crafting;
 
-/**
- * @node    GenericTokenMorphPolicyTest
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Verifies locked generic token morph policy behavior: largest matching stack selection,
- *          deterministic tie-break, and remain-generic fallback when no concrete stack matches.
- * @wave    5 (surface parity + regression coverage)
- * @status  Wave 5 - implemented policy contract tests for generic token morph helper
- * @do-not  Assert engine removeMaterials internals from these pure policy tests.
- *          Expand this suite into planner raw-cost integration behavior.
- */
-
-import org.junit.jupiter.api.Test;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,14 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 class GenericTokenMorphPolicyTest {
 
-        /** @intent Consumption ordering helper must preserve largest-stack-first and resolver-order tie-break semantics.
-         *  @wave   5 - implemented ordering helper contract coverage
-         *  @status implemented
-         *  @node   GenericTokenMorphPolicyTest#orderForConsumptionLargestThenResolverOrder
-         */
         @Test
         void orderForConsumptionLargestThenResolverOrder() {
                 List<GenericVariantMatcher.VariantAvailability> unordered = List.of(
@@ -42,11 +25,6 @@ class GenericTokenMorphPolicyTest {
                 assertEquals(List.of("Wood_Hardwood_Raw", "Wood_Hardwood_Planks", "Wood_Hardwood_Decorative"), orderedIds);
         }
 
-    /** @intent Policy A should choose the largest stack and keep resolver ordering as deterministic tie-break.
-     *  @wave   5 - implemented selection contract coverage
-     *  @status implemented
-     *  @node   GenericTokenMorphPolicyTest#selectFromAvailabilityChoosesLargestThenResolverOrder
-     */
     @Test
     void selectFromAvailabilityChoosesLargestThenResolverOrder() {
         GenericIngredientResolution resolution = new GenericIngredientResolution(
@@ -74,11 +52,6 @@ class GenericTokenMorphPolicyTest {
         assertFalse(unevenSelection.remainsGeneric());
     }
 
-    /** @intent No matching concrete stack for a generic token must keep the token generic instead of forcing representative morph.
-     *  @wave   5 - implemented no-match fallback contract coverage
-     *  @status implemented
-     *  @node   GenericTokenMorphPolicyTest#selectFromAvailabilityNoMatchRemainsGeneric
-     */
     @Test
     void selectFromAvailabilityNoMatchRemainsGeneric() {
         GenericIngredientResolution resolution = new GenericIngredientResolution(

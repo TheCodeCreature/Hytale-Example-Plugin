@@ -13,10 +13,6 @@ import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 
 class GenericDropProxyCatalogTest {
 
-    /** @intent Ensure the same ResourceTypeId always maps to the same proxy ID and decodes cleanly.
-     *  @wave   3 - implemented
-     *  @status implemented
-     *  @node   GenericDropProxyCatalogTest#proxyIdIsDeterministic */
     @Test
     void proxyIdIsDeterministic() {
         GenericDropProxyCatalog catalog = new GenericDropProxyCatalog();
@@ -43,10 +39,6 @@ class GenericDropProxyCatalogTest {
                 "Wood trunk proxy IDs should decode to trunk-family generic ID");
     }
 
-    /** @intent Ensure icon path resolution uses representative item-icon normalization and does not hardcode fallback icons.
-     *  @wave   3 - implemented
-     *  @status implemented
-     *  @node   GenericDropProxyCatalogTest#iconPathResolutionUsesRepresentativeItemIcons */
     @Test
     void iconPathResolutionUsesRepresentativeItemIcons() {
         GenericDropProxyCatalog catalog = new GenericDropProxyCatalog();
@@ -59,10 +51,6 @@ class GenericDropProxyCatalogTest {
             "Resolved generic icon should preserve semantic ranking but project to generated item-icon family");
     }
 
-    /** @intent Ensure catalog resolves item-icon-family paths when a representative item icon exists.
-     *  @wave   3 - implemented
-     *  @status implemented
-     *  @node   GenericDropProxyCatalogTest#iconPathResolutionNormalizesRepresentativeItemIcons */
     @Test
     void iconPathResolutionNormalizesRepresentativeItemIcons() {
         AssetTestHelper.installItems(Map.of(
@@ -84,11 +72,6 @@ class GenericDropProxyCatalogTest {
             "Registry/resource-type semantic icon should outrank representative item icon fallback and map to item icons");
     }
 
-    /** @intent Ensure trunk-family generic icons prefer Any_Trunk semantic assets before exact Wood_Trunk images.
-     *  @wave   3 - implemented
-     *  @status implemented
-     *  @node   GenericDropProxyCatalogTest#trunkFamilyIconPrefersAnyTrunk
-     */
     @Test
     void trunkFamilyIconPrefersAnyTrunk() {
         GenericDropProxyCatalog catalog = new GenericDropProxyCatalog();
@@ -99,11 +82,6 @@ class GenericDropProxyCatalogTest {
             "Wood_Trunk should prefer Any_Trunk according to the ranked fallback hierarchy and map to item icons");
     }
 
-    /** @intent Ensure resource-type-only trunk icons do not fabricate generated texture paths when no texture asset exists.
-     *  @wave   3 - implemented
-     *  @status implemented
-     *  @node   GenericDropProxyCatalogTest#trunkFamilyTexturePathRemainsNullWithoutGeneratedTexture
-     */
     @Test
     void trunkFamilyTexturePathRemainsNullWithoutGeneratedTexture() {
         GenericDropProxyCatalog catalog = new GenericDropProxyCatalog();
@@ -114,10 +92,6 @@ class GenericDropProxyCatalogTest {
             "Trunk-family proxy textures should map from generated item icons when mirrored texture assets exist");
     }
 
-    /** @intent Ensure runtime-generated proxy items initialize required packet fields so login/item sync does not crash.
-     *  @wave   3 - implemented proxy item packet-safety regression coverage
-     *  @status implemented
-     *  @node   GenericDropProxyCatalogTest#proxyItemToPacketDoesNotThrow */
     @Test
     void proxyItemToPacketDoesNotThrow() {
         AssetTestHelper.installItems(Map.of(

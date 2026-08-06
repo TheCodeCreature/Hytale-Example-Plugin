@@ -1,28 +1,5 @@
 package com.CodeCreature.ui.ingredienttree;
 
-/**
- * @node    IngredientTreeBuilder
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Builds the ingredient tree from display-only representative projections so tree icons
- *          remain stable without treating one concrete item as semantic truth for a generic input.
- * @wave    2 (affordability and UI projection migration)
- * @status  Wave 2 - tree display now routes through presentation-oriented generic projections
- * @do-not  Change grouping or ordering semantics in this wave.
- *          Reuse tree representative choice as a semantic resolution policy.
- */
-
-import com.CodeCreature.crafting.GenericIngredientResolution;
-import com.CodeCreature.crafting.IngredientPresentation;
-import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-import com.hypixel.hytale.server.core.asset.type.item.config.Item;
-import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
-import com.hypixel.hytale.protocol.ItemResourceType;
-import com.CodeCreature.scaling.ResourceTypeResolver;
-
-import com.CodeCreature.util.DebugLogger;
-import com.CodeCreature.scaling.ResourceTypeResolver;
-
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -34,7 +11,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
-import static com.CodeCreature.util.DebugLogger.Subsystem.*;
+import javax.annotation.Nullable;
+
+import com.CodeCreature.crafting.GenericIngredientResolution;
+import com.CodeCreature.crafting.IngredientPresentation;
+import com.CodeCreature.scaling.ResourceTypeResolver;
+import com.CodeCreature.util.DebugLogger;
+import static com.CodeCreature.util.DebugLogger.Subsystem.INGREDIENT_TREE;
+import com.hypixel.hytale.protocol.ItemResourceType;
+import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
+import com.hypixel.hytale.server.core.asset.type.item.config.Item;
+import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
 public final class IngredientTreeBuilder {
 

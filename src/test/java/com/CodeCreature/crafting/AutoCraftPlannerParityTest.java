@@ -1,34 +1,23 @@
 package com.CodeCreature.crafting;
 
-/**
- * @node    AutoCraftPlannerParityTest
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Covers planner parity-critical behavior across generic deficits, stencil exclusion,
- *          and raw projection boundaries while keeping tests scoped to deterministic contracts.
- * @wave    5 (surface parity + regression coverage)
- * @status  Wave 5 - implemented focused planner parity regression tests
- * @do-not  Treat these tests as runtime proof of engine removeMaterials ordering.
- *          Expand this suite into full craftprobe runtime matrix coverage.
- */
-
-import com.CodeCreature.scaling.ResourceTypeResolver;
-import com.hypixel.hytale.protocol.BenchType;
-import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-import com.hypixel.hytale.server.core.asset.type.item.config.Item;
-import com.hypixel.hytale.server.core.inventory.ItemStack;
-import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
-import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
-import org.bson.BsonDocument;
-import org.bson.BsonString;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+
+import org.bson.BsonDocument;
+import org.bson.BsonString;
+import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import static com.CodeCreature.scaling.AssetTestHelper.cleanup;
 import static com.CodeCreature.scaling.AssetTestHelper.installItems;
@@ -39,13 +28,13 @@ import static com.CodeCreature.scaling.AssetTestHelper.recipe;
 import static com.CodeCreature.scaling.AssetTestHelper.resourceType;
 import static com.CodeCreature.scaling.AssetTestHelper.setCraftedItemIds;
 import static com.CodeCreature.scaling.AssetTestHelper.setNaturalRegistry;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.CodeCreature.scaling.ResourceTypeResolver;
+import com.hypixel.hytale.protocol.BenchType;
+import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
+import com.hypixel.hytale.server.core.asset.type.item.config.Item;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
+import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
 
 class AutoCraftPlannerParityTest {
 
@@ -55,11 +44,6 @@ class AutoCraftPlannerParityTest {
         resetRawCostCache();
     }
 
-    /** @intent Direct affordability and planner verification should agree for generic variant sums when no auto-craft is required.
-     *  @wave   5 - implemented direct/planner consistency coverage
-     *  @status implemented
-     *  @node   AutoCraftPlannerParityTest#plannerAndFacadeAgreeForDirectGenericAffordability
-     */
     @Test
     void plannerAndFacadeAgreeForDirectGenericAffordability() {
         installHardwoodItems();
@@ -77,11 +61,6 @@ class AutoCraftPlannerParityTest {
         assertFalse(plan.requiresAutoCraft());
     }
 
-    /** @intent Stencil-tagged stacks must be excluded identically from direct affordability and planner verification.
-     *  @wave   5 - implemented stencil exclusion parity coverage
-     *  @status implemented
-     *  @node   AutoCraftPlannerParityTest#plannerAndFacadeExcludeStencilTaggedStacks
-     */
     @Test
     void plannerAndFacadeExcludeStencilTaggedStacks() {
         installHardwoodItems();
@@ -99,11 +78,6 @@ class AutoCraftPlannerParityTest {
         assertFalse(plan.affordable());
     }
 
-    /** @intent Deficit expansion should keep deterministic behavior while preferring policy-A concrete morph selection before compatibility fallback.
-     *  @wave   5 - implemented planner deficit expansion coverage
-     *  @status implemented
-     *  @node   AutoCraftPlannerParityTest#plannerDeficitExpansionUsesPolicyAMorphFirst
-     */
     @Test
     void plannerDeficitExpansionUsesPolicyAMorphFirst() {
         installHardwoodItems();
@@ -129,11 +103,6 @@ class AutoCraftPlannerParityTest {
         assertEquals(4, merged.getOrDefault("Rock_Stone_Cobble", 0));
     }
 
-    /** @intent Raw projection remains display-only; planner consumptions must still follow variant availability instead of representative projection identity.
-     *  @wave   5 - implemented raw-projection boundary coverage
-     *  @status implemented
-     *  @node   AutoCraftPlannerParityTest#rawProjectionIsDisplayOnlyBoundary
-     */
     @Test
     void rawProjectionIsDisplayOnlyBoundary() {
         installHardwoodItems();

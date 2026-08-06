@@ -16,36 +16,30 @@
 	"Texture": "Items/Weapons/Spellbook/Grimoire_Brown_Texture.png",
 	"PlayerAnimationsId": "Spellbook",
 	"Recipe": {
+		"TimeSeconds": 1,
 		"Input": [
 			{
 				"ItemId": "Ingredient_Fabric_Scrap_Linen",
-				"Quantity": 6,
-				"Metadata": {}
+				"Quantity": 6
 			},
 			{
 				"ItemId": "Ingredient_Leather_Light",
-				"Quantity": 2,
-				"Metadata": {}
+				"Quantity": 2
 			},
 			{
 				"ItemId": "Ingredient_Life_Essence",
-				"Quantity": 10,
-				"Metadata": {}
+				"Quantity": 10
 			}
 		],
-		"PrimaryOutput": {
-			"Metadata": {}
-		},
 		"BenchRequirement": [
 			{
+				"Id": "Fieldcraft",
 				"Type": "Crafting",
-				"Id": "Workbench",
 				"Categories": [
-					"Workbench_Tools"
+					"Tools"
 				]
 			}
-		],
-		"TimeSeconds": 4
+		]
 	},
 	"Interactions": {
 		"Pick": "StencilBook_PickStencil",

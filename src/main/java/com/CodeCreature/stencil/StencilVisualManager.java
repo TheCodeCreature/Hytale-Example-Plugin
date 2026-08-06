@@ -1,16 +1,5 @@
 package com.CodeCreature.stencil;
 
-/**
- * @node    StencilVisualManager
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Applies stencil affordability visuals through the Wave 2 facade while keeping this
- *          runtime surface boolean-focused and separate from ingredient presentation concerns.
- * @wave    2 (affordability and UI projection migration)
- * @status  Wave 2 - stencil affordability visuals now route through the facade boundary
- * @do-not  Pull direct ingredient presentation logic into this runtime visual manager.
- *          Bypass the facade with ad hoc affordability policy here.
- */
-
 import com.CodeCreature.crafting.CraftingAffordabilityFacade;
 import com.CodeCreature.util.StencilMetadata;
 import com.hypixel.hytale.protocol.GameMode;

@@ -1,16 +1,5 @@
 package com.CodeCreature.ui.bench;
 
-/**
- * @node    StencilSelectionPage
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Drives stencil recipe browsing/filtering and affordability visualization while routing
- *          primary affordability semantics through CraftingAffordabilityFacade.
- * @wave    5 (surface parity + regression hardening)
- * @status  Wave 5 - retained and isolated block-group affordability fallback as intentional UI-only path
- * @do-not  Treat local fallback checks as the parity source-of-truth for direct recipe affordability.
- *          Route direct recipe affordability semantics around generic matching through facade/resolver boundaries.
- */
-
 import com.CodeCreature.crafting.CraftingAffordabilityFacade;
 import com.CodeCreature.ui.common.IconPathResolver;
 import com.CodeCreature.ui.ingredienttree.IngredientTree;
@@ -1351,11 +1340,6 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         return null;
     }
 
-    /** @intent Resolve stencil-list affordability through the shared facade first, then apply a legacy block-group fallback for UI parity only.
-     *  @wave   5 - documented fallback-only path and kept facade as the semantic source-of-truth
-     *  @status implemented
-     *  @node   StencilSelectionPage#isAffordable
-     */
     private boolean isAffordable(RecipeFilterPipeline.InputRecipe entry, CombinedItemContainer container) {
         CraftingRecipe recipe = CraftingRecipe.getAssetMap().getAsset(entry.recipeId());
         if (recipe != null) {
@@ -1367,11 +1351,6 @@ public class StencilSelectionPage extends InteractiveCustomUIPage<StencilSelecti
         return isBlockGroupFallbackAffordable(entry.outputItemId(), container);
     }
 
-    /** @intent Keep FullBlocks block-group swap behavior as an explicit fallback-only UI affordance when direct recipe affordability is false.
-     *  @wave   5 - isolated legacy fallback for auditability and parity rationale
-     *  @status implemented
-     *  @node   StencilSelectionPage#isBlockGroupFallbackAffordable
-     */
     private boolean isBlockGroupFallbackAffordable(@Nullable String outputItemId,
                                                    CombinedItemContainer container) {
         // Intentional fallback-only path:

@@ -1,16 +1,5 @@
 package com.CodeCreature.command.debug;
 
-/**
- * @node    CraftingParityProbeSubCommand
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Provides a read-only runtime probe for generic crafting-input parity across engine direct checks,
- *          facade checks, planner outcomes, and raw-cost projection snapshots.
- * @wave    1 (runtime parity diagnostics)
- * @status  Wave 1 - implemented read-only parity probe command
- * @do-not  Mutate inventory or consume materials.
- *          Treat raw-cost representative projection as semantic proof.
- */
-
 import com.CodeCreature.crafting.AutoCraftPlan;
 import com.CodeCreature.crafting.AutoCraftPlanner;
 import com.CodeCreature.crafting.CraftingAffordabilityFacade;

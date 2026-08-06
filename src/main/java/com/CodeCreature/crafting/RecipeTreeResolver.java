@@ -1,27 +1,5 @@
 package com.CodeCreature.crafting;
 
-/**
- * @node    RecipeTreeResolver
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Resolves recipes into deterministic raw-cost compatibility projections while keeping
- *          execution/removal semantics outside projection helper boundaries.
- * @wave    5 (raw projection isolation hardening)
- * @status  Wave 5 - reinforced display-only projection contracts and execution-boundary guardrails
- * @do-not  Use display projection helpers as final removal semantics.
- *          Infer engine removal ordering from compatibility projection output.
- */
-
-import com.CodeCreature.registry.BenchRegistry;
-import com.CodeCreature.scaling.NaturalResourceRegistry;
-import com.CodeCreature.scaling.RecipeTierClassifier;
-import com.CodeCreature.scaling.ResourceTypeResolver;
-import com.hypixel.hytale.protocol.BenchRequirement;
-import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
-import com.hypixel.hytale.server.core.asset.type.item.config.Item;
-import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -30,8 +8,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import com.CodeCreature.registry.BenchRegistry;
+import com.CodeCreature.scaling.NaturalResourceRegistry;
+import com.CodeCreature.scaling.RecipeTierClassifier;
+import com.CodeCreature.scaling.ResourceTypeResolver;
 import com.CodeCreature.util.DebugLogger;
-import static com.CodeCreature.util.DebugLogger.Subsystem.*;
+import static com.CodeCreature.util.DebugLogger.Subsystem.CRAFTING;
+import com.hypixel.hytale.protocol.BenchRequirement;
+import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
+import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 
 /**
  * Recursively resolves crafted items to their raw material equivalents,

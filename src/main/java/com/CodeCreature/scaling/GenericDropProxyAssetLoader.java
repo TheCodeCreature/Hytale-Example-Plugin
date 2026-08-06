@@ -1,15 +1,5 @@
 package com.CodeCreature.scaling;
 
-/**
- * @node    GenericDropProxyAssetLoader
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Ensures proxy item assets exist for generic recipe inputs before synthetic recipe
- *          drop-list generation.
- * @wave    1 (asset ensure)
- * @status  Wave 1 - implemented with deterministic fallback when runtime item registration fails
- * @do-not  Mutate natural block scaling or placement cost logic.
- */
-
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -42,10 +32,6 @@ public final class GenericDropProxyAssetLoader {
         Objects.requireNonNull(fields, "fields");
     }
 
-    /** @intent Ensure proxy assets for every generic input in the provided recipe.
-     *  @wave   1 - implemented
-     *  @status implemented
-     *  @node   GenericDropProxyAssetLoader#ensureProxyAssetsForRecipe */
     public void ensureProxyAssetsForRecipe(@Nonnull CraftingRecipe recipe) {
         MaterialQuantity[] inputs = recipe.getInput();
         if (inputs == null || inputs.length == 0) return;
@@ -58,10 +44,6 @@ public final class GenericDropProxyAssetLoader {
         }
     }
 
-    /** @intent Ensure one proxy asset exists for the resource type and return the proxy item ID.
-     *  @wave   1 - implemented
-     *  @status implemented
-     *  @node   GenericDropProxyAssetLoader#ensureProxyAsset */
     @Nonnull
     public String ensureProxyAsset(@Nonnull String resourceTypeId) {
         String normalizedResourceTypeId = normalizeRequired(resourceTypeId);
@@ -94,11 +76,6 @@ public final class GenericDropProxyAssetLoader {
         return proxyItemId;
     }
 
-    /** @intent Build a runtime proxy item by cloning original server sap asset and
-     *          mutating only sap-existing fields + id.
-     *  @wave   1 - implemented
-     *  @status implemented
-     *  @node   GenericDropProxyAssetLoader#buildProxyItem */
     @Nonnull
     public Item buildProxyItem(@Nonnull String sourceResourceTypeId,
                                @Nonnull String genericTypeId,

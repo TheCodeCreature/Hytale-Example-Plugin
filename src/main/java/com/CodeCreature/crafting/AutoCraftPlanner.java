@@ -1,16 +1,12 @@
 package com.CodeCreature.crafting;
 
-/**
- * @node    AutoCraftPlanner
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Plans stencil-safe crafting consumption through the Wave 1/2 typed generic ingredient
- *          boundary, separating variant-aware direct stock accounting from late concrete deficit
- *          projection for raw-cost compatibility.
- * @wave    3 (planner migration)
- * @status  Wave 3 - typed generic resolution drives planner accounting; raw-cost projection remains late
- * @do-not  Change RecipeTreeResolver raw-cost policy in this wave.
- *          Claim exact engine removeMaterials ordering from planner consumptions.
- */
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import com.CodeCreature.scaling.NaturalResourceRegistry;
 import com.CodeCreature.scaling.RecipeTierClassifier;
@@ -18,13 +14,6 @@ import com.CodeCreature.scaling.ResourceTypeResolver;
 import com.hypixel.hytale.server.core.asset.type.item.config.CraftingRecipe;
 import com.hypixel.hytale.server.core.inventory.MaterialQuantity;
 import com.hypixel.hytale.server.core.inventory.container.CombinedItemContainer;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Computes an {@link AutoCraftPlan} for a stencil placement, determining
@@ -85,57 +74,6 @@ public final class AutoCraftPlanner {
 
     private AutoCraftPlanner() {}
 
-    /**
-     * Produces an {@link AutoCraftPlan} for placing one block from the
-     * given recipe, checking the player's inventory for direct ingredients
-     * and falling back to auto-crafting from raw materials.
-     *
-     * <h3>Fast path</h3>
-     * If {@code container.canRemoveMaterials(directMaterials)} returns
-     * {@code true}, the player has all direct ingredients (possibly
-     * matching via {@code ResourceTypeId}). Returns a plan with
-     * {@code requiresAutoCraft=false} and the direct materials as
-     * consumptions.
-     *
-     * <h3>Slow path</h3>
-     * For each per-unit input from
-     * {@link PlaceBlockCostUtil#getPerUnitCost}:
-     * <ol>
-     *   <li>Resolve to concrete item ID via
-     *       {@link ResourceTypeResolver#resolveInputItemId} and
-     *       {@link NaturalResourceRegistry#resolveToGatherableForm}</li>
-     *   <li>{@code playerHas = container.countItemStacks(predicate)}</li>
-     *   <li>{@code useExisting = min(playerHas, needed)}</li>
-     *   <li>{@code deficit = needed - useExisting}</li>
-     *   <li>If deficit > 0 and item is crafted:
-     *       look up {@link RecipeTreeResolver#resolveItemToRaw} and
-     *       accumulate {@code rawQty * deficit} for each raw material</li>
-     *   <li>If deficit > 0 and item is raw:
-     *       accumulate deficit directly</li>
-     * </ol>
-     * After all ingredients are processed, verify total consumption
-     * against actual inventory. If all satisfied, return an affordable
-     * auto-craft plan.
-     *
-     * <h3>Overlap handling</h3>
-     * The same raw material may appear both as a direct recipe input
-     * and as a raw material needed for auto-crafting. The consumption
-     * map uses {@code merge(itemId, qty, Integer::sum)} to aggregate
-     * all needs, and the final inventory check validates the total.
-     *
-     * @param recipe         the crafting recipe for the block being placed
-     * @param preferNatural  {@code true} to prefer natural items during
-     *                       {@code ResourceTypeId} resolution
-     * @param container      the player's combined inventory container
-     *                       (backpack + storage + hotbar)
-     * @return an {@link AutoCraftPlan} with the consumption list and
-     *         affordability result
-     */
-    /** @intent Plan direct and auto-craft consumption through typed ingredient resolution, variant-aware stock accounting, and late compatibility projection.
-     *  @wave   3 - implemented planner migration to the generic ingredient boundary
-     *  @status implemented
-     *  @node   AutoCraftPlanner#plan
-     */
     @Nonnull
     public static AutoCraftPlan plan(@Nonnull CraftingRecipe recipe,
                                      boolean preferNatural,
@@ -211,11 +149,6 @@ public final class AutoCraftPlanner {
         }
     }
 
-    /** @intent Resolve one planner ingredient through typed identity, count directly-usable variants, and leave only the unresolved deficit for late compatibility projection.
-     *  @wave   3 - implemented planner ingredient accounting stage
-     *  @status implemented
-     *  @node   AutoCraftPlanner#resolvePlannerIngredientNeed
-     */
     private static PlannerIngredientNeed resolvePlannerIngredientNeed(@Nonnull GenericIngredientResolution resolution,
                                                                      @Nonnull CombinedItemContainer container) {
         String compatibilityItemId = resolveCompatibilityItemId(resolution);
@@ -251,10 +184,6 @@ public final class AutoCraftPlanner {
 
     private record DeficitProjection(@Nullable String itemId, boolean compatibilityFallback) {}
 
-    /** @intent Select deficit projection item using policy A first (largest matching stack), and only use representative compatibility fallback when no concrete stack can be selected.
-     *  @status implemented
-     *  @node   AutoCraftPlanner#resolveDeficitProjectionItemId
-     */
     @Nonnull
     private static DeficitProjection resolveDeficitProjectionItemId(
             @Nonnull GenericIngredientResolution resolution,
@@ -276,11 +205,6 @@ public final class AutoCraftPlanner {
         return new DeficitProjection(compatibilityItemId, false);
     }
 
-    /** @intent Keep the current representative-item policy as an explicit late compatibility boundary for crafted-item checks and raw-cost lookup.
-     *  @wave   3 - implemented late concrete projection helper
-     *  @status implemented
-     *  @node   AutoCraftPlanner#resolveCompatibilityItemId
-     */
     private static String resolveCompatibilityItemId(@Nonnull GenericIngredientResolution resolution) {
         String representativeItemId = resolution.representativeItemId();
         if ((representativeItemId == null || representativeItemId.isEmpty())
@@ -293,11 +217,6 @@ public final class AutoCraftPlanner {
         return NaturalResourceRegistry.resolveToGatherableForm(representativeItemId);
     }
 
-    /** @intent Expand only the unresolved deficit for one planner ingredient, using late compatibility projection strictly in planner-space before execution consumes explicit item IDs.
-     *  @wave   5 - documented raw-projection isolation at execution boundary
-     *  @status implemented
-     *  @node   AutoCraftPlanner#expandDeficit
-     */
     @Nonnull
     private static DeficitExpansionResult expandDeficit(@Nonnull PlannerIngredientNeed plannerNeed,
                                                         @Nonnull Map<String, Integer> totalConsumption) {
@@ -332,11 +251,6 @@ public final class AutoCraftPlanner {
         return new DeficitExpansionResult(true, false);
     }
 
-    /** @intent Merge concrete consumption entries into the planner's final verification map without implying engine-exact removal ordering.
-     *  @wave   3 - implemented planner accumulation helper
-     *  @status implemented
-     *  @node   AutoCraftPlanner#mergeConsumptionEntries
-     */
     private static void mergeConsumptionEntries(@Nonnull Map<String, Integer> totalConsumption,
                                                 @Nonnull List<ConsumptionEntry> consumptions) {
         for (ConsumptionEntry consumption : consumptions) {
@@ -344,11 +258,6 @@ public final class AutoCraftPlanner {
         }
     }
 
-    /** @intent Materialize the planner verification map into concrete consumption entries for the existing plan contract.
-     *  @wave   3 - implemented plan materialization helper
-     *  @status implemented
-     *  @node   AutoCraftPlanner#toConsumptionEntries
-     */
     @Nonnull
     private static List<ConsumptionEntry> toConsumptionEntries(@Nonnull Map<String, Integer> totalConsumption) {
         return totalConsumption.entrySet().stream()

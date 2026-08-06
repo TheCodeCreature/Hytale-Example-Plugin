@@ -1,17 +1,5 @@
 package com.CodeCreature.crafting;
 
-/**
- * @node    RecipeAffordabilityResolver
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Resolves direct recipe ingredient affordability against the Wave 1 typed generic
- *          ingredient boundary while preserving the legacy ResolvedIngredient adapter for
- *          transitional callers.
- * @wave    2 (affordability and UI projection migration)
- * @status  Wave 2 - direct affordability now routes through generic identity plus presentation
- * @do-not  Migrate auto-craft planner semantics here beyond facade delegation.
- *          Treat representativeItemId as the semantic identity for generic inputs.
- */
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -91,11 +79,6 @@ public final class RecipeAffordabilityResolver {
 
     private RecipeAffordabilityResolver() {}
 
-    /** @intent Resolve direct ingredient affordability on the typed generic ingredient boundary and attach UI-facing presentation data.
-     *  @wave   2 - implemented typed direct affordability projection
-     *  @status implemented
-     *  @node   RecipeAffordabilityResolver#resolveIngredientAffordability
-     */
     @Nonnull
     public static List<CraftingAffordabilityFacade.DirectIngredientView> resolveIngredientAffordability(
             @Nonnull CraftingRecipe recipe,
@@ -247,11 +230,6 @@ public final class RecipeAffordabilityResolver {
         return AutoCraftPlanner.plan(recipe, preferNatural, container).affordable();
     }
 
-    /** @intent Preserve current gatherable display projection for direct affordability without implying semantic identity.
-     *  @wave   2 - implemented display projection helper
-     *  @status implemented
-     *  @node   RecipeAffordabilityResolver#resolveDisplayItemId
-     */
     @Nullable
     private static String resolveDisplayItemId(GenericIngredientResolution resolution) {
         String representativeItemId = resolution.representativeItemId();
@@ -265,11 +243,6 @@ public final class RecipeAffordabilityResolver {
         return NaturalResourceRegistry.resolveToGatherableForm(representativeItemId);
     }
 
-    /** @intent Build a UI-facing ingredient projection that separates generic identity from representative icon choice.
-     *  @wave   2 - implemented presentation adapter
-     *  @status implemented
-     *  @node   RecipeAffordabilityResolver#toPresentation
-     */
     @Nonnull
     private static IngredientPresentation toPresentation(GenericIngredientIdentity identity,
                                                          GenericIngredientResolution resolution,
@@ -302,11 +275,6 @@ public final class RecipeAffordabilityResolver {
                 genericIconPath);
     }
 
-    /** @intent Count the player's holdings for one typed ingredient while preserving current generic mixed-variant and stencil-exclusion behavior.
-     *  @wave   2 - implemented player-holdings helper
-     *  @status implemented
-     *  @node   RecipeAffordabilityResolver#countPlayerHas
-     */
     private static int countPlayerHas(GenericIngredientResolution resolution,
                                       String displayItemId,
                                       @Nullable CombinedItemContainer container) {

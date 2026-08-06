@@ -1,16 +1,5 @@
 package com.CodeCreature.ui.bench;
 
-/**
- * @node    DetailPanelController
- * @wiki    docs/The Fractonomical System/_knowledge/_sources/Hytale/04010000_Crafting-Input-Resolution/Overview.md
- * @intent  Renders stencil detail-panel ingredient costs from Wave 2 presentation-oriented
- *          affordability data instead of inferring semantics from a resolved concrete item ID.
- * @wave    2 (affordability and UI projection migration)
- * @status  Wave 2 - detail panel now consumes facade-projected ingredient presentation
- * @do-not  Reintroduce semantic coupling to one representative concrete item here.
- *          Add planner or raw-cost policy here.
- */
-
 import java.util.List;
 
 import javax.annotation.Nullable;
